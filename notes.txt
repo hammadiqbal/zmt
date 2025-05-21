@@ -1,0 +1,65 @@
+Update Logs recording in whole software
+
+Service Activation: Show organization in site in first row of table.
+
+Employee Setup: 
+CNIC Expiry to be added
+Two addresses: Present Address and Mailing Address with different province, division and district
+
+Employee Documents: Cmplete Employee Documents
+
+Patietn Arrival/Departure:
+Service Details must show in 3rd row if patient or arrived or not.
+
+When click on confirm patient arrival in grid below Service Location and Service Location 
+Schedule must be auto filled.
+
+If there are 2 or more arrivals with same service mode then if click confirm patient arrival then all 
+arrival should add in DB.
+
+If there are 2 or more arrivals with different service modes and patient arrived in any one
+service modes then in other entries then display message 'Patient already arrived in "Servicemode name",
+, please end that service first'. Confirm Patient Arrival link should not be displayed in this case. when 
+previous arrival end then it should display  Confirm Patient Arrival link.
+
+Service Booking:
+When click on confirm patient arrival in grid below Service Location and Service Location 
+Schedule must be auto filled.
+
+If there are 2 or more arrivals with same service mode then if click confirm patient arrival then all 
+arrival should add in DB.
+
+If there are 2 or more arrivals with different service modes and patient arrived in any one
+service modes then in other entries then display message 'Patient already arrived in "Servicemode name",
+, please end that service first'. Confirm Patient Arrival link should not be displayed in this case. when 
+previous arrival end then it should display  Confirm Patient Arrival link.
+
+Finalize Procedure Coding:
+Remove Ref Service code in Medical Coding
+Show all activated services where service type must be procedures according to the org only.
+then map with medical codeing where code type is procedure.
+
+
+Encounter & Procedure:
+If there are two arrivals with any difference with Speciality (Billing Cost Center), Responsible Physician and
+Service Mode then when patient change at the start it shows on popup there are two or more 
+services available for this patient please select one to start.
+
+Caption in Medical Diagnosis History should be corrected to Medical Diagnosis.
+Remove / and add & in top right service detail.
+
+if there are selected main service type is procedure then it should show medical coding
+procedures which is mapped in the Activations/Procedure Coding instead of symptoms
+and if service type is encounter then it should display show symptoms while adding visit based
+details.
+
+after adding visit based details it should end patient arrival of speciifc service details
+
+Encounter Request, Procedure Planning, and Inevstigation Order:
+below options must be there while adding above requests.
+site, Service Mode , Service, Physyician, and Billing CC
+
+Complete Investigation Tracking
+
+
+Before Deployment

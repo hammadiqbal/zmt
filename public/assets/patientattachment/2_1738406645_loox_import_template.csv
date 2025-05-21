@@ -1,0 +1,2 @@
+product_handle,rating,author,email,body,created_at,photo_url,verified_purchase
+blue-hoodie,5,John D.,johnd@johnd.com,This is the best blue hoodie I've ever seen,2016-12-31 00:00:00 UTC,http://website.com/photo.jpg,true
