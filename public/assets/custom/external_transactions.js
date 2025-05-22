@@ -251,6 +251,27 @@ $(document).ready(function() {
         }
     });
 
+    // BrandChangeBatch('.et_brand', '#u_im_batch_no', '#add_externaltransactions');
+
+    // $('.et_brand').off('change.etBrand').on ('change.etBrand', function(){
+    //     var brandId = $(this).val();
+    //     var currentRow = $(this).closest('.duplicate'); 
+    //     var currentRowBrandSelect = currentRow.find('.et_brand'); 
+    
+    //     if (brandId) {
+    //          fetchBrandBatch(brandId,currentRowBrandSelect, function(data) {
+    //                 currentRowBrandSelect.find('option:contains("Loading...")').remove();
+    //                 $.each(data, function(key, value) {
+    //                     currentRowBrandSelect.append('<option value="' + value.id + '">' + value.name + '</option>');
+    //                 });
+    //             });
+    //     } 
+    //     else {
+    //         currentRowCCSelect.empty();
+    //         currentRowCCSelect.html("<option selected disabled value=''>Select Cost Center</option>").prop('disabled', true);
+    //     }
+    // });
+
     $('#add_externaltransactions').submit(function(e) {
         e.preventDefault();
         var data = SerializeForm(this);

@@ -1,0 +1,2 @@
+This will erase whatever’s currently on origin/main and replace it with exactly what you have locally.
+git push origin main --force

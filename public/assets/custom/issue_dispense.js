@@ -1,7 +1,7 @@
 $(document).ready(function() {
     //Open Issue & Dispense Modal
     $(document).on('click', '.add-issuedispense', function() {
-        $('#id_dl,#id_sl,.serviceDetails').hide();
+        $('#id_dl,#id_sl,.serviceDetails,.brand_details').hide();
         $('.req_only').show();
         $('#transaction-info-row').empty();
         $('#mrService,.mr-dependent').hide();
@@ -140,7 +140,7 @@ $(document).ready(function() {
         if ($('#id_mr').val()) {
             toggleDuplicateFieldsBasedOnMR($('#id_mr').val());
         }
-
+       
         $(document).off('change', '#id_transactiontype').on('change', '#id_transactiontype', function() {
             let transactionTypeID = $(this).val();
             let siteId = $('#id_site').val();  // you must already have a selected site
@@ -388,9 +388,111 @@ $(document).ready(function() {
        
         $('.id_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
         // GenericChangeBrand('.id_generic', '.id_brand', '#add_issuedispense');
+        const $row = $('#add-issuedispense').find('.duplicate').first();
+        BrandChangeBatchAndExpiry(
+                '#id_org',  
+                '#id_site',  
+                $row.find('.id_generic'),
+                $row.find('.id_brand'),
+                $row.find('.id_batch'),
+                $row.find('.id_expiry'),
+                '#add-issuedispense'
+            );
+
         $('#add-issuedispense').modal('show');
     });
 
+    //     $(document).off('change', '.id_brand').on('change', '.id_brand', function() {
+
+    //     // const $row = $('#add-issuedispense').find('.duplicate').first();
+        
+    //     // var genericId = $(this).val();
+    //     const $row = $(this).closest('.duplicate'); 
+    //     // var currentRowBrandSelect = currentRow.find('.id_brand'); 
+    //     BrandChangeBatchAndExpiry(
+    //             '#id_org',  
+    //             '#id_site',  
+    //             $row.find('.id_generic'),
+    //             $row.find('.id_brand'),
+    //             $row.find('.id_batch'),
+    //             $row.find('.id_expiry'),
+    //             '#add-issuedispense'
+    //         );
+    // });
+     
+        // $('.id_brand').off('change.idBrand').on ('change.idBrand', function(){
+        //     var brandId = $(this).val();
+        //     let $currentRow = $(this).closest('.duplicate'); 
+        //     // var currentRowBrandSelect = currentRow.find('.id_brand'); 
+        //     BrandChangeBatchAndExpiry(
+        //         '#id_org',  
+        //         '#id_site',  
+        //         $currentRow.find('.id_generic'),
+        //         $currentRow.find('.id_brand'),
+        //         $currentRow.find('.id_batch'),
+        //         $currentRow.find('.id_expiry'),
+        //         '#add-issuedispense'
+        //     );
+        //     // BrandChangeBatchAndExpiry(
+        //     //     '#id_org',                               // org select
+        //     //     '#id_site',                              // site select
+        //     //     '#add-issuedispense .duplicate .id_generic', // generic select in the row
+        //     //     '#add-issuedispense .duplicate .id_brand',   // brand   select in the row
+        //     //     '#add-issuedispense .duplicate .id_batch',   // batch   input/select in the row
+        //     //     '#add-issuedispense .duplicate .id_expiry',  // expiry  input in the row
+        //     //     '#add-issueddispense'                    // the form/modal container
+        //     // );
+        
+        //     // if (brandId) {
+        //     //     fetchBrandBatch(brandId,currentRowBrandSelect, function(data) {
+        //     //             currentRowBrandSelect.find('option:contains("Loading...")').remove();
+        //     //             $.each(data, function(key, value) {
+        //     //                 currentRowBrandSelect.append('<option value="' + value.id + '">' + value.name + '</option>');
+        //     //             });
+        //     //         });
+        //     // } 
+        //     // else {
+        //     //     currentRowBrandSelect.empty();
+        //     //     currentRowBrandSelect.html("<option selected disabled value=''>Select Brand </option>").prop('disabled', true);
+        //     // }
+        // });
+    $(document).off('change', '.id_generic').on('change', '.id_generic', function() {
+        var genericId = $(this).val();
+        var currentRow = $(this).closest('.duplicate'); 
+        var currentRowBrandSelect = currentRow.find('.id_brand'); 
+    
+        if (genericId) {
+            fetchGenericItemBrand(genericId, currentRowBrandSelect, function(data) {
+                if (data.length > 0) {
+                    currentRowBrandSelect.empty();
+                    currentRowBrandSelect.append('<option selected disabled value="">Select Brand</option>');
+                    $.each(data, function(key, value) {
+                        currentRowBrandSelect.append('<option value="' + value.id + '">' + value.name + '</option>');
+                    });
+                    currentRowBrandSelect.find('option:contains("Loading...")').remove();
+                    currentRowBrandSelect.prop('disabled', false);
+                } else {
+                    Swal.fire({
+                        text: 'Brands are not available for the selected Item Generic',
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            currentRowBrandSelect.empty();
+                            currentRowBrandSelect.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
+                        }
+                    });
+                }
+            }, function(error) {
+                console.log(error);
+            });
+        } else {
+            currentRowBrandSelect.empty();
+            currentRowBrandSelect.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
+        }
+    });
+        
     // $('.id_generic').off('change.id_generic').on('change.id_generic', function(){
     $(document).off('change', '.id_generic').on('change', '.id_generic', function() {
         var genericId = $(this).val();
@@ -476,10 +578,11 @@ $(document).ready(function() {
 
     // Event listener for respond button
     $('#view-issuedispense').on('click', '.respond-btn', function() {
+         $('#ajax-loader').show();
         const txId     = $(this).data('id');
         const genId    = $(this).data('generic-id');
         const source   = $(this).data('source');   // ← pull it out
-         $('#ajax-loader').show();
+        
         $.getJSON('inventory/respond-issuedispense', {
             id:        txId,
             genericId: genId,
@@ -561,7 +664,6 @@ $(document).ready(function() {
                     .html(`<option selected value="${data.mr_code}">${data.mr_code} – ${data.patient_name}</option>`)
                     .prop('disabled', true).trigger('change');
             }
-
 
             $(document).off('change', '#id_transactiontype').on('change', '#id_transactiontype', function() {
                 let transactionTypeID = $(this).val();
@@ -753,22 +855,13 @@ $(document).ready(function() {
                 });
             });
            
-            $('#id_transactiontype')
-                .html(`<option selected value="${data.transaction_type_id}">${data.transaction_type_name}</option>`)
-                .prop('disabled', true).trigger('change');
-
-
+            $('#id_transactiontype').html(`<option selected value="${data.transaction_type_id}">${data.transaction_type_name}</option>`).prop('disabled', true).trigger('change');
             $('#id_service').html(`<option selected value="${data.service_id}">${data.service_name}</option>`).prop('disabled', true);
-
             $('#id_servicemode').html(`<option selected value="${data.service_mode_id}">${data.service_mode_name}</option>`).prop('disabled', true);
-
             $('#id_physician').html(`<option selected value="${data.physician_id}">${data.physician_name}</option>`).prop('disabled', true);
-
             $('#id_billingcc').html(`<option selected value="${data.billing_cc}">${data.billing_cc_name}</option>`).prop('disabled', true);
-
             $('input[name="id_servicetype"]').val(data.service_type_name).prop('readonly', true);
             $('input[name="id_servicegroup"]').val(data.service_group_name).prop('readonly', true);
-
             $('textarea[name="id_remarks"]').val(data.remarks).prop('disabled', false);
             $('input[name="id_reference_document"]').val(data.reference_document).prop('disabled', false);
 
@@ -782,11 +875,12 @@ $(document).ready(function() {
                     currentBrandField.empty();
                     // currentBrandField.append('<option selected disabled value="">Select Brand</option>');
                     $.each(data, function(key, value) {
-                        currentBrandField.append('<option value="' + value.id + '">' + value.name + '</option>');
+                        currentBrandField.append('<option value="' + value.id + '">' + value.name + '</option>').trigger('change');
                     });
                     currentBrandField.find('option:contains("Loading...")').remove();
                     currentBrandField.prop('disabled', false);
-                } else {
+                } 
+                else {
                     Swal.fire({
                         text: 'Brands are not available for the selected Item Generic',
                         icon: 'error',
@@ -797,6 +891,7 @@ $(document).ready(function() {
                             currentBrandField.empty();
                             currentBrandField.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
                             $('#add-issuedispense').modal('hide');
+
                         }
                     });
                 }
@@ -804,9 +899,25 @@ $(document).ready(function() {
                 console.log(error);
             });
 
-            // $row.find('.id_brand').html(`<option selected value="${data.brand_id}">${data.brand_name}</option>`).prop('disabled', true);
+                // BrandChangeBatchAndExpiry(
+                // '$row.find('.id_generic')',   
+                // '.id_brand',   
+                // '.id_batch',     
+                // '.id_expiry',   
+                // '#add-issuedispense'
+                // );
 
-            // 8) Branch on source
+            BrandChangeBatchAndExpiry(
+                '#id_org',  
+                '#id_site',  
+                $row.find('.id_generic'),
+                $row.find('.id_brand'),
+                $row.find('.id_batch'),
+                $row.find('.id_expiry'),
+                '#add-issuedispense'
+            );
+
+            // $row.find('.id_brand').html(`<option selected value="${data.brand_id}">${data.brand_name}</option>`).prop('disabled', true);
             if (data.source === 'medication') {
                 $('.mr-dependent').show();
                 $('.req_only').hide();
@@ -822,10 +933,11 @@ $(document).ready(function() {
                 $row.find('input[name="et_qty[]"]').val('').prop('disabled', false);
             }
 
-            $('#ajax-loader').hide();
             $('#add-issuedispense').modal('show');
-        });
-
+            setTimeout(function(){
+                $('#ajax-loader').hide();
+                }, 700);        
+            });
     });
     // Event listener for respond button
 
@@ -857,12 +969,17 @@ $(document).ready(function() {
             .prop('disabled', true)
             .html('<option selected disabled value="">Select Item Brand</option>');
 
+        $('.id_batch').val('').prop('disabled', false);
+        $('.id_expiry').val('').prop('disabled', false);
+        $('.id_demand_qty').val('').prop('disabled', false);
+
         $('#id_dl, #id_sl, .serviceDetails').hide();
         $('.mr-dependent').hide();
         $('.req_only').show();
         $('#transaction-info-row').empty();
     });
 
+   
 
     // $('.id_brand').off('change.idBrand').on ('change.idBrand', function(){
     //     var brandId = $(this).val();

@@ -538,7 +538,6 @@ Route::get('inventory/externaltransaction', [App\Http\Controllers\InventoryContr
 Route::get('issue-dispense', [App\Http\Controllers\InventoryController::class, 'ShowIssueDispense'])->name('issue-dispense');
 Route::get('patient/fetchpatientdetails', [App\Http\Controllers\PatientController::class, 'FetchpatientRecord'])->name('FetchpatientRecord');
 Route::get('inventory/issuedispense', [App\Http\Controllers\InventoryController::class, 'GetIssueDispenseData'])->name('GetIssueDispenseData');
-// Route::get('inventory/respond-issuedispense', [InventoryController::class, 'RespondIssueDispense']);
 Route::get('inventory/respond-issuedispense', [App\Http\Controllers\InventoryController::class, 'RespondIssueDispense'])->name('RespondIssueDispense');
 
 
@@ -609,7 +608,7 @@ Route::get('inventory/materialconsumption-status', [App\Http\Controllers\Invento
 Route::get('inventory/updatematerialconsumption/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumptionModal'])->name('UpdateMaterialConsumptionModal');
 Route::post('inventory/update-materialconsumption/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumption'])->name('UpdateMaterialConsumption');
 
-// Route::get('inventory/getbatchno', [InventoryController::class, 'GetBatchNo'])->name('GetBatchNo');
+Route::get('inventory/getbatchno', [InventoryController::class, 'GetBatchNo'])->name('GetBatchNo');
 // Route::get('inventory/getexpiryrate', [InventoryController::class, 'GetBatchExpiryRate'])->name('GetBatchExpiryRate');
 Route::get('inventory/getorganizationgeneric', [InventoryController::class, 'GetOrgItemGeneric'])->name('GetOrgItemGeneric');
 Route::get('inventory/getgenericbrand', [InventoryController::class, 'GetGenericBrand'])->name('GetGenericBrand');

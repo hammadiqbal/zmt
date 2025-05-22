@@ -393,7 +393,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                             </div>
 
         
-                                                            <div class="col-md-6">
+                                                            <div class="col-md-6 brand_details">
                                                                 <div class="form-group row">
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
@@ -405,7 +405,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 </div>
                                                             </div>
         
-                                                            <div class="col-md-6" id="itemexpiry">
+                                                            <div class="col-md-6 brand_details">
                                                                 <div class="form-group row">
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">

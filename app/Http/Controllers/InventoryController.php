@@ -8049,11 +8049,8 @@ class InventoryController extends Controller
                 'service_group_name'      => $med->service_group_name,
                 'service_type_id'         => $med->service_type_id,
                 'service_type_name'       => $med->service_type_name,
-                'remarks'                 => $med->remarks,
-                'reference_document'      => $med->reference_document ?? '',
                 'generic_id'              => $gIds[$i]   ?? null,
                 'generic_name'            => $genericName,
-                'brand_id'                => null,
                 'brand_name'              => $brandName,
                 'dose'                    => $doses[$i]  ?? '',
                 'route_id'                => $routes[$i] ?? '',
@@ -8126,8 +8123,6 @@ class InventoryController extends Controller
                 'physician_name'         => $mat->physician_name,
                 'billing_cc'             => $mat->billing_cc,
                 'billing_cc_name'        => $mat->billing_cc_name,
-                'remarks'                => $mat->remarks,
-                'reference_document'     => $mat->reference_document ?? '',
                 'generic_id'             => $gIds[$i]      ?? null,
                 'generic_name'           => $genericName,
                 'brand_id'               => null,         
@@ -8139,7 +8134,78 @@ class InventoryController extends Controller
         return response()->json(['error'=>'Unknown source'], 400);
     }
 
+    public function GetBatchNo(Request $request)
+    {
+        $orgId     = $request->query('orgId');
+        $siteId    = $request->query('siteId');
+        $brandId   = $request->query('brandId');
+        $genericId = $request->query('genericId');
 
+        if (! $orgId || ! $siteId || ! $brandId || ! $genericId) {
+            return response()->json(null, 400);
+        }
+
+        // 1) find the last matching balance
+        $balance = InventoryBalance::query()
+        ->where('org_id',     $orgId)
+        ->where('site_id',    $siteId)
+        ->where('brand_id',   $brandId)
+        ->where('generic_id', $genericId)
+        ->orderByDesc('id')
+        ->first(['batch_no','management_id']);
+
+        if (! $balance) {
+            // no inventory at all
+            return response()->json(null, 200);
+        }
+
+        $batchNo    = $balance->batch_no;
+        $mgmtId     = $balance->management_id;
+
+        // 2) load the management record
+        $mgmt = InventoryManagement::query()
+            ->find($mgmtId, [
+                'inv_generic_id',
+                'brand_id',
+                'batch_no',
+                'expiry_date',
+            ]);
+
+        if (! $mgmt) {
+            // management row missing
+            return response()->json([
+                'batch_no'    => $batchNo,
+                'expiry_date' => null,
+            ]);
+        }
+
+        // 3) explode the CSV fields into parallel arrays
+        $gIds    = explode(',', $mgmt->inv_generic_id);
+        $bIds    = explode(',', $mgmt->brand_id);
+        $bNos    = explode(',', $mgmt->batch_no);
+        $exps    = explode(',', $mgmt->expiry_date);
+
+        $expiryDate = null;
+
+        // 4) find the array index where everything matches
+        foreach ($bNos as $i => $b) {
+            if (
+                isset($gIds[$i], $bIds[$i], $exps[$i])
+                && $b === $batchNo
+                && $gIds[$i] == $genericId
+                && $bIds[$i] == $brandId
+            ) {
+                // convert UNIX timestamp (or whatever you're storing) to Y-m-d
+                $expiryDate = date('Y-m-d', (int)$exps[$i]);
+                break;
+            }
+        }
+
+        return response()->json([
+            'batch_no'    => $batchNo,
+            'expiry_date' => $expiryDate,
+        ]);
+    }
 
     // public function InventoryManagement()
     // {
@@ -8443,20 +8509,7 @@ class InventoryController extends Controller
     //     return response()->json($PreviousTransactions);
     // }
 
-    // public function GetBatchNo(Request $request)
-    // {
-    //     if ($request->has('brandId'))
-    //     {
-    //         $brandId = $request->input('brandId');
-    //         $BatchNo = InventoryManagement::select('inventory_management.id','inventory_management.batch_no')
-    //         ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'inventory_management.transaction_type_id')
-    //         ->where('inventory_management.brand_id', $brandId)
-    //         ->whereNotIn('inventory_transaction_type.transaction_type', ['opening balance'])
-    //         ->groupBy('inventory_management.id', 'inventory_management.batch_no')
-    //         ->get();
-    //     }
-    //     return response()->json($BatchNo);
-    // }
+    
 
     public function GetOrgItemGeneric(Request $request)
     {
