@@ -7549,7 +7549,10 @@ class InventoryController extends Controller
         ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'inventory_management.transaction_type_id')
         ->leftJoin('organization', 'organization.id', '=', 'inventory_management.org_id')
         ->join('org_site', 'org_site.id', '=', 'inventory_management.site_id')
+        ->leftJoin('inventory_generic',       'inventory_generic.id',       '=', 'inventory_management.inv_generic_id')
+        ->leftJoin('inventory_brand',         'inventory_brand.id',         '=', 'inventory_management.brand_id')
         ->orderBy('inventory_management.id', 'desc');
+        // ->get();
 
         // 3) Filter by user's org if needed
         $session = auth()->user();
@@ -7559,26 +7562,27 @@ class InventoryController extends Controller
         }
 
         // 4) Return DataTables
+        // return DataTables::of($ExternalTransactions)
         return DataTables::eloquent($ExternalTransactions)
-            // ->filter(function ($query) use ($request) {
-            //     if ($request->has('search') && $request->search['value']) {
-            //         $search = $request->search['value'];
-            //         $query->where(function ($q) use ($search) {
-            //             $q->where('inventory_management.id', 'like', "%{$search}%")
-            //             ->orWhere('organization.organization', 'like', "%{$search}%")
-            //             ->orWhere('org_site.name', 'like', "%{$search}%");
-            //             // If you want to also allow searching by brand/generic names, 
-            //             // consider adjusting logic to accommodate that. 
-            //         });
-            //     }
-            // })
-
-            // Example hidden column (if needed)
+             ->filter(function($query) use ($request) {
+                if ($request->has('search') && $search = $request->search['value']) {
+                    $query->where(function($q) use ($search) {
+                        $q->where('inventory_management.id','like', "%{$search}%")
+                        ->orWhere('inventory_transaction_type.name','like', "%{$search}%")
+                        ->orWhere('organization.organization','like', "%{$search}%")
+                        ->orWhere('org_site.name','like', "%{$search}%")
+                        ->orWhere('inventory_management.transaction_qty','like', "%{$search}%")
+                        ->orWhere('inventory_management.batch_no','like', "%{$search}%")
+                        ->orWhere('inventory_generic.name','like', "%{$search}%")
+                        ->orWhere('inventory_brand.name','like', "%{$search}%")
+                        ->orWhere('inventory_management.ref_document_no','like', "%{$search}%")
+                        ->orWhere('inventory_management.remarks','like', "%{$search}%");
+                    });
+                }
+            })
             ->addColumn('id_raw', function ($row) {
                 return $row->id;
             })
-
-
             ->addColumn('transaction_details', function ($row) {
                 $SiteCode  = strtoupper(substr($row->siteName, 0, 3));
                 $idStr     = str_pad($row->id, 5, "0", STR_PAD_LEFT);
@@ -7779,199 +7783,6 @@ class InventoryController extends Controller
         return view('dashboard.material_management.issue_dispense', compact('user','RequisitionNonMandatory','costcenters','MedicationRoutes','MedicationFrequencies'));
     }
 
-    // public function GetIssueDispenseData(Request $request)
-    // {
-    //     // 1) Check user rights
-    //     $rights = $this->rights;
-    //     $view   = explode(',', $rights->issue_and_dispense)[1];
-    //     if ($view == 0) {
-    //         abort(403, 'Forbidden');
-    //     }
-
-    //     $IssueDispenseDetails = RequisitionForMedicationConsumption::select(
-    //         'req_medication_consumption.*', 'gender.name as gender','patient.name as patientName',
-    //         'employee.name as Physician',
-    //         'organization.organization as OrgName', 'org_site.name as SiteName', 'services.name as serviceName',
-    //         'service_mode.name as serviceMode', 'billingCC.name as billingCC', 'service_group.name as serviceGroup',
-    //         'service_type.name as serviceType','inventory_transaction_type.name as TransactionType','service_location.name as ServiceLocationName'
-    //     )
-    //     ->join('gender', 'gender.id', '=', 'req_medication_consumption.gender_id')
-    //     ->join('costcenter as billingCC', 'billingCC.id', '=', 'req_medication_consumption.billing_cc')
-    //     ->join('employee', 'employee.id', '=', 'req_medication_consumption.responsible_physician')
-    //     ->join('service_mode', 'service_mode.id', '=', 'req_medication_consumption.service_mode_id')
-    //     ->join('services', 'services.id', '=', 'req_medication_consumption.service_id')
-    //     ->join('organization', 'organization.id', '=', 'req_medication_consumption.org_id')
-    //     ->join('org_site', 'org_site.id', '=', 'req_medication_consumption.site_id')
-    //     ->join('service_group', 'service_group.id', '=', 'req_medication_consumption.service_group_id')
-    //     ->join('service_type', 'service_type.id', '=', 'req_medication_consumption.service_type_id')
-    //     ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'req_medication_consumption.transaction_type_id')
-    //     ->join('service_location', 'service_location.id', '=', 'req_medication_consumption.inv_location_id')
-    //     ->join('patient', 'patient.mr_code', '=', 'req_medication_consumption.mr_code');
-    //     // ->where('req_medication_consumption.mr_code', $mr);
-    //     $session = auth()->user();
-    //     $sessionOrg = $session->org_id;
-    //     // if ($sessionOrg != '0') {
-    //     //     $ExternalTransactions->where('inventory_management.org_id', '=', $sessionOrg);
-    //     // }
-
-    //     // 4) Return DataTables
-    //     return DataTables::eloquent($IssueDispenseDetails)
-    //     ->filter(function ($query) use ($request) {
-    //         if ($request->has('search') && $request->search['value']) {
-    //             $search = $request->search['value'];
-    //             $query->where(function ($q) use ($search) {
-    //                 $q->where('req_medication_consumption.id', 'like', "%{$search}%")
-    //                 ->orWhere('gender.name', 'like', "%{$search}%")
-    //                 // ->orWhere('inventory_generic.name', 'like', "%{$search}%")
-    //                 ->orWhere('employee.name', 'like', "%{$search}%")
-    //                 ->orWhere('organization.organization', 'like', "%{$search}%")
-    //                 ->orWhere('org_site.name', 'like', "%{$search}%")
-    //                 ->orWhere('services.name', 'like', "%{$search}%")
-    //                 ->orWhere('service_mode.name', 'like', "%{$search}%")
-    //                 ->orWhere('billingCC.name', 'like', "%{$search}%")
-    //                 ->orWhere('service_group.name', 'like', "%{$search}%")
-    //                 ->orWhere('service_type.name', 'like', "%{$search}%")
-    //                 ->orWhere('inventory_transaction_type.name', 'like', "%{$search}%")
-    //                 // ->orWhere('medication_routes.name', 'like', "%{$search}%")
-    //                 // ->orWhere('medication_frequency.name', 'like', "%{$search}%")
-    //                 ->orWhere('req_medication_consumption.dose', 'like', "%{$search}%")
-    //                 ->orWhere('req_medication_consumption.days', 'like', "%{$search}%")
-    //                 ->orWhere('req_medication_consumption.remarks', 'like', "%{$search}%")
-    //                 ->orWhere('req_medication_consumption.effective_timestamp', 'like', "%{$search}%")
-    //                 ->orWhere('req_medication_consumption.timestamp', 'like', "%{$search}%")
-    //                 ->orWhere('req_medication_consumption.last_updated', 'like', "%{$search}%")
-    //                 ->orWhere('req_medication_consumption.mr_code', 'like', "%{$search}%");
-    //             });
-    //         }
-    //     })
-    //     ->addColumn('id_raw', function ($RMCDetail) {
-    //         return $RMCDetail->id;  
-    //     })
-    //     ->editColumn('id', function ($RMCDetail) {
-    //         $session = auth()->user();
-    //         $sessionName = $session->name;
-    //         $TransactionType = $RMCDetail->TransactionType;
-    //         $ServiceLocationName = $RMCDetail->ServiceLocationName;
-    //         $SiteName = $RMCDetail->SiteName;
-    //         $serviceType = $RMCDetail->serviceType;
-    //         $Remarks = !empty($RMCDetail->remarks) ? $RMCDetail->remarks : 'N/A';
-            
-    //         $idStr = str_pad($RMCDetail->id, 4, "0", STR_PAD_LEFT);
-    //         $effectiveDate = Carbon::createFromTimestamp($RMCDetail->effective_timestamp)->format('l d F Y - h:i A');
-    //         $timestamp = Carbon::createFromTimestamp($RMCDetail->timestamp)->format('l d F Y - h:i A');
-
-    //         $firstSiteNameLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $SiteName))));
-    //         $firstServiceTypeLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $serviceType))));
-    //         $RequisitionCode = $firstSiteNameLetters.'-'.$firstServiceTypeLetters.'-'.$idStr;
-    
-    //         return $RequisitionCode
-    //             . '<hr class="mt-1 mb-2">'
-    //             .'<b>Request For</b>: '.$TransactionType.'<br>'
-    //             .'<b>Requesting Location</b>: '.$ServiceLocationName.'<br>'
-    //             .'<b>Site</b>: '.$SiteName.'<br>'
-    //             .'<b>Request Date: </b>: '.$timestamp.'<br>'
-    //             .'<b>Effective Date: </b>: '.$effectiveDate.'<br>'
-    //             .'<b>Remarks</b>: '.$Remarks;
-    //     })
-    //     ->editColumn('patientDetails', function ($RMCDetail) {
-    //         // return;
-    //         $MR = $RMCDetail->mr_code;
-    //         $patientName = ucwords($RMCDetail->patientName);
-    //         $Physician = ucwords($RMCDetail->Physician);
-    //         $serviceMode = ucwords($RMCDetail->serviceMode);
-    //         $serviceName = ucwords($RMCDetail->serviceName);
-    //         $serviceGroup = ucwords($RMCDetail->serviceGroup);
-    //         $Physician = ucwords($RMCDetail->Physician);
-    //         $billingCC = ucwords($RMCDetail->billingCC);
-    //         return $MR.'<br>'
-    //             .$patientName
-    //             . '<hr class="mt-1 mb-2">'  
-    //             .'<b>Service Mode</b>: '.$serviceMode.'<br>'
-    //             .'<b>Service Group</b>: '.$serviceGroup.'<br>'
-    //             .'<b>Service</b>: '.$serviceName.'<br>'
-    //             .'<b>Responsible Physician</b>: '.$Physician.'<br>'
-    //             .'<b>Billing CC</b>: '.$billingCC.'<br>'
-    //             ;
-    //     })
-    //     ->editColumn('InventoryDetails', function ($RMCDetail) {
-    //         // Get the comma-separated IDs and values
-    //         $genericIds = explode(',', $RMCDetail->inv_generic_ids);
-    //         $routeIds = explode(',', $RMCDetail->route_ids);
-    //         $frequencyIds = explode(',', $RMCDetail->frequency_ids);
-    //         $dose = explode(',', $RMCDetail->dose);
-    //         $days = explode(',', $RMCDetail->days);
-        
-    //         // Fetch the corresponding names for the IDs (including duplicates)
-    //         $genericNames = InventoryGeneric::whereIn('id', $genericIds)->pluck('name', 'id')->toArray();
-    //         $routeNames = MedicationRoutes::whereIn('id', $routeIds)->pluck('name', 'id')->toArray();
-    //         $frequencyNames = MedicationFrequency::whereIn('id', $frequencyIds)->pluck('name', 'id')->toArray();
-        
-    //         $tableRows = '';
-    //         $maxRows = max(count($genericIds), count($routeIds), count($frequencyIds), count($dose), count($days));
-        
-    //         // Loop through the ids to handle each corresponding name and value
-    //         for ($i = 0; $i < $maxRows; $i++) {
-    //             // Ensure no index out of range error and default to 'N/A' if not available
-    //             $genericName = isset($genericIds[$i]) && isset($genericNames[$genericIds[$i]]) ? $genericNames[$genericIds[$i]] : 'N/A';
-    //             $routeName = isset($routeIds[$i]) && isset($routeNames[$routeIds[$i]]) ? $routeNames[$routeIds[$i]] : 'N/A';
-    //             $frequencyName = isset($frequencyIds[$i]) && isset($frequencyNames[$frequencyIds[$i]]) ? $frequencyNames[$frequencyIds[$i]] : 'N/A';
-    //             $doseName = isset($dose[$i]) ? $dose[$i] : 'N/A';  // Get dose from the exploded array
-    //             $daysValue = isset($days[$i]) ? $days[$i] : 'N/A';  // Get days from the exploded array
-        
-    //             // Add row for each item
-    //             $tableRows .= '
-    //                 <tr>
-    //                     <td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . $genericName . '</td>
-    //                     <td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . $doseName . '</td>
-    //                     <td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . $routeName . '</td>
-    //                     <td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . $frequencyName . '</td>
-    //                     <td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . $daysValue . '</td>
-    //                 </tr>';
-    //         }
-        
-    //         // Return the table structure with dynamic rows
-    //         return '
-    //             <table class="table" style="width:100%;">
-    //                 <thead>
-    //                     <tr>
-    //                         <th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Generic Name</th>
-    //                         <th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Dose</th>
-    //                         <th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Route</th>
-    //                         <th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Frequency</th>
-    //                         <th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Duration (Days)</th>
-    //                     </tr>
-    //                 </thead>
-    //                 <tbody>' . $tableRows . '</tbody>
-    //             </table>';
-    //     })
-    //     ->addColumn('action', function ($RMCDetail) {
-    //         $RMCId = $RMCDetail->id;
-    //         $logId = $RMCDetail->logid;
-    //         $Rights = $this->rights;
-    //         $edit = explode(',', $Rights->encounters_and_procedures)[2];
-    //         $actionButtons = '';
-    //         if ($edit == 1) {
-    //             $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 edit-reqmc" data-reqmc-id="'.$RMCId.'">'
-    //             . '<i class="fa fa-edit"></i> Edit'
-    //             . '</button>';
-    //         }
-           
-    //         $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
-    //         . '<i class="fa fa-eye"></i> View Logs'
-    //         . '</button>';
-            
-    //         return $RMCDetail->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
-    //     })
-    //     ->editColumn('status', function ($RMCDetail) {
-    //         $rights = $this->rights;
-    //         $updateStatus = explode(',', $rights->encounters_and_procedures)[3];
-    //         return $updateStatus == 1 ? ($RMCDetail->status ? '<span class="label label-success rmc_status cursor-pointer" data-id="'.$RMCDetail->id.'" data-status="'.$RMCDetail->status.'">Active</span>' : '<span class="label label-danger rmc_status cursor-pointer" data-id="'.$RMCDetail->id.'" data-status="'.$RMCDetail->status.'">Inactive</span>') : ($RMCDetail->status ? '<span class="label label-success">Active</span>' : '<span class="label label-danger">Inactive</span>');
-    //     })
-    //     ->rawColumns(['id_raw','id','patientDetails','InventoryDetails','action','status'])
-    //     ->make(true);
-    // }
-
-
     public function GetIssueDispenseData(Request $request)
     {
         $rights = $this->rights;
@@ -8118,7 +7929,7 @@ class InventoryController extends Controller
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($frequencies[$frequencyIds[$i]] ?? 'N/A').'</td>'
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($days[$i] ?? 'N/A').'</td>
                             <td style="padding: 5px 15px;border: 1px solid #ccc;">
-                                <a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-generic-id="' . ($genericIds[$i] ?? '') . '">Respond</a>
+                                <a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . ($genericIds[$i] ?? '') . '">Respond</a>
                             </td>
                             </tr>';
                     }
@@ -8142,7 +7953,7 @@ class InventoryController extends Controller
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$genericIds[$i]] ?? 'N/A').'</td>'
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($qty[$i] ?? 'N/A').'</td>
                               <td style="padding: 5px 15px;border: 1px solid #ccc;">
-                                <a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-generic-id="' . ($genericIds[$i] ?? '') . '">Respond</a>
+                                <a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . ($genericIds[$i] ?? '') . '">Respond</a>
                             </td>
                             </tr>';
                     }
@@ -8159,6 +7970,173 @@ class InventoryController extends Controller
             })
             ->rawColumns(['id_raw', 'id', 'patientDetails', 'InventoryDetails'])
             ->make(true);
+    }
+
+
+    public function RespondIssueDispense(Request $r)
+    {
+        $id        = $r->query('id');
+        $genericId = $r->query('genericId');
+        $source    = $r->query('source');  // “medication” or “material”
+
+        if ($source === 'medication') {
+            $med = RequisitionForMedicationConsumption::from('req_medication_consumption as r')
+                ->select([
+                    'r.*',
+                    'o.organization as org_name',
+                    's.name as site_name',
+                    'p.name as patient_name',
+                    'itt.name as transaction_type_name',
+                    'sl.name as location_name',
+                    'sm.name as service_mode_name',
+                    'sv.name as service_name',
+                    'e.name as physician_name',
+                    'bcc.name as billing_cc_name',
+                    'sg.name as service_group_name',
+                    'st.name as service_type_name',
+                ])
+                ->join('organization as o', 'o.id', '=', 'r.org_id')
+                ->join('org_site as s', 's.id', '=', 'r.site_id')
+                ->join('patient as p', 'p.mr_code', '=', 'r.mr_code')
+                ->join('inventory_transaction_type as itt', 'itt.id', '=', 'r.transaction_type_id')
+                ->join('service_location as sl', 'sl.id', '=', 'r.inv_location_id')
+                ->join('service_mode as sm', 'sm.id', '=', 'r.service_mode_id')
+                ->join('services as sv', 'sv.id', '=', 'r.service_id')
+                ->join('employee as e', 'e.id', '=', 'r.responsible_physician')
+                ->join('costcenter as bcc', 'bcc.id', '=', 'r.billing_cc')
+                ->join('service_group as sg', 'sg.id', '=', 'r.service_group_id')
+                ->join('service_type as st', 'st.id', '=', 'r.service_type_id')
+                ->where('r.id', $id)
+                ->first();
+                    
+            if (! $med) {
+                return response()->json(['error'=>'Medication record not found'], 404);
+            }
+
+            $gIds     = explode(',', $med->inv_generic_ids);
+            $doses    = explode(',', $med->dose);
+            $routes   = explode(',', $med->route_ids);
+            $freqs    = explode(',', $med->frequency_ids);
+            $days     = explode(',', $med->days);
+            $i        = array_search($genericId, $gIds);
+
+            $genericName   = InventoryGeneric::find($gIds[$i])->name              ?? '';
+            $routeName     = MedicationRoutes::find($routes[$i])->name             ?? '';
+            $frequencyName = MedicationFrequency::find($freqs[$i])->name          ?? '';
+            $brandName     = '';
+
+            return response()->json([
+                'source'                  => 'medication',
+                'org_id'                  => $med->org_id,
+                'org_name'                => $med->org_name,
+                'site_id'                 => $med->site_id,
+                'site_name'               => $med->site_name,
+                'mr_code'                 => $med->mr_code,
+                'patient_name'            => $med->patient_name,
+                'transaction_type_id'     => $med->transaction_type_id,
+                'transaction_type_name'   => $med->transaction_type_name,
+                'inv_location_id'         => $med->inv_location_id,
+                'location_name'           => $med->location_name,
+                'service_id'              => $med->service_id,
+                'service_name'            => $med->service_name,
+                'service_mode_id'         => $med->service_mode_id,
+                'service_mode_name'       => $med->service_mode_name,
+                'physician_id'            => $med->responsible_physician,
+                'physician_name'          => $med->physician_name,
+                'billing_cc'              => $med->billing_cc,
+                'billing_cc_name'         => $med->billing_cc_name,
+                'service_group_id'        => $med->service_group_id,
+                'service_group_name'      => $med->service_group_name,
+                'service_type_id'         => $med->service_type_id,
+                'service_type_name'       => $med->service_type_name,
+                'remarks'                 => $med->remarks,
+                'reference_document'      => $med->reference_document ?? '',
+                'generic_id'              => $gIds[$i]   ?? null,
+                'generic_name'            => $genericName,
+                'brand_id'                => null,
+                'brand_name'              => $brandName,
+                'dose'                    => $doses[$i]  ?? '',
+                'route_id'                => $routes[$i] ?? '',
+                'route_name'              => $routeName,
+                'frequency_id'            => $freqs[$i]  ?? '',
+                'frequency_name'          => $frequencyName,
+                'days'                    => $days[$i]   ?? '',
+            ]);
+        }
+
+        if ($source === 'material') {
+                $mat = MaterialConsumptionRequisition::from('material_consumption_requisition as m')
+                ->select([
+                    'm.*',
+                    'o.organization                as org_name',
+                    's.name                        as site_name',
+                    'p.name                        as patient_name',
+                    'itt.name                      as transaction_type_name',
+                    'sl.name                       as location_name',
+                    'sm.name                       as service_mode_name',
+                    'sv.name                       as service_name',
+                    'e.name                        as physician_name',
+                    'bcc.name                      as billing_cc_name',
+                    'sg.name                       as service_group_name',
+                    'st.name                       as service_type_name',
+                ])
+                ->join('organization                as o',   'o.id',  '=', 'm.org_id')
+                ->join('org_site                    as s',   's.id',  '=', 'm.site_id')
+                ->leftJoin('patient                   as p',   'p.mr_code', '=', 'm.mr_code')
+                ->join('inventory_transaction_type  as itt', 'itt.id',     '=', 'm.transaction_type_id')
+                ->leftJoin('service_location            as sl',   'sl.id',  '=', 'm.inv_location_id')
+                ->leftJoin('service_mode                as sm',   'sm.id',  '=', 'm.service_mode_id')
+                ->leftJoin('services                    as sv',   'sv.id',  '=', 'm.service_id')
+                ->leftJoin('service_group               as sg',   'sg.id',  '=', 'sv.group_id')
+                ->leftJoin('service_type                as st',   'st.id',  '=', 'sg.type_id')
+                ->leftJoin('employee                    as e',   'e.id',  '=', 'm.physician_id')
+                ->leftJoin  ('costcenter                  as bcc', 'bcc.id',     '=', 'm.billing_cc')
+                ->where('m.id', $id)
+                ->first();
+
+            if (! $mat) {
+                return response()->json(['error'=>'Material record not found'], 404);
+            }
+
+            $gIds = explode(',', $mat->generic_id);
+            $qtys = explode(',', $mat->qty);
+            $i    = array_search($genericId, $gIds);
+
+            $genericName = InventoryGeneric::find($gIds[$i])->name ?? '';
+
+            return response()->json([
+                'source'                 => 'material',
+                'org_id'                 => $mat->org_id,
+                'org_name'               => $mat->org_name,
+                'site_id'                => $mat->site_id,
+                'site_name'              => $mat->site_name,
+                'mr_code'                => $mat->mr_code,
+                'patient_name'           => $mat->patient_name,
+                'transaction_type_id'    => $mat->transaction_type_id,
+                'transaction_type_name'  => $mat->transaction_type_name,
+                'inv_location_id'        => $mat->inv_location_id,
+                'location_name'          => $mat->location_name,
+                'service_mode_id'        => $mat->service_mode_id,
+                'service_mode_name'      => $mat->service_mode_name,
+                'service_id'             => $mat->service_id,
+                'service_name'           => $mat->service_name,
+                'service_group_name'     => $mat->service_group_name,
+                'service_type_name'      => $mat->service_type_name,
+                'physician_id'           => $mat->physician_id,
+                'physician_name'         => $mat->physician_name,
+                'billing_cc'             => $mat->billing_cc,
+                'billing_cc_name'        => $mat->billing_cc_name,
+                'remarks'                => $mat->remarks,
+                'reference_document'     => $mat->reference_document ?? '',
+                'generic_id'             => $gIds[$i]      ?? null,
+                'generic_name'           => $genericName,
+                'brand_id'               => null,         
+                'brand_name'             => '',
+                'demand_qty'             => $qtys[$i]      ?? '',
+            ]);
+        }
+
+        return response()->json(['error'=>'Unknown source'], 400);
     }
 
 

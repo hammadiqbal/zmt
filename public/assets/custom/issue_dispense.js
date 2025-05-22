@@ -14,7 +14,7 @@ $(document).ready(function() {
         $('#id_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
         if(orgId)
         {
-            $('#id_site').html("<option selected disabled value=''>Select Site</option>");
+            $('#id_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',false);
             fetchOrganizationSites(orgId, '#id_site', function(data) {
                 $.each(data, function(key, value) {
                     $('#id_site').append('<option value="' + value.id + '">' + value.name + '</option>');
@@ -26,7 +26,7 @@ $(document).ready(function() {
                     $('#id_mr').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name +'</option>');
                 });
             });
-            $('.id_generic').html("<option selected disabled value=''>Select Item Generic</option>");
+            $('.id_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', false);
             fetchOrganizationItemGeneric(orgId, '.id_generic', function(data) {
                 $.each(data, function(key, value) {
                     $('.id_generic').append('<option value="' + value.id + '">' + value.name + '</option>');
@@ -34,7 +34,7 @@ $(document).ready(function() {
             });
         }
         else{
-            $('#id_org').html("<option selected disabled value=''>Select Organization</option>");
+            $('#id_org').html("<option selected disabled value=''>Select Organization</option>").prop('disabled',false);
             fetchOrganizations('null', '','#id_org', function(data) {
                 $('#id_org').find('option:contains("Loading...")').remove();
                 $.each(data, function(key, value) {
@@ -52,7 +52,7 @@ $(document).ready(function() {
             OrgChangeInventoryGeneric('#id_org', '.id_generic', '#add_issuedispense');
         }
         SiteChangeMaterialManagementTransactionTypes('#id_site','#id_org', '#id_transactiontype', '#add_issuedispense','issue_dispense');
-
+        
         $(document).off('change', '#id_mr').on('change', '#id_mr', function() {
             $('.req_only').hide();
             let MRno = $(this).val();
@@ -140,6 +140,7 @@ $(document).ready(function() {
         if ($('#id_mr').val()) {
             toggleDuplicateFieldsBasedOnMR($('#id_mr').val());
         }
+
         $(document).off('change', '#id_transactiontype').on('change', '#id_transactiontype', function() {
             let transactionTypeID = $(this).val();
             let siteId = $('#id_site').val();  // you must already have a selected site
@@ -390,21 +391,22 @@ $(document).ready(function() {
         $('#add-issuedispense').modal('show');
     });
 
+    // $('.id_generic').off('change.id_generic').on('change.id_generic', function(){
     $(document).off('change', '.id_generic').on('change', '.id_generic', function() {
         var genericId = $(this).val();
         var currentRow = $(this).closest('.duplicate'); 
-        var currentRowCCSelect = currentRow.find('.id_brand'); 
+        var currentRowBrandSelect = currentRow.find('.id_brand'); 
     
         if (genericId) {
-            fetchGenericItemBrand(genericId, currentRowCCSelect, function(data) {
+            fetchGenericItemBrand(genericId, currentRowBrandSelect, function(data) {
                 if (data.length > 0) {
-                    currentRowCCSelect.empty();
-                    currentRowCCSelect.append('<option selected disabled value="">Select Brand</option>');
+                    currentRowBrandSelect.empty();
+                    currentRowBrandSelect.append('<option selected disabled value="">Select Brand</option>');
                     $.each(data, function(key, value) {
-                        currentRowCCSelect.append('<option value="' + value.id + '">' + value.name + '</option>');
+                        currentRowBrandSelect.append('<option value="' + value.id + '">' + value.name + '</option>');
                     });
-                    currentRowCCSelect.find('option:contains("Loading...")').remove();
-                    currentRowCCSelect.prop('disabled', false);
+                    currentRowBrandSelect.find('option:contains("Loading...")').remove();
+                    currentRowBrandSelect.prop('disabled', false);
                 } else {
                     Swal.fire({
                         text: 'Brands are not available for the selected Item Generic',
@@ -413,8 +415,8 @@ $(document).ready(function() {
                         allowOutsideClick: false
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            currentRowCCSelect.empty();
-                            currentRowCCSelect.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
+                            currentRowBrandSelect.empty();
+                            currentRowBrandSelect.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
                         }
                     });
                 }
@@ -422,8 +424,8 @@ $(document).ready(function() {
                 console.log(error);
             });
         } else {
-            currentRowCCSelect.empty();
-            currentRowCCSelect.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
+            currentRowBrandSelect.empty();
+            currentRowBrandSelect.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
         }
     });
 
@@ -471,6 +473,396 @@ $(document).ready(function() {
         $('#ajax-loader').hide();
     });
     // View Issue Dispense
+
+    // Event listener for respond button
+    $('#view-issuedispense').on('click', '.respond-btn', function() {
+        const txId     = $(this).data('id');
+        const genId    = $(this).data('generic-id');
+        const source   = $(this).data('source');   // ← pull it out
+         $('#ajax-loader').show();
+        $.getJSON('inventory/respond-issuedispense', {
+            id:        txId,
+            genericId: genId,
+            source:    source               // ← send it
+        })
+        .fail(() => Swal.fire('Error','Could not load data','error'))
+        .done(data => {
+            // $('#id_dl,#id_sl,.serviceDetails').show();
+            // $('#mrService,.mr-dependent').show();
+            if (data.source === 'material' && !data.mr_code) {
+                $('#id_mr').closest('.col-md-6').hide();
+                $('#id_sl, #id_dl, .serviceDetails, #mrService, .mr-dependent').hide();
+                $('.req_only').show();
+            }
+            else {
+                $('#id_mr').closest('.col-md-6').show();
+                $('#id_sl, #id_dl, .serviceDetails, #mrService, .mr-dependent').show();
+            }
+            $('#add_issuedispense')[0].reset();
+            $('#addMoreBtn, #removeBtn').hide();
+
+            $('#id_org')
+                .html(`<option selected value="${data.org_id}">${data.org_name}</option>`)
+                .prop('disabled', true);
+
+            $('#id_site')
+                .html(`<option selected value="${data.site_id}">${data.site_name}</option>`)
+                .prop('disabled', true);
+
+            $(document).off('change', '#id_mr').on('change', '#id_mr', function() {
+                $('.req_only').hide();
+                let MRno = $(this).val();
+                $.ajax({
+                    url: 'patient/fetchpatientdetails',
+                    type: 'GET',
+                    data: {
+                        MRno: MRno
+                    },
+                    success: function(resp) {
+                        let patientInfoHtml = `
+                                <div class="col-12 mt-1 mb-1 patient-block">
+                                    <div class="card shadow-sm border mb-0">
+                                        <div class="card-body py-2 px-3">
+                                            <div class="row align-items-center text-center">
+                                                <div class="col-md-4 col-6 mb-2 mb-md-0">
+                                                    <small class="text-muted">Patient Name:</small><br>
+                                                    <strong class="text-primary">${resp.name || '-'}</strong>
+                                                </div>
+                                                <div class="col-md-4 col-6 mb-2 mb-md-0">
+                                                    <small class="text-muted">Gender:</small><br>
+                                                    <strong class="text-primary">${resp.gender || '-'}</strong>
+                                                </div>
+                                                <div class="col-md-4 col-6 mb-2 mb-md-0">
+                                                    <small class="text-muted">Age:</small><br>
+                                                    <strong class="text-primary">${resp.Age || '-'}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                `;
+
+
+                        $('#transaction-info-row').find('.patient-block').remove();
+                        $('#transaction-info-row')
+                        .append(patientInfoHtml)   // leave off the .empty() here
+                        .show();
+                        $('#ajax-loader').hide();
+                    },
+                    error: function(xhr, status, error) {
+                        Swal.close();
+                        console.log(error);
+                    }
+                });
+            });
+
+            if (data.mr_code) {
+                $('#id_mr')
+                    .html(`<option selected value="${data.mr_code}">${data.mr_code} – ${data.patient_name}</option>`)
+                    .prop('disabled', true).trigger('change');
+            }
+
+
+            $(document).off('change', '#id_transactiontype').on('change', '#id_transactiontype', function() {
+                let transactionTypeID = $(this).val();
+                let siteId = $('#id_site').val();  // you must already have a selected site
+                $('#mr-optional').show();
+                if (!siteId) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Site Required',
+                        text: 'Please select a site before choosing the transaction type.'
+                    });
+                    return;
+                }
+                $.ajax({
+                    url: 'inventory/gettransactiontypeet',
+                    type: 'GET',
+                    data: {
+                        transactionTypeId: transactionTypeID,
+                        siteId: siteId
+                    },
+                    success: function(resp) {
+                        if (resp.success === false) {
+                            Swal.fire({
+                                text: resp.message,
+                                icon: 'error',
+                                confirmButtonText: 'OK'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $('#add-issuedispense').modal('hide');
+                                }
+                            });
+                        }
+                        else if (!resp.Source && !resp.Destination) {
+                            Swal.fire({
+                                icon: 'error',
+                                text: 'No transaction type data found.'
+                            });
+                            return;
+                        }
+
+                        let infoHtml = `
+                                <div class="col-12 mt-1 mb-1 transaction-block">
+                                    <div class="card shadow-sm border mb-0">
+                                        <div class="card-body py-2 px-3">
+                                            <div class="row align-items-center text-center">
+                                                <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                                    <small class="text-muted">Source:</small><br>
+                                                    <strong class="text-primary">${resp.Source || '-'}</strong>
+                                                </div>
+                                                <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                                    <small class="text-muted">Destination:</small><br>
+                                                    <strong class="text-primary">${resp.Destination || '-'}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                `;
+
+                        $('#transaction-info-row').find('.transaction-block').remove();
+                        $('#transaction-info-row')
+                        .append(infoHtml)
+                        .show();
+            
+                        let sourceType = (resp.Source || '').toLowerCase();
+                        if (sourceType.includes('location')) {
+                            $('#id_sl').show();
+                            $('#id_sl label').text('Inventory Source Location');
+                        }
+                        else if (sourceType.includes('patient')) {
+                            $('#id_sl').show();
+                            $('#id_sl label').text('Inventory Source Patient');
+                        }
+                        else {
+                            $('#id_sl').hide();
+                        }
+            
+                        let destType = (resp.Destination || '').toLowerCase();
+                        if (destType.includes('location')) {
+                            $('#id_dl').show();
+                            $('#id_dl label').text('Inventory Destination Location');
+                        }
+                        else if (destType.includes('patient')) {
+                            $('#id_dl').show();
+                            $('#id_dl label').text('Inventory Destination Patient');
+                        }
+                        else {
+                            $('#id_dl').hide();
+                        }
+                        
+                        $('#id_source')
+                            .empty()
+                            .append('<option selected disabled value="">Select Source</option>');
+            
+                        if (resp.sourceData && resp.sourceData.length > 0) {
+                            resp.sourceData.forEach(function(item) {
+                                let displayText = item.name || item.person_name || item.patient_name || 'Unnamed';
+                                $('#id_source').append(
+                                    '<option value="' + item.id + '">' + displayText + '</option>'
+                                );
+                            });
+                            $('#id_source').prop('disabled', false);
+                        } else {
+                            $('#id_source').prop('disabled', true);
+                        }
+            
+                        $('#id_destination')
+                            .empty()
+                            .append('<option selected disabled value="">Select Destination</option>');
+            
+                        if (resp.destinationData && resp.destinationData.length > 0) {
+                            resp.destinationData.forEach(function(item) {
+                                let displayText = item.name || item.person_name || item.patient_name ||'Unnamed';
+                                $('#id_destination').append(
+                                    '<option value="' + item.id + '">' + displayText + '</option>'
+                                );
+                            });
+                            $('#id_destination').prop('disabled', false);
+                        } else {
+                            $('#id_destination').prop('disabled', true);
+                        }
+
+                        let mrSelected = $('#id_mr').val(); // Get selected MR number
+                        let sourceTypenew = (resp.Source || '').toLowerCase();
+                        let destinationTypenew = (resp.Destination || '').toLowerCase();
+
+                        // if (sourceTypenew.includes('patient')) {
+                        //     if (mrSelected) {
+                        //         $('#id_source').html(`<option value="${mrSelected}" selected>${$('#id_mr option:selected').text()}</option>`);
+                        //         $('#id_source').prop('disabled', true);
+                        //     } else {
+                        //         $('#mr-optional').hide();
+                        //         Swal.fire({
+                        //             icon: 'warning',
+                        //             title: 'MR Required',
+                        //             text: 'Please select a MR # first because the Source is Patient.',
+                        //         });
+                        //         // return;
+                        //         $('#id_source').html('<option selected disabled value="">Select Source</option>');
+                        //         $('#id_source').prop('disabled', true);
+                        //     }
+                        // }
+
+                        // if (destinationTypenew.includes('patient')) {
+                        //     if (mrSelected) {
+                        //         $('#id_destination').html(`<option value="${mrSelected}" selected>${$('#id_mr option:selected').text()}</option>`);
+                        //         $('#id_destination').prop('disabled', true);
+                        //     } else {
+                        //         $('#mr-optional').hide();
+                        //         Swal.fire({
+                        //             icon: 'warning',
+                        //             title: 'MR Required',
+                        //             text: 'Please select a MR # first because the Destination is Patient.',
+                        //         });
+                        //         // return;
+                        //         $('#id_destination').html('<option selected disabled value="">Select Destination</option>');
+                        //         $('#id_destination').prop('disabled', true);
+                        //     }
+                        // }
+
+                        if (!sourceTypenew.includes('patient')) {
+                            $('#id_source').prop('disabled', false);
+                        }
+                        if (!destinationTypenew.includes('patient')) {
+                            $('#id_destination').prop('disabled', false);
+                        }
+
+                        $('#id_mr').off('change.idMr').on ('change.idMr', function(){
+                            let mrSelectedNow = $(this).val();
+                            let mrSelectedText = $('#id_mr option:selected').text();
+                            let sourceTypeNow = (sourceTypenew || '').toLowerCase();
+                            let destinationTypeNow = (destinationTypenew || '').toLowerCase();
+                        
+                            if (sourceTypeNow.includes('patient')) {
+                                $('#id_source').html(`<option value="${mrSelectedNow}" selected>${mrSelectedText}</option>`);
+                                $('#id_source').prop('disabled', true);
+                            }
+                            if (destinationTypeNow.includes('patient')) {
+                                $('#id_destination').html(`<option value="${mrSelectedNow}" selected>${mrSelectedText}</option>`);
+                                $('#id_destination').prop('disabled', true);
+                            }
+                        
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        Swal.close();
+                        console.log(error);
+                    }
+                });
+            });
+           
+            $('#id_transactiontype')
+                .html(`<option selected value="${data.transaction_type_id}">${data.transaction_type_name}</option>`)
+                .prop('disabled', true).trigger('change');
+
+
+            $('#id_service').html(`<option selected value="${data.service_id}">${data.service_name}</option>`).prop('disabled', true);
+
+            $('#id_servicemode').html(`<option selected value="${data.service_mode_id}">${data.service_mode_name}</option>`).prop('disabled', true);
+
+            $('#id_physician').html(`<option selected value="${data.physician_id}">${data.physician_name}</option>`).prop('disabled', true);
+
+            $('#id_billingcc').html(`<option selected value="${data.billing_cc}">${data.billing_cc_name}</option>`).prop('disabled', true);
+
+            $('input[name="id_servicetype"]').val(data.service_type_name).prop('readonly', true);
+            $('input[name="id_servicegroup"]').val(data.service_group_name).prop('readonly', true);
+
+            $('textarea[name="id_remarks"]').val(data.remarks).prop('disabled', false);
+            $('input[name="id_reference_document"]').val(data.reference_document).prop('disabled', false);
+
+            $('.duplicate').not(':first').remove();
+            let $row = $('.duplicate').first();
+
+            $row.find('.id_generic').html(`<option selected value="${data.generic_id}">${data.generic_name}</option>`).prop('disabled', true);
+            var currentBrandField = $row.find('.id_brand');
+            fetchGenericItemBrand(data.generic_id, currentBrandField, function(data) {
+                if (data.length > 0) {
+                    currentBrandField.empty();
+                    // currentBrandField.append('<option selected disabled value="">Select Brand</option>');
+                    $.each(data, function(key, value) {
+                        currentBrandField.append('<option value="' + value.id + '">' + value.name + '</option>');
+                    });
+                    currentBrandField.find('option:contains("Loading...")').remove();
+                    currentBrandField.prop('disabled', false);
+                } else {
+                    Swal.fire({
+                        text: 'Brands are not available for the selected Item Generic',
+                        icon: 'error',
+                        confirmButtonText: 'OK',
+                        allowOutsideClick: false
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            currentBrandField.empty();
+                            currentBrandField.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
+                            $('#add-issuedispense').modal('hide');
+                        }
+                    });
+                }
+            }, function(error) {
+                console.log(error);
+            });
+
+            // $row.find('.id_brand').html(`<option selected value="${data.brand_id}">${data.brand_name}</option>`).prop('disabled', true);
+
+            // 8) Branch on source
+            if (data.source === 'medication') {
+                $('.mr-dependent').show();
+                $('.req_only').hide();
+                $row.find('.id_dose').val(data.dose).prop('disabled', true);
+                $row.find('.id_route').html(`<option selected value="${data.route_id}">${data.route_name}</option>`).prop('disabled', true);
+                $row.find('.id_frequency').html(`<option selected value="${data.frequency_id}">${data.frequency_name}</option>`).prop('disabled', true);
+                $row.find('input[name="id_duration[]"]').val(data.days).prop('disabled', true);
+                $row.find('.id_batch, .id_expiry, input[name="et_qty[]"]').val('').prop('disabled', false);
+            } else {
+                $('.mr-dependent').hide();
+                $('.req_only').show();
+                $row.find('.id_demand_qty').val(data.demand_qty).prop('disabled', true);
+                $row.find('input[name="et_qty[]"]').val('').prop('disabled', false);
+            }
+
+            $('#ajax-loader').hide();
+            $('#add-issuedispense').modal('show');
+        });
+
+    });
+    // Event listener for respond button
+
+    // whenever the Add/Issue modal closes, reset everything back to New‐Issue state
+    $('#add-issuedispense').on('hidden.bs.modal', function() {
+        // $('#add_issuedispense')[0].reset();
+        $('#addMoreBtn, #removeBtn').show();
+        $('.duplicate').not(':first').remove();
+        // $('#id_org')
+        //     .prop('disabled', false)
+        //     .html('<option selected disabled value="">Select Organization</option>');
+
+        $('#id_site')
+            .prop('disabled', true)
+            .html('<option selected disabled value="">Select Site</option>');
+
+        $('#id_mr')
+            .prop('disabled', true)
+            .html('<option selected disabled value="">Select MR #</option>');
+
+        $('#id_transactiontype')
+            .prop('disabled', true)
+            .html('<option selected disabled value="">Select Transaction Type</option>');
+
+        $('.id_generic')
+            .prop('disabled', true)
+            .html('<option selected disabled value="">Select Item Generic</option>');
+        $('.id_brand')
+            .prop('disabled', true)
+            .html('<option selected disabled value="">Select Item Brand</option>');
+
+        $('#id_dl, #id_sl, .serviceDetails').hide();
+        $('.mr-dependent').hide();
+        $('.req_only').show();
+        $('#transaction-info-row').empty();
+    });
+
 
     // $('.id_brand').off('change.idBrand').on ('change.idBrand', function(){
     //     var brandId = $(this).val();

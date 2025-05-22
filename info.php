@@ -37,7 +37,9 @@ from requisition for medication and material consumption and insert data into in
 
 ...........................................................................
 ISUUE & DISPENSE
-Show data from material requisition and medication requistion show in word file
+now show auto batch no and expiry date while new issue and dispense 
+and in respond btn show auto batch_no and expiry date after select brand 
+if same generic and brand has one batch the it should auto select if more than 1 then user should select
 
 ...........................................................................
 Changes required before deployment
@@ -46,4 +48,4 @@ Update inventory_balance table
 ...........................................................................
 
 when mutiple time ajax run error change the .change function with like this   
- $(siteSelector).off('change.siteLookup').on ('change.siteLookup', function(){
+ $(siteSelector).off('change.siteLookup').on('change.siteLookup', function(){

@@ -68,7 +68,7 @@ border: 1px solid rgba(0,0,0,.15);
                     @endif
                 @endif
             </div>
-            @if ($RequisitionNonMandatory)
+            {{-- @if ($RequisitionNonMandatory) --}}
                 @if ($add == 1)
                 <div class="modal fade bs-example-modal-lg" id="add-issuedispense" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
                     <div class="modal-dialog modal-lg" role="document">
@@ -455,7 +455,7 @@ border: 1px solid rgba(0,0,0,.15);
                     </div>
                 </div>
                 @endif
-            @endif
+            {{-- @endif --}}
 
             @if ($view == 1)
             <div class="table-responsive m-t-40">
