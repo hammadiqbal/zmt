@@ -447,6 +447,11 @@ $(document).ready(function() {
             'Please select Organization, Site, Generic and Brand before proceeding.',
             'warning'
             );
+            $brand
+              .prop('disabled',false)
+              .children('option[value=""]').remove().end()
+              .prepend('<option value="" disabled>Select Brand</option>')
+              .val('');
             return;
         }
 
