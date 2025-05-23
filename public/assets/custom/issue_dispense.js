@@ -52,7 +52,7 @@ $(document).ready(function() {
             OrgChangeInventoryGeneric('#id_org', '.id_generic', '#add_issuedispense');
         }
         SiteChangeMaterialManagementTransactionTypes('#id_site','#id_org', '#id_transactiontype', '#add_issuedispense','issue_dispense');
-        
+
         $(document).off('change', '#id_mr').on('change', '#id_mr', function() {
             $('.req_only').hide();
             let MRno = $(this).val();
@@ -387,113 +387,10 @@ $(document).ready(function() {
         });
        
         $('.id_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
-        // GenericChangeBrand('.id_generic', '.id_brand', '#add_issuedispense');
-        const $row = $('#add-issuedispense').find('.duplicate').first();
-        BrandChangeBatchAndExpiry(
-                '#id_org',  
-                '#id_site',  
-                $row.find('.id_generic'),
-                $row.find('.id_brand'),
-                $row.find('.id_batch'),
-                $row.find('.id_expiry'),
-                '#add-issuedispense'
-            );
+       
 
         $('#add-issuedispense').modal('show');
     });
-
-    //     $(document).off('change', '.id_brand').on('change', '.id_brand', function() {
-
-    //     // const $row = $('#add-issuedispense').find('.duplicate').first();
-        
-    //     // var genericId = $(this).val();
-    //     const $row = $(this).closest('.duplicate'); 
-    //     // var currentRowBrandSelect = currentRow.find('.id_brand'); 
-    //     BrandChangeBatchAndExpiry(
-    //             '#id_org',  
-    //             '#id_site',  
-    //             $row.find('.id_generic'),
-    //             $row.find('.id_brand'),
-    //             $row.find('.id_batch'),
-    //             $row.find('.id_expiry'),
-    //             '#add-issuedispense'
-    //         );
-    // });
-     
-        // $('.id_brand').off('change.idBrand').on ('change.idBrand', function(){
-        //     var brandId = $(this).val();
-        //     let $currentRow = $(this).closest('.duplicate'); 
-        //     // var currentRowBrandSelect = currentRow.find('.id_brand'); 
-        //     BrandChangeBatchAndExpiry(
-        //         '#id_org',  
-        //         '#id_site',  
-        //         $currentRow.find('.id_generic'),
-        //         $currentRow.find('.id_brand'),
-        //         $currentRow.find('.id_batch'),
-        //         $currentRow.find('.id_expiry'),
-        //         '#add-issuedispense'
-        //     );
-        //     // BrandChangeBatchAndExpiry(
-        //     //     '#id_org',                               // org select
-        //     //     '#id_site',                              // site select
-        //     //     '#add-issuedispense .duplicate .id_generic', // generic select in the row
-        //     //     '#add-issuedispense .duplicate .id_brand',   // brand   select in the row
-        //     //     '#add-issuedispense .duplicate .id_batch',   // batch   input/select in the row
-        //     //     '#add-issuedispense .duplicate .id_expiry',  // expiry  input in the row
-        //     //     '#add-issueddispense'                    // the form/modal container
-        //     // );
-        
-        //     // if (brandId) {
-        //     //     fetchBrandBatch(brandId,currentRowBrandSelect, function(data) {
-        //     //             currentRowBrandSelect.find('option:contains("Loading...")').remove();
-        //     //             $.each(data, function(key, value) {
-        //     //                 currentRowBrandSelect.append('<option value="' + value.id + '">' + value.name + '</option>');
-        //     //             });
-        //     //         });
-        //     // } 
-        //     // else {
-        //     //     currentRowBrandSelect.empty();
-        //     //     currentRowBrandSelect.html("<option selected disabled value=''>Select Brand </option>").prop('disabled', true);
-        //     // }
-        // });
-    $(document).off('change', '.id_generic').on('change', '.id_generic', function() {
-        var genericId = $(this).val();
-        var currentRow = $(this).closest('.duplicate'); 
-        var currentRowBrandSelect = currentRow.find('.id_brand'); 
-    
-        if (genericId) {
-            fetchGenericItemBrand(genericId, currentRowBrandSelect, function(data) {
-                if (data.length > 0) {
-                    currentRowBrandSelect.empty();
-                    currentRowBrandSelect.append('<option selected disabled value="">Select Brand</option>');
-                    $.each(data, function(key, value) {
-                        currentRowBrandSelect.append('<option value="' + value.id + '">' + value.name + '</option>');
-                    });
-                    currentRowBrandSelect.find('option:contains("Loading...")').remove();
-                    currentRowBrandSelect.prop('disabled', false);
-                } else {
-                    Swal.fire({
-                        text: 'Brands are not available for the selected Item Generic',
-                        icon: 'error',
-                        confirmButtonText: 'OK',
-                        allowOutsideClick: false
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            currentRowBrandSelect.empty();
-                            currentRowBrandSelect.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
-                        }
-                    });
-                }
-            }, function(error) {
-                console.log(error);
-            });
-        } else {
-            currentRowBrandSelect.empty();
-            currentRowBrandSelect.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
-        }
-    });
-        
-    // $('.id_generic').off('change.id_generic').on('change.id_generic', function(){
     $(document).off('change', '.id_generic').on('change', '.id_generic', function() {
         var genericId = $(this).val();
         var currentRow = $(this).closest('.duplicate'); 
@@ -531,6 +428,48 @@ $(document).ready(function() {
         }
     });
 
+    $(document).off('change', '.id_brand').on('change', '.id_brand', function() {
+        var currentRow = $(this).closest('.duplicate'); 
+        // var currentRowBrandSelect = currentRow.find('.id_brand'); 
+        const orgId     = $('#id_org').val(); 
+        const siteId    = $('#id_site').val();
+        const genericId = currentRow.find('.id_generic').val();
+        console.log(genericId);
+        // const brandId   = currentRow.find('.id_brand').val();
+        var brandId = $(this).val();
+
+        const $batch   =  currentRow.find('.id_batch');
+        const $expiry  =  currentRow.find('.id_expiry');
+        
+        if (!orgId || !siteId || !genericId || !brandId) {
+            Swal.fire(
+            'Missing Information',
+            'Please select Organization, Site, Generic and Brand before proceeding.',
+            'warning'
+            );
+            return;
+        }
+
+        $.getJSON('inventory/getbatchno', { orgId, siteId, genericId, brandId })
+            // .always(() => $('#ajax-loader').hide())
+            .done(resp => {
+            if (resp && resp.batch_no) {
+                $('.brand_details').show();
+                $batch.val(resp.batch_no).prop('disabled', true);
+                $expiry.val(resp.expiry_date).prop('disabled', true);
+            } else {
+                Swal.fire('No batch# found','No inventory for that combination.','warning');
+                $brand
+                .prop('disabled',false)
+                .children('option[value=""]').remove().end()
+                .prepend('<option value="" disabled>Select Brand</option>')
+                .val('');
+                $batch.val('').prop('disabled', true);
+                $expiry.val('').prop('disabled', true);
+            }
+            })
+            .fail(() => Swal.fire('Error','Could not fetch batch info','error'));
+    });
     
     // View Issue Dispense
     var viewIssueDispense =  $('#view-issuedispense').DataTable({
@@ -899,14 +838,6 @@ $(document).ready(function() {
                 console.log(error);
             });
 
-                // BrandChangeBatchAndExpiry(
-                // '$row.find('.id_generic')',   
-                // '.id_brand',   
-                // '.id_batch',     
-                // '.id_expiry',   
-                // '#add-issuedispense'
-                // );
-
             BrandChangeBatchAndExpiry(
                 '#id_org',  
                 '#id_site',  
@@ -979,45 +910,6 @@ $(document).ready(function() {
         $('#transaction-info-row').empty();
     });
 
-   
-
-    // $('.id_brand').off('change.idBrand').on ('change.idBrand', function(){
-    //     var brandId = $(this).val();
-    //     var currentRow = $(this).closest('.duplicate'); 
-    //     var currentRowCCSelect = currentRow.find('.id_brand'); 
-    
-    //     // if (brandId) {
-    //     //     fetchGenericItemBrand(brandId, currentRowCCSelect, function(data) {
-    //     //         if (data.length > 0) {
-    //     //             currentRowCCSelect.empty();
-    //     //             currentRowCCSelect.append('<option selected disabled value="">Select Brand</option>');
-    //     //             $.each(data, function(key, value) {
-    //     //                 currentRowCCSelect.append('<option value="' + value.id + '">' + value.name + '</option>');
-    //     //             });
-    //     //             currentRowCCSelect.find('option:contains("Loading...")').remove();
-    //     //             currentRowCCSelect.prop('disabled', false);
-    //     //         } else {
-    //     //             Swal.fire({
-    //     //                 text: 'Brands are not available for the selected Item Generic',
-    //     //                 icon: 'error',
-    //     //                 confirmButtonText: 'OK',
-    //     //                 allowOutsideClick: false
-    //     //             }).then((result) => {
-    //     //                 if (result.isConfirmed) {
-    //     //                     currentRowCCSelect.empty();
-    //     //                     currentRowCCSelect.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
-    //     //                 }
-    //     //             });
-    //     //         }
-    //     //     }, function(error) {
-    //     //         console.log(error);
-    //     //     });
-    //     // } 
-    //     // else {
-    //     //     currentRowCCSelect.empty();
-    //     //     currentRowCCSelect.html("<option selected disabled value=''>Select Cost Center</option>").prop('disabled', true);
-    //     // }
-    // });
 
 
     // $('#add_issuedispense').submit(function(e) {
