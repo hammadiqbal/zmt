@@ -173,6 +173,13 @@
                                                             <label for="minimal-checkbox-{{ $moduleName }}-work_order-{{ $key }}">Approve WO</label>
                                                         </li>
                                                         @endif
+
+                                                        @if($moduleName == 'issue_and_dispense')
+                                                        <li>
+                                                            <input type="checkbox" name="{{ $moduleName }}[]" class="check update_status" id="minimal-checkbox-{{ $moduleName }}-issue_and_dispense-{{ $key }}">
+                                                            <label for="minimal-checkbox-{{ $moduleName }}-issue_and_dispense-{{ $key }}">Respond</label>
+                                                        </li>
+                                                        @endif
                                                     @endif
                                                     </ul>
                                                 </div>
