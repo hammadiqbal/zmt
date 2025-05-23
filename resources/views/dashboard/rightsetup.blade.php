@@ -128,12 +128,14 @@
                                                             <input type="checkbox" name="{{ $moduleName }}[]" class="check view" id="minimal-checkbox-{{ $moduleName }}-view-{{ $key }}">
                                                             <label for="minimal-checkbox-{{ $moduleName }}-view-{{ $key }}">View</label>
                                                         </li>
+
+                                                        @if($moduleName != 'modules' && $moduleName != 'external_transaction' && $moduleName != 'issue_and_dispense' && $moduleName != 'consumption' && $moduleName != 'inventory_return' && $moduleName != 'other_transactions' && $moduleName != 'reversal_of_transactions')
                                                         <li>
                                                             <input type="checkbox" name="{{ $moduleName }}[]" class="check edit" id="minimal-checkbox-{{ $moduleName }}-edit-{{ $key }}">
                                                             <label for="minimal-checkbox-{{ $moduleName }}-edit-{{ $key }}">Edit</label>
                                                         </li>
-                                
-                                                        @if($moduleName != 'modules' && $moduleName != 'employee_qualification_setup' && $moduleName != 'employee_medical_license_setup' && $moduleName != 'employee_cost_center_allocation' && $moduleName != 'external_transaction')
+                                                        @endif
+                                                        @if($moduleName != 'modules' && $moduleName != 'employee_qualification_setup' && $moduleName != 'employee_medical_license_setup' && $moduleName != 'employee_cost_center_allocation' && $moduleName != 'external_transaction' && $moduleName != 'issue_and_dispense' && $moduleName != 'consumption' && $moduleName != 'inventory_return' && $moduleName != 'other_transactions' && $moduleName != 'reversal_of_transactions')
                                                         <li>
                                                             <input type="checkbox" name="{{ $moduleName }}[]" class="check update_status" id="minimal-checkbox-{{ $moduleName }}-update-status-{{ $key }}">
                                                             <label for="minimal-checkbox-{{ $moduleName }}-update-status-{{ $key }}">Update Status</label>

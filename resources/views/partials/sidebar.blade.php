@@ -622,6 +622,10 @@
                     $hideWorkOrder = true;
                     $hideExternalTransaction = true;
                     $hideIssueDispense = true;
+                    $hideConsumption = true;
+                    $hideInventoryReturn = true;
+                    $hideOtherTransaction = true;
+                    $hideReversalTransaction = true;
                     $hideMedicationRoutes = true;
                     $hideMedicationFrequency = true;
                     $hideRequisitionMaterialConsumption = true;
@@ -675,6 +679,22 @@
                     $hideIssueDispenseValues = explode(',', $rights->issue_and_dispense);
                     if (in_array('1', $hideIssueDispenseValues)) {
                         $hideIssueDispense = false;
+                    }
+                    $hideConsumptionValues = explode(',', $rights->consumption);
+                    if (in_array('1', $hideConsumptionValues)) {
+                        $hideConsumption = false;
+                    }
+                    $hideInventoryReturnValues = explode(',', $rights->inventory_return);
+                    if (in_array('1', $hideInventoryReturnValues)) {
+                        $hideInventoryReturn = false;
+                    }
+                    $hideOtherTransactionValues = explode(',', $rights->other_transactions);
+                    if (in_array('1', $hideOtherTransactionValues)) {
+                        $hideOtherTransaction = false;
+                    }
+                    $hideReversalTransactionValues = explode(',', $rights->reversal_of_transactions);
+                    if (in_array('1', $hideReversalTransactionValues)) {
+                        $hideReversalTransaction = false;
                     }
                     $hideMedicationRoutesValues = explode(',', $rights->medication_routes);
                     if (in_array('1', $hideMedicationRoutesValues)) {
@@ -826,27 +846,25 @@
                                     </ul>
                                   
                                     <ul aria-expanded="false" class="collapse">
-                                        {{-- @if (!$hideTransactionType) --}}
+                                        @if (!$hideConsumption)
                                             <li><a>Consumption</a></li>
-                                        {{-- @endif --}}
+                                        @endif
                                     </ul>
                                     <ul aria-expanded="false" class="collapse">
-                                        {{-- @if (!$hideTransactionType) --}}
+                                        @if (!$hideInventoryReturn)
                                             <li><a>Return</a></li>
-                                        {{-- @endif --}}
+                                        @endif
                                     </ul>
                                     <ul aria-expanded="false" class="collapse">
-                                        {{-- @if (!$hideTransactionType) --}}
+                                        @if (!$hideOtherTransaction)
                                             <li><a>Other Transactions</a></li>
-                                        {{-- @endif --}}
+                                        @endif
                                     </ul>
                                     <ul aria-expanded="false" class="collapse">
-                                        {{-- @if (!$hideTransactionType) --}}
+                                        @if (!$hideReversalTransaction)
                                             <li><a>Reversal Of Transactions</a></li>
-                                        {{-- @endif --}}
+                                        @endif
                                     </ul>
-                                 
-                                  
                                 </li>
                                 @endif
                                 {{-- @if (!$hideInventoryManagement)
