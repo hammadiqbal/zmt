@@ -43,9 +43,7 @@ if same generic and brand has one batch the it should auto select if more than 1
 
 ...........................................................................
 Changes required before deployment
-Update Module Table
-create 4 columns in rights table  consumption,inventory_return,other_transactions,reversal_of_transactions
-
+chnage source and destination coulm in inventory_management table update int to var_char
 ...........................................................................
 
 when mutiple time ajax run error change the .change function with like this   

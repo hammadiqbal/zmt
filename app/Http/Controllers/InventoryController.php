@@ -33,6 +33,7 @@ use App\Http\Requests\StockMonitoringRequest;
 use App\Http\Requests\InventorySourceDestinationTypeRequest;
 use App\Http\Requests\InventoryTransactionActivityRequest;
 use App\Http\Requests\ExternalTransactionRequest;
+use App\Http\Requests\IssueDispenseRequest;
 use App\Models\InventoryCategory;
 use App\Models\InventorySubCategory;
 use App\Models\InventoryType;
@@ -1225,11 +1226,6 @@ class InventoryController extends Controller
             ->addColumn('id_raw', function ($InventoryGeneric) {
                 return $InventoryGeneric->id;  
             })
-            ->addColumn('patientMandatory', function ($InventoryGeneric) {
-                $patientMandatory = $InventoryGeneric->patient_mandatory;
-                $patientMandatory = ['y' => 'Yes','n' => 'No'][$patientMandatory] ?? $patientMandatory;
-                return $patientMandatory; 
-            })
             ->editColumn('id', function ($InventoryGeneric) {
                 $session = auth()->user();
                 $sessionName = $session->name;
@@ -1241,6 +1237,8 @@ class InventoryController extends Controller
                 $timestamp = Carbon::createFromTimestamp($InventoryGeneric->timestamp)->format('l d F Y - h:i A');
                 $lastUpdated = Carbon::createFromTimestamp($InventoryGeneric->last_updated)->format('l d F Y - h:i A');
                 $createdByName = getUserNameById($InventoryGeneric->user_id);
+                $patientMandatory = $InventoryGeneric->patient_mandatory;
+                $patientMandatory = ['y' => 'Yes','n' => 'No'][$patientMandatory] ?? $patientMandatory;
                 $createdInfo = "
                         <b>Created By:</b> " . ucwords($createdByName) . "  <br>
                         <b>Effective Date&amp;Time:</b> " . $effectiveDate . " <br>
@@ -1257,8 +1255,8 @@ class InventoryController extends Controller
                 {
                     $orgName ='<hr class="mt-1 mb-1"><b>Organization:</b> '.ucwords($InventoryGeneric->orgName);
                 }
-
-                return $Code.$orgName
+                $patientMandatory ='<hr class="mt-1 mb-1"><b>Patient Mandatory Status:</b> '.ucwords($patientMandatory);
+                return $Code.$orgName.$patientMandatory
                     . '<hr class="mt-1 mb-2">'
                     . '<span class="label label-info popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $createdInfo .'">'
                     . '<i class="fa fa-toggle-right"></i> View Details'
@@ -7591,6 +7589,7 @@ class InventoryController extends Controller
                 $issueDate = $row->effective_timestamp
                     ? \Carbon\Carbon::createFromTimestamp($row->effective_timestamp)->format('d F Y')
                     : 'N/A';
+                // $issueDate   = Carbon::createFromTimestamp($row->effective_timestamp)->format('d-M-Y H:i');
             
                 $referenceNumber = $row->ref_document_no ?: 'N/A';
                 $siteName        = $row->siteName       ?: 'N/A';
@@ -8147,12 +8146,12 @@ class InventoryController extends Controller
 
         // 1) find the last matching balance
         $balance = InventoryBalance::query()
-        ->where('org_id',     $orgId)
-        ->where('site_id',    $siteId)
-        ->where('brand_id',   $brandId)
-        ->where('generic_id', $genericId)
-        ->orderByDesc('id')
-        ->first(['batch_no','management_id']);
+            ->where('org_id',     $orgId)
+            ->where('site_id',    $siteId)
+            ->where('brand_id',   $brandId)
+            ->where('generic_id', $genericId)
+            ->orderByDesc('id')
+            ->first(['batch_no','management_id','site_balance']);
 
         if (! $balance) {
             // no inventory at all
@@ -8161,6 +8160,7 @@ class InventoryController extends Controller
 
         $batchNo    = $balance->batch_no;
         $mgmtId     = $balance->management_id;
+        $siteBalance = $balance->site_balance; // <-- Add this
 
         // 2) load the management record
         $mgmt = InventoryManagement::query()
@@ -8176,6 +8176,7 @@ class InventoryController extends Controller
             return response()->json([
                 'batch_no'    => $batchNo,
                 'expiry_date' => null,
+                'site_balance' => $siteBalance, // <-- Add this
             ]);
         }
 
@@ -8204,8 +8205,200 @@ class InventoryController extends Controller
         return response()->json([
             'batch_no'    => $batchNo,
             'expiry_date' => $expiryDate,
+            'site_balance' => $siteBalance, // <-- Add this
         ]);
     }
+
+    // public function AddIssueDispense(IssueDispenseRequest $request)
+    // {
+    //     // Start database transaction
+    //     DB::beginTransaction();
+
+    //     // Get validated data
+    //     $validated = $request->validated();
+        
+    //     $itemCount = count($request->id_generic);
+    //     $success = true;
+    //     $message = '';
+
+    //     for ($i = 0; $i < $itemCount; $i++) {
+    //         $inventory = new InventoryManagement();
+            
+    //         // Required fields
+    //         $inventory->transaction_type_id = $validated['id_transactiontype'];
+    //         $inventory->org_id = $validated['id_org'];
+    //         $inventory->site_id = $validated['id_site'];
+    //         $inventory->source = $validated['id_source'];
+    //         $inventory->destination = $validated['id_destination'];
+            
+    //         // Optional fields with null coalescing
+    //         $inventory->ref_document_no = $validated['id_reference_document'] ?? null;
+    //         $inventory->mr_code = $validated['id_mr'] ?? null;
+    //         $inventory->service_id = $validated['id_service'] ?? null;
+    //         $inventory->service_mode_id = $validated['id_service_mode'] ?? null;
+    //         $inventory->billing_cc = $validated['id_billingcc'] ?? null;
+    //         $inventory->performing_cc = $validated['id_billingcc'] ?? null;
+    //         $inventory->resp_physician = $validated['id_physician'] ?? null;
+    //         $inventory->remarks = $validated['id_remarks'] ?? null;
+
+    //         // Item specific fields
+    //         $inventory->inv_generic_id = $validated['id_generic'][$i];
+    //         $inventory->brand_id = $validated['id_brand'][$i];
+    //         $inventory->batch_no = $validated['id_batch'][$i];
+    //         $inventory->expiry_date = $validated['id_expiry'][$i];
+    //         $inventory->transaction_qty = $validated['et_qty'][$i];
+            
+    //         // Set default values
+    //         $inventory->status = 1;
+    //         $inventory->user_id = auth()->id();
+    //         $inventory->logid = auth()->id();
+    //         $inventory->effective_timestamp = now()->timestamp;
+    //         $inventory->timestamp = now()->timestamp;
+    //         $inventory->last_updated = now()->timestamp;
+
+    //         if (!$inventory->save()) {
+    //             $success = false;
+    //             $message = 'Failed to save inventory record';
+    //             break;
+    //         }
+    //     }
+
+    //     if ($success) {
+    //         DB::commit();
+    //         return response()->json([
+    //             'success' => 'Issue & Dispense records have been added successfully',
+    //             'reload' => true
+    //         ]);
+    //     } else {
+    //         DB::rollback();
+    //         return response()->json([
+    //             'error' => $message,
+    //             'reload' => false
+    //         ]);
+    //     }
+    // }
+
+    public function AddIssueDispense(IssueDispenseRequest $request)
+    {
+        // Get validated data
+        $validated = $request->validated();
+        
+        $itemCount = count($request->id_generic);
+        $success = true;
+        $message = '';
+
+        $inventory = new InventoryManagement();
+        
+        // Required fields
+        $inventory->transaction_type_id = $validated['id_transactiontype'];
+        $inventory->org_id = $validated['id_org'];
+        $inventory->site_id = $validated['id_site'];
+        $inventory->source = $validated['id_source'];
+        $inventory->destination = $validated['id_destination'];
+        
+        // Handle MR related fields
+        if (isset($validated['id_mr']) && !empty($validated['id_mr'])) {
+            $inventory->mr_code = $validated['id_mr'];
+            
+            // If MR exists, check for service details
+            if (isset($validated['id_service']) && !empty($validated['id_service'])) {
+                $inventory->service_id = $validated['id_service'];
+                $inventory->service_mode_id = $validated['id_servicemode'] ?? null;
+                $inventory->billing_cc = $validated['id_billingcc'] ?? null;
+                $inventory->performing_cc = $validated['id_performing_cc'] ?? null;
+                $inventory->resp_physician = $validated['id_physician'] ?? null;
+            }
+        }
+
+        // Optional reference document
+        $inventory->ref_document_no = $validated['id_reference_document'] ?? null;
+        
+        // Remarks field
+        $inventory->remarks = $validated['id_remarks'] ?? null;
+
+        // Handle item specific fields based on count
+        if ($itemCount > 1) {
+            // Multiple items - use comma separated values
+            $inventory->inv_generic_id = implode(',', $validated['id_generic']);
+            $inventory->brand_id = implode(',', $validated['id_brand']);
+            $inventory->batch_no = implode(',', $validated['id_batch']);
+            
+            // Format expiry dates before imploding
+            $formattedDates = array_map(function($date) {
+                Carbon::createFromFormat('Y-m-d', $date)->timestamp;
+            }, $validated['id_expiry']);
+            $inventory->expiry_date = implode(',', $formattedDates);
+            
+
+        //         $ExpireDate = $request->input('et_expiry');
+        // $ExpireDates = [];
+        // foreach ($ExpireDate as $ed) {
+        //     $timestamp = Carbon::createFromFormat('Y-m-d', $ed)->timestamp;
+        //     $ExpireDates[] = $timestamp;
+        // }
+
+        // $ExpireDates = is_array($ExpireDates) ? implode(',', $ExpireDates) : '';
+            
+            $inventory->transaction_qty = implode(',', $validated['id_qty']);
+
+            // Calculate total balances for multiple items
+            $totalSourceBalance = 0;
+            $totalDestBalance = 0;
+            foreach ($validated['id_qty'] as $qty) {
+                $totalSourceBalance += (-1 * abs($qty));
+                $totalDestBalance += abs($qty);
+            }
+            
+            // $inventory->source_balance = $totalSourceBalance;
+            // $inventory->destination_balance = $totalDestBalance;
+            // $inventory->site_balance = $totalSourceBalance + $totalDestBalance;
+            // $inventory->org_balance = $inventory->site_balance;expiry_date
+        } else {
+            // Single item - store as is
+            $inventory->inv_generic_id = $validated['id_generic'][0];
+            $inventory->brand_id = $validated['id_brand'][0];
+            $inventory->batch_no = $validated['id_batch'][0];
+            // $inventory->expiry_date = date('Y-m-d', strtotime($validated['id_expiry'][0]));
+            $inventory->expiry_date  = Carbon::createFromFormat('Y-m-d', $validated['id_expiry'][0])->timestamp;
+
+            $inventory->transaction_qty = $validated['id_qty'][0];
+
+            // Calculate balances for single item
+            // $sourceBalance = -1 * abs($validated['id_qty'][0]);
+            // $destBalance = abs($validated['id_qty'][0]);
+            
+            // $inventory->source_balance = $sourceBalance;
+            // $inventory->destination_balance = $destBalance;
+            // $inventory->site_balance = $sourceBalance + $destBalance;
+            // $inventory->org_balance = $inventory->site_balance;
+        }
+        
+        // Set default values
+        $inventory->status = 1;
+        $inventory->user_id = auth()->id();
+        $inventory->logid = auth()->user()->username ?? auth()->id();
+        $inventory->effective_timestamp = now()->timestamp;
+        $inventory->timestamp = now()->timestamp;
+        $inventory->last_updated = now()->timestamp;
+
+        if (!$inventory->save()) {
+            $success = false;
+            $message = 'Failed to save inventory record';
+        }
+
+        if ($success) {
+            return response()->json([
+                'success' => 'Issue & Dispense records have been added successfully',
+                'reload' => true
+            ]);
+        } else {
+            return response()->json([
+                'error' => $message,
+                'reload' => false
+            ]);
+        }
+    }
+
 
     // public function InventoryManagement()
     // {

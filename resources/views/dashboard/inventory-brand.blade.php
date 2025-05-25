@@ -208,8 +208,11 @@
                         <tr>
                             <th></th>
                             <th>ID</th>
-                            <th>Brand </th>
+                            <th>Category</th>
+                            <th>Sub Categoty</th>
+                            <th>Type</th>
                             <th>Generic</th>
+                            <th>Brand </th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>

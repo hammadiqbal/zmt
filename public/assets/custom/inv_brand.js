@@ -158,7 +158,19 @@ $(document).ready(function() {
             { data: 'id_raw', name: 'id_raw', visible: false },
             { data: 'id', name: 'id' },
             {
-                "data": 'name',
+                "data": 'catName',
+                "render": function(data, type, row) {
+                    return data.replace(/\b\w/g, function(char) { return char.toUpperCase(); });
+                }
+            },
+            {
+                "data": 'subCatName',
+                "render": function(data, type, row) {
+                    return data.replace(/\b\w/g, function(char) { return char.toUpperCase(); });
+                }
+            },
+            {
+                "data": 'typeName',
                 "render": function(data, type, row) {
                     return data.replace(/\b\w/g, function(char) { return char.toUpperCase(); });
                 }
@@ -169,6 +181,13 @@ $(document).ready(function() {
                     return data.replace(/\b\w/g, function(char) { return char.toUpperCase(); });
                 }
             },
+            {
+                "data": 'name',
+                "render": function(data, type, row) {
+                    return data.replace(/\b\w/g, function(char) { return char.toUpperCase(); });
+                }
+            },
+           
             { data: 'status', name: 'status' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
@@ -178,8 +197,8 @@ $(document).ready(function() {
                 width: "200px"
             },
             {
-                targets: 4,
-                width: "250px"
+                targets: 8,
+                width: "300px"
             }
         ]
     });

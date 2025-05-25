@@ -205,8 +205,10 @@
                         <tr>
                             <th></th>
                             <th>Description</th>
-                            <th>Item Generic</th>
-                            <th>Patient Mandatory Status</th>
+                            <th>Category</th>
+                            <th>Sub Category</th>
+                            <th>Type</th>
+                            <th>Generic</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>

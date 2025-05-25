@@ -54,6 +54,9 @@ $(document).ready(function() {
         SiteChangeMaterialManagementTransactionTypes('#id_site','#id_org', '#id_transactiontype', '#add_issuedispense','issue_dispense');
 
         $(document).off('change', '#id_mr').on('change', '#id_mr', function() {
+        // $(document)
+        // .off('change.mrNewid', '#id_mr')
+        // .on('change.mrnewid', '#id_mr', function() {
             $('.req_only').hide();
             let MRno = $(this).val();
             toggleDuplicateFieldsBasedOnMR(MRno);
@@ -199,11 +202,11 @@ $(document).ready(function() {
                                         <div class="row align-items-center text-center">
                                             <div class="col-md-6 col-12 mb-2 mb-md-0">
                                                 <small class="text-muted">Source:</small><br>
-                                                <strong class="text-primary">${resp.Source || '-'}</strong>
+                                                <strong class="text-primary source">${resp.Source || '-'}</strong>
                                             </div>
                                             <div class="col-md-6 col-12 mb-2 mb-md-0">
                                                 <small class="text-muted">Destination:</small><br>
-                                                <strong class="text-primary">${resp.Destination || '-'}</strong>
+                                                <strong class="text-primary destination">${resp.Destination || '-'}</strong>
                                             </div>
                                         </div>
                                     </div>
@@ -387,10 +390,111 @@ $(document).ready(function() {
         });
        
         $('.id_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
-       
+
+        // const $row = $(this).closest('.duplicate'); 
+  
+        // $(document).off('change', '.id_brand').on('change', '.id_brand', function() {
+        // $(document)
+        //     .off('change.newIssueBrand')           // only removes handlers in .newIssueBrand namespace
+        //     .on('change.newIssueBrand', '.id_brand', function(){
+        //     var currentRow = $(this).closest('.duplicate'); 
+        //     // var currentRowBrandSelect = currentRow.find('.id_brand'); 
+        //     const orgId     = $('#id_org').val(); 
+        //     const siteId    = $('#id_site').val();
+        //     const genericId = currentRow.find('.id_generic').val();
+        //     // const brandId   = currentRow.find('.id_brand').val();
+        //     var brandId = $(this).val();
+
+        //     const $batch   =  currentRow.find('.id_batch');
+        //     const $expiry  =  currentRow.find('.id_expiry');
+        //     const $brand  =  currentRow.find('.id_brand');
+            
+        //     if (!orgId || !siteId || !genericId || !brandId) {
+        //         Swal.fire(
+        //         'Missing Information',
+        //         'Please select Organization, Site, Generic and Brand before proceeding.',
+        //         'warning'
+        //         );
+        //         $brand
+        //         .prop('disabled',false)
+        //         .children('option[value=""]').remove().end()
+        //         .prepend('<option value="" disabled>Select Brand</option>')
+        //         .val('');
+        //         return;
+        //     }
+
+        //     $.getJSON('inventory/getbatchno', { orgId, siteId, genericId, brandId })
+        //         // .always(() => $('#ajax-loader').hide())
+        //         .done(resp => {
+        //         if (resp && resp.batch_no) {
+        //             // $('.brand_details').show();
+        //             currentRow.find('.brand_details').show();
+
+        //             $batch.val(resp.batch_no).prop('disabled', true);
+        //             $expiry.val(resp.expiry_date).prop('disabled', true);
+
+        //             // Set max for transaction qty input
+        //             const $qty = currentRow.find('.id_qty');
+        //             if ($qty.length && resp.site_balance !== undefined) {
+        //                 $qty.attr('max', resp.site_balance);
+        //                 $qty.attr('placeholder', 'Max: ' + resp.site_balance);
+        //             }
+        //         } else {
+        //             Swal.fire('No batch# found','No inventory for that combination.','warning');
+        //             $brand
+        //             .prop('disabled',false)
+        //             .children('option[value=""]').remove().end()
+        //             .prepend('<option value="" disabled>Select Brand</option>')
+        //             .val('');
+        //             currentRow.find('.brand_details').hide();
+        //             $batch.val('').prop('disabled', true);
+        //             $expiry.val('').prop('disabled', true);
+
+        //             // Remove max restriction if no batch found
+        //             const $qty = currentRow.find('.id_qty');
+        //             if ($qty.length) {
+        //                 $qty.removeAttr('max');
+        //                 $qty.attr('placeholder', 'Transaction Qty...');
+        //             }
+        //             return;
+        //         }
+        //         })
+        //         .fail(() => Swal.fire('Error','Could not fetch batch info','error'));
+        // });
+
+        $(document)
+            .off('change.newIssueBrand')
+            .on('change.newIssueBrand', '.id_brand', function(e) {
+            e.stopPropagation();
+            
+            const currentRow = $(this).closest('.duplicate');
+            const orgId = $('#id_org').val();
+            const siteId = $('#id_site').val();
+            const genericId = currentRow.find('.id_generic').val();
+            const brandId = $(this).val();
+            const $brand = $(this);
+
+            if (!orgId || !siteId || !genericId || !brandId) {
+                Swal.fire(
+                    'Missing Information',
+                    'Please select Organization, Site, Generic and Brand before proceeding.',
+                    'warning'
+                );
+                $brand
+                    .prop('disabled', false)
+                    .children('option[value=""]').remove().end()
+                    .prepend('<option value="" disabled>Select Brand</option>')
+                    .val('');
+                return;
+            }
+
+            handleBatchNumberCheck(orgId, siteId, genericId, brandId, $brand, currentRow);
+        });
 
         $('#add-issuedispense').modal('show');
     });
+  
+
     $(document).off('change', '.id_generic').on('change', '.id_generic', function() {
         var genericId = $(this).val();
         var currentRow = $(this).closest('.duplicate'); 
@@ -415,7 +519,14 @@ $(document).ready(function() {
                     }).then((result) => {
                         if (result.isConfirmed) {
                             currentRowBrandSelect.empty();
+                            currentRow.find('.brand_details').hide();
                             currentRowBrandSelect.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
+                            var $qty = currentRowBrandSelect.closest('.duplicate').find('.id_qty');
+                            if ($qty.length) {
+                                $qty.removeAttr('max');
+                                $qty.attr('placeholder', 'Transaction Qty...');
+                            }
+
                         }
                     });
                 }
@@ -428,54 +539,6 @@ $(document).ready(function() {
         }
     });
 
-    $(document).off('change', '.id_brand').on('change', '.id_brand', function() {
-        var currentRow = $(this).closest('.duplicate'); 
-        // var currentRowBrandSelect = currentRow.find('.id_brand'); 
-        const orgId     = $('#id_org').val(); 
-        const siteId    = $('#id_site').val();
-        const genericId = currentRow.find('.id_generic').val();
-        console.log(genericId);
-        // const brandId   = currentRow.find('.id_brand').val();
-        var brandId = $(this).val();
-
-        const $batch   =  currentRow.find('.id_batch');
-        const $expiry  =  currentRow.find('.id_expiry');
-        
-        if (!orgId || !siteId || !genericId || !brandId) {
-            Swal.fire(
-            'Missing Information',
-            'Please select Organization, Site, Generic and Brand before proceeding.',
-            'warning'
-            );
-            $brand
-              .prop('disabled',false)
-              .children('option[value=""]').remove().end()
-              .prepend('<option value="" disabled>Select Brand</option>')
-              .val('');
-            return;
-        }
-
-        $.getJSON('inventory/getbatchno', { orgId, siteId, genericId, brandId })
-            // .always(() => $('#ajax-loader').hide())
-            .done(resp => {
-            if (resp && resp.batch_no) {
-                $('.brand_details').show();
-                $batch.val(resp.batch_no).prop('disabled', true);
-                $expiry.val(resp.expiry_date).prop('disabled', true);
-            } else {
-                Swal.fire('No batch# found','No inventory for that combination.','warning');
-                $brand
-                .prop('disabled',false)
-                .children('option[value=""]').remove().end()
-                .prepend('<option value="" disabled>Select Brand</option>')
-                .val('');
-                $batch.val('').prop('disabled', true);
-                $expiry.val('').prop('disabled', true);
-            }
-            })
-            .fail(() => Swal.fire('Error','Could not fetch batch info','error'));
-    });
-    
     // View Issue Dispense
     var viewIssueDispense =  $('#view-issuedispense').DataTable({
         processing: true,
@@ -556,6 +619,23 @@ $(document).ready(function() {
                 .html(`<option selected value="${data.site_id}">${data.site_name}</option>`)
                 .prop('disabled', true);
 
+            // if (data.mr_code) {
+            //     $('#id_mr')
+            //         .html(`<option selected value="${data.mr_code}">${data.mr_code} – ${data.patient_name}</option>`)
+            //         .prop('disabled', true).trigger('change');
+            // }
+
+            if (data.mr_code) {
+                $('#id_mr')
+                    .html(`<option selected value="${data.mr_code}">${data.mr_code} – ${data.patient_name}</option>`)
+                    .prop('disabled', true);
+                
+                // Trigger change event after a short delay
+                setTimeout(() => {
+                    $('#id_mr').trigger('change');
+                }, 100);
+            }
+
             $(document).off('change', '#id_mr').on('change', '#id_mr', function() {
                 $('.req_only').hide();
                 let MRno = $(this).val();
@@ -603,15 +683,21 @@ $(document).ready(function() {
                 });
             });
 
-            if (data.mr_code) {
-                $('#id_mr')
-                    .html(`<option selected value="${data.mr_code}">${data.mr_code} – ${data.patient_name}</option>`)
-                    .prop('disabled', true).trigger('change');
-            }
+            
+            // $('#id_transactiontype').html(`<option selected value="${data.transaction_type_id}">${data.transaction_type_name}</option>`).prop('disabled', true).trigger('change');
+            $('#id_transactiontype')
+                .html(`<option selected value="${data.transaction_type_id}">${data.transaction_type_name}</option>`)
+                .prop('disabled', true);
+            
+            // Trigger change event after a short delay
+            setTimeout(() => {
+                $('#id_transactiontype').trigger('change');
+            }, 50);
 
             $(document).off('change', '#id_transactiontype').on('change', '#id_transactiontype', function() {
                 let transactionTypeID = $(this).val();
                 let siteId = $('#id_site').val();  // you must already have a selected site
+
                 $('#mr-optional').show();
                 if (!siteId) {
                     Swal.fire({
@@ -655,11 +741,11 @@ $(document).ready(function() {
                                             <div class="row align-items-center text-center">
                                                 <div class="col-md-6 col-12 mb-2 mb-md-0">
                                                     <small class="text-muted">Source:</small><br>
-                                                    <strong class="text-primary">${resp.Source || '-'}</strong>
+                                                    <strong class="text-primary source">${resp.Source || '-'}</strong>
                                                 </div>
                                                 <div class="col-md-6 col-12 mb-2 mb-md-0">
                                                     <small class="text-muted">Destination:</small><br>
-                                                    <strong class="text-primary">${resp.Destination || '-'}</strong>
+                                                    <strong class="text-primary destination">${resp.Destination || '-'}</strong>
                                                 </div>
                                             </div>
                                         </div>
@@ -734,39 +820,39 @@ $(document).ready(function() {
                         let sourceTypenew = (resp.Source || '').toLowerCase();
                         let destinationTypenew = (resp.Destination || '').toLowerCase();
 
-                        // if (sourceTypenew.includes('patient')) {
-                        //     if (mrSelected) {
-                        //         $('#id_source').html(`<option value="${mrSelected}" selected>${$('#id_mr option:selected').text()}</option>`);
-                        //         $('#id_source').prop('disabled', true);
-                        //     } else {
-                        //         $('#mr-optional').hide();
-                        //         Swal.fire({
-                        //             icon: 'warning',
-                        //             title: 'MR Required',
-                        //             text: 'Please select a MR # first because the Source is Patient.',
-                        //         });
-                        //         // return;
-                        //         $('#id_source').html('<option selected disabled value="">Select Source</option>');
-                        //         $('#id_source').prop('disabled', true);
-                        //     }
-                        // }
+                        if (sourceTypenew.includes('patient')) {
+                            if (mrSelected) {
+                                $('#id_source').html(`<option value="${mrSelected}" selected>${$('#id_mr option:selected').text()}</option>`);
+                                $('#id_source').prop('disabled', true);
+                            } else {
+                                $('#mr-optional').hide();
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'MR Required',
+                                    text: 'Please select a MR # first because the Source is Patient.',
+                                });
+                                // return;
+                                $('#id_source').html('<option selected disabled value="">Select Source</option>');
+                                $('#id_source').prop('disabled', true);
+                            }
+                        }
 
-                        // if (destinationTypenew.includes('patient')) {
-                        //     if (mrSelected) {
-                        //         $('#id_destination').html(`<option value="${mrSelected}" selected>${$('#id_mr option:selected').text()}</option>`);
-                        //         $('#id_destination').prop('disabled', true);
-                        //     } else {
-                        //         $('#mr-optional').hide();
-                        //         Swal.fire({
-                        //             icon: 'warning',
-                        //             title: 'MR Required',
-                        //             text: 'Please select a MR # first because the Destination is Patient.',
-                        //         });
-                        //         // return;
-                        //         $('#id_destination').html('<option selected disabled value="">Select Destination</option>');
-                        //         $('#id_destination').prop('disabled', true);
-                        //     }
-                        // }
+                        if (destinationTypenew.includes('patient')) {
+                            if (mrSelected) {
+                                $('#id_destination').html(`<option value="${mrSelected}" selected>${$('#id_mr option:selected').text()}</option>`);
+                                $('#id_destination').prop('disabled', true);
+                            } else {
+                                $('#mr-optional').hide();
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'MR Required',
+                                    text: 'Please select a MR # first because the Destination is Patient.',
+                                });
+                                // return;
+                                $('#id_destination').html('<option selected disabled value="">Select Destination</option>');
+                                $('#id_destination').prop('disabled', true);
+                            }
+                        }
 
                         if (!sourceTypenew.includes('patient')) {
                             $('#id_source').prop('disabled', false);
@@ -799,7 +885,6 @@ $(document).ready(function() {
                 });
             });
            
-            $('#id_transactiontype').html(`<option selected value="${data.transaction_type_id}">${data.transaction_type_name}</option>`).prop('disabled', true).trigger('change');
             $('#id_service').html(`<option selected value="${data.service_id}">${data.service_name}</option>`).prop('disabled', true);
             $('#id_servicemode').html(`<option selected value="${data.service_mode_id}">${data.service_mode_name}</option>`).prop('disabled', true);
             $('#id_physician').html(`<option selected value="${data.physician_id}">${data.physician_name}</option>`).prop('disabled', true);
@@ -915,146 +1000,224 @@ $(document).ready(function() {
         $('#transaction-info-row').empty();
     });
 
+    $('#add_issuedispense').submit(function(e) {
+        e.preventDefault();
+        var data = SerializeForm(this);
+        var resp = true;
+        var mrSelected = $('#id_mr').val();
+        var serviceAvailable = $('#mrService').is(':visible');
+        // Get source and destination types
+        var sourceType = $('#transaction-info-row .source').first().text().toLowerCase();
+        var destinationType = $('#transaction-info-row .destination').last().text().toLowerCase();
+        
+        // Check if MR is required (when source or destination is patient)
+        var isMRRequired = sourceType.includes('patient') || destinationType.includes('patient');
 
+        // Validate MR field if required
+        if (isMRRequired && !mrSelected) {
+            $('#id_mr')
+                .next('.select2-container')
+                .find('.select2-selection')
+                .addClass('requirefield');
+            $('#id_mr_error').text("MR # is required when source or destination is patient");
+            resp = false;
+        }
 
-    // $('#add_issuedispense').submit(function(e) {
-    //     e.preventDefault();
-    //     var data = SerializeForm(this);
-    //     var resp = true;
-    //     $(".duplicate").each(function() {
-    //         var row = $(this);
-    //         row.find('input, textarea, select').each(function() {
-    //             var elem = $(this);
-    //             var value = elem.val();
-    //             var fieldName = elem.attr('name').replace('[]', '');
-    //             var errorField = row.find('.' + fieldName + '_error');
-    //             if (!value || value === "" || (elem.is('select') && value === null)) {
-    //                 errorField.text("This field is required");
-    //                 if (elem.is('select')) {
-    //                     elem.next('.select2-container').find('.select2-selection').addClass('requirefield');
-    //                     elem.on('select2:open', function() {
-    //                         errorField.text("");
-    //                         elem.next('.select2-container').find('.select2-selection').removeClass("requirefield");
-    //                     });
-    //                 }
-    //                 else {
-    //                     elem.addClass('requirefield');
-    //                     elem.focus(function() {
-    //                         errorField.text("");
-    //                         elem.removeClass("requirefield");
-    //                     });
-    //                 }
-    //                 resp = false;
-    //             } else {
-    //                 errorField.text("");
-    //                 if (elem.is('select')) {
-    //                     elem.next('.select2-container').find('.select2-selection').removeClass('requirefield');
-    //                 } else {
-    //                     elem.removeClass('requirefield');
-    //                 }
-    //             }
-    //         });
-    //     });
+        // Validate source/destination match with MR if patient type
+        if (mrSelected) {
+            if (sourceType.includes('patient') && $('#id_source').val() !== mrSelected) {
+                $('#id_source_error').text("Source patient must match selected MR#");
+                resp = false;
+            }
+            if (destinationType.includes('patient') && $('#id_destination').val() !== mrSelected) {
+                $('#id_destination_error').text("Destination patient must match selected MR#");
+                resp = false;
+            }
+        }
 
-    //     var excludedFields = ['id_reference_document', 'et_remarks'];
-    //     $(data).each(function(i, field){
-    //         var originalFieldName = field.name;
-    //         var sanitizedFieldName = originalFieldName.replace(/\[\]/g, '');
-    //         if (excludedFields.indexOf(sanitizedFieldName) !== -1) {
-    //             return true; 
-    //         }
-    //         if ((field.value == '') || (field.value == null))
-    //         {
-    //             var FieldName = field.name;
-    //             var FieldID = '#'+FieldName + "_error";
-              
-    //             $(FieldID).text("This field is required");
-    //             $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
-    //             $( 'input[name= "' +FieldName +'"' ).focus(function() {
-    //                 $(FieldID).text("");
-    //                 $('input[name= "' +FieldName +'"' ).removeClass("requirefield");
-    //             })
+        // Validate each row in duplicate class
+        $(".duplicate").each(function() {
+            var row = $(this);
+            
+          const fieldsToValidate = 
+            (!isMRRequired && !mrSelected)
+            ? 'input:not(.mr-dependent input), textarea:not(.mr-dependent textarea), select:not(.mr-dependent select)'
+            : 'input:not([name="id_demand_qty[]"]), textarea, select';
 
-    //             $('select[name= "' +FieldName +'"' ).next('.select2-container').find('.select2-selection').addClass('requirefield');
-    //             $('select[name= "' +FieldName +'"' ).on('select2:open', function() {
-    //                 $(FieldID).text("");
-    //                 $(this).next('.select2-container').find('.select2-selection').removeClass("requirefield");
-    //             });
-    //             resp = false;
-    //         }
-    //     });
-    //     if (resp) {
-    //         $.ajax({
-    //             url: "/inventory/addexternaltransaction",
-    //             method: "POST",
-    //             headers: {
-    //                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-    //             },
-    //             data: data,
-    //             beforeSend: function() {
-    //                 Swal.fire({
-    //                     title: "Processing",
-    //                     allowOutsideClick: false,
-    //                     willOpen: () => {
-    //                         Swal.showLoading();
-    //                     },
-    //                     showConfirmButton: false
-    //                 });
-    //             },
-    //             success: function(response) {
-    //                 if (response.error) {
-    //                     Swal.fire({
-    //                         text: response.error,
-    //                         icon: 'error',
-    //                         confirmButtonText: 'OK'
-    //                     });
-    //                 } else if (response.success) {
-    //                     Swal.fire({
-    //                         text: response.success,
-    //                         icon: 'success',
-    //                         allowOutsideClick: false,
-    //                         confirmButtonText: 'OK'
-    //                     }).then((result) => {
-    //                         if (result.isConfirmed) {
-    //                             $('#add-externaltransactions').modal('hide');
-    //                             $('#view-externaltransactions').DataTable().ajax.reload();
-    //                             $('#add_issuedispense')[0].reset();
-    //                             // $('#add_issuedispense').find('select').each(function(){
-    //                             //     $(this).val($(this).find('option:first').val()).trigger('change');
-    //                             // });
-    //                             $('.text-danger').hide();
-    //                         }
-    //                     });
-    //                 } else if (response.info) {
-    //                     Swal.fire({
-    //                         text: response.info,
-    //                         icon: 'info',
-    //                         confirmButtonText: 'OK'
-    //                     }).then((result) => {
-    //                         if (result.isConfirmed) {
-    //                             $('#add-externaltransactions').modal('hide');
-    //                         }
-    //                     });
-    //                 }
-    //             },
-    //             error: function(error) {
-    //                 if (error.responseJSON && error.responseJSON.errors) {
-    //                     $('.text-danger').show();
-    //                     var errors = error.responseJSON.errors;
-    //                     $.each(errors, function(field, messages) {
-    //                         // 'field' might still have [] or not,
-    //                         // so if your error IDs are sanitized, remove [] before targeting
-    //                         var sanitizedField = field.replace(/\[\]/g, '');
-    //                         var errorSelector = '#' + sanitizedField + '_error';
-    //                         $(errorSelector).text(messages.join(' '));
-    //                     });
-    //                     Swal.close();
-    //                 }
-    //             }
-    //         });
-    //     }
-    // });
-    // //Add External Transaction
+            row.find(fieldsToValidate).each(function() {
+                var elem = $(this);
+                var value = elem.val();
+                var fieldName = elem.attr('name').replace('[]', '');
+                var errorField = row.find('.' + fieldName + '_error');
 
+                if (!serviceAvailable && 
+                    ['id_service', 'id_servicemode', 'id_physician', 'id_billingcc'].includes(fieldName)) {
+                    return true;
+                }
+
+                if (!isMRRequired && !mrSelected && 
+                    ['id_dose', 'id_route', 'id_frequency', 'id_duration'].includes(fieldName)) {
+                    return true;
+                }
+
+                if (!value || value === "" || (elem.is('select') && value === null)) {
+                    // console.log(fieldName);
+                    errorField.text("This field is required");
+                    if (elem.is('select')) {
+                        elem.next('.select2-container').find('.select2-selection').addClass('requirefield');
+                        elem.on('select2:open', function() {
+                            errorField.text("");
+                            elem.next('.select2-container').find('.select2-selection').removeClass("requirefield");
+                        });
+                    } else {
+                        elem.addClass('requirefield');
+                        elem.focus(function() {
+                            errorField.text("");
+                            elem.removeClass("requirefield");
+                        });
+                    }
+                    resp = false;
+                } else {
+                    errorField.text("");
+                    if (elem.is('select')) {
+                        elem.next('.select2-container').find('.select2-selection').removeClass('requirefield');
+                    } else {
+                        elem.removeClass('requirefield');
+                    }
+                }
+            });
+        });
+
+        // Validate non-array fields
+        var excludedFields = ['id_reference_document', 'id_remarks'];
+        
+        if (!serviceAvailable) {
+            excludedFields = excludedFields.concat([
+                'id_service',
+                'id_servicemode',
+                'id_servicetype',
+                'id_servicegroup',
+                'id_physician',
+                'id_billingcc'
+            ]);
+        }
+
+        if (!isMRRequired && !mrSelected) {
+            excludedFields = excludedFields.concat([
+                'id_dose',
+                'id_route',
+                'id_frequency',
+                'id_duration'
+            ]);
+        }
+        else{
+            excludedFields = excludedFields.concat([
+                'id_demand_qty'
+            ]);
+        }
+
+        // If MR is optional, add it to excluded fields
+        if (!isMRRequired) {
+            excludedFields.push('id_mr');
+        }
+
+        $(data).each(function(i, field) {
+            var originalFieldName = field.name;
+            var sanitizedFieldName = originalFieldName.replace(/\[\]/g, '');
+            
+            if (excludedFields.indexOf(sanitizedFieldName) !== -1) {
+                return true;
+            }
+            
+            if ((field.value == '') || (field.value == null)) {
+                var FieldName = field.name;
+                var FieldName = FieldName.replace('[]', '');
+                var FieldID = '#' + FieldName + "_error";
+                    console.log(FieldName);
+
+                $(FieldID).text("This field is required");
+                $('input[name="' + FieldName + '"]').addClass('requirefield');
+                $('input[name="' + FieldName + '"]').focus(function() {
+                    $(FieldID).text("");
+                    $('input[name="' + FieldName + '"]').removeClass("requirefield");
+                });
+
+                $('select[name="' + FieldName + '"]').next('.select2-container').find('.select2-selection').addClass('requirefield');
+                $('select[name="' + FieldName + '"]').on('select2:open', function() {
+                    $(FieldID).text("");
+                    $(this).next('.select2-container').find('.select2-selection').removeClass("requirefield");
+                });
+                
+                resp = false;
+            }
+        });
+
+        // If validation passes, submit the form
+        if (resp) {
+            $.ajax({
+                url: "/inventory/addissuedispense",
+                method: "POST",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: data,
+                beforeSend: function() {
+                    Swal.fire({
+                        title: "Processing",
+                        allowOutsideClick: false,
+                        willOpen: () => {
+                            Swal.showLoading();
+                        },
+                        showConfirmButton: false
+                    });
+                },
+                success: function(response) {
+                    if (response.error) {
+                        Swal.fire({
+                            text: response.error,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    } else if (response.success) {
+                        Swal.fire({
+                            text: response.success,
+                            icon: 'success',
+                            allowOutsideClick: false,
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $('#add-issuedispense').modal('hide');
+                                $('#view-issuedispense').DataTable().ajax.reload();
+                                $('#add_issuedispense')[0].reset();
+                                $('.text-danger').hide();
+                            }
+                        });
+                    } else if (response.info) {
+                        Swal.fire({
+                            text: response.info,
+                            icon: 'info',
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $('#add-issuedispense').modal('hide');
+                            }
+                        });
+                    }
+                },
+                error: function(error) {
+                    if (error.responseJSON && error.responseJSON.errors) {
+                        $('.text-danger').show();
+                        var errors = error.responseJSON.errors;
+                        $.each(errors, function(field, messages) {
+                            var sanitizedField = field.replace(/\[\]/g, '');
+                            var errorSelector = '#' + sanitizedField + '_error';
+                            $(errorSelector).text(messages.join(' '));
+                        });
+                        Swal.close();
+                    }
+                }
+            });
+        }
+    });
 
 });

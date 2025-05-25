@@ -176,8 +176,9 @@
                         <tr>
                             <th></th>
                             <th>Code</th>
-                            <th>Item Type</th>
-                            <th>Organization</th>
+                            <th>Category</th>
+                            <th>Subcategory</th>
+                            <th>Type</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>

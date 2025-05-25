@@ -207,7 +207,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Service Type</label>
-                                                                        <input type="text" name="id_servicetype" class="form-control input-sm">
+                                                                        <input type="text" id="id_servicetype" name="id_servicetype" class="form-control input-sm">
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -218,7 +218,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Service Group</label>
-                                                                        <input type="text" name="id_servicegroup" class="form-control input-sm">
+                                                                        <input type="text"  id="id_servicegroup" name="id_servicegroup" class="form-control input-sm">
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -424,9 +424,9 @@ border: 1px solid rgba(0,0,0,.15);
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
                                                                             <label class="control-label">Enter Transaction Qty</label>
-                                                                            <input type="number" class="form-control input-sm" placeholder="Transaction Qty..." name="et_qty[]">
+                                                                            <input type="number" class="form-control input-sm id_qty" placeholder="Transaction Qty..." name="id_qty[]">
                                                                         </div>
-                                                                        <span class="text-danger et_qty_error" ></span>
+                                                                        <span class="text-danger id_qty_error" ></span>
                                                                     </div>
                                                                 </div>
                                                             </div>

@@ -156,13 +156,19 @@ $(document).ready(function() {
             { data: 'id_raw', name: 'id_raw', visible: false },
             { data: 'id', name: 'id' },
             {
-                "data": 'name',
+                "data": 'catName',
                 "render": function(data, type, row) {
                     return data.replace(/\b\w/g, function(char) { return char.toUpperCase(); });
                 }
             },
             {
-                "data": 'orgName',
+                "data": 'subCatName',
+                "render": function(data, type, row) {
+                    return data.replace(/\b\w/g, function(char) { return char.toUpperCase(); });
+                }
+            },
+            {
+                "data": 'name',
                 "render": function(data, type, row) {
                     return data.replace(/\b\w/g, function(char) { return char.toUpperCase(); });
                 }
@@ -176,7 +182,7 @@ $(document).ready(function() {
                 width: "200px"
             },
             {
-                targets: 5,
+                targets: 6,
                 width: "250px"
             }
         ]

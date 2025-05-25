@@ -539,7 +539,7 @@ Route::get('issue-dispense', [App\Http\Controllers\InventoryController::class, '
 Route::get('patient/fetchpatientdetails', [App\Http\Controllers\PatientController::class, 'FetchpatientRecord'])->name('FetchpatientRecord');
 Route::get('inventory/issuedispense', [App\Http\Controllers\InventoryController::class, 'GetIssueDispenseData'])->name('GetIssueDispenseData');
 Route::get('inventory/respond-issuedispense', [App\Http\Controllers\InventoryController::class, 'RespondIssueDispense'])->name('RespondIssueDispense');
-
+Route::post('inventory/addissuedispense', [InventoryController::class, 'AddIssueDispense'])->name('AddIssueDispense');
 
 Route::get('inventory-generic', [App\Http\Controllers\InventoryController::class, 'InventoryGeneric'])->name('inventory-generic');
 Route::post('inventory/addinvgeneric', [InventoryController::class, 'AddInventoryGeneric'])->name('AddInventoryGeneric');
