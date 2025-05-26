@@ -155,7 +155,7 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Patient MR# <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                                    <label class="control-label">Patient MR# <small class="text-danger mr_optional" style="font-size:11px;">(Optional)</small></label>
                                                                     <select class="form-control selecter p-0" name="mc_patient" id="mc_patient" style="color:#222d32">
                                                                     </select>
                                                                 </div>
@@ -196,13 +196,9 @@
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Select Item Generic</label>
                                                                     <select class="form-control selecter p-0 mc_itemgeneric" name="mc_itemgeneric[]" style="color:#222d32">
-                                                                        <option selected disabled >Select Item Generic</option>
-                                                                        @foreach ($Generics as $Generic)
-                                                                            <option value="{{ $Generic['id'] }}">{{ ucwords($Generic['name']) }}</option>
-                                                                        @endforeach
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="mc_itemgeneric_error"></span>
+                                                                <span class="text-danger mc_itemgeneric_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -214,7 +210,7 @@
                                                                     <label class="control-label">Enter Demand Qty</label>
                                                                     <input type="number" class="form-control input-sm" placeholder="Demand Qty.." name="mc_qty[]">
                                                                 </div>
-                                                                <span class="text-danger" id="mc_qty_error"></span>
+                                                                <span class="text-danger mc_qty_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>

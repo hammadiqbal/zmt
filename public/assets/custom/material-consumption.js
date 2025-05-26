@@ -2,6 +2,8 @@ $(document).ready(function() {
     //Open Add Requisition For Material Consumption Setup
     $(document).on('click', '.add-materialconsumption', function() {
         $('.duplicate:not(:first)').remove();
+        $('#mc_patient').prop('required', false);
+        $('.mr_optional').show();
         var orgId = $('#mc_org').val();
         $('#serviceSelect').hide();
         if(!orgId)
@@ -17,6 +19,9 @@ $(document).ready(function() {
             OrgChangeSites('#mc_org', '#mc_site', '#add_materialconsumption');
             $('#mc_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
             OrgChangeTransactionTypes('#mc_org', '#mc_transactiontype', '#add_materialconsumption',true);
+            
+            $('.mc_itemgeneric').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
+            OrgChangeInventoryGeneric('#mc_org', '.mc_itemgeneric', '#add_materialconsumption');
 
         }
         else{
@@ -27,20 +32,84 @@ $(document).ready(function() {
                 });
             });
             fetchTransactionTypes(orgId, '#mc_transactiontype', true, function(data) {
-                    if (data && data.length > 0) {
-                        $.each(data, function(key, value) {
-                            $('#mc_transactiontype').append('<option value="' + value.id + '">' + value.name + '</option>');
-                        });
-                    } 
+                if (data && data.length > 0) {
+                    $.each(data, function(key, value) {
+                        $('#mc_transactiontype').append('<option value="' + value.id + '">' + value.name + '</option>');
+                    });
+                } 
+            });
+             $('.mc_itemgeneric').html("<option selected disabled value=''>Select Item Generic</option>");
+            fetchOrganizationItemGeneric(orgId, '.mc_itemgeneric', function(data) {
+                $.each(data, function(key, value) {
+                    $('.mc_itemgeneric').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
+            });
             
         }
         $('#mc_patient').html("<option selected disabled value=''>Select Patient MR#</option>").prop('disabled',true);
         SiteChangeMRCode('#mc_site', '#mc_patient', '#add_materialconsumption', 'materialConsumption');
         MRChangeService('#mc_patient', '#mc_service');
 
+        $(document).off('change', '#mc_transactiontype').on('change', '#mc_transactiontype', function() {
+
+            let transactionTypeID = $(this).val();
+            let siteId = $('#mc_site').val();  // you must already have a selected site
+            if (!siteId) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Site Required',
+                    text: 'Please select a site before choosing the transaction type.'
+                });
+                $('#mc_transactiontype')
+                    .prop('disabled', false)
+                    .children('option[value=""]').remove().end()
+                    .prepend('<option value="" disabled>Select Transaction Type</option>')
+                    .val('');
+                return;
+            }
+        
+            Swal.fire({
+                title: "Processing",
+                allowOutsideClick: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                },
+                showConfirmButton: false
+            });
+        
+            $.ajax({
+                url: 'inventory/gettransactiontypeet',
+                type: 'GET',
+                data: {
+                    transactionTypeId: transactionTypeID,
+                    siteId: siteId
+                },
+                success: function(resp) {
+                    Swal.close();
+                    let sourceType = (resp.Source || '').toLowerCase();
+                    // if (sourceType.includes('patient')) {
+                    //     console.log('if');
+                    // }
+                    let destType = (resp.Destination || '').toLowerCase();
+                    // if (destType.includes('patient')) {
+                    //     console.log('ifff');
+                    // }
+                    if (sourceType.includes('patient') || destType.includes('patient')) {
+                        $('.mr_optional').hide();
+                        $('#mc_patient').prop('required', true);
+                    }
+
+                },
+                error: function(xhr, status, error) {
+                    Swal.close();
+                    console.log(error);
+                }
+            });
+        });
         $('#add-materialconsumption').modal('show');
     });
+
+    
     //Open Add Requisition For Material Consumption Setup
 
     //Add Requisition For Material Consumption
@@ -49,27 +118,107 @@ $(document).ready(function() {
         var data = SerializeForm(this);
 
         var resp = true;
+        // $(data).each(function(i, field){
+        //     if (((field.value == '') || (field.value == null)) && (field.name != 'mc_patient' && field.name != 'mc_service'  && field.name != 'mc_remarks')) 
+        //     {
+        //         var FieldName = field.name;
+        //         var FieldName = FieldName.replace('[]', '');
+
+        //         // var FieldName = field.name;
+        //         // FieldName = FieldName.replace(/\[\]/g, ''); // Remove all instances of []
+
+        //         // For the focus handlers, modify the selectors
+        //         $('input[name^="' + FieldName + '"]').focus(function() {  // Use ^= for "starts with"
+        //             $(FieldID).text("");
+        //             $('input[name^="' + FieldName + '"]').removeClass("requirefield");
+        //         });
+        //         $('select[name^="' + FieldName + '"]' ).on('select2:open', function() {
+        //             $(FieldID).text("");
+        //             $(this).next('.select2-container').find('.select2-selection').removeClass("requirefield");
+        //         });
+
+        //         var FieldID = '#'+FieldName + "_error";
+        //         $(FieldID).text("This field is required");
+        //         $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
+        //         $( 'input[name= "' +FieldName +'"' ).focus(function() {
+        //             $(FieldID).text("");
+        //             $('input[name= "' +FieldName +'"' ).removeClass("requirefield");
+        //         })
+        //         $('select[name= "' +FieldName +'"' ).next('.select2-container').find('.select2-selection').addClass('requirefield');
+        //         $('select[name= "' +FieldName +'"' ).on('select2:open', function() {
+        //             $(FieldID).text("");
+        //             $(this).next('.select2-container').find('.select2-selection').removeClass("requirefield");
+        //         });
+        //         $( 'textarea[name= "' +FieldName +'"' ).focus(function() {
+        //             $(FieldID).text("");
+        //             $('textarea[name= "' +FieldName +'"' ).removeClass("requirefield");
+        //         })
+        //         $( 'textarea[name= "' +FieldName +'"' ).addClass('requirefield');
+        //         resp = false;
+        //     }
+        // });
+
+        $(".duplicate").each(function() {
+            var row = $(this);
+            row.find('input, textarea, select').each(function() {
+                var elem = $(this);
+                var value = elem.val();
+                var fieldName = elem.attr('name').replace('[]', '');
+                console.log(fieldName);
+                var errorField = row.find('.' + fieldName + '_error');
+                if (!value || value === "" || (elem.is('select') && value === null)) {
+                    console.log(errorField);
+                    errorField.text("This field is required");
+                    if (elem.is('select')) {
+                        elem.next('.select2-container').find('.select2-selection').addClass('requirefield');
+                        elem.on('select2:open', function() {
+                            errorField.text("");
+                            elem.next('.select2-container').find('.select2-selection').removeClass("requirefield");
+                        });
+                    }
+                    else {
+                        elem.addClass('requirefield');
+                        elem.focus(function() {
+                            errorField.text("");
+                            elem.removeClass("requirefield");
+                        });
+                    }
+                    resp = false;
+                } else {
+                    errorField.text("");
+                    if (elem.is('select')) {
+                        elem.next('.select2-container').find('.select2-selection').removeClass('requirefield');
+                    } else {
+                        elem.removeClass('requirefield');
+                    }
+                }
+            });
+        });
+
+        var excludedFields = ['mc_patient', 'mc_service', 'mc_remarks'];
         $(data).each(function(i, field){
-            if (((field.value == '') || (field.value == null)) && (field.name != 'mc_patient' && field.name != 'mc_service'  && field.name != 'mc_remarks')) 
+            var originalFieldName = field.name;
+            var sanitizedFieldName = originalFieldName.replace(/\[\]/g, '');
+            if (excludedFields.indexOf(sanitizedFieldName) !== -1) {
+                return true; 
+            }
+            if ((field.value == '') || (field.value == null))
             {
                 var FieldName = field.name;
                 var FieldID = '#'+FieldName + "_error";
+              
                 $(FieldID).text("This field is required");
                 $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
                 $( 'input[name= "' +FieldName +'"' ).focus(function() {
                     $(FieldID).text("");
                     $('input[name= "' +FieldName +'"' ).removeClass("requirefield");
                 })
+
                 $('select[name= "' +FieldName +'"' ).next('.select2-container').find('.select2-selection').addClass('requirefield');
                 $('select[name= "' +FieldName +'"' ).on('select2:open', function() {
                     $(FieldID).text("");
                     $(this).next('.select2-container').find('.select2-selection').removeClass("requirefield");
                 });
-                $( 'textarea[name= "' +FieldName +'"' ).focus(function() {
-                    $(FieldID).text("");
-                    $('textarea[name= "' +FieldName +'"' ).removeClass("requirefield");
-                })
-                $( 'textarea[name= "' +FieldName +'"' ).addClass('requirefield');
                 resp = false;
             }
         });
@@ -284,11 +433,21 @@ $(document).ready(function() {
                 OrgChangeTransactionTypes('#u_mc_org', '#u_mc_transactionType', '#add_materialconsumption',true);
 
                 $('#u_mc_inv_location').val(response.ServiceLocationId).change();
-
                 fetchPatientMR(response.siteId, '#u_mc_patient', 'materialConsumption', function(data) {
                     $('#u_mc_patient').empty();
                     $('#u_mc_patient').find('option:contains("Loading...")').remove();
-
+                    
+                    if (!data || data.length === 0) {
+                        $('#u_mc_patient')
+                            .html('<option selected disabled value="">Not Available</option>')
+                            .prop('disabled', true);
+                        $('#u_serviceSelect').hide();
+                        $('#u_mc_service').empty();
+                        return;
+                    } else {
+                        $('#u_mc_patient').prop('disabled', false);
+                    }
+                    
                     if(response.mrCode && response.mrCode.trim() !== '')
                     {
                         $('#u_mc_patient').html("<option selected value='"+response.mrCode+"'>" + response.mrCode + "</option>");
@@ -306,6 +465,15 @@ $(document).ready(function() {
                     }
                     else{
                         $('#u_mc_patient').append('<option selected disabled value="">Select Patient MR#</option>');
+                        fetchMRServices(response.mrCode, '#u_mc_service', function(data) {
+                            if (data && data.length > 0) {
+                                $.each(data, function(key, values) {
+                                    if (response.serviceId != values.id) {
+                                        $('#u_mc_service').append('<option value="' + values.id + '">' + values.name + '</option>');
+                                    }
+                                });
+                            } 
+                        });
                         $('#u_serviceSelect').hide();
                     }
 
@@ -440,4 +608,34 @@ $(document).ready(function() {
         });
     });
     //Update Requisition For Material Consumption
+
+    $(document).on('change', '#mc_transactiontype', function() {
+        let transactionTypeId = $(this).val();
+        
+        // Reset the patient field state first
+        $('.mr_optional').text('(Optional)');
+        $('#mc_patient').prop('required', false);
+        
+        if (transactionTypeId) {
+            $.ajax({
+                url: 'inventory/gettransactiontypes',
+                type: 'GET',
+                data: { id: transactionTypeId },
+                success: function(resp) {
+                    let sourceType = (resp.Source || '').toLowerCase();
+                    let destType = (resp.Destination || '').toLowerCase();
+                    
+                    // If either source or destination includes 'patient'
+                    if (sourceType.includes('patient') || destType.includes('patient')) {
+                        // Make the patient field required
+                        $('.mr_optional').text('(Required)');
+                        $('#mc_patient').prop('required', true);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching transaction types:', error);
+                }
+            });
+        }
+    });
 });

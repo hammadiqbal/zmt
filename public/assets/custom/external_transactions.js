@@ -43,7 +43,6 @@ $(document).ready(function() {
             $('#et_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',true);
             OrgChangeSites('#et_org', '#et_site', '#add_externaltransactions');
             
-            
             $('.et_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
             OrgChangeInventoryGeneric('#et_org', '.et_generic', '#add_externaltransactions');
         }

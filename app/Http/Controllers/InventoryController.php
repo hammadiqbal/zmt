@@ -8211,9 +8211,6 @@ class InventoryController extends Controller
 
     // public function AddIssueDispense(IssueDispenseRequest $request)
     // {
-    //     // Start database transaction
-    //     DB::beginTransaction();
-
     //     // Get validated data
     //     $validated = $request->validated();
         
@@ -8221,56 +8218,111 @@ class InventoryController extends Controller
     //     $success = true;
     //     $message = '';
 
-    //     for ($i = 0; $i < $itemCount; $i++) {
-    //         $inventory = new InventoryManagement();
+    //     $inventory = new InventoryManagement();
+        
+    //     // Required fields
+    //     $inventory->transaction_type_id = $validated['id_transactiontype'];
+    //     $inventory->org_id = $validated['id_org'];
+    //     $inventory->site_id = $validated['id_site'];
+    //     $inventory->source = $validated['id_source'];
+    //     $inventory->destination = $validated['id_destination'];
+        
+    //     // Handle MR related fields
+    //     if (isset($validated['id_mr']) && !empty($validated['id_mr'])) {
+    //         $inventory->mr_code = $validated['id_mr'];
             
-    //         // Required fields
-    //         $inventory->transaction_type_id = $validated['id_transactiontype'];
-    //         $inventory->org_id = $validated['id_org'];
-    //         $inventory->site_id = $validated['id_site'];
-    //         $inventory->source = $validated['id_source'];
-    //         $inventory->destination = $validated['id_destination'];
-            
-    //         // Optional fields with null coalescing
-    //         $inventory->ref_document_no = $validated['id_reference_document'] ?? null;
-    //         $inventory->mr_code = $validated['id_mr'] ?? null;
-    //         $inventory->service_id = $validated['id_service'] ?? null;
-    //         $inventory->service_mode_id = $validated['id_service_mode'] ?? null;
-    //         $inventory->billing_cc = $validated['id_billingcc'] ?? null;
-    //         $inventory->performing_cc = $validated['id_billingcc'] ?? null;
-    //         $inventory->resp_physician = $validated['id_physician'] ?? null;
-    //         $inventory->remarks = $validated['id_remarks'] ?? null;
-
-    //         // Item specific fields
-    //         $inventory->inv_generic_id = $validated['id_generic'][$i];
-    //         $inventory->brand_id = $validated['id_brand'][$i];
-    //         $inventory->batch_no = $validated['id_batch'][$i];
-    //         $inventory->expiry_date = $validated['id_expiry'][$i];
-    //         $inventory->transaction_qty = $validated['et_qty'][$i];
-            
-    //         // Set default values
-    //         $inventory->status = 1;
-    //         $inventory->user_id = auth()->id();
-    //         $inventory->logid = auth()->id();
-    //         $inventory->effective_timestamp = now()->timestamp;
-    //         $inventory->timestamp = now()->timestamp;
-    //         $inventory->last_updated = now()->timestamp;
-
-    //         if (!$inventory->save()) {
-    //             $success = false;
-    //             $message = 'Failed to save inventory record';
-    //             break;
+    //         // If MR exists, check for service details
+    //         if (isset($validated['id_service']) && !empty($validated['id_service'])) {
+    //             $inventory->service_id = $validated['id_service'];
+    //             $inventory->service_mode_id = $validated['id_servicemode'] ?? null;
+    //             $inventory->billing_cc = $validated['id_billingcc'] ?? null;
+    //             $inventory->performing_cc = $validated['id_performing_cc'] ?? null;
+    //             $inventory->resp_physician = $validated['id_physician'] ?? null;
     //         }
     //     }
 
+    //     // Optional reference document
+    //     $inventory->ref_document_no = $validated['id_reference_document'] ?? null;
+        
+    //     // Remarks field
+    //     $inventory->remarks = $validated['id_remarks'] ?? null;
+
+    //     // Handle item specific fields based on count
+    //     if ($itemCount > 1) {
+    //         // Multiple items - use comma separated values
+    //         $inventory->inv_generic_id = implode(',', $validated['id_generic']);
+    //         $inventory->brand_id = implode(',', $validated['id_brand']);
+    //         $inventory->batch_no = implode(',', $validated['id_batch']);
+            
+    //         // Format expiry dates before imploding
+    //         $formattedDates = array_map(function($date) {
+    //             Carbon::createFromFormat('Y-m-d', $date)->timestamp;
+    //         }, $validated['id_expiry']);
+    //         $inventory->expiry_date = implode(',', $formattedDates);
+            
+
+    //     //         $ExpireDate = $request->input('et_expiry');
+    //     // $ExpireDates = [];
+    //     // foreach ($ExpireDate as $ed) {
+    //     //     $timestamp = Carbon::createFromFormat('Y-m-d', $ed)->timestamp;
+    //     //     $ExpireDates[] = $timestamp;
+    //     // }
+
+    //     // $ExpireDates = is_array($ExpireDates) ? implode(',', $ExpireDates) : '';
+            
+    //         $inventory->transaction_qty = implode(',', $validated['id_qty']);
+
+    //         // Calculate total balances for multiple items
+    //         $totalSourceBalance = 0;
+    //         $totalDestBalance = 0;
+    //         foreach ($validated['id_qty'] as $qty) {
+    //             $totalSourceBalance += (-1 * abs($qty));
+    //             $totalDestBalance += abs($qty);
+    //         }
+            
+    //         // $inventory->source_balance = $totalSourceBalance;
+    //         // $inventory->destination_balance = $totalDestBalance;
+    //         // $inventory->site_balance = $totalSourceBalance + $totalDestBalance;
+    //         // $inventory->org_balance = $inventory->site_balance;expiry_date
+    //     } else {
+    //         // Single item - store as is
+    //         $inventory->inv_generic_id = $validated['id_generic'][0];
+    //         $inventory->brand_id = $validated['id_brand'][0];
+    //         $inventory->batch_no = $validated['id_batch'][0];
+    //         // $inventory->expiry_date = date('Y-m-d', strtotime($validated['id_expiry'][0]));
+    //         $inventory->expiry_date  = Carbon::createFromFormat('Y-m-d', $validated['id_expiry'][0])->timestamp;
+
+    //         $inventory->transaction_qty = $validated['id_qty'][0];
+
+    //         // Calculate balances for single item
+    //         // $sourceBalance = -1 * abs($validated['id_qty'][0]);
+    //         // $destBalance = abs($validated['id_qty'][0]);
+            
+    //         // $inventory->source_balance = $sourceBalance;
+    //         // $inventory->destination_balance = $destBalance;
+    //         // $inventory->site_balance = $sourceBalance + $destBalance;
+    //         // $inventory->org_balance = $inventory->site_balance;
+    //     }
+        
+    //     // Set default values
+    //     $inventory->status = 1;
+    //     $inventory->user_id = auth()->id();
+    //     $inventory->logid = auth()->user()->username ?? auth()->id();
+    //     $inventory->effective_timestamp = now()->timestamp;
+    //     $inventory->timestamp = now()->timestamp;
+    //     $inventory->last_updated = now()->timestamp;
+
+    //     if (!$inventory->save()) {
+    //         $success = false;
+    //         $message = 'Failed to save inventory record';
+    //     }
+
     //     if ($success) {
-    //         DB::commit();
     //         return response()->json([
     //             'success' => 'Issue & Dispense records have been added successfully',
     //             'reload' => true
     //         ]);
     //     } else {
-    //         DB::rollback();
     //         return response()->json([
     //             'error' => $message,
     //             'reload' => false
@@ -8323,57 +8375,21 @@ class InventoryController extends Controller
             $inventory->brand_id = implode(',', $validated['id_brand']);
             $inventory->batch_no = implode(',', $validated['id_batch']);
             
-            // Format expiry dates before imploding
+            // Format expiry dates
             $formattedDates = array_map(function($date) {
-                Carbon::createFromFormat('Y-m-d', $date)->timestamp;
+                return Carbon::createFromFormat('Y-m-d', $date)->timestamp;
             }, $validated['id_expiry']);
             $inventory->expiry_date = implode(',', $formattedDates);
             
-
-        //         $ExpireDate = $request->input('et_expiry');
-        // $ExpireDates = [];
-        // foreach ($ExpireDate as $ed) {
-        //     $timestamp = Carbon::createFromFormat('Y-m-d', $ed)->timestamp;
-        //     $ExpireDates[] = $timestamp;
-        // }
-
-        // $ExpireDates = is_array($ExpireDates) ? implode(',', $ExpireDates) : '';
-            
             $inventory->transaction_qty = implode(',', $validated['id_qty']);
-
-            // Calculate total balances for multiple items
-            $totalSourceBalance = 0;
-            $totalDestBalance = 0;
-            foreach ($validated['id_qty'] as $qty) {
-                $totalSourceBalance += (-1 * abs($qty));
-                $totalDestBalance += abs($qty);
-            }
-            
-            // $inventory->source_balance = $totalSourceBalance;
-            // $inventory->destination_balance = $totalDestBalance;
-            // $inventory->site_balance = $totalSourceBalance + $totalDestBalance;
-            // $inventory->org_balance = $inventory->site_balance;expiry_date
         } else {
-            // Single item - store as is
             $inventory->inv_generic_id = $validated['id_generic'][0];
             $inventory->brand_id = $validated['id_brand'][0];
             $inventory->batch_no = $validated['id_batch'][0];
-            // $inventory->expiry_date = date('Y-m-d', strtotime($validated['id_expiry'][0]));
-            $inventory->expiry_date  = Carbon::createFromFormat('Y-m-d', $validated['id_expiry'][0])->timestamp;
-
+            $inventory->expiry_date = Carbon::createFromFormat('Y-m-d', $validated['id_expiry'][0])->timestamp;
             $inventory->transaction_qty = $validated['id_qty'][0];
-
-            // Calculate balances for single item
-            // $sourceBalance = -1 * abs($validated['id_qty'][0]);
-            // $destBalance = abs($validated['id_qty'][0]);
-            
-            // $inventory->source_balance = $sourceBalance;
-            // $inventory->destination_balance = $destBalance;
-            // $inventory->site_balance = $sourceBalance + $destBalance;
-            // $inventory->org_balance = $inventory->site_balance;
         }
         
-        // Set default values
         $inventory->status = 1;
         $inventory->user_id = auth()->id();
         $inventory->logid = auth()->user()->username ?? auth()->id();
@@ -8384,6 +8400,61 @@ class InventoryController extends Controller
         if (!$inventory->save()) {
             $success = false;
             $message = 'Failed to save inventory record';
+        }
+
+        // Get transaction type rule for balance calculation
+        $rule = DB::table('inventory_transaction_type')
+            ->select('applicable_location_to', 'source_action', 'destination_action')
+            ->where('id', $validated['id_transactiontype'])
+            ->first();
+
+        // Process each item separately for inventory_balance
+        for ($i = 0; $i < $itemCount; $i++) {
+            $genId = $validated['id_generic'][$i];
+            $brandId = $validated['id_brand'][$i];
+            $batchNo = $validated['id_batch'][$i];
+            $qty = (int)$validated['id_qty'][$i];
+            $expTs = Carbon::createFromFormat('Y-m-d', $validated['id_expiry'][$i])->timestamp;
+
+            // Get previous balances
+            $prevOrgRow = InventoryBalance::where('generic_id', $genId)
+                ->where('brand_id', $brandId)
+                ->where('batch_no', $batchNo)
+                ->where('org_id', $validated['id_org'])
+                ->orderBy('id', 'desc')
+                ->first();
+            $prevOrgBalance = $prevOrgRow ? $prevOrgRow->org_balance : 0;
+
+            $prevSiteRow = InventoryBalance::where('generic_id', $genId)
+                ->where('brand_id', $brandId)
+                ->where('batch_no', $batchNo)
+                ->where('org_id', $validated['id_org'])
+                ->where('site_id', $validated['id_site'])
+                ->orderBy('id', 'desc')
+                ->first();
+            $prevSiteBalance = $prevSiteRow ? $prevSiteRow->site_balance : 0;
+
+            // For issue and dispense, we always subtract quantities
+            $newOrgBalance = $prevOrgBalance - $qty;
+            $newSiteBalance = $prevSiteBalance - $qty;
+
+            $dateTime = Carbon::createFromTimestamp(now()->timestamp)->format('d-M-Y H:i');
+            $remarkText = "Issue & Dispense Transaction by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSiteBalance}";
+
+            // Create inventory balance record
+            InventoryBalance::create([
+                'management_id' => $inventory->id,
+                'generic_id' => $genId,
+                'brand_id' => $brandId,
+                'batch_no' => $batchNo,
+                'expiry_date' => $expTs,
+                'org_id' => $validated['id_org'],
+                'site_id' => $validated['id_site'],
+                'org_balance' => $newOrgBalance,
+                'site_balance' => $newSiteBalance,
+                'remarks' => $remarkText,
+                'timestamp' => now()->timestamp,
+            ]);
         }
 
         if ($success) {

@@ -54,9 +54,9 @@ $(document).ready(function() {
         SiteChangeMaterialManagementTransactionTypes('#id_site','#id_org', '#id_transactiontype', '#add_issuedispense','issue_dispense');
 
         $(document).off('change', '#id_mr').on('change', '#id_mr', function() {
-        // $(document)
-        // .off('change.mrNewid', '#id_mr')
-        // .on('change.mrnewid', '#id_mr', function() {
+            // $(document)
+            // .off('change.mrNewid', '#id_mr')
+            // .on('change.mrnewid', '#id_mr', function() {
             $('.req_only').hide();
             let MRno = $(this).val();
             toggleDuplicateFieldsBasedOnMR(MRno);
@@ -391,77 +391,6 @@ $(document).ready(function() {
        
         $('.id_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
 
-        // const $row = $(this).closest('.duplicate'); 
-  
-        // $(document).off('change', '.id_brand').on('change', '.id_brand', function() {
-        // $(document)
-        //     .off('change.newIssueBrand')           // only removes handlers in .newIssueBrand namespace
-        //     .on('change.newIssueBrand', '.id_brand', function(){
-        //     var currentRow = $(this).closest('.duplicate'); 
-        //     // var currentRowBrandSelect = currentRow.find('.id_brand'); 
-        //     const orgId     = $('#id_org').val(); 
-        //     const siteId    = $('#id_site').val();
-        //     const genericId = currentRow.find('.id_generic').val();
-        //     // const brandId   = currentRow.find('.id_brand').val();
-        //     var brandId = $(this).val();
-
-        //     const $batch   =  currentRow.find('.id_batch');
-        //     const $expiry  =  currentRow.find('.id_expiry');
-        //     const $brand  =  currentRow.find('.id_brand');
-            
-        //     if (!orgId || !siteId || !genericId || !brandId) {
-        //         Swal.fire(
-        //         'Missing Information',
-        //         'Please select Organization, Site, Generic and Brand before proceeding.',
-        //         'warning'
-        //         );
-        //         $brand
-        //         .prop('disabled',false)
-        //         .children('option[value=""]').remove().end()
-        //         .prepend('<option value="" disabled>Select Brand</option>')
-        //         .val('');
-        //         return;
-        //     }
-
-        //     $.getJSON('inventory/getbatchno', { orgId, siteId, genericId, brandId })
-        //         // .always(() => $('#ajax-loader').hide())
-        //         .done(resp => {
-        //         if (resp && resp.batch_no) {
-        //             // $('.brand_details').show();
-        //             currentRow.find('.brand_details').show();
-
-        //             $batch.val(resp.batch_no).prop('disabled', true);
-        //             $expiry.val(resp.expiry_date).prop('disabled', true);
-
-        //             // Set max for transaction qty input
-        //             const $qty = currentRow.find('.id_qty');
-        //             if ($qty.length && resp.site_balance !== undefined) {
-        //                 $qty.attr('max', resp.site_balance);
-        //                 $qty.attr('placeholder', 'Max: ' + resp.site_balance);
-        //             }
-        //         } else {
-        //             Swal.fire('No batch# found','No inventory for that combination.','warning');
-        //             $brand
-        //             .prop('disabled',false)
-        //             .children('option[value=""]').remove().end()
-        //             .prepend('<option value="" disabled>Select Brand</option>')
-        //             .val('');
-        //             currentRow.find('.brand_details').hide();
-        //             $batch.val('').prop('disabled', true);
-        //             $expiry.val('').prop('disabled', true);
-
-        //             // Remove max restriction if no batch found
-        //             const $qty = currentRow.find('.id_qty');
-        //             if ($qty.length) {
-        //                 $qty.removeAttr('max');
-        //                 $qty.attr('placeholder', 'Transaction Qty...');
-        //             }
-        //             return;
-        //         }
-        //         })
-        //         .fail(() => Swal.fire('Error','Could not fetch batch info','error'));
-        // });
-
         $(document)
             .off('change.newIssueBrand')
             .on('change.newIssueBrand', '.id_brand', function(e) {
@@ -588,12 +517,12 @@ $(document).ready(function() {
          $('#ajax-loader').show();
         const txId     = $(this).data('id');
         const genId    = $(this).data('generic-id');
-        const source   = $(this).data('source');   // ← pull it out
+        const source   = $(this).data('source'); 
         
         $.getJSON('inventory/respond-issuedispense', {
             id:        txId,
             genericId: genId,
-            source:    source               // ← send it
+            source:    source 
         })
         .fail(() => Swal.fire('Error','Could not load data','error'))
         .done(data => {

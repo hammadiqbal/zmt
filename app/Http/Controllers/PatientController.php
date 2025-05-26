@@ -70,6 +70,7 @@ class PatientController extends Controller
     {
         $siteId = $request->input('siteId');
         $condition = $request->input('condition');
+        // dd($siteId, $condition);
 
         $baseQuery = PatientRegistration::select('patient.mr_code')
         ->where('patient.status', 1)
@@ -80,7 +81,7 @@ class PatientController extends Controller
                 ->join('patient_inout', 'patient_inout.mr_code', '=', 'patient.mr_code')
                 ->where('patient_inout.status', 1)
                 ->distinct('patient.mr_code');
-        } 
+        }
         elseif ($condition == 'serviceBooking') {
             $PatientMRCode = $baseQuery
                 ->leftJoin('service_booking', function($join) {
@@ -90,6 +91,7 @@ class PatientController extends Controller
                 ->whereNull('service_booking.mr_code');
         }
         $PatientMRCode = $baseQuery->get();
+
         return response()->json($PatientMRCode);
     }
 
