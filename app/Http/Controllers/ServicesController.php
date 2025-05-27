@@ -2116,7 +2116,7 @@ class ServicesController extends Controller
             ->where('patient_inout.status', 1)
             ->distinct()
             ->get();
-
+;
         return response()->json($serviceDetails);
     }
     

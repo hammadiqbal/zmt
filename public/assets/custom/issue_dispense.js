@@ -3,9 +3,24 @@ $(document).ready(function() {
     $(document).on('click', '.add-issuedispense', function() {
         $('#id_dl,#id_sl,.serviceDetails,.brand_details').hide();
         $('.req_only').show();
+        $('#id_mr').closest('.col-md-6').show();
         $('#transaction-info-row').empty();
         $('#mrService,.mr-dependent').hide();
         $('#id_mr').val('');
+        $('.text-danger').text('');  
+        $('.requirefield').removeClass('requirefield');  
+        $('.select2-selection').removeClass('requirefield'); 
+
+         if ($('#source_type').length) {
+                $('#source_type').val('material');
+            } else {
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'source_type',
+                    id: 'source_type',
+                    value: 'material'
+                }).appendTo('#add_issuedispense');
+            }
 
         $(".id_frequency, .id_route").each(function() {
             $(this).val($(this).find("option:first").val()).change();
@@ -54,13 +69,13 @@ $(document).ready(function() {
         SiteChangeMaterialManagementTransactionTypes('#id_site','#id_org', '#id_transactiontype', '#add_issuedispense','issue_dispense');
 
         $(document).off('change', '#id_mr').on('change', '#id_mr', function() {
-            // $(document)
-            // .off('change.mrNewid', '#id_mr')
-            // .on('change.mrnewid', '#id_mr', function() {
+            $('#source_type').val('medication');
+
             $('.req_only').hide();
             let MRno = $(this).val();
             toggleDuplicateFieldsBasedOnMR(MRno);
             fetchMRServices(MRno, '#id_service', function(data) {
+                // console.log(data);
                 if (data && data.length > 0) {
                     $('#id_service').empty();
                     let $service = $('#id_service')
@@ -423,7 +438,6 @@ $(document).ready(function() {
         $('#add-issuedispense').modal('show');
     });
   
-
     $(document).off('change', '.id_generic').on('change', '.id_generic', function() {
         var genericId = $(this).val();
         var currentRow = $(this).closest('.duplicate'); 
@@ -515,6 +529,9 @@ $(document).ready(function() {
     // Event listener for respond button
     $('#view-issuedispense').on('click', '.respond-btn', function() {
          $('#ajax-loader').show();
+         $('.text-danger').text('');  
+         $('.requirefield').removeClass('requirefield');  
+         $('.select2-selection').removeClass('requirefield'); 
         const txId     = $(this).data('id');
         const genId    = $(this).data('generic-id');
         const source   = $(this).data('source'); 
@@ -528,7 +545,8 @@ $(document).ready(function() {
         .done(data => {
             // $('#id_dl,#id_sl,.serviceDetails').show();
             // $('#mrService,.mr-dependent').show();
-            if (data.source === 'material' && !data.mr_code) {
+            // if (data.source === 'material' && !data.mr_code) {
+            if (data.source === 'material') {
                 $('#id_mr').closest('.col-md-6').hide();
                 $('#id_sl, #id_dl, .serviceDetails, #mrService, .mr-dependent').hide();
                 $('.req_only').show();
@@ -538,6 +556,18 @@ $(document).ready(function() {
                 $('#id_sl, #id_dl, .serviceDetails, #mrService, .mr-dependent').show();
             }
             $('#add_issuedispense')[0].reset();
+
+            if ($('#source_type').length) {
+                $('#source_type').val(data.source);
+            } else {
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'source_type',
+                    id: 'source_type',
+                    value: data.source
+                }).appendTo('#add_issuedispense');
+            }
+
             $('#addMoreBtn, #removeBtn').hide();
 
             $('#id_org')
@@ -566,7 +596,7 @@ $(document).ready(function() {
             }
 
             $(document).off('change', '#id_mr').on('change', '#id_mr', function() {
-                $('.req_only').hide();
+                // $('.req_only').hide();
                 let MRno = $(this).val();
                 $.ajax({
                     url: 'patient/fetchpatientdetails',
@@ -875,12 +905,41 @@ $(document).ready(function() {
                 $row.find('.id_route').html(`<option selected value="${data.route_id}">${data.route_name}</option>`).prop('disabled', true);
                 $row.find('.id_frequency').html(`<option selected value="${data.frequency_id}">${data.frequency_name}</option>`).prop('disabled', true);
                 $row.find('input[name="id_duration[]"]').val(data.days).prop('disabled', true);
-                $row.find('.id_batch, .id_expiry, input[name="et_qty[]"]').val('').prop('disabled', false);
+                $row.find('.id_batch, .id_expiry, input[name="id_qty[]"]').val('').prop('disabled', false);
             } else {
                 $('.mr-dependent').hide();
                 $('.req_only').show();
+
+                const demandQty = parseFloat(data.demand_qty);
+                const $qtyInput = $row.find('.id_qty');
+                
+                // Set demand qty display first
                 $row.find('.id_demand_qty').val(data.demand_qty).prop('disabled', true);
-                $row.find('input[name="et_qty[]"]').val('').prop('disabled', false);
+                $qtyInput.val('').prop('disabled', false);
+            
+                // Wait for batch info to be loaded
+                setTimeout(() => {
+                    const currentMax = parseFloat($qtyInput.attr('max'));
+                    if (demandQty && !isNaN(demandQty)) {
+                        if (currentMax && !isNaN(currentMax)) {
+                            if (demandQty < currentMax) {
+                                $qtyInput.attr('max', demandQty);
+                                $qtyInput.attr('placeholder', `Max: ${demandQty} (Demand Qty)`);
+                            }
+                            // If demand qty is greater than current max, keep the current max
+                        } else {
+                            // If no current max exists, set to demand qty
+                            $qtyInput.attr('max', demandQty);
+                            $qtyInput.attr('placeholder', `Max: ${demandQty} (Demand Qty)`);
+                        }
+                    }
+                }, 1000); // Increased timeout to ensure batch info is loaded
+                
+                
+
+                // $qtyInput.val('').prop('disabled', false);
+                // $row.find('.id_demand_qty').val(data.demand_qty).prop('disabled', true);
+                // $row.find('input[name="id_qty[]"]').val('').prop('disabled', false);
             }
 
             $('#add-issuedispense').modal('show');
@@ -935,14 +994,9 @@ $(document).ready(function() {
         var resp = true;
         var mrSelected = $('#id_mr').val();
         var serviceAvailable = $('#mrService').is(':visible');
-        // Get source and destination types
         var sourceType = $('#transaction-info-row .source').first().text().toLowerCase();
         var destinationType = $('#transaction-info-row .destination').last().text().toLowerCase();
-        
-        // Check if MR is required (when source or destination is patient)
         var isMRRequired = sourceType.includes('patient') || destinationType.includes('patient');
-
-        // Validate MR field if required
         if (isMRRequired && !mrSelected) {
             $('#id_mr')
                 .next('.select2-container')
@@ -952,7 +1006,6 @@ $(document).ready(function() {
             resp = false;
         }
 
-        // Validate source/destination match with MR if patient type
         if (mrSelected) {
             if (sourceType.includes('patient') && $('#id_source').val() !== mrSelected) {
                 $('#id_source_error').text("Source patient must match selected MR#");
@@ -963,8 +1016,8 @@ $(document).ready(function() {
                 resp = false;
             }
         }
-
-        // Validate each row in duplicate class
+        var sourceType = $('#source_type').val(); 
+        var hasSourceType = $('#source_type').length > 0; 
         $(".duplicate").each(function() {
             var row = $(this);
             
@@ -989,8 +1042,33 @@ $(document).ready(function() {
                     return true;
                 }
 
+                    
+                if (hasSourceType) {
+                    if (sourceType === 'material') {
+                        if (['id_dose', 'id_route', 'id_frequency', 'id_duration'].includes(fieldName)) {
+                            return true;
+                        }
+                    } else {
+                        if (['id_demand_qty'].includes(fieldName)) {
+                            return true;
+                        }
+                    }
+                }
+                else{
+                    if (!isMRRequired && !mrSelected && 
+                        ['id_dose', 'id_route', 'id_frequency', 'id_duration'].includes(fieldName)) {
+                        return true;
+                    }
+                    else{
+                        if (!isMRRequired && !mrSelected && 
+                            ['id_demand_qty'].includes(fieldName)) {
+                            return true;
+                        }
+
+                    }
+                }
+
                 if (!value || value === "" || (elem.is('select') && value === null)) {
-                    // console.log(fieldName);
                     errorField.text("This field is required");
                     if (elem.is('select')) {
                         elem.next('.select2-container').find('.select2-selection').addClass('requirefield');
@@ -1031,21 +1109,42 @@ $(document).ready(function() {
             ]);
         }
 
-        if (!isMRRequired && !mrSelected) {
-            excludedFields = excludedFields.concat([
-                'id_dose',
-                'id_route',
-                'id_frequency',
-                'id_duration'
-            ]);
+    
+        if (hasSourceType) {
+            // Only modify excludedFields if we're handling a response (source_type exists)
+            if (sourceType === 'material') {
+                // For material source, exclude medication-related fields
+                excludedFields = excludedFields.concat([
+                    'id_dose',
+                    'id_route',
+                    'id_frequency',
+                    'id_duration'
+                ]);
+            } else {
+                // For medication source, exclude material-related fields
+                excludedFields = excludedFields.concat([
+                    'id_demand_qty'
+                ]);
+            }
         }
         else{
-            excludedFields = excludedFields.concat([
-                'id_demand_qty'
-            ]);
+            if (!isMRRequired && !mrSelected) {
+                excludedFields = excludedFields.concat([
+                    'id_dose',
+                    'id_route',
+                    'id_frequency',
+                    'id_duration'
+                ]);
+            }
+            else{
+                excludedFields = excludedFields.concat([
+                    'id_demand_qty'
+                ]);
+            }
         }
 
-        // If MR is optional, add it to excluded fields
+      
+    
         if (!isMRRequired) {
             excludedFields.push('id_mr');
         }
@@ -1061,8 +1160,8 @@ $(document).ready(function() {
             if ((field.value == '') || (field.value == null)) {
                 var FieldName = field.name;
                 var FieldName = FieldName.replace('[]', '');
+                console.log(FieldName);
                 var FieldID = '#' + FieldName + "_error";
-                    console.log(FieldName);
 
                 $(FieldID).text("This field is required");
                 $('input[name="' + FieldName + '"]').addClass('requirefield');
@@ -1079,6 +1178,7 @@ $(document).ready(function() {
                 
                 resp = false;
             }
+           
         });
 
         // If validation passes, submit the form

@@ -44,23 +44,64 @@ class IssueDispenseRequest extends FormRequest
         ];
 
         // Add conditional validation for MR related fields
-        if ($this->filled('id_mr')) {
-            $rules['id_mr'] = 'exists:patient,mr_code';
-            
-            // If MR exists, service becomes required
-            $rules['id_service'] = 'required|exists:services,id';
-            $rules['id_servicemode'] = 'required|exists:service_mode,id';
-            $rules['id_billingcc'] = 'required|exists:costcenter,id';
-            $rules['id_performing_cc'] = 'required';
-            $rules['id_physician'] = 'required|exists:employee,id';
+        $sourceType = $this->input('source_type');
+
+        if ($sourceType === 'material') {
+            // For material source
+            if ($this->filled('id_mr')) {
+                // If MR is provided, validate it exists but keep service fields optional
+                $rules['id_mr'] = 'exists:patient,mr_code';
+                $rules['id_service'] = 'nullable|exists:services,id';
+                $rules['id_servicemode'] = 'nullable|exists:service_mode,id';
+                $rules['id_billingcc'] = 'nullable|exists:costcenter,id';
+                $rules['id_performing_cc'] = 'nullable';
+                $rules['id_physician'] = 'nullable|exists:employee,id';
+            } else {
+                // If no MR, all service-related fields are optional
+                $rules['id_mr'] = 'nullable';
+                $rules['id_service'] = 'nullable';
+                $rules['id_servicemode'] = 'nullable';
+                $rules['id_billingcc'] = 'nullable';
+                $rules['id_performing_cc'] = 'nullable';
+                $rules['id_physician'] = 'nullable';
+            }
         } else {
-            // If no MR, these fields should be nullable
-            $rules['id_service'] = 'nullable|exists:services,id';
-            $rules['id_servicemode'] = 'nullable|exists:service_mode,id';
-            $rules['id_billingcc'] = 'nullable|exists:costcenter,id';
-            $rules['id_performing_cc'] = 'nullable';
-            $rules['id_physician'] = 'nullable|exists:employee,id';
+            // For non-material source (medication)
+            if ($this->filled('id_mr')) {
+                // If MR exists, require all service fields
+                $rules['id_mr'] = 'exists:patient,mr_code';
+                $rules['id_service'] = 'required|exists:services,id';
+                $rules['id_servicemode'] = 'required|exists:service_mode,id';
+                $rules['id_billingcc'] = 'required|exists:costcenter,id';
+                $rules['id_performing_cc'] = 'required';
+                $rules['id_physician'] = 'required|exists:employee,id';
+            } else {
+                // If no MR, make fields optional
+                $rules['id_mr'] = 'nullable';
+                $rules['id_service'] = 'nullable';
+                $rules['id_servicemode'] = 'nullable';
+                $rules['id_billingcc'] = 'nullable';
+                $rules['id_performing_cc'] = 'nullable';
+                $rules['id_physician'] = 'nullable';
+            }
         }
+        // if ($this->filled('id_mr')) {
+        //     $rules['id_mr'] = 'exists:patient,mr_code';
+            
+        //     // If MR exists, service becomes required
+        //     $rules['id_service'] = 'required|exists:services,id';
+        //     $rules['id_servicemode'] = 'required|exists:service_mode,id';
+        //     $rules['id_billingcc'] = 'required|exists:costcenter,id';
+        //     $rules['id_performing_cc'] = 'required';
+        //     $rules['id_physician'] = 'required|exists:employee,id';
+        // } else {
+        //     // If no MR, these fields should be nullable
+        //     $rules['id_service'] = 'nullable|exists:services,id';
+        //     $rules['id_servicemode'] = 'nullable|exists:service_mode,id';
+        //     $rules['id_billingcc'] = 'nullable|exists:costcenter,id';
+        //     $rules['id_performing_cc'] = 'nullable';
+        //     $rules['id_physician'] = 'nullable|exists:employee,id';
+        // }
 
         return $rules;
     }

@@ -7782,6 +7782,194 @@ class InventoryController extends Controller
         return view('dashboard.material_management.issue_dispense', compact('user','RequisitionNonMandatory','costcenters','MedicationRoutes','MedicationFrequencies'));
     }
 
+    // public function GetIssueDispenseData(Request $request)
+    // {
+    //     $rights = $this->rights;
+    //     $view = explode(',', $rights->issue_and_dispense)[1];
+    //     if ($view == 0) {
+    //         abort(403, 'Forbidden');
+    //     }
+
+    //     $sharedFields = [
+    //         'id', 'transaction_type_id', 'inv_location_id', 'status',
+    //         'effective_timestamp', 'timestamp', 'last_updated', 'logid'
+    //     ];
+
+    //     $joinFields = [
+    //         // DB::raw('gender.name as gender'),
+    //         DB::raw('patient.name as patientName'),
+    //         DB::raw('employee.name as Physician'),
+    //         DB::raw('organization.organization as OrgName'),
+    //         DB::raw('org_site.name as SiteName'),
+    //         DB::raw('services.name as serviceName'),
+    //         DB::raw('service_mode.name as serviceMode'),
+    //         DB::raw('billingCC.name as billingCC'),
+    //         DB::raw('service_group.name as serviceGroup'),
+    //         DB::raw('service_type.name as serviceType'),
+    //         DB::raw('inventory_transaction_type.name as TransactionType'),
+    //         DB::raw('service_location.name as ServiceLocationName')
+    //     ];
+
+    //     // --- Medication Query ---
+    //     $medication = DB::table('req_medication_consumption as rmc')
+    //         // ->join('gender', 'gender.id', '=', 'rmc.gender_id')
+    //         ->join('costcenter as billingCC', 'billingCC.id', '=', 'rmc.billing_cc')
+    //         ->join('employee', 'employee.id', '=', 'rmc.responsible_physician')
+    //         ->join('service_mode', 'service_mode.id', '=', 'rmc.service_mode_id')
+    //         ->join('services', 'services.id', '=', 'rmc.service_id')
+    //         ->join('organization', 'organization.id', '=', 'rmc.org_id')
+    //         ->join('org_site', 'org_site.id', '=', 'rmc.site_id')
+    //         ->join('service_group', 'service_group.id', '=', 'rmc.service_group_id')
+    //         ->join('service_type', 'service_type.id', '=', 'rmc.service_type_id')
+    //         ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'rmc.transaction_type_id')
+    //         ->join('service_location', 'service_location.id', '=', 'rmc.inv_location_id')
+    //         ->join('patient', 'patient.mr_code', '=', 'rmc.mr_code')
+    //         ->select(array_merge(
+    //             array_map(fn($col) => "rmc.$col", $sharedFields),
+    //             [
+    //                 DB::raw("CAST(rmc.mr_code AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as mr_code"),
+    //                 DB::raw("CAST(rmc.dose AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as dose"),
+    //                 DB::raw("CAST(rmc.route_ids AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as route_ids"),
+    //                 DB::raw("CAST(rmc.frequency_ids AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as frequency_ids"),
+    //                 DB::raw("CAST(rmc.days AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as days"),
+    //                 DB::raw("CAST(rmc.inv_generic_ids AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as inv_generic_ids"),
+    //                 DB::raw("CAST(rmc.remarks AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as remarks")
+    //             ],
+    //             $joinFields,
+    //             [DB::raw("CAST('medication' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")]
+    //         ))->get();
+
+    //     // --- Material Query ---
+    //     $material = DB::table('material_consumption_requisition as mcr')
+    //         ->leftJoin('patient', 'patient.mr_code', '=', 'mcr.mr_code')
+    //         // ->leftJoin('gender', 'gender.id', '=', 'patient.gender_id')
+    //         ->leftJoin('employee', 'employee.id', '=', 'mcr.physician_id')
+    //         ->leftJoin('service_mode', 'service_mode.id', '=', 'mcr.service_mode_id')
+    //         ->leftJoin('services', 'services.id', '=', 'mcr.service_id')
+    //         ->leftJoin('service_group', 'service_group.id', '=', 'services.group_id')
+    //         ->leftJoin('service_type', 'service_type.id', '=', 'service_group.type_id')
+    //         ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'mcr.billing_cc')
+    //         ->leftJoin('organization', 'organization.id', '=', 'mcr.org_id')
+    //         ->leftJoin('org_site', 'org_site.id', '=', 'mcr.site_id')
+    //         ->leftJoin('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'mcr.transaction_type_id')
+    //         ->leftJoin('service_location', 'service_location.id', '=', 'mcr.inv_location_id')
+    //         ->select(array_merge(
+    //             array_map(fn($col) => "mcr.$col", $sharedFields),
+    //             [
+    //                 DB::raw("CAST(mcr.mr_code AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as mr_code"),
+    //                 DB::raw("CAST('' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as dose"),
+    //                 DB::raw("CAST('' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as route_ids"),
+    //                 DB::raw("CAST('' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as frequency_ids"),
+    //                 DB::raw("CAST(mcr.qty AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as days"),
+    //                 DB::raw("CAST(mcr.generic_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as inv_generic_ids"),
+    //                 DB::raw("CAST(mcr.remarks AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as remarks")
+    //             ],
+    //             $joinFields,
+    //             [DB::raw("CAST('material' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")]
+    //         ))->get();
+    //         $combined = $medication->merge($material);
+    //         // return DataTables::query(DB::table(DB::raw("({$combined->toSql()}) as combined"))
+    //         return DataTables::of(collect($combined))
+    //         // ->mergeBindings($combined))
+    //         ->addColumn('id_raw', fn($row) => $row->id)
+    //         ->editColumn('id', function ($row) {
+    //             $timestamp = Carbon::createFromTimestamp($row->timestamp)->format('l d F Y - h:i A');
+    //             $effectiveDate = Carbon::createFromTimestamp($row->effective_timestamp)->format('l d F Y - h:i A');
+
+    //             // Generate standardized RequisitionCode
+    //             $siteName = $row->SiteName ?? 'Unknown';
+    //             $typeOrOrg = $row->source === 'material' ? ($row->OrgName ?? 'Org') : ($row->serviceType ?? 'Type');
+
+    //             $siteInitials = strtoupper(implode('', array_map(fn($w) => substr(preg_replace('/[^A-Za-z0-9]/', '', $w), 0, 1), explode(' ', $siteName))));
+    //             $typeInitials = strtoupper(implode('', array_map(fn($w) => substr(preg_replace('/[^A-Za-z0-9]/', '', $w), 0, 1), explode(' ', $typeOrOrg))));
+    //             $idStr = str_pad($row->id, 4, "0", STR_PAD_LEFT);
+    //             $RequisitionCode = $siteInitials . '-' . $typeInitials . '-' . $idStr;
+
+    //             return $RequisitionCode
+    //                 . '<hr class="mt-1 mb-2">'
+    //                 . '<b>Request For</b>: ' . $row->TransactionType . '<br>'
+    //                 . '<b>Requesting Location</b>: ' . $row->ServiceLocationName . '<br>'
+    //                 . '<b>Site</b>: ' . $row->SiteName . '<br>'
+    //                 . '<b>Request Date: </b>: ' . $timestamp . '<br>'
+    //                 . '<b>Effective Date: </b>: ' . $effectiveDate . '<br>'
+    //                 . '<b>Remarks</b>: ' . ($row->remarks ?: 'N/A');
+    //         })
+    //         ->editColumn('patientDetails', function ($row) {
+    //             if (empty($row->mr_code)) return 'N/A';
+
+    //             return '<b>MR#:</b> '.$row->mr_code.'<br>'.$row->patientName.'<hr class="mt-1 mb-2">'
+    //                 .'<b>Service Mode</b>: '.$row->serviceMode.'<br>'
+    //                 .'<b>Service Group</b>: '.$row->serviceGroup.'<br>'
+    //                 .'<b>Service</b>: '.$row->serviceName.'<br>'
+    //                 .'<b>Responsible Physician</b>: '.$row->Physician.'<br>'
+    //                 .'<b>Billing CC</b>: '.$row->billingCC;
+    //         })
+    //        ->editColumn('InventoryDetails', function ($row) {
+    //             $tableRows = '';
+    //             $genericIds = explode(',', $row->inv_generic_ids);
+    //             $genericNames = InventoryGeneric::whereIn('id', $genericIds)->pluck('name', 'id')->toArray();
+    //             if ($row->source === 'medication') {
+    //                 $dose = explode(',', $row->dose);
+    //                 $routeIds = explode(',', $row->route_ids);
+    //                 $routes = MedicationRoutes::whereIn('id', $routeIds)->pluck('name', 'id')->toArray();
+    //                 $frequencyIds = explode(',', $row->frequency_ids);
+    //                 $frequencies = MedicationFrequency::whereIn('id', $frequencyIds)->pluck('name', 'id')->toArray();
+    //                 $days = explode(',', $row->days);
+
+    //                 $count = max(count($genericIds), count($dose), count($routeIds), count($frequencyIds), count($days));
+
+    //                 for ($i = 0; $i < $count; $i++) {
+    //                     $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
+    //                     $tableRows .= '<tr style="background-color:'.$bg.';">'
+    //                         .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$genericIds[$i]] ?? 'N/A').'</td>'
+    //                         .'<td style="padding:8px;border:1px solid #ccc;">'.($dose[$i] ?? 'N/A').'</td>'
+    //                         .'<td style="padding:8px;border:1px solid #ccc;">'.($routes[$routeIds[$i]] ?? 'N/A').'</td>'
+    //                         .'<td style="padding:8px;border:1px solid #ccc;">'.($frequencies[$frequencyIds[$i]] ?? 'N/A').'</td>'
+    //                         .'<td style="padding:8px;border:1px solid #ccc;">'.($days[$i] ?? 'N/A').'</td>
+    //                         <td style="padding: 5px 15px;border: 1px solid #ccc;">
+    //                             <a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . ($genericIds[$i] ?? '') . '">Respond</a>
+    //                         </td>
+    //                         </tr>';
+    //                 }
+
+    //                 return '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+    //                     .'<thead style="background-color:#e2e8f0;color:#000;">'
+    //                     .'<tr>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic Name</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Dose</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Route</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Frequency</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Duration (Days)</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
+    //                     .'</tr>'
+    //                     .'</thead><tbody>'.$tableRows.'</tbody></table>';
+    //             } else {
+    //                 $qty = explode(',', $row->days);
+    //                 for ($i = 0; $i < count($genericIds); $i++) {
+    //                     $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
+    //                     $tableRows .= '<tr style="background-color:'.$bg.';">'
+    //                         .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$genericIds[$i]] ?? 'N/A').'</td>'
+    //                         .'<td style="padding:8px;border:1px solid #ccc;">'.($qty[$i] ?? 'N/A').'</td>
+    //                           <td style="padding: 5px 15px;border: 1px solid #ccc;">
+    //                             <a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . ($genericIds[$i] ?? '') . '">Respond</a>
+    //                         </td>
+    //                         </tr>';
+    //                 }
+
+    //                 return '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+    //                     .'<thead style="background-color:#e2e8f0;color:#000;">'
+    //                     .'<tr>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic Name</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Demand Qty</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
+    //                     .'</tr>'
+    //                     .'</thead><tbody>'.$tableRows.'</tbody></table>';
+    //             }
+    //         })
+    //         ->rawColumns(['id_raw', 'id', 'patientDetails', 'InventoryDetails'])
+    //         ->make(true);
+    // }
+
     public function GetIssueDispenseData(Request $request)
     {
         $rights = $this->rights;
@@ -7796,7 +7984,7 @@ class InventoryController extends Controller
         ];
 
         $joinFields = [
-            DB::raw('gender.name as gender'),
+            // DB::raw('gender.name as gender'),
             DB::raw('patient.name as patientName'),
             DB::raw('employee.name as Physician'),
             DB::raw('organization.organization as OrgName'),
@@ -7812,7 +8000,7 @@ class InventoryController extends Controller
 
         // --- Medication Query ---
         $medication = DB::table('req_medication_consumption as rmc')
-            ->join('gender', 'gender.id', '=', 'rmc.gender_id')
+            // ->join('gender', 'gender.id', '=', 'rmc.gender_id')
             ->join('costcenter as billingCC', 'billingCC.id', '=', 'rmc.billing_cc')
             ->join('employee', 'employee.id', '=', 'rmc.responsible_physician')
             ->join('service_mode', 'service_mode.id', '=', 'rmc.service_mode_id')
@@ -7842,7 +8030,7 @@ class InventoryController extends Controller
         // --- Material Query ---
         $material = DB::table('material_consumption_requisition as mcr')
             ->leftJoin('patient', 'patient.mr_code', '=', 'mcr.mr_code')
-            ->leftJoin('gender', 'gender.id', '=', 'patient.gender_id')
+            // ->leftJoin('gender', 'gender.id', '=', 'patient.gender_id')
             ->leftJoin('employee', 'employee.id', '=', 'mcr.physician_id')
             ->leftJoin('service_mode', 'service_mode.id', '=', 'mcr.service_mode_id')
             ->leftJoin('services', 'services.id', '=', 'mcr.service_id')
@@ -7867,9 +8055,43 @@ class InventoryController extends Controller
                 $joinFields,
                 [DB::raw("CAST('material' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")]
             ))->get();
-        $combined = $medication->merge($material);
-        // $combined = $medication->unionAll($material);
-        // return DataTables::query(DB::table(DB::raw("({$combined->toSql()}) as combined"))
+
+        // $inventory = DB::table('inventory_management as im')
+        //     ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'im.transaction_type_id')
+        //     ->leftJoin('patient', 'patient.mr_code', '=', 'im.source')
+        //     ->leftJoin('employee', 'employee.id', '=', 'im.physician_id')
+        //     ->leftJoin('service_mode', 'service_mode.id', '=', 'im.service_mode_id')
+        //     ->leftJoin('services', 'services.id', '=', 'im.service_id')
+        //     ->leftJoin('service_group', 'service_group.id', '=', 'services.group_id')
+        //     ->leftJoin('service_type', 'service_type.id', '=', 'service_group.type_id')
+        //     ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'im.billing_cc')
+        //     ->leftJoin('organization', 'organization.id', '=', 'im.org_id')
+        //     ->leftJoin('org_site', 'org_site.id', '=', 'im.site_id')
+        //     ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'im.transaction_type_id')
+        //     ->leftJoin('service_location', 'service_location.id', '=', 'im.inv_location_id')
+        //     ->where(function($query) {
+        //         $query->where('ita.name', 'like', '%issue%')
+        //               ->orWhere('ita.name', 'like', '%dispense%');
+        //     })
+        //     ->select(array_merge(
+        //         array_map(fn($col) => "im.$col", $sharedFields),
+        //         [
+        //             DB::raw("CAST(im.source AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as mr_code"),
+        //             DB::raw("CAST('' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as dose"),
+        //             DB::raw("CAST('' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as route_ids"),
+        //             DB::raw("CAST('' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as frequency_ids"),
+        //             DB::raw("CAST(im.qty AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as days"),
+        //             DB::raw("CAST(im.generic_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as inv_generic_ids"),
+        //             DB::raw("CAST(im.remarks AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as remarks")
+        //         ],
+        //         $joinFields,
+        //         [DB::raw("CAST('inventory' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")]
+        //     ))->get();
+
+        //     $combined = $medication->merge($material)->merge($inventory);
+
+            $combined = $medication->merge($material);
+            // return DataTables::query(DB::table(DB::raw("({$combined->toSql()}) as combined"))
             return DataTables::of(collect($combined))
             // ->mergeBindings($combined))
             ->addColumn('id_raw', fn($row) => $row->id)
@@ -7930,6 +8152,9 @@ class InventoryController extends Controller
                             <td style="padding: 5px 15px;border: 1px solid #ccc;">
                                 <a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . ($genericIds[$i] ?? '') . '">Respond</a>
                             </td>
+                            <td style="padding:8px;border:1px solid #ccc;">
+                                <span class="label label-warning">Pending</span>
+                            </td>
                             </tr>';
                     }
 
@@ -7942,6 +8167,7 @@ class InventoryController extends Controller
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Frequency</th>'
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Duration (Days)</th>'
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
+                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
                         .'</tr>'
                         .'</thead><tbody>'.$tableRows.'</tbody></table>';
                 } else {
@@ -7954,6 +8180,9 @@ class InventoryController extends Controller
                               <td style="padding: 5px 15px;border: 1px solid #ccc;">
                                 <a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . ($genericIds[$i] ?? '') . '">Respond</a>
                             </td>
+                            <td style="padding: 5px 15px;border: 1px solid #ccc;">
+                                <span class="label label-warning">Pending</span>
+                            </td>
                             </tr>';
                     }
 
@@ -7963,6 +8192,7 @@ class InventoryController extends Controller
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic Name</th>'
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Demand Qty</th>'
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
+                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
                         .'</tr>'
                         .'</thead><tbody>'.$tableRows.'</tbody></table>';
                 }
@@ -7970,7 +8200,6 @@ class InventoryController extends Controller
             ->rawColumns(['id_raw', 'id', 'patientDetails', 'InventoryDetails'])
             ->make(true);
     }
-
 
     public function RespondIssueDispense(Request $r)
     {
@@ -8334,7 +8563,6 @@ class InventoryController extends Controller
     {
         // Get validated data
         $validated = $request->validated();
-        
         $itemCount = count($request->id_generic);
         $success = true;
         $message = '';
@@ -8434,7 +8662,6 @@ class InventoryController extends Controller
                 ->first();
             $prevSiteBalance = $prevSiteRow ? $prevSiteRow->site_balance : 0;
 
-            // For issue and dispense, we always subtract quantities
             $newOrgBalance = $prevOrgBalance - $qty;
             $newSiteBalance = $prevSiteBalance - $qty;
 

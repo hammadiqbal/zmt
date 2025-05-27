@@ -331,7 +331,7 @@
                                                 <div class="form-group row m-b-5">
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
-                                                            <label class="control-label">Update Patient MR# <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                            <label class="control-label">Update Patient MR# <small class="text-danger umr_optional" style="font-size:11px;">(Optional)</small></label>
                                                             <select class="form-control selecter p-0" name="u_mc_patient"  id="u_mc_patient" style="color:#222d32">
                                                             </select>
                                                         </div>
