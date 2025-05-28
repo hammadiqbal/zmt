@@ -279,7 +279,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                         <label for="im_reference_document">Enter Reference Document# <small class="text-danger" style="font-size:11px;">(Optional)</small> </label>
-                                                                        <input type="text" placeholder="Enter Reference Document#" name="id_reference_document" class="form-control input-sm">
+                                                                        <input type="text" placeholder="Enter Reference Document#"  name="id_reference_document" class="form-control input-sm">
                                                                     </div>
                                                                 </div>
                                                             </div>

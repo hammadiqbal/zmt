@@ -44,6 +44,8 @@ if same generic and brand has one batch the it should auto select if more than 1
 ...........................................................................
 Changes required before deployment
 chnage source and destination coulm in inventory_management table update int to var_char
+add code coulumn in material_consumption_requisition and req_medication_consumption table
+add demand_qty in inventory_management table
 ...........................................................................
 
 when mutiple time ajax run error change the .change function with like this   

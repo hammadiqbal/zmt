@@ -2,14 +2,15 @@ $(document).ready(function() {
     //Open Issue & Dispense Modal
     $(document).on('click', '.add-issuedispense', function() {
         $('#id_dl,#id_sl,.serviceDetails,.brand_details').hide();
+        $('input[name="id_reference_document"]').val('').prop('disabled', false);
         $('.req_only').show();
         $('#id_mr').closest('.col-md-6').show();
         $('#transaction-info-row').empty();
         $('#mrService,.mr-dependent').hide();
         $('#id_mr').val('');
-        $('.text-danger').text('');  
-        $('.requirefield').removeClass('requirefield');  
-        $('.select2-selection').removeClass('requirefield'); 
+        // $('.text-danger').text('');  
+        // $('.requirefield').removeClass('requirefield');  
+        // $('.select2-selection').removeClass('requirefield'); 
 
          if ($('#source_type').length) {
                 $('#source_type').val('material');
@@ -529,9 +530,9 @@ $(document).ready(function() {
     // Event listener for respond button
     $('#view-issuedispense').on('click', '.respond-btn', function() {
          $('#ajax-loader').show();
-         $('.text-danger').text('');  
-         $('.requirefield').removeClass('requirefield');  
-         $('.select2-selection').removeClass('requirefield'); 
+        //  $('.text-danger').text('');  
+        //  $('.requirefield').removeClass('requirefield');  
+        //  $('.select2-selection').removeClass('requirefield'); 
         const txId     = $(this).data('id');
         const genId    = $(this).data('generic-id');
         const source   = $(this).data('source'); 
@@ -546,6 +547,7 @@ $(document).ready(function() {
             // $('#id_dl,#id_sl,.serviceDetails').show();
             // $('#mrService,.mr-dependent').show();
             // if (data.source === 'material' && !data.mr_code) {
+            console.log(data.code);
             if (data.source === 'material') {
                 $('#id_mr').closest('.col-md-6').hide();
                 $('#id_sl, #id_dl, .serviceDetails, #mrService, .mr-dependent').hide();
@@ -851,7 +853,7 @@ $(document).ready(function() {
             $('input[name="id_servicetype"]').val(data.service_type_name).prop('readonly', true);
             $('input[name="id_servicegroup"]').val(data.service_group_name).prop('readonly', true);
             $('textarea[name="id_remarks"]').val(data.remarks).prop('disabled', false);
-            $('input[name="id_reference_document"]').val(data.reference_document).prop('disabled', false);
+            $('input[name="id_reference_document"]').val(data.code).prop('disabled', true);
 
             $('.duplicate').not(':first').remove();
             let $row = $('.duplicate').first();
@@ -926,9 +928,7 @@ $(document).ready(function() {
                                 $qtyInput.attr('max', demandQty);
                                 $qtyInput.attr('placeholder', `Max: ${demandQty} (Demand Qty)`);
                             }
-                            // If demand qty is greater than current max, keep the current max
                         } else {
-                            // If no current max exists, set to demand qty
                             $qtyInput.attr('max', demandQty);
                             $qtyInput.attr('placeholder', `Max: ${demandQty} (Demand Qty)`);
                         }
