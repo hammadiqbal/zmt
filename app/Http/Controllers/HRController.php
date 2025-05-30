@@ -2798,23 +2798,23 @@ class HRController extends Controller
         $Employee->additional_mobile_no = trim($request->input('u_emp_additional_cell'));
         $Employee->landline = $request->input('u_emp_landline');
 
-        // $Employee->email = $request->input('u_emp_email');
+        $Employee->email = $request->input('u_emp_email');
         $Employee->address = $request->input('u_emp_address');
         $Employee->mailing_address = $request->input('u_emp_mailingaddress');
         $empImg = $request->file('u_empImg');
 
-        // $Email = $request->input('u_emp_email');;
-        // if(!empty($Email)){
-        //     $EmployeeExists = Employee::where('email', $Email)->exists();
-        //     if ($EmployeeExists) {
-        //         return response()->json(['info' => 'Employee already exists.']);
-        //     }
+        $Email = $request->input('u_emp_email');
+        if(!empty($Email)){
+            $EmployeeExists = Employee::where('email', $Email)->exists();
+            if ($EmployeeExists) {
+                return response()->json(['info' => 'Employee already exists.']);
+            }
 
-        //     $userExists = Users::where('email', $Email)->exists();
-        //     if ($userExists) {
-        //         return response()->json(['info' => 'This email is already associated with a registered user.']);
-        //     }
-        // }
+            $userExists = Users::where('email', $Email)->exists();
+            if ($userExists) {
+                return response()->json(['info' => 'This email is already associated with a registered user.']);
+            }
+        }
 
         if (isset($empImg)) {
             $oldImagePath = public_path('assets/emp/' . $id . '_' .$Employee->image);

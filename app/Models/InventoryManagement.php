@@ -33,6 +33,7 @@ class InventoryManagement extends Model
         'batch_no',
         'expiry_date',
         'transaction_qty',
+        'demand_qty',
         'inv_generic_id',
         'status',
         'user_id',

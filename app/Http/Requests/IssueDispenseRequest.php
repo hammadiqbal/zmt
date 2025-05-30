@@ -41,6 +41,7 @@ class IssueDispenseRequest extends FormRequest
             'id_qty.*' => 'required|numeric|min:1',
             'id_reference_document' => 'nullable|string|max:255',
             'id_remarks' => 'nullable|string|max:1000',
+            'id_demand_qty.*' => 'nullable|numeric',
         ];
 
         // Add conditional validation for MR related fields
