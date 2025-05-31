@@ -35,6 +35,7 @@ use App\Models\ProcedureCoding;
 use App\Models\PatientArrivalDeparture;
 use App\Models\PatientAttachments;
 use App\Models\ServiceLocation;
+use App\Models\Site;
 use App\Models\ServiceActivation;
 use App\Models\InvestigationTracking;
 use App\Models\ServiceBooking;
@@ -2971,6 +2972,13 @@ class PatientMedicalRecord extends Controller
             return response()->json(['error' => "Failed to add Requisition for Medication Consumption."]);
         }
 
+        $SiteName = Site::find($Site); // $Site is the site_id
+        $SiteName = $SiteName ? $SiteName->name : '';  
+        $idStr = str_pad($ReqMedicationConsumption->id, 5, "0", STR_PAD_LEFT);
+        $firstSiteNameLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $SiteName))));
+        $RequisitionCode = $firstSiteNameLetters.'-MDC-'.$idStr;
+        $ReqMedicationConsumption->code = $RequisitionCode;
+
         $log = Logs::create([
             'module' => 'patient_medical_record', 'content' => "Requisition For Medication Consumption has been added by '{$sessionName}'",
             'event' => 'add', 'timestamp' => $timestamp,
@@ -3064,13 +3072,10 @@ class PatientMedicalRecord extends Controller
                 $serviceType = $RMCDetail->serviceType;
                 $Remarks = !empty($RMCDetail->remarks) ? $RMCDetail->remarks : 'N/A';
                 
-                $idStr = str_pad($RMCDetail->id, 4, "0", STR_PAD_LEFT);
                 $effectiveDate = Carbon::createFromTimestamp($RMCDetail->effective_timestamp)->format('l d F Y - h:i A');
                 $timestamp = Carbon::createFromTimestamp($RMCDetail->timestamp)->format('l d F Y - h:i A');
 
-                $firstSiteNameLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $SiteName))));
-                $firstServiceTypeLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $serviceType))));
-                $RequisitionCode = $firstSiteNameLetters.'-'.$firstServiceTypeLetters.'-'.$idStr;
+                $RequisitionCode = $RMCDetail->code;
                 return $RequisitionCode
                     . '<hr class="mt-1 mb-2">'
                     .'<b>Request For</b>: '.$TransactionType.'<br>'

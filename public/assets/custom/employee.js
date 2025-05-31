@@ -465,11 +465,11 @@ $(document).ready(function() {
                 $('.u_emp_additional_cell').val(AdditionalCell);
                 $('.u_emp_landline').val(landline);
                 $('.u_emp_email').val(email);
-                if (email) {
-                    $('.u_emp_email').prop('readonly', true);
-                } else {
-                    $('.u_emp_email').prop('readonly', false);
-                }
+                // if (email) {
+                //     $('.u_emp_email').prop('readonly', true);
+                // } else {
+                //     $('.u_emp_email').prop('readonly', false);
+                // }
                 $('.u_emp_address').val(address);
                 $('.u_emp_mailingaddress').val(MailingAddress);
                 $('.u_emp_name').val(empname);

@@ -1,50 +1,23 @@
+Issue And Dispense
+..................
+<!-- For add new issue or dispense form transaction type should show where request mandatory is N.
+For respond form transaction type should show where request mandatory is Y.  -->
 
+For selecting source and destination after selecting transaction type if both source and destination are 
+locations then check location applicable to for transaction type if it is source then show controlled 
+locations in source only and in destinations all locations should show. do same if location applicable to for 
+transaction type if it is destination then show controlled locations in destination 
+only and in source all locations should show.
 
-EXTERNAL TRANSACTIONS
-Write some logic for showing source and destination balance
-............................................................
+For inventory Balance we have to store balance for org, site and locations if source or destination
+are locations then we have to store balance for both source or destination according to source action
+and destination action.
 
-ISSUE AND DISENSE
-in below table Fetch details from requisition for medicines and requisition for material consumption
-status should select by user
+For respond if there is demand qty is 5 and on first go user only issue or dispense 3 then on 
+second go demandqty must change like 5 - 3 = 2 and on second go user can issue or dispense only 2 qty.
 
-............................................................................................................................................................
-Prompts should be added from stock monitioring see details in excel file
-
-Show Quantities from issue and dispense
-
-Multi Select Service  option in Req first select service modes then  show there services 
-in req for investigation.
-
-<!-- Check Status management for ReqEPi and patient arrival and departure
-If patient is not arrived then remove all btns in investigaton tracking -->
-
-Add Filter for encounter, procedure and investigation in patient arrival and departure module
-
-Create one other module name investigation confirmation show all (multi select) services there and patient arrived in same time for all services.
-
-<!-- check expiry check for external transaction if expiry check is yes then expired items should select previous or future date
-there is 0 restriction for this if no then expired items should select only in future date -->
-
-<!-- check mechanism for updating status from active to inactive for these 3 modules
-patient arrival & departure, and Requisition For EPI
-if service end and patient arrival status set from  active to inactive then the 
-should also set inactive for requisition for epi according to mr, emp_id, servieid, service_mode_id and biling CC
-where status must be = 1 -->
-
-check issue and dispense and add more btn functinality in all other form and then finaliza issue & dispense and show data
-from requisition for medication and material consumption and insert data into inventory_management table
-
+Create Module of prefix under human resource like mr, ms etc and this module will add field in add employee
+and third party registration form.
 ...........................................................................
-ISUUE & DISPENSE
-now show auto batch no and expiry date while new issue and dispense 
-and in respond btn show auto batch_no and expiry date after select brand 
-if same generic and brand has one batch the it should auto select if more than 1 then user should select
-
-...........................................................................
-Changes required before deployment
-chnage source and destination coulm in inventory_management table update int to var_char
-...........................................................................
-
 when mutiple time ajax run error change the .change function with like this   
  $(siteSelector).off('change.siteLookup').on('change.siteLookup', function(){
