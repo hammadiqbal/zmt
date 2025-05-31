@@ -7983,7 +7983,10 @@ class InventoryController extends Controller
                     .'<b>Responsible Physician</b>: '.$row->Physician.'<br>'
                     .'<b>Billing CC</b>: '.$row->billingCC;
             })
-           ->editColumn('InventoryDetails', function ($row) {
+            ->editColumn('InventoryDetails', function ($row) {
+                $Rights = $this->rights;
+                $respond = explode(',', $Rights->issue_and_dispense)[2];
+                
                 $tableRows = '';
                 $genericIds = explode(',', $row->inv_generic_ids);
                 $genericNames = InventoryGeneric::whereIn('id', $genericIds)->pluck('name', 'id')->toArray();
@@ -8151,10 +8154,46 @@ class InventoryController extends Controller
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($dose[$i] ?? 'N/A').'</td>'
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($routes[$routeIds[$i]] ?? 'N/A').'</td>'
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($frequencies[$frequencyIds[$i]] ?? 'N/A').'</td>'
-                            .'<td style="padding:8px;border:1px solid #ccc;">'.($days[$i] ?? 'N/A').'</td>
-                            <td style="padding: 5px 15px;border: 1px solid #ccc;">
-                                <a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . ($genericIds[$i] ?? '') . '">Respond</a>
-                            </td>
+                            .'<td style="padding:8px;border:1px solid #ccc;">'.($days[$i] ?? 'N/A').'</td>';
+                
+                        if ($isResponded) {
+                            $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$respondedEntries[$currentGenericId].'</td>';
+                                $respondedEntry = DB::table('inventory_management')
+                                    ->where('ref_document_no', $row->referenceNumber)
+                                    ->where('inv_generic_id', $currentGenericId)
+                                    ->select('brand_id', 'batch_no')
+                                    ->first();
+
+                                if ($respondedEntry) {
+                                    $orgBalance = DB::table('inventory_balance')
+                                        ->where('org_id', $row->org_id)
+                                        ->where('generic_id', $currentGenericId)
+                                        ->where('brand_id', $respondedEntry->brand_id)
+                                        ->where('batch_no', $respondedEntry->batch_no)
+                                        ->orderBy('id', 'desc')
+                                        ->value('org_balance') ?? 'N/A';
+
+                                    $siteBalance = DB::table('inventory_balance')
+                                        ->where('org_id', $row->org_id)
+                                        ->where('site_id', $row->site_id)
+                                        ->where('generic_id', $currentGenericId)
+                                        ->where('brand_id', $respondedEntry->brand_id)
+                                        ->where('batch_no', $respondedEntry->batch_no)
+                                        ->orderBy('id', 'desc')
+                                        ->value('site_balance') ?? 'N/A';
+
+                                    $balances = [
+                                        'orgBalance' => $orgBalance,
+                                        'siteBalance' => $siteBalance
+                                    ];
+                                }
+                        }
+                        if($respond != 1)
+                        {
+                            $actionBtn = '<code>Unauthorized Access</code>';
+                        }
+                
+                        $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>
                             <td style="padding:8px;border:1px solid #ccc;">
                                 <span class="label label-'.$statusClass.'">'.$status.'</span>
                             </td>
@@ -8204,14 +8243,159 @@ class InventoryController extends Controller
                 
                     for ($i = 0; $i < count($genericIds); $i++) {
                         $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
-                        $tableRows .= '<tr style="background-color:'.$bg.';">'
-                            .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$genericIds[$i]] ?? 'N/A').'</td>'
-                            .'<td style="padding:8px;border:1px solid #ccc;">'.($qty[$i] ?? 'N/A').'</td>
-                              <td style="padding: 5px 15px;border: 1px solid #ccc;">
-                                <a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . ($genericIds[$i] ?? '') . '">Respond</a>
-                            </td>
+                        
+                        $currentGenericId = $genericIds[$i];
+
+                        // if ($isDirectEntry) {
+                        //     $balanceInfo = DB::table('inventory_management')
+                        //         ->where('inv_generic_id', $currentGenericId)
+                        //         ->select('brand_id', 'batch_no')
+                        //         ->first();
+
+                        //     if ($balanceInfo) {
+                        //         $orgBalance = DB::table('inventory_balance')
+                        //             ->where('org_id', $row->org_id)
+                        //             ->where('generic_id', $currentGenericId)
+                        //             ->where('brand_id', $balanceInfo->brand_id)
+                        //             ->where('batch_no', $balanceInfo->batch_no)
+                        //             ->orderBy('id', 'desc')
+                        //             ->value('org_balance') ?? 'N/A';
+
+                        //         $siteBalance = DB::table('inventory_balance')
+                        //             ->where('org_id', $row->org_id)
+                        //             ->where('site_id', $row->site_id)
+                        //             ->where('generic_id', $currentGenericId)
+                        //             ->where('brand_id', $balanceInfo->brand_id)
+                        //             ->where('batch_no', $balanceInfo->batch_no)
+                        //             ->orderBy('id', 'desc')
+                        //             ->value('site_balance') ?? 'N/A';
+
+                        //         $balances = [
+                        //             'orgBalance' => $orgBalance,
+                        //             'siteBalance' => $siteBalance
+                        //         ];
+                        //     }
+                        // }
+                        // else{
+                        //     $balances = [
+                        //         'orgBalance' => 'N/A',
+                        //         'siteBalance' => 'N/A'
+                        //     ];
+                        // }
+
+                        $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A'];
+
+                        if ($isDirectEntry) {
+                            $balanceInfo = DB::table('inventory_management')
+                                ->where('inv_generic_id', $currentGenericId)
+                                ->select('brand_id', 'batch_no')
+                                ->first();
+
+                            if ($balanceInfo) {
+                                $orgBalance = DB::table('inventory_balance')
+                                    ->where('org_id', $row->org_id)
+                                    ->where('generic_id', $currentGenericId)
+                                    ->where('brand_id', $balanceInfo->brand_id)
+                                    ->where('batch_no', $balanceInfo->batch_no)
+                                    ->orderBy('id', 'desc')
+                                    ->value('org_balance') ?? 'N/A';
+
+                                $siteBalance = DB::table('inventory_balance')
+                                    ->where('org_id', $row->org_id)
+                                    ->where('site_id', $row->site_id)
+                                    ->where('generic_id', $currentGenericId)
+                                    ->where('brand_id', $balanceInfo->brand_id)
+                                    ->where('batch_no', $balanceInfo->batch_no)
+                                    ->orderBy('id', 'desc')
+                                    ->value('site_balance') ?? 'N/A';
+
+                                $balances = [
+                                    'orgBalance' => $orgBalance,
+                                    'siteBalance' => $siteBalance
+                                ];
+                            }
+                        } else if (!empty($row->referenceNumber) && $respondedQtys) {
+                            $respondedEntry = DB::table('inventory_management')
+                                ->where('ref_document_no', $row->referenceNumber)
+                                ->where('inv_generic_id', $currentGenericId)
+                                ->select('brand_id', 'batch_no')
+                                ->first();
+
+                            if ($respondedEntry) {
+                                $orgBalance = DB::table('inventory_balance')
+                                    ->where('org_id', $row->org_id)
+                                    ->where('generic_id', $currentGenericId)
+                                    ->where('brand_id', $respondedEntry->brand_id)
+                                    ->where('batch_no', $respondedEntry->batch_no)
+                                    ->orderBy('id', 'desc')
+                                    ->value('org_balance') ?? 'N/A';
+
+                                $siteBalance = DB::table('inventory_balance')
+                                    ->where('org_id', $row->org_id)
+                                    ->where('site_id', $row->site_id)
+                                    ->where('generic_id', $currentGenericId)
+                                    ->where('brand_id', $respondedEntry->brand_id)
+                                    ->where('batch_no', $respondedEntry->batch_no)
+                                    ->orderBy('id', 'desc')
+                                    ->value('site_balance') ?? 'N/A';
+
+                                $balances = [
+                                    'orgBalance' => $orgBalance,
+                                    'siteBalance' => $siteBalance
+                                ];
+                            }
+                        }
+
+
+                        $currentDemandQty = isset($demandQty[$i]) ? floatval($demandQty[$i]) : 0;
+                        $currentRespondedQty = isset($respondedQtys[$currentGenericId]) ? floatval($respondedQtys[$currentGenericId]) : 0;
+                        
+                        // Determine status based on responded quantities
+                        if ($currentRespondedQty > 0) {
+                            if ($currentRespondedQty >= $currentDemandQty) {
+                                $status = 'Completed';
+                                $statusClass = 'success';
+                                $actionBtn = 'N/A';
+                            } else {
+                                $status = 'Partially Completed';
+                                $statusClass = 'info';
+                                $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
+                            }
+                        } else {
+                            $status = 'Pending';
+                            $statusClass = 'warning';
+                            $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
+                        }
+                
+                        // Override for direct entries
+                        if ($isDirectEntry) {
+                            $status = 'Completed';
+                            $statusClass = 'success';
+                            $actionBtn = 'N/A';
+                        }
+                
+                        $tableRows .= '<tr style="background-color:'.$bg.';" class="balance-row" data-org-balance="'.$balances['orgBalance'].'" data-site-balance="'.$balances['siteBalance'].'">'
+                            .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$currentGenericId] ?? 'N/A').'</td>'
+                            .'<td style="padding:8px;border:1px solid #ccc;">'.($demandQty[$i] ?? 'N/A').'</td>';
+                        
+                        // Add transaction qty column only for inventory source
+                        if ($row->source === 'inventory' && $transactionQty !== null) {
+                            $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($transactionQty[$i] ?? 'N/A').'</td>';
+                        }
+                
+                        // Add responded qty column if not inventory source
+                        if ($row->source !== 'inventory' && $currentRespondedQty > 0) {
+                            $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$currentRespondedQty.'</td>';
+                        }
+
+                        if($respond != 1)
+                        {
+                            $actionBtn = '<code>Unauthorized Access</code>';
+                        }
+                
+                        $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>
                             <td style="padding: 5px 15px;border: 1px solid #ccc;">
-                                <span class="label label-warning">Pending</span>
+                                <span class="label label-'.$statusClass.'">'.$status.'</span>
                             </td>
                             </tr>';
                     }
