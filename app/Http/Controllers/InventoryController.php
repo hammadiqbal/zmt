@@ -5364,7 +5364,7 @@ class InventoryController extends Controller
     //     return response()->json($TransactionTypes);
     // }
 
-     public function GetMaterialManagementTransactionTypes(Request $request)
+    public function GetMaterialManagementTransactionTypes(Request $request)
     {
         $orgId = $request->input('orgId');
         $condition = $request->input('condition');

@@ -1,7 +1,7 @@
 Issue And Dispense
 ..................
-For add new issue or dispense form transaction type should show where request mandatory is N.
-For respond form transaction type should show where request mandatory is Y. 
+<!-- For add new issue or dispense form transaction type should show where request mandatory is N.
+For respond form transaction type should show where request mandatory is Y.  -->
 
 For selecting source and destination after selecting transaction type if both source and destination are 
 locations then check location applicable to for transaction type if it is source then show controlled 
