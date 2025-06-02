@@ -529,7 +529,7 @@ Route::get('/work-order/{id}/pdf', [InventoryController::class, 'generatePdfWO']
 // Route::get('inventory/getsiterequisition', [InventoryController::class, 'GetSiteRequisition'])->name('GetSiteRequisition');
 
 
-Route::get('inventory/gettransactiontypeet', [InventoryController::class, 'GetTransactionTypeExternalTransaction'])->name('inventory/gettransactiontypeet');
+Route::get('inventory/gettransactiontypeim', [InventoryController::class, 'GetTransactionTypeInventoryManagement'])->name('inventory/gettransactiontypeim');
 Route::get('inventory/getmaterialtransactiontypes', [App\Http\Controllers\InventoryController::class, 'GetMaterialManagementTransactionTypes'])->name('GetMaterialManagementTransactionTypes');
 Route::get('external-transaction', [App\Http\Controllers\InventoryController::class, 'ShowExternalTransaction'])->name('external-transaction');
 Route::post('inventory/addexternaltransaction', [InventoryController::class, 'AddExternalTransaction'])->name('AddExternalTransaction');

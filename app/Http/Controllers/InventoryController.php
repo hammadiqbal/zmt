@@ -7220,7 +7220,7 @@ class InventoryController extends Controller
         return response()->json(['success' => 'Work Order Details updated successfully']);
     }
 
-    public function GetTransactionTypeExternalTransaction(Request $request)
+    public function GetTransactionTypeInventoryManagement(Request $request)
     {
         $siteId            = $request->input('siteId');
         $transactionTypeId = $request->input('transactionTypeId');
@@ -7237,7 +7237,8 @@ class InventoryController extends Controller
             'source_type.name as Source',
             'destination_type.name as Destination',
             'inventory_transaction_type.service_location_id',
-            'inventory_transaction_type.transaction_expired_status'
+            'inventory_transaction_type.transaction_expired_status',
+            'inventory_transaction_type.applicable_location_to'
         )
         ->join('inventory_source_destination_type as source_type', 'source_type.id', '=', 'inventory_transaction_type.source_location_type')
         ->join('inventory_source_destination_type as destination_type', 'destination_type.id', '=', 'inventory_transaction_type.destination_location_type')
@@ -7255,6 +7256,8 @@ class InventoryController extends Controller
     
         $sourceName      = strtolower($TransactionType->Source);
         $destinationName = strtolower($TransactionType->Destination);
+        $applicableLocationTo = $TransactionType->applicable_location_to;
+
     
         $serviceLocationIDs = [];
         if (! empty($TransactionType->service_location_id)) {
@@ -7265,41 +7268,64 @@ class InventoryController extends Controller
         }
     
     
+        // if ($roleId != 1 && $isEmployee == 1) {
+        //     $empInv = DB::table('emp_inventory_location')
+        //         ->where('site_id', $siteId)
+        //         ->where('emp_id', $empId)
+        //         ->where('status', 1)
+        //         ->first();
+        //         // dd($empInv);
+    
+        //     if ($empInv && ! empty($empInv->service_location_id)) {
+        //         // Typically JSON like ["1","2","3"] or possibly nested
+        //         $decoded = json_decode($empInv->service_location_id, true);
+        //         if (! is_array($decoded)) {
+        //             $decoded = [];
+        //         } else {
+        //             // Flatten if nested
+        //             $flattened = [];
+        //             array_walk_recursive($decoded, function($val) use (&$flattened) {
+        //                 $flattened[] = (string) $val;
+        //             });
+        //             $decoded = $flattened; // now a flat array of strings
+        //         }
+    
+        //         if (! empty($serviceLocationIDs)) {
+        //             $serviceLocationIDs = array_intersect($serviceLocationIDs, $decoded);
+        //         } else {
+        //             // if no IDs from transaction type,
+        //             // we just use the employee's allowed IDs
+        //             $serviceLocationIDs = $decoded;
+        //         }
+        //     }
+        // }
+        $empServiceLocationIDs = [];
         if ($roleId != 1 && $isEmployee == 1) {
             $empInv = DB::table('emp_inventory_location')
                 ->where('site_id', $siteId)
                 ->where('emp_id', $empId)
                 ->where('status', 1)
                 ->first();
-                // dd($empInv);
-    
-            if ($empInv && ! empty($empInv->service_location_id)) {
-                // Typically JSON like ["1","2","3"] or possibly nested
+
+            if ($empInv && !empty($empInv->service_location_id)) {
                 $decoded = json_decode($empInv->service_location_id, true);
-                if (! is_array($decoded)) {
+                if (!is_array($decoded)) {
                     $decoded = [];
                 } else {
-                    // Flatten if nested
                     $flattened = [];
                     array_walk_recursive($decoded, function($val) use (&$flattened) {
                         $flattened[] = (string) $val;
                     });
-                    $decoded = $flattened; // now a flat array of strings
+                    $decoded = $flattened;
                 }
-    
-                if (! empty($serviceLocationIDs)) {
-                    $serviceLocationIDs = array_intersect($serviceLocationIDs, $decoded);
-                } else {
-                    // if no IDs from transaction type,
-                    // we just use the employee's allowed IDs
-                    $serviceLocationIDs = $decoded;
-                }
+                $empServiceLocationIDs = $decoded;
             }
         }
+
         if (empty($serviceLocationIDs)) {
             return response()->json([
                 'success'     => false,
-                'message'     => 'Currently no site is activated for you. Please contact the administrator.',
+                'message'     => 'Currently no locations are activated for you. Please contact the administrator.',
             ], 200);
         }
     
@@ -7307,16 +7333,35 @@ class InventoryController extends Controller
         $sourceData      = [];
         $destinationData = [];
     
-        
         if (stripos($sourceName, 'location') !== false) {
             $srcQuery = DB::table('service_location')
                 ->where('service_location.status', 1)
                 ->select('service_location.id', 'service_location.name')
                 ->orderBy('service_location.name', 'asc');
         
-            if (count($serviceLocationIDs) > 0) {
-                $srcQuery->whereIn('service_location.id', $serviceLocationIDs);
+            // if (count($serviceLocationIDs) > 0) {
+            //     $srcQuery->whereIn('service_location.id', $serviceLocationIDs);
+            // }
+
+            if ($applicableLocationTo === 'source') {
+                if(count($empServiceLocationIDs) > 0) {
+                    $srcQuery->whereIn('service_location.id', array_intersect($serviceLocationIDs, $empServiceLocationIDs));
+                } 
+                else {
+                    $srcQuery->whereIn('service_location.id', $serviceLocationIDs);
+                }
+            } 
+            else {
+                if (count($empServiceLocationIDs) > 0) {
+                    $srcQuery->whereIn('service_location.id', $empServiceLocationIDs);
+                }
             }
+
+            // if ($applicableLocationTo === 'source' && count($empServiceLocationIDs) > 0) {
+            //     $srcQuery->whereIn('service_location.id', array_intersect($serviceLocationIDs, $empServiceLocationIDs));
+            // } else {
+            //     $srcQuery->whereIn('service_location.id', $empServiceLocationIDs);
+            // }
         
             $sourceData = $srcQuery->get();
         }
@@ -7348,15 +7393,36 @@ class InventoryController extends Controller
         }
     
         // DESTINATION
-        if ($destinationName === 'inventory location') {
+        if (stripos($destinationName, 'location') !== false) {
+        // if ($destinationName === 'inventory location') {
             $destQuery = DB::table('service_location')
                 ->where('service_location.status', 1)
                 ->select('service_location.id', 'service_location.name')
                 ->orderBy('service_location.name', 'asc');
     
-            if (count($serviceLocationIDs) > 0) {
-                $destQuery->whereIn('service_location.id', $serviceLocationIDs);
+            // if (count($serviceLocationIDs) > 0) {
+            //     $destQuery->whereIn('service_location.id', $serviceLocationIDs);
+            // }
+
+            if ($applicableLocationTo === 'destination') {
+                if(count($empServiceLocationIDs) > 0) {
+                    $destQuery->whereIn('service_location.id', array_intersect($serviceLocationIDs, $empServiceLocationIDs));
+                } 
+                else {
+                    $destQuery->whereIn('service_location.id', $serviceLocationIDs);
+                }
+            } 
+            else {
+                if (count($empServiceLocationIDs) > 0) {
+                    $destQuery->whereIn('service_location.id', $empServiceLocationIDs);
+                }
             }
+            // if ($applicableLocationTo === 'destination') {
+            //     // dd($applicableLocationTo, $serviceLocationIDs, $empServiceLocationIDs); 
+            //     $destQuery->whereIn('service_location.id', array_intersect($serviceLocationIDs, $empServiceLocationIDs));
+            // } else {
+            //     $destQuery->whereIn('service_location.id', $empServiceLocationIDs);
+            // }
     
             $destinationData = $destQuery->get();
         }
@@ -8426,6 +8492,7 @@ class InventoryController extends Controller
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($demandQty[$i] ?? 'N/A').'</td>';
                         
                         // Add transaction qty column only for inventory source
+                        // if ($row->source === 'inventory' && $transactionQty !== null) {
                         if ($row->source === 'inventory' && $transactionQty !== null) {
                             $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($transactionQty[$i] ?? 'N/A').'</td>';
                         }
@@ -8433,6 +8500,9 @@ class InventoryController extends Controller
                         // Add responded qty column if not inventory source
                         if ($row->source !== 'inventory' && $currentRespondedQty > 0) {
                             $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$currentRespondedQty.'</td>';
+                        }
+                        else{
+                            $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">0</td>';
                         }
 
                         if($respond != 1)
@@ -8450,17 +8520,18 @@ class InventoryController extends Controller
                     // Build table header
                     $tableHeader = '<tr>'
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic Name</th>'
-                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Demand Qty</th>';
+                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Demand Qty</th>'
+                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>';
                     
                     // Add transaction qty header only for inventory source
-                    if ($row->source === 'inventory') {
-                        $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>';
-                    }
+                    // if ($row->source === 'inventory') {
+                    //     $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>';
+                    // }
                 
-                    // Add responded qty header if not inventory source
-                    if ($row->source !== 'inventory' && !empty($respondedQtys)) {
-                        $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>';
-                    }
+                    // // Add responded qty header if not inventory source
+                    // if ($row->source !== 'inventory' && !empty($respondedQtys)) {
+                    //     $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>';
+                    // }
                 
                     $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
@@ -8472,296 +8543,8 @@ class InventoryController extends Controller
                         .'</thead><tbody>'.$tableRows.'</tbody></table>';   
                 }
             })
-            // ->editColumn('InventoryDetails', function ($row) {
-            //     $tableRows = '';
-            //     $genericIds = explode(',', $row->inv_generic_ids);
-            //     $genericNames = InventoryGeneric::whereIn('id', $genericIds)->pluck('name', 'id')->toArray();
-
-            //     $isDirectEntry = false;
-            //     if ($row->source === 'inventory') {
-            //         if (!empty($row->referenceNumber)) {
-            //             if (str_contains($row->referenceNumber, '-MTC-') || str_contains($row->referenceNumber, '-MDC-')) {
-            //                 $isDirectEntry = false;
-            //             } else {
-            //                 $isDirectEntry = true;
-            //             }
-            //         } else {
-            //             $isDirectEntry = true;
-            //         }
-            //     } else {
-            //         $isDirectEntry = false;
-            //     }
-
-            //     // Get responded entries from inventory_management
-            //     $respondedEntries = [];
-            //     if (!empty($row->referenceNumber)) {
-            //         $respondedEntries = DB::table('inventory_management')
-            //             ->where('ref_document_no', $row->referenceNumber)
-            //             ->groupBy('inv_generic_id')
-            //             ->select('inv_generic_id', DB::raw('SUM(transaction_qty) as total_qty'))
-            //             ->pluck('total_qty', 'inv_generic_id')
-            //             ->toArray();
-            //     }
-
-            //     if ($row->source === 'medication') {
-            //         $dose = explode(',', $row->dose);
-            //         $routeIds = explode(',', $row->route_ids);
-            //         $routes = MedicationRoutes::whereIn('id', $routeIds)->pluck('name', 'id')->toArray();
-            //         $frequencyIds = explode(',', $row->frequency_ids);
-            //         $frequencies = MedicationFrequency::whereIn('id', $frequencyIds)->pluck('name', 'id')->toArray();
-            //         $days = explode(',', $row->days);
-                
-            //         $count = max(count($genericIds), count($dose), count($routeIds), count($frequencyIds), count($days));
-            //         for ($i = 0; $i < $count; $i++) {
-            //             $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
-                        
-            //             $currentGenericId = $genericIds[$i] ?? '';
-            //             $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A'];
-
-            //             // Get balances for both direct inventory and responded entries
-            //             if ($row->source === 'inventory' && !empty($row->brand_id) && !empty($row->batch_no)) {
-            //                 $orgBalance = DB::table('inventory_balance')
-            //                     ->where('org_id', $row->org_id)
-            //                     ->where('generic_id', $currentGenericId)
-            //                     ->where('brand_id', $row->brand_id)
-            //                     ->where('batch_no', $row->batch_no)
-            //                     ->orderBy('id', 'desc')
-            //                     ->value('org_balance') ?? 'N/A';
-
-            //                 $siteBalance = DB::table('inventory_balance')
-            //                     ->where('org_id', $row->org_id)
-            //                     ->where('site_id', $row->site_id)
-            //                     ->where('generic_id', $currentGenericId)
-            //                     ->where('brand_id', $row->brand_id)
-            //                     ->where('batch_no', $row->batch_no)
-            //                     ->orderBy('id', 'desc')
-            //                     ->value('site_balance') ?? 'N/A';
-
-            //                 $balances = [
-            //                     'orgBalance' => $orgBalance,
-            //                     'siteBalance' => $siteBalance
-            //                 ];
-            //             } 
-            //             else if (!empty($row->referenceNumber)) {
-            //                 $respondedEntry = DB::table('inventory_management')
-            //                     ->where('ref_document_no', $row->referenceNumber)
-            //                     ->where('inv_generic_id', $currentGenericId)
-            //                     ->select('brand_id', 'batch_no')
-            //                     ->first();
-
-            //                 if ($respondedEntry) {
-            //                     $orgBalance = DB::table('inventory_balance')
-            //                         ->where('org_id', $row->org_id)
-            //                         ->where('generic_id', $currentGenericId)
-            //                         ->where('brand_id', $respondedEntry->brand_id)
-            //                         ->where('batch_no', $respondedEntry->batch_no)
-            //                         ->orderBy('id', 'desc')
-            //                         ->value('org_balance') ?? 'N/A';
-
-            //                     $siteBalance = DB::table('inventory_balance')
-            //                         ->where('org_id', $row->org_id)
-            //                         ->where('site_id', $row->site_id)
-            //                         ->where('generic_id', $currentGenericId)
-            //                         ->where('brand_id', $respondedEntry->brand_id)
-            //                         ->where('batch_no', $respondedEntry->batch_no)
-            //                         ->orderBy('id', 'desc')
-            //                         ->value('site_balance') ?? 'N/A';
-
-            //                     $balances = [
-            //                         'orgBalance' => $orgBalance,
-            //                         'siteBalance' => $siteBalance
-            //                     ];
-            //                 }
-            //             }
-
-            //             $balanceTooltip = 'Org Balance: ' . $balances['orgBalance'] . ' | Site Balance: ' . $balances['siteBalance'];
-
-            //             $isResponded = array_key_exists($currentGenericId, $respondedEntries);
-
-            //             if ($isDirectEntry || $isResponded) {
-            //                 $status = 'Completed';
-            //                 $statusClass = 'success';
-            //                 $actionBtn = 'N/A';
-            //             } else {
-            //                 $status = 'Pending';
-            //                 $statusClass = 'warning';
-            //                 $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
-            //             }
-                
-            //             $tableRows .= '<tr style="background-color:'.$bg.';" class="balance-row" data-org-balance="'.$balances['orgBalance'].'" data-site-balance="'.$balances['siteBalance'].'">'
-            //                 .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$currentGenericId] ?? 'N/A').'</td>'
-            //                 .'<td style="padding:8px;border:1px solid #ccc;">'.($dose[$i] ?? 'N/A').'</td>'
-            //                 .'<td style="padding:8px;border:1px solid #ccc;">'.($routes[$routeIds[$i]] ?? 'N/A').'</td>'
-            //                 .'<td style="padding:8px;border:1px solid #ccc;">'.($frequencies[$frequencyIds[$i]] ?? 'N/A').'</td>'
-            //                 .'<td style="padding:8px;border:1px solid #ccc;">'.($days[$i] ?? 'N/A').'</td>';
-                
-            //             if ($isResponded) {
-            //                 $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$respondedEntries[$currentGenericId].'</td>';
-            //             }
-                
-            //             $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>
-            //                 <td style="padding:8px;border:1px solid #ccc;">
-            //                     <span class="label label-'.$statusClass.'">'.$status.'</span>
-            //                 </td>
-            //                 </tr>';
-            //         }
-                
-            //         $tableHeader = '<tr>'
-            //             .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic Name</th>'
-            //             .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Dose</th>'
-            //             .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Route</th>'
-            //             .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Frequency</th>'
-            //             .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Duration (Days)</th>';
-                    
-            //         if (!empty($respondedEntries)) {
-            //             $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>';
-            //         }
-                
-            //         $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
-            //             .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
-            //             .'</tr>';
-                
-            //         return '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
-            //             .'<thead style="background-color:#e2e8f0;color:#000;">'
-            //             .$tableHeader
-            //             .'</thead><tbody>'.$tableRows.'</tbody></table>';
-            //     }
-            //     else {
-            //         $demandQty = !empty($row->demand_qty) ? explode(',', $row->demand_qty) : [];
-            //         $transactionQty = ($row->source === 'inventory' && !empty($row->transaction_qty)) ? explode(',', $row->transaction_qty) : null;
-                    
-            //         for ($i = 0; $i < count($genericIds); $i++) {
-            //             $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
-                        
-            //             $currentGenericId = $genericIds[$i];
-            //             $currentDemandQty = isset($demandQty[$i]) ? floatval($demandQty[$i]) : 0;
-            //             $currentRespondedQty = isset($respondedQtys[$currentGenericId]) ? floatval($respondedQtys[$currentGenericId]) : 0;
-                        
-            //             // Get balances for both direct inventory and responded entries
-            //             $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A'];
-                        
-            //             if ($row->source === 'inventory' && !empty($row->brand_id) && !empty($row->batch_no)) {
-            //                 $orgBalance = DB::table('inventory_balance')
-            //                     ->where('org_id', $row->org_id)
-            //                     ->where('generic_id', $currentGenericId)
-            //                     ->where('brand_id', $row->brand_id)
-            //                     ->where('batch_no', $row->batch_no)
-            //                     ->orderBy('id', 'desc')
-            //                     ->value('org_balance') ?? 'N/A';
-
-            //                 $siteBalance = DB::table('inventory_balance')
-            //                     ->where('org_id', $row->org_id)
-            //                     ->where('site_id', $row->site_id)
-            //                     ->where('generic_id', $currentGenericId)
-            //                     ->where('brand_id', $row->brand_id)
-            //                     ->where('batch_no', $row->batch_no)
-            //                     ->orderBy('id', 'desc')
-            //                     ->value('site_balance') ?? 'N/A';
-
-            //                 $balances = [
-            //                     'orgBalance' => $orgBalance,
-            //                     'siteBalance' => $siteBalance
-            //                 ];
-            //             } 
-            //             else if (!empty($row->referenceNumber)) {
-            //                 $respondedEntry = DB::table('inventory_management')
-            //                     ->where('ref_document_no', $row->referenceNumber)
-            //                     ->where('inv_generic_id', $currentGenericId)
-            //                     ->select('brand_id', 'batch_no')
-            //                     ->first();
-
-            //                 if ($respondedEntry) {
-            //                     $orgBalance = DB::table('inventory_balance')
-            //                         ->where('org_id', $row->org_id)
-            //                         ->where('generic_id', $currentGenericId)
-            //                         ->where('brand_id', $respondedEntry->brand_id)
-            //                         ->where('batch_no', $respondedEntry->batch_no)
-            //                         ->orderBy('id', 'desc')
-            //                         ->value('org_balance') ?? 'N/A';
-
-            //                     $siteBalance = DB::table('inventory_balance')
-            //                         ->where('org_id', $row->org_id)
-            //                         ->where('site_id', $row->site_id)
-            //                         ->where('generic_id', $currentGenericId)
-            //                         ->where('brand_id', $respondedEntry->brand_id)
-            //                         ->where('batch_no', $respondedEntry->batch_no)
-            //                         ->orderBy('id', 'desc')
-            //                         ->value('site_balance') ?? 'N/A';
-
-            //                     $balances = [
-            //                         'orgBalance' => $orgBalance,
-            //                         'siteBalance' => $siteBalance
-            //                     ];
-            //                 }
-            //             }
-
-            //             $balanceTooltip = 'Org Balance: ' . $balances['orgBalance'] . ' | Site Balance: ' . $balances['siteBalance'];
-                        
-            //             if ($currentRespondedQty > 0) {
-            //                 if ($currentRespondedQty >= $currentDemandQty) {
-            //                     $status = 'Completed';
-            //                     $statusClass = 'success';
-            //                     $actionBtn = 'N/A';
-            //                 } else {
-            //                     $status = 'Partially Completed';
-            //                     $statusClass = 'info';
-            //                     $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
-            //                 }
-            //             } else {
-            //                 $status = 'Pending';
-            //                 $statusClass = 'warning';
-            //                 $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
-            //             }
-                
-            //             if ($isDirectEntry) {
-            //                 $status = 'Completed';
-            //                 $statusClass = 'success';
-            //                 $actionBtn = 'N/A';
-            //             }
-                
-            //             $tableRows .= '<tr style="background-color:'.$bg.';" class="balance-row" data-org-balance="'.$balances['orgBalance'].'" data-site-balance="'.$balances['siteBalance'].'">'
-            //                 .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$currentGenericId] ?? 'N/A').'</td>'
-            //                 .'<td style="padding:8px;border:1px solid #ccc;">'.($demandQty[$i] ?? 'N/A').'</td>';
-                        
-            //             if ($row->source === 'inventory' && $transactionQty !== null) {
-            //                 $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($transactionQty[$i] ?? 'N/A').'</td>';
-            //             }
-                
-            //             if ($row->source !== 'inventory' && $currentRespondedQty > 0) {
-            //                 $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$currentRespondedQty.'</td>';
-            //             }
-                
-            //             $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>
-            //                 <td style="padding: 5px 15px;border: 1px solid #ccc;">
-            //                     <span class="label label-'.$statusClass.'">'.$status.'</span>
-            //                 </td>
-            //                 </tr>';
-            //         }
-                
-            //         $tableHeader = '<tr>'
-            //             .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic Name</th>'
-            //             .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Demand Qty</th>';
-                    
-            //         if ($row->source === 'inventory') {
-            //             $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>';
-            //         }
-                
-            //         if ($row->source !== 'inventory' && !empty($respondedQtys)) {
-            //             $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>';
-            //         }
-                
-            //         $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
-            //             .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
-            //             .'</tr>';
-                
-            //         return '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
-            //             .'<thead style="background-color:#e2e8f0;color:#000;">'
-            //             .$tableHeader
-            //             .'</thead><tbody>'.$tableRows.'</tbody></table>';   
-            //     }
-            // })
-            ->rawColumns(['id_raw', 'id', 'patientDetails', 'InventoryDetails'])
-            ->make(true);
+        ->rawColumns(['id_raw', 'id', 'patientDetails', 'InventoryDetails'])
+        ->make(true);
     }
 
     public function RespondIssueDispense(Request $r)
@@ -8791,6 +8574,8 @@ class InventoryController extends Controller
                     'bcc.name as billing_cc_name',
                     'sg.name as service_group_name',
                     'st.name as service_type_name',
+                    'ib.site_balance as maxQty'
+
                 ])
                 ->join('organization as o', 'o.id', '=', 'r.org_id')
                 ->join('org_site as s', 's.id', '=', 'r.site_id')
@@ -8803,6 +8588,12 @@ class InventoryController extends Controller
                 ->join('costcenter as bcc', 'bcc.id', '=', 'r.billing_cc')
                 ->join('service_group as sg', 'sg.id', '=', 'r.service_group_id')
                 ->join('service_type as st', 'st.id', '=', 'r.service_type_id')
+                ->leftJoin('inventory_management as im', 'im.ref_document_no', '=', 'r.code')
+                ->leftJoin(DB::raw('(SELECT * FROM inventory_balance ORDER BY id DESC LIMIT 1) as ib'), function($join) {
+                    $join->on('ib.generic_id', '=', 'im.inv_generic_id')
+                        ->on('ib.brand_id', '=', 'im.brand_id')
+                        ->on('ib.batch_no', '=', 'im.batch_no');
+                })
                 ->where('r.id', $id)
                 ->first();
                     
@@ -8860,9 +8651,60 @@ class InventoryController extends Controller
         }
 
         if ($source === 'material') {
+                // $mat = MaterialConsumptionRequisition::from('material_consumption_requisition as m')
+                // ->select([
+                //     'm.*',
+                //     'o.organization                as org_name',
+                //     's.name                        as site_name',
+                //     'p.name                        as patient_name',
+                //     'itt.name                      as transaction_type_name',
+                //     'sl.name                       as location_name',
+                //     'sm.name                       as service_mode_name',
+                //     'sv.name                       as service_name',
+                //     'e.name                        as physician_name',
+                //     'bcc.name                      as billing_cc_name',
+                //     'sg.name                       as service_group_name',
+                //     'st.name                       as service_type_name',
+                //     'im.transaction_qty            as issuedQty',
+                    
+                //     'ib.site_balance              as maxQty'  // Added this line
+                // ])
+                // ->join('organization                as o',   'o.id',  '=', 'm.org_id')
+                // ->join('org_site                    as s',   's.id',  '=', 'm.site_id')
+                // ->leftJoin('patient                   as p',   'p.mr_code', '=', 'm.mr_code')
+                // ->join('inventory_transaction_type  as itt', 'itt.id',     '=', 'm.transaction_type_id')
+                // ->leftJoin('service_location            as sl',   'sl.id',  '=', 'm.inv_location_id')
+                // ->leftJoin('service_mode                as sm',   'sm.id',  '=', 'm.service_mode_id')
+                // ->leftJoin('services                    as sv',   'sv.id',  '=', 'm.service_id')
+                // ->leftJoin('service_group               as sg',   'sg.id',  '=', 'sv.group_id')
+                // ->leftJoin('service_type                as st',   'st.id',  '=', 'sg.type_id')
+                // ->leftJoin('employee                    as e',   'e.id',  '=', 'm.physician_id')
+                // ->leftJoin  ('costcenter                  as bcc', 'bcc.id',     '=', 'm.billing_cc')
+                // ->leftJoin  ('inventory_management as im', 'im.ref_document_no',     '=', 'm.code')
+                // ->leftJoin(DB::raw('(SELECT * FROM inventory_balance ORDER BY id DESC LIMIT 1) as ib'), function($join) {
+                //     $join->on('ib.generic_id', '=', 'im.inv_generic_id')
+                //         ->on('ib.brand_id', '=', 'im.brand_id')
+                //         ->on('ib.batch_no', '=', 'im.batch_no');
+                // })
+                // ->where('m.id', $id)
+                // ->first();
+                
                 $mat = MaterialConsumptionRequisition::from('material_consumption_requisition as m')
                 ->select([
-                    'm.*',
+                    'm.id',
+                    'm.code',
+                    'm.org_id',
+                    'm.site_id',
+                    'm.mr_code',
+                    'm.transaction_type_id',
+                    'm.inv_location_id',
+                    'm.service_mode_id',
+                    'm.service_id',
+                    'm.physician_id',
+                    'm.billing_cc',
+                    'm.generic_id',
+                    'm.qty',
+                    'm.status',
                     'o.organization                as org_name',
                     's.name                        as site_name',
                     'p.name                        as patient_name',
@@ -8874,6 +8716,8 @@ class InventoryController extends Controller
                     'bcc.name                      as billing_cc_name',
                     'sg.name                       as service_group_name',
                     'st.name                       as service_type_name',
+                    DB::raw('COALESCE(SUM(im.transaction_qty), 0) as issuedQty'),
+                    'ib.site_balance              as maxQty'
                 ])
                 ->join('organization                as o',   'o.id',  '=', 'm.org_id')
                 ->join('org_site                    as s',   's.id',  '=', 'm.site_id')
@@ -8885,10 +8729,28 @@ class InventoryController extends Controller
                 ->leftJoin('service_group               as sg',   'sg.id',  '=', 'sv.group_id')
                 ->leftJoin('service_type                as st',   'st.id',  '=', 'sg.type_id')
                 ->leftJoin('employee                    as e',   'e.id',  '=', 'm.physician_id')
-                ->leftJoin  ('costcenter                  as bcc', 'bcc.id',     '=', 'm.billing_cc')
+                ->leftJoin('costcenter                  as bcc', 'bcc.id',     '=', 'm.billing_cc')
+                ->leftJoin('inventory_management as im', function($join) use ($genericId) {
+                    $join->on('im.ref_document_no', '=', 'm.code')
+                         ->where('im.inv_generic_id', '=', DB::raw($genericId));
+                })
+                ->leftJoin(DB::raw('(SELECT * FROM inventory_balance ORDER BY id DESC LIMIT 1) as ib'), function($join) {
+                    $join->on('ib.generic_id', '=', 'im.inv_generic_id')
+                        ->on('ib.brand_id', '=', 'im.brand_id')
+                        ->on('ib.batch_no', '=', 'im.batch_no');
+                })
                 ->where('m.id', $id)
+                ->groupBy([
+                    'm.id', 'm.code', 'm.org_id', 'm.site_id', 'm.mr_code',
+                    'm.transaction_type_id', 'm.inv_location_id', 'm.service_mode_id',
+                    'm.service_id', 'm.physician_id', 'm.billing_cc', 'm.generic_id',
+                    'm.qty', 'm.status',
+                    'o.organization', 's.name', 'p.name', 'itt.name', 'sl.name',
+                    'sm.name', 'sv.name', 'e.name', 'bcc.name', 'sg.name', 'st.name',
+                    'ib.site_balance'
+                ])
                 ->first();
-
+                
             if (! $mat) {
                 return response()->json(['error'=>'Material record not found'], 404);
             }
@@ -8898,6 +8760,14 @@ class InventoryController extends Controller
             $i    = array_search($genericId, $gIds);
 
             $genericName = InventoryGeneric::find($gIds[$i])->name ?? '';
+            $originalQty = $qtys[$i] ?? 0;
+            $issuedQty = $mat->issuedQty;
+            $maxQty = $mat->maxQty;
+            // dd($maxQty);
+
+            $remainingQty = max(0, $originalQty - $issuedQty); 
+            // dd($originalQty,$issuedQty,$remainingQty);
+
 
             return response()->json([
                 'source'                 => 'material',
@@ -8926,7 +8796,9 @@ class InventoryController extends Controller
                 'generic_name'           => $genericName,
                 'brand_id'               => null,         
                 'brand_name'             => '',
-                'demand_qty'             => $qtys[$i]      ?? '',
+                // 'demand_qty'             => $qtys[$i]      ?? '',
+                'demand_qty'             => $remainingQty      ?? '0',
+                'max_qty'             => $maxQty      ?? '0',
             ]);
         }
 

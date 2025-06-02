@@ -3,11 +3,11 @@ Issue And Dispense
 <!-- For add new issue or dispense form transaction type should show where request mandatory is N.
 For respond form transaction type should show where request mandatory is Y.  -->
 
-For selecting source and destination after selecting transaction type if both source and destination are 
+<!-- For selecting source and destination after selecting transaction type if both source and destination are 
 locations then check location applicable to for transaction type if it is source then show controlled 
 locations in source only and in destinations all locations should show. do same if location applicable to for 
 transaction type if it is destination then show controlled locations in destination 
-only and in source all locations should show.
+only and in source all locations should show. -->
 
 For inventory Balance we have to store balance for org, site and locations if source or destination
 are locations then we have to store balance for both source or destination according to source action

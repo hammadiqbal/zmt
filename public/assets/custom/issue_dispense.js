@@ -8,6 +8,10 @@ $(document).ready(function() {
         $('#transaction-info-row').empty();
         $('#mrService,.mr-dependent').hide();
         $('#id_mr').val('');
+        $('.id_brand').off('change.BrandChangeBatch');
+        $('.id_qty').attr('max', 0);
+        $('.id_qty').attr('placeholder', 'Transaction Qty..');
+        batchCheckInProgress = false;
         // $('.text-danger').text('');  
         // $('.requirefield').removeClass('requirefield');  
         // $('.select2-selection').removeClass('requirefield'); 
@@ -182,7 +186,7 @@ $(document).ready(function() {
             });
         
             $.ajax({
-                url: 'inventory/gettransactiontypeet',
+                url: 'inventory/gettransactiontypeim',
                 type: 'GET',
                 data: {
                     transactionTypeId: transactionTypeID,
@@ -406,9 +410,7 @@ $(document).ready(function() {
        
         $('.id_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
 
-        $(document)
-            .off('change.newIssueBrand')
-            .on('change.newIssueBrand', '.id_brand', function(e) {
+        $(document).off('change.newIssueBrand').on('change.newIssueBrand', '.id_brand', function(e) {
             e.stopPropagation();
             
             const currentRow = $(this).closest('.duplicate');
@@ -432,7 +434,7 @@ $(document).ready(function() {
                 return;
             }
 
-            handleBatchNumberCheck(orgId, siteId, genericId, brandId, $brand, currentRow);
+            handleBatchNumberCheck(orgId, siteId, genericId, brandId, $brand, currentRow, false);
         });
 
         $('#add-issuedispense').modal('show');
@@ -546,7 +548,6 @@ $(document).ready(function() {
             // $('#id_dl,#id_sl,.serviceDetails').show();
             // $('#mrService,.mr-dependent').show();
             // if (data.source === 'material' && !data.mr_code) {
-            console.log(data.code);
             if (data.source === 'material') {
                 $('#id_mr').closest('.col-md-6').hide();
                 $('#id_sl, #id_dl, .serviceDetails, #mrService, .mr-dependent').hide();
@@ -668,7 +669,7 @@ $(document).ready(function() {
                     return;
                 }
                 $.ajax({
-                    url: 'inventory/gettransactiontypeet',
+                    url: 'inventory/gettransactiontypeim',
                     type: 'GET',
                     data: {
                         transactionTypeId: transactionTypeID,
@@ -888,6 +889,14 @@ $(document).ready(function() {
                 console.log(error);
             });
 
+             // Add this to clean up when modal closes
+            $('#add-issuedispense').one('hidden.bs.modal', function() {
+                // Unbind all brand change events
+                $('.id_brand').off('change.BrandChangeBatch');
+                // Reset any other state if needed
+                batchCheckInProgress = false;
+            });
+
             BrandChangeBatchAndExpiry(
                 '#id_org',  
                 '#id_site',  
@@ -897,7 +906,8 @@ $(document).ready(function() {
                 $row.find('.id_expiry'),
                 '#add-issuedispense'
             );
-
+            const maxQty = parseFloat(data.max_qty);
+            const $qtyInput = $row.find('.id_qty');
             // $row.find('.id_brand').html(`<option selected value="${data.brand_id}">${data.brand_name}</option>`).prop('disabled', true);
             if (data.source === 'medication') {
                 $('.mr-dependent').show();
@@ -907,44 +917,51 @@ $(document).ready(function() {
                 $row.find('.id_frequency').html(`<option selected value="${data.frequency_id}">${data.frequency_name}</option>`).prop('disabled', true);
                 $row.find('input[name="id_duration[]"]').val(data.days).prop('disabled', true);
                 $row.find('.id_batch, .id_expiry, input[name="id_qty[]"]').val('').prop('disabled', false);
-            } else {
+                //  $qtyInput.attr('max', maxQty);
+                // $qtyInput.attr('placeholder', `Max: ${maxQty} (Demand Qty)`);
+            } 
+            else {
                 $('.mr-dependent').hide();
                 $('.req_only').show();
 
                 const demandQty = parseFloat(data.demand_qty);
-                const $qtyInput = $row.find('.id_qty');
+               
                 
                 // Set demand qty display first
                 $row.find('.id_demand_qty').val(data.demand_qty).prop('disabled', true);
                 $qtyInput.val('').prop('disabled', false);
             
-                // Wait for batch info to be loaded
-                setTimeout(() => {
-                    const currentMax = parseFloat($qtyInput.attr('max'));
-                    if (demandQty && !isNaN(demandQty)) {
-                        if (currentMax && !isNaN(currentMax)) {
-                            if (demandQty < currentMax) {
+                // setTimeout(() => {
+                    // const currentMax = parseFloat($qtyInput.attr('max'));
+
+                    // if (demandQty && !isNaN(demandQty)) {
+                // console.log('Demand Qty:', demandQty, 'Current Max:', currentMax);
+
+                        // if (maxQty && !isNaN(maxQty)) {
+                            if (demandQty < maxQty) {
                                 $qtyInput.attr('max', demandQty);
                                 $qtyInput.attr('placeholder', `Max: ${demandQty} (Demand Qty)`);
                             }
-                        } else {
-                            $qtyInput.attr('max', demandQty);
-                            $qtyInput.attr('placeholder', `Max: ${demandQty} (Demand Qty)`);
-                        }
-                    }
-                }, 1000); // Increased timeout to ensure batch info is loaded
-                
-                
+                            else {
+                                console.log('else');
+                                $qtyInput.attr('max', demandQty);
+                                $qtyInput.attr('placeholder', `Max: ${demandQty} (Demand Qty)`);
+                            }
+                        // } 
+                    // }
+                // }, 1000);
 
                 // $qtyInput.val('').prop('disabled', false);
                 // $row.find('.id_demand_qty').val(data.demand_qty).prop('disabled', true);
                 // $row.find('input[name="id_qty[]"]').val('').prop('disabled', false);
             }
 
+            
+
             $('#add-issuedispense').modal('show');
             setTimeout(function(){
                 $('#ajax-loader').hide();
-                }, 700);        
+                }, 1000);        
             });
     });
     // Event listener for respond button
