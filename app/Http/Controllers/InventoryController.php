@@ -7230,6 +7230,7 @@ class InventoryController extends Controller
     }
 
     public function GetTransactionTypeInventoryManagement(Request $request)
+    public function GetTransactionTypeInventoryManagement(Request $request)
     {
         $siteId            = $request->input('siteId');
         $transactionTypeId = $request->input('transactionTypeId');

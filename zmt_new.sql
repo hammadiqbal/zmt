@@ -984,6 +984,7 @@ CREATE TABLE `emp_inventory_location` (
 INSERT INTO `emp_inventory_location` (`id`, `org_id`, `site_id`, `emp_id`, `location_site`, `service_location_id`, `status`, `user_id`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
 (1, 4, '1', 1, '1', '[[\"1\",\"2\"]]', 1, 1, 1728499080, 1728330559, 1729275282),
 (2, 4, '1', 2, '1', '[[\"1\",\"9\",\"10\"]]', 1, 1, 1739786880, 1739786910, 1748887657);
+(2, 4, '1', 2, '1', '[[\"1\",\"9\",\"10\"]]', 1, 1, 1739786880, 1739786910, 1748887657);
 
 -- --------------------------------------------------------
 
@@ -20784,9 +20785,11 @@ CREATE TABLE `inventory_transaction_type` (
 
 INSERT INTO `inventory_transaction_type` (`id`, `name`, `activity_type`, `request_mandatory`, `request_location_mandatory`, `source_location_type`, `source_action`, `destination_location_type`, `destination_action`, `service_location_id`, `applicable_location_to`, `transaction_expired_status`, `org_id`, `status`, `user_id`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
 (1, 'Material Receiving - Opening Balance', '1', 'n', 'n', 1, 'n', 4, 'a', '10', 'destination', 'n', 4, 1, 1, '2178,2678,2679', 1739776440, 1739776534, 1748887046),
+(1, 'Material Receiving - Opening Balance', '1', 'n', 'n', 1, 'n', 4, 'a', '10', 'destination', 'n', 4, 1, 1, '2178,2678,2679', 1739776440, 1739776534, 1748887046),
 (2, 'Material Receiving - Procurement', '1', 'n', 'n', 1, 'n', 4, 'a', '10', 'destination', 'n', 4, 1, 1, '2179,2223,2226', 1739776440, 1739776577, 1743094950),
 (3, 'Material Receiving - Donation In Kind', '1', 'n', 'n', 2, 'n', 4, 'a', '10', 'destination', 'n', 4, 1, 1, '2180,2222,2225,2556,2557', 1739776440, 1739776609, 1747770609),
 (4, 'Material Return From Store To Vendor', '1', 'n', 'n', 4, 's', 1, 'n', '10', 'source', 'y', 4, 1, 1, '2181,2221,2224', 1739776440, 1739776645, 1743094928),
+(5, 'Issue From Store To Service Location', '2', 'n', 'y', 4, 's', 4, 'a', '9,10,11,13', 'source', 'n', 4, 1, 1, '2182,2351,2352,2353,2504,2505,2506,2615,2620,2621,2628,2638,2640,2659,2660,2661,2662,2666,2667,2670,2671', 1739776440, 1739776681, 1748885817),
 (5, 'Issue From Store To Service Location', '2', 'n', 'y', 4, 's', 4, 'a', '9,10,11,13', 'source', 'n', 4, 1, 1, '2182,2351,2352,2353,2504,2505,2506,2615,2620,2621,2628,2638,2640,2659,2660,2661,2662,2666,2667,2670,2671', 1739776440, 1739776681, 1748885817),
 (6, 'Direct Dispensing To Patient', '2', 'y', 'y', 4, 's', 3, 'n', '9,13', 'source', 'n', 4, 1, 1, '2183,2502,2503', 1739776440, 1739776717, 1746642301),
 (7, 'Patient Material Consumption', '3', 'n', 'n', 4, 's', 3, 'n', '1,2,4', 'source', 'n', 4, 1, 1, '2184', 1739776440, 1739776753, 1739776753),
@@ -20796,6 +20799,8 @@ INSERT INTO `inventory_transaction_type` (`id`, `name`, `activity_type`, `reques
 (11, 'Patient Material Return after Direct Dispense', '4', 'n', 'n', 3, 'n', 4, 'a', '9,13', 'destination', 'y', 4, 1, 1, '2188', 1739776440, 1739776909, 1739776909),
 (12, 'Material Internal Transfer', '5', 'n', 'n', 4, 's', 4, 'a', '10', 'source', 'y', 4, 1, 1, '2189,2192', 1739776440, 1739776944, 1739783714),
 (13, 'Material Condemnation', '5', 'n', 'n', 4, 's', 5, 'n', '10', 'source', 'y', 4, 1, 1, '2190', 1739776440, 1739776981, 1739776981),
+(14, 'Reversal of Transaction', '6', 'n', 'n', 5, 'r', 5, 'r', '14', 'not applicable', 'n', 4, 1, 1, '2191', 1739776440, 1739777022, 1739777022),
+(15, 'Test for issue and dispense', '2', 'y', 'y', 4, 'a', 4, 's', '3,8,9,10,1', 'source', 'y', 4, 1, 1, '2684', 1748889660, 1748889769, 1748889769);
 (14, 'Reversal of Transaction', '6', 'n', 'n', 5, 'r', 5, 'r', '14', 'not applicable', 'n', 4, 1, 1, '2191', 1739776440, 1739777022, 1739777022),
 (15, 'Test for issue and dispense', '2', 'y', 'y', 4, 'a', 4, 's', '3,8,9,10,1', 'source', 'y', 4, 1, 1, '2684', 1748889660, 1748889769, 1748889769);
 
@@ -23945,6 +23950,9 @@ INSERT INTO `material_consumption_requisition` (`id`, `code`, `org_id`, `site_id
 (1, 'ZCG-MTC-00001', 4, 1, 6, 2, 'ZMTP-0000001', '3 years 7 months 14 days', 1, 5, 6, 8, 2, '4,122', '10,20', NULL, 1, 1, '2637,2686', 1748445439, 1748445439, 1748890831),
 (3, 'ZCG-MTC-00003', 4, 1, 15, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '3', '10', '', 1, 1, '2685', 1748889822, 1748889822, 1748889822),
 (4, 'ZCSN-MTC-00004', 4, 2, 15, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '5', '5', '', 1, 1, '2687', 1748892590, 1748892590, 1748892590);
+(1, 'ZCG-MTC-00001', 4, 1, 6, 2, 'ZMTP-0000001', '3 years 7 months 14 days', 1, 5, 6, 8, 2, '4,122', '10,20', NULL, 1, 1, '2637,2686', 1748445439, 1748445439, 1748890831),
+(3, 'ZCG-MTC-00003', 4, 1, 15, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '3', '10', '', 1, 1, '2685', 1748889822, 1748889822, 1748889822),
+(4, 'ZCSN-MTC-00004', 4, 2, 15, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '5', '5', '', 1, 1, '2687', 1748892590, 1748892590, 1748892590);
 
 -- --------------------------------------------------------
 
@@ -24656,6 +24664,8 @@ CREATE TABLE `req_medication_consumption` (
 --
 
 INSERT INTO `req_medication_consumption` (`id`, `code`, `transaction_type_id`, `inv_location_id`, `mr_code`, `gender_id`, `age`, `service_id`, `org_id`, `site_id`, `service_mode_id`, `service_type_id`, `service_group_id`, `responsible_physician`, `billing_cc`, `inv_generic_ids`, `dose`, `route_ids`, `frequency_ids`, `days`, `remarks`, `user_id`, `status`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
+(1, 'ZCG-MDC-00001', 6, 1, 'ZMTP-0000001', 1, '3 years 7 months 8 days', 5, 4, 1, 6, 2, 5, 2, 8, '1', '1', '1', '2', '1', '', 1, 1, '2635', 1748434337, 1748434337, 1748434337),
+(2, 'ZCG-MDC-00002', 6, 2, 'ZMTP-0000001', 1, '3 years 7 months 11 days', 5, 4, 1, 6, 2, 5, 2, 8, '3', '1', '2', '2', '1', '', 1, 1, '2663', 1748700638, 1748700638, 1748700638);
 (1, 'ZCG-MDC-00001', 6, 1, 'ZMTP-0000001', 1, '3 years 7 months 8 days', 5, 4, 1, 6, 2, 5, 2, 8, '1', '1', '1', '2', '1', '', 1, 1, '2635', 1748434337, 1748434337, 1748434337),
 (2, 'ZCG-MDC-00002', 6, 2, 'ZMTP-0000001', 1, '3 years 7 months 11 days', 5, 4, 1, 6, 2, 5, 2, 8, '3', '1', '2', '2', '1', '', 1, 1, '2663', 1748700638, 1748700638, 1748700638);
 
@@ -26246,6 +26256,7 @@ ALTER TABLE `inventory_transaction_activity`
 --
 ALTER TABLE `inventory_transaction_type`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `inventory_type`
@@ -26305,6 +26316,7 @@ ALTER TABLE `logs`
 -- AUTO_INCREMENT for table `material_consumption_requisition`
 --
 ALTER TABLE `material_consumption_requisition`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
@@ -26407,6 +26419,7 @@ ALTER TABLE `req_epi`
 -- AUTO_INCREMENT for table `req_medication_consumption`
 --
 ALTER TABLE `req_medication_consumption`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --

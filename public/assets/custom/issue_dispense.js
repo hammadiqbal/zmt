@@ -12,6 +12,10 @@ $(document).ready(function() {
         $('.id_qty').attr('max', 0);
         $('.id_qty').attr('placeholder', 'Transaction Qty..');
         batchCheckInProgress = false;
+        $('.id_brand').off('change.BrandChangeBatch');
+        $('.id_qty').attr('max', 0);
+        $('.id_qty').attr('placeholder', 'Transaction Qty..');
+        batchCheckInProgress = false;
         // $('.text-danger').text('');  
         // $('.requirefield').removeClass('requirefield');  
         // $('.select2-selection').removeClass('requirefield'); 
@@ -186,6 +190,7 @@ $(document).ready(function() {
             });
         
             $.ajax({
+                url: 'inventory/gettransactiontypeim',
                 url: 'inventory/gettransactiontypeim',
                 type: 'GET',
                 data: {
@@ -410,6 +415,7 @@ $(document).ready(function() {
        
         $('.id_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
 
+        $(document).off('change.newIssueBrand').on('change.newIssueBrand', '.id_brand', function(e) {
         $(document).off('change.newIssueBrand').on('change.newIssueBrand', '.id_brand', function(e) {
             e.stopPropagation();
             
@@ -701,6 +707,7 @@ $(document).ready(function() {
                 }
                 $.ajax({
                     url: 'inventory/gettransactiontypeim',
+                    url: 'inventory/gettransactiontypeim',
                     type: 'GET',
                     data: {
                         transactionTypeId: transactionTypeID,
@@ -928,6 +935,14 @@ $(document).ready(function() {
                 batchCheckInProgress = false;
             });
 
+             // Add this to clean up when modal closes
+            $('#add-issuedispense').one('hidden.bs.modal', function() {
+                // Unbind all brand change events
+                $('.id_brand').off('change.BrandChangeBatch');
+                // Reset any other state if needed
+                batchCheckInProgress = false;
+            });
+
             
             const maxQty = parseFloat(data.max_qty);
             // console.log(maxQty);
@@ -988,6 +1003,7 @@ $(document).ready(function() {
             $('#add-issuedispense').modal('show');
             setTimeout(function(){
                 $('#ajax-loader').hide();
+                }, 1000);        
                 }, 1000);        
             });
     });
