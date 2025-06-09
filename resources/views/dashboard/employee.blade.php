@@ -48,7 +48,7 @@ border: 1px solid rgba(0,0,0,.15);
         <div class="col-md-12 d-flex justify-content-center">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">Home</li>
-                <li class="breadcrumb-item">Settings</li>
+                <li class="breadcrumb-item">Human Resource</li>
                 <li class="breadcrumb-item active">Employee</li>
             </ol>
         </div>
@@ -93,6 +93,22 @@ border: 1px solid rgba(0,0,0,.15);
                                     <div class="col-lg-12">
                                         <div class="form-body">
                                             <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="form-group row">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group has-custom m-b-5">
+                                                                <label class="control-label">Select Prefix</label>
+                                                                <select class="form-control selecter p-0" name="emp_prefix" id="emp_prefix" style="color:#222d32">
+                                                                    @foreach ($Prefixes as $Prefix)
+                                                                        <option value="{{ $Prefix['id'] }}"> {{ $Prefix['name'] }}</option>
+                                                                    @endforeach
+                                                                </select>
+                                                            </div>
+                                                            <span class="text-danger" id="emp_prefix_error"></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
                                                 <div class="col-md-4">
                                                     <div class="form-group row">
                                                         <div class="col-md-12">
@@ -694,6 +710,20 @@ border: 1px solid rgba(0,0,0,.15);
                                 <div class="card-body">
                                     <div class="form-body">
                                         <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Prefix </label>
+                                                            <select class="form-control selecter p-0" name="u_emp_prefix" id="u_emp_prefix" style="color:#222d32">
+                                                                @foreach ($Prefixes as $Prefix)
+                                                                    <option value="{{ $Prefix['id'] }}"> {{ $Prefix['name'] }}</option>
+                                                                @endforeach
+                                                            </select>   
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <div class="col-md-4">
                                                 <div class="form-group row m-b-5">
                                                     <div class="col-md-12">

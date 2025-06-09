@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 28, 2025 at 10:13 PM
+-- Generation Time: Jun 09, 2025 at 07:42 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -815,6 +815,7 @@ CREATE TABLE `drug_history` (
 CREATE TABLE `employee` (
   `id` int(11) NOT NULL,
   `name` varchar(150) NOT NULL,
+  `prefix_id` int(11) NOT NULL,
   `guardian_name` varchar(150) NOT NULL,
   `guardian_relation` varchar(100) NOT NULL,
   `next_of_kin` varchar(150) NOT NULL,
@@ -861,10 +862,11 @@ CREATE TABLE `employee` (
 -- Dumping data for table `employee`
 --
 
-INSERT INTO `employee` (`id`, `name`, `guardian_name`, `guardian_relation`, `next_of_kin`, `next_of_kin_relation`, `old_code`, `gender_id`, `language`, `religion`, `marital_status`, `dob`, `org_id`, `site_id`, `cc_id`, `cadre_id`, `position_id`, `week_hrs`, `report_to`, `q_level_id`, `emp_status_id`, `work_status_id`, `leaving_date`, `joinig_date`, `address`, `mailing_address`, `province_id`, `division_id`, `district_id`, `cnic`, `cnic_expiry`, `mobile_no`, `additional_mobile_no`, `landline`, `email`, `image`, `status`, `user_id`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
-(1, 'Test Employee', 'Test Employee One Father', 'Father', 'Test Employee One Next Of Kin', 'Brother', NULL, 2, 'Urdu', 'Islam', 'Married', 962447570, 4, 1, 63, 5, 10, 40, 0, 4, 2, 1, 0, 1719829970, 'Test Employee One Address', 'Test Mailing Address 2', 2, 2, 5, '4222277777779', 1706092370, '03009999999', '', NULL, 'admin@zmtclinics.org', 'Screenshot 2024-09-03 230753.png', 1, 1, '1020,1159,1161,1162,1326,1391,1455,1660,1690,1982,2256', 1722494700, 1722494916, 1737714770),
-(2, 'Saniya', 'Riaz Godil', 'Father', 'Maryam', 'Mother', NULL, 2, 'English,Urdu', 'Islam', 'Single', 957374900, 4, 1, 1, 1, 26, 48, 1, 4, 1, 1, 0, 1696699700, 'Flat # 1203, Taloo Gold Residency, Gulzar E Hijiri, Scheme 33', 'test mailing address 1', 2, 2, 6, '4210175388264', 1832321692, '03349272400', '', NULL, 'saniya@zmtclinics.org', 'logo (2).png', 1, 6, '1304,1307,1325,1432,1513,1662,1689,2193,2194,2195,2251,2355,2356,2357', 1725256200, 1725256331, 1730309300),
-(4, 'Test Employee one', 'test father one', 'Father', 'test next of kin', 'Father', '', 1, 'urdu', 'Islam', 'Single', 790424092, 4, 1, 8, 1, 4, 40, 0, 4, 1, 1, 0, 1737713692, 'test present address test present address test present address test present address test present address', 'test mailing address test mailing address test mailing address test mailing address test mailing address', 2, 2, 5, '4220118437422', 1832321692, '5454897987987', NULL, NULL, 'hammadiqbal.esire@gmail.com', 'fb-events - Copy - Copy (2).PNG', 1, 1, '1981', 1737713160, 1737713692, 1737713692);
+INSERT INTO `employee` (`id`, `name`, `prefix_id`, `guardian_name`, `guardian_relation`, `next_of_kin`, `next_of_kin_relation`, `old_code`, `gender_id`, `language`, `religion`, `marital_status`, `dob`, `org_id`, `site_id`, `cc_id`, `cadre_id`, `position_id`, `week_hrs`, `report_to`, `q_level_id`, `emp_status_id`, `work_status_id`, `leaving_date`, `joinig_date`, `address`, `mailing_address`, `province_id`, `division_id`, `district_id`, `cnic`, `cnic_expiry`, `mobile_no`, `additional_mobile_no`, `landline`, `email`, `image`, `status`, `user_id`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
+(1, 'Test Employee', 4, 'Test Employee One Father', 'Father', 'Test Employee One Next Of Kin', 'Brother', NULL, 2, 'Urdu', 'Islam', 'Married', 962456050, 4, 1, 63, 5, 10, 40, 0, 4, 2, 1, 0, 1719838450, 'Test Employee One Address', 'Test Mailing Address 2', 2, 2, 5, '4222277777779', 1706100850, '03009999999', '', NULL, 'admin@zmtclinics.org', 'Capture001.png', 1, 1, '1020,1159,1161,1162,1326,1391,1455,1660,1690,1982,2256,2718,2719,2720,2721', 1722494700, 1722494916, 1749214450),
+(2, 'Saniya', 4, 'Riaz Godil', 'Father', 'Maryam', 'Mother', NULL, 2, 'English,Urdu', 'Islam', 'Single', 957374900, 4, 1, 1, 1, 26, 48, 1, 4, 1, 1, 0, 1696699700, 'Flat # 1203, Taloo Gold Residency, Gulzar E Hijiri, Scheme 33', 'test mailing address 1', 2, 2, 6, '4210175388264', 1832321692, '03349272400', '', NULL, 'saniya@zmtclinics.org', 'logo (2).png', 1, 6, '1304,1307,1325,1432,1513,1662,1689,2193,2194,2195,2251,2355,2356,2357,2669,2674,2677,2683', 1725256200, 1725256331, 1730309300),
+(4, 'Test Employee One', 2, 'Test Father One', 'Father', 'Test Next Of Kin', 'Father', NULL, 1, 'Urdu', 'Islam', 'Single', 790374548, 4, 1, 8, 1, 4, 40, 0, 4, 1, 1, 0, 1737664148, 'Test Present Address Test Present Address Test Present Address Test Present Address Test Present Address', 'Test Mailing Address Test Mailing Address Test Mailing Address Test Mailing Address Test Mailing Address', 2, 2, 5, '4220118437422', 1832272148, '5454897987987', '', NULL, 'hammadiqbal.esire@gmail.com', 'fb-events - Copy - Copy (2).PNG', 1, 1, '1981,2641,2642,2643', 1737713160, 1737713692, 1748464148),
+(5, 'Test Employee two', 3, 'test father name', 'Father', 'nxxt of kin', 'Father', '', 2, 'urdu', 'Islam', 'Single', 1465215809, 4, 1, 8, 1, 2, 40, 0, 2, 1, 1, 0, 1749212609, 'test present address test present address test present address test present address test present address', 'test Mailing Address', 2, 2, 3, '4220118637411', 1938515009, '03323405869', NULL, NULL, 'ihammad256@gmail.com', 'Capture001.png', 1, 1, '2717', 1749212220, 1749212609, 1749212609);
 
 -- --------------------------------------------------------
 
@@ -981,7 +983,7 @@ CREATE TABLE `emp_inventory_location` (
 
 INSERT INTO `emp_inventory_location` (`id`, `org_id`, `site_id`, `emp_id`, `location_site`, `service_location_id`, `status`, `user_id`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
 (1, 4, '1', 1, '1', '[[\"1\",\"2\"]]', 1, 1, 1728499080, 1728330559, 1729275282),
-(2, 4, '1', 2, '1', '[[\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"9\",\"10\"]]', 1, 1, 1739786880, 1739786910, 1745174421);
+(2, 4, '1', 2, '1', '[[\"1\",\"9\",\"10\"]]', 1, 1, 1739786880, 1739786910, 1748887657);
 
 -- --------------------------------------------------------
 
@@ -1428,7 +1430,8 @@ CREATE TABLE `gender` (
 INSERT INTO `gender` (`id`, `name`, `status`, `user_id`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
 (1, 'Male', 1, 1, '153', 1713115800, 1713115834, 1713115834),
 (2, 'Female', 1, 1, '154', 1713115800, 1713115842, 1713115842),
-(3, 'Transgender', 1, 1, '155', 1713115800, 1713115850, 1713115850);
+(3, 'Transgender', 1, 1, '155', 1713115800, 1713115850, 1713115850),
+(4, 'test', 1, 1, '2706', 1749207300, 1749207306, 1749207306);
 
 -- --------------------------------------------------------
 
@@ -19976,11 +19979,11 @@ INSERT INTO `inventory_balance` (`id`, `org_id`, `site_id`, `management_id`, `ge
 (139, 4, 2, 139, 128, 138, '125487122', 150, 150, 'Transaction by Ashar Alam on 25-May-2025 17:49 | Batch: 125487122 | Qty: 150 | New Org Balance: 150 | New Site Balance: 150', 1748177346),
 (140, 4, 1, 140, 11, 12, '45787787', 200, 200, 'Transaction by Ashar Alam on 26-May-2025 00:13 | Batch: 45787787 | Qty: 200 | New Org Balance: 200 | New Site Balance: 200', 1748200432),
 (141, 4, 1, 140, 16, 17, '48778877', 100, 100, 'Transaction by Ashar Alam on 26-May-2025 00:13 | Batch: 48778877 | Qty: 100 | New Org Balance: 100 | New Site Balance: 100', 1748200432),
-(147, 4, 1, 149, 5, 5, '1111115', 4, 4, 'Transaction by Ashar Alam on 27-May-2025 23:59 | Batch: 1111115 | Qty: 96 | New Org Balance: 4 | New Site Balance: 4', 1748372386),
-(162, 4, 1, 163, 5, 5, '1111115', 2, 2, 'Issue & Dispense Transaction by Ashar Alam on 29-May-2025 00:43 | Batch: 1111115 | Qty: 2 | New Org Balance: 2 | New Site Balance: 2', 1748461426),
-(163, 4, 1, 164, 4, 4, '1111114', 95, 95, 'Issue & Dispense Transaction by Ashar Alam on 29-May-2025 01:03 | Batch: 1111114 | Qty: 5 | New Org Balance: 95 | New Site Balance: 95', 1748462636),
-(164, 4, 1, 165, 1, 1, '1111111', 90, 90, 'Issue & Dispense Transaction by Ashar Alam on 29-May-2025 01:12 | Batch: 1111111 | Qty: 10 | New Org Balance: 90 | New Site Balance: 90', 1748463130),
-(165, 4, 1, 166, 5, 5, '1111115', 0, 0, 'Issue & Dispense Transaction by Ashar Alam on 29-May-2025 01:12 | Batch: 1111115 | Qty: 2 | New Org Balance: 0 | New Site Balance: 0', 1748463172);
+(147, 4, 1, 149, 5, 5, '1111115', 96, 96, 'Transaction by Ashar Alam on 27-May-2025 23:59 | Batch: 1111115 | Qty: 96 | New Org Balance: 4 | New Site Balance: 4', 1748372386),
+(177, 4, 1, 177, 4, 4, 'test2batch', 500, 500, 'Transaction by Ashar Alam on 04-Jun-2025 00:30 | Batch: test2batch | Qty: 500 | New Org Balance: 500 | New Site Balance: 500', 1748979018),
+(178, 4, 1, 178, 4, 4, 'testbatch', 8, 8, 'Transaction by Ashar Alam on 04-Jun-2025 00:30 | Batch: testbatch | Qty: 8 | New Org Balance: 8 | New Site Balance: 8', 1748979045),
+(179, 4, 1, 179, 4, 4, 'test5batch', 7, 7, 'Transaction by Ashar Alam on 04-Jun-2025 00:32 | Batch: test5batch | Qty: 7 | New Org Balance: 7 | New Site Balance: 7', 1748979167),
+(180, 4, 1, 180, 4, 4, 'test5batch', 0, 0, 'Issue & Dispense Transaction by Ashar Alam on 04-Jun-2025 00:45 | Batch: test5batch | Qty: 7 | New Org Balance: 0 | New Site Balance: 0', 1748979934);
 
 -- --------------------------------------------------------
 
@@ -20595,11 +20598,11 @@ INSERT INTO `inventory_management` (`id`, `transaction_type_id`, `org_id`, `site
 (138, 2, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '128', '138', '12486792', '1779799323', '110', NULL, 1, 1, '2604', 1748176923, 1748176923, 1748176923),
 (139, 2, 4, 2, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '128', '138', '125487122', '1811335747', '150', NULL, 1, 1, '2605', 1748177346, 1748177346, 1748177346),
 (140, 3, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '2', '10', NULL, NULL, NULL, NULL, NULL, '11,16', '12,17', '45787787,48778877', '1779822832,1758914032', '200,100', NULL, 1, 1, '2607', 1748200432, 1748200432, 1748200432),
-(149, 4, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '10', '3', NULL, NULL, NULL, NULL, NULL, '5', '5', '1111115', '1748285987', '96', NULL, 1, 1, '2629', 1748372386, 1748372386, 1748372386),
-(163, 5, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '9', '13', NULL, NULL, NULL, NULL, NULL, '5', '5', '1111115', '1748202226', '2', '2', 1, 1, '1', 1748461426, 1748461426, 1748461426),
-(164, 6, 4, 1, 'ZCG-MTC-00001', NULL, 'ZMTP-0000001', 5, 6, 8, 0, 2, '13', 'ZMTP-0000001', NULL, NULL, NULL, NULL, NULL, '4', '4', '1111114', '1810929836', '5', '10', 1, 1, '1', 1748462636, 1748462636, 1748462636),
-(165, 6, 4, 1, 'ZCG-MDC-00001', NULL, 'ZMTP-0000001', 5, 6, 8, 0, 2, '13', 'ZMTP-0000001', NULL, NULL, NULL, NULL, NULL, '1', '1', '1111111', '1810930330', '10', NULL, 1, 1, '1', 1748463130, 1748463130, 1748463130),
-(166, 5, 4, 1, 'ZCG-MTC-00002', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '13', '9', NULL, NULL, NULL, NULL, NULL, '5', '5', '1111115', '1748203972', '2', '5', 1, 1, '1', 1748463172, 1748463172, 1748463172);
+(149, 4, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '10', '3', NULL, NULL, NULL, NULL, NULL, '5', '5', '1111115', '1748285987', '4', NULL, 1, 1, '2629', 1748372386, 1748372386, 1748372386),
+(177, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '4', '4', 'test2batch', '1780601418', '500', NULL, 1, 1, '2696', 1748979018, 1748979018, 1748979018),
+(178, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '4', '4', 'testbatch', '1843759845', '8', NULL, 1, 1, '2697', 1748979045, 1748979045, 1748979045),
+(179, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '4', '4', 'test5batch', '1757014367', '7', NULL, 1, 1, '2698', 1748979167, 1748979167, 1748979167),
+(180, 6, 4, 1, 'ZCG-MTC-00001', NULL, 'ZMTP-0000001', 5, 6, 8, 0, 2, '13', 'ZMTP-0000001', NULL, NULL, NULL, NULL, NULL, '4', '4', 'test5batch', '1757015134', '7', '10', 1, 1, '1', 1748979934, 1748979934, 1748979934);
 
 -- --------------------------------------------------------
 
@@ -20780,11 +20783,11 @@ CREATE TABLE `inventory_transaction_type` (
 --
 
 INSERT INTO `inventory_transaction_type` (`id`, `name`, `activity_type`, `request_mandatory`, `request_location_mandatory`, `source_location_type`, `source_action`, `destination_location_type`, `destination_action`, `service_location_id`, `applicable_location_to`, `transaction_expired_status`, `org_id`, `status`, `user_id`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
-(1, 'Material Receiving - Opening Balance', '1', 'n', 'n', 1, 'n', 4, 'a', '10', 'destination', 'n', 4, 1, 1, '2178', 1739776440, 1739776534, 1739776534),
+(1, 'Material Receiving - Opening Balance', '1', 'n', 'n', 1, 'n', 4, 'a', '10', 'destination', 'n', 4, 1, 1, '2178,2678,2679', 1739776440, 1739776534, 1748887046),
 (2, 'Material Receiving - Procurement', '1', 'n', 'n', 1, 'n', 4, 'a', '10', 'destination', 'n', 4, 1, 1, '2179,2223,2226', 1739776440, 1739776577, 1743094950),
 (3, 'Material Receiving - Donation In Kind', '1', 'n', 'n', 2, 'n', 4, 'a', '10', 'destination', 'n', 4, 1, 1, '2180,2222,2225,2556,2557', 1739776440, 1739776609, 1747770609),
 (4, 'Material Return From Store To Vendor', '1', 'n', 'n', 4, 's', 1, 'n', '10', 'source', 'y', 4, 1, 1, '2181,2221,2224', 1739776440, 1739776645, 1743094928),
-(5, 'Issue From Store To Service Location', '2', 'n', 'y', 4, 's', 4, 'a', '9,13', 'source', 'n', 4, 1, 1, '2182,2351,2352,2353,2504,2505,2506,2615,2620,2621,2628,2638,2640', 1739776440, 1739776681, 1748446186),
+(5, 'Issue From Store To Service Location', '2', 'n', 'y', 4, 's', 4, 'a', '9,10,11,13', 'source', 'n', 4, 1, 1, '2182,2351,2352,2353,2504,2505,2506,2615,2620,2621,2628,2638,2640,2659,2660,2661,2662,2666,2667,2670,2671', 1739776440, 1739776681, 1748885817),
 (6, 'Direct Dispensing To Patient', '2', 'y', 'y', 4, 's', 3, 'n', '9,13', 'source', 'n', 4, 1, 1, '2183,2502,2503', 1739776440, 1739776717, 1746642301),
 (7, 'Patient Material Consumption', '3', 'n', 'n', 4, 's', 3, 'n', '1,2,4', 'source', 'n', 4, 1, 1, '2184', 1739776440, 1739776753, 1739776753),
 (8, 'General Material Consumption', '3', 'n', 'n', 4, 's', 5, 'n', '1,2,4', 'source', 'n', 4, 1, 1, '2185', 1739776440, 1739776793, 1739776793),
@@ -20793,7 +20796,8 @@ INSERT INTO `inventory_transaction_type` (`id`, `name`, `activity_type`, `reques
 (11, 'Patient Material Return after Direct Dispense', '4', 'n', 'n', 3, 'n', 4, 'a', '9,13', 'destination', 'y', 4, 1, 1, '2188', 1739776440, 1739776909, 1739776909),
 (12, 'Material Internal Transfer', '5', 'n', 'n', 4, 's', 4, 'a', '10', 'source', 'y', 4, 1, 1, '2189,2192', 1739776440, 1739776944, 1739783714),
 (13, 'Material Condemnation', '5', 'n', 'n', 4, 's', 5, 'n', '10', 'source', 'y', 4, 1, 1, '2190', 1739776440, 1739776981, 1739776981),
-(14, 'Reversal of Transaction', '6', 'n', 'n', 5, 'r', 5, 'r', '14', 'not applicable', 'n', 4, 1, 1, '2191', 1739776440, 1739777022, 1739777022);
+(14, 'Reversal of Transaction', '6', 'n', 'n', 5, 'r', 5, 'r', '14', 'not applicable', 'n', 4, 1, 1, '2191', 1739776440, 1739777022, 1739777022),
+(15, 'Test for issue and dispense', '2', 'y', 'y', 4, 'a', 4, 's', '3,8,9,10,1', 'source', 'y', 4, 1, 1, '2684', 1748889660, 1748889769, 1748889769);
 
 -- --------------------------------------------------------
 
@@ -23817,7 +23821,90 @@ INSERT INTO `logs` (`id`, `module`, `content`, `event`, `timestamp`) VALUES
 (2637, 'inventory', 'Requisition has been added by \'Ashar Alam\'', 'add', 1748445439),
 (2638, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748445453),
 (2639, 'inventory', 'Requisition has been added by \'Ashar Alam\'', 'add', 1748445471),
-(2640, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748446186);
+(2640, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748446186),
+(2641, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1748464125),
+(2642, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1748464141),
+(2643, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1748464148),
+(2644, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1748629200),
+(2645, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1748629863),
+(2646, 'logout', '\'Ashar Alam\' has successfully logged out.', 'logout', 1748630275),
+(2647, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1748630279),
+(2648, 'logout', '\'Ashar Alam\' has successfully logged out.', 'logout', 1748630526),
+(2649, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1748630531),
+(2650, 'logout', '\'Ashar Alam\' has successfully logged out.', 'logout', 1748630610),
+(2651, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1748630614),
+(2652, 'login', '\'Saniya\' has successfully logged in.', 'login', 1748632255),
+(2653, 'user', 'Rights has been updated by \'Ashar Alam\'', 'update', 1748632463),
+(2654, 'logout', '\'Saniya\' has successfully logged out.', 'logout', 1748632471),
+(2655, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1748632474),
+(2656, 'logout', '\'Ashar Alam\' has successfully logged out.', 'logout', 1748632478),
+(2657, 'login', '\'Saniya\' has successfully logged in.', 'login', 1748632482),
+(2658, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1748698893),
+(2659, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748699094),
+(2660, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748699105),
+(2661, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748699686),
+(2662, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748699851),
+(2663, 'patient_medical_record', 'Requisition For Medication Consumption has been added by \'Ashar Alam\'', 'add', 1748700638),
+(2664, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1748703000),
+(2665, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1748883173),
+(2666, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748883249),
+(2667, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748883301),
+(2668, 'login', '\'Saniya\' has successfully logged in.', 'login', 1748884242),
+(2669, 'hr', 'Employee Location Allocation has been updated by \'Ashar Alam\'', 'add', 1748884305),
+(2670, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748884448),
+(2671, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748885817),
+(2672, 'logout', '\'Saniya\' has successfully logged out.', 'logout', 1748886064),
+(2673, 'login', '\'Saniya\' has successfully logged in.', 'login', 1748886067),
+(2674, 'hr', 'Employee Location Allocation has been updated by \'Ashar Alam\'', 'add', 1748886135),
+(2675, 'logout', '\'Saniya\' has successfully logged out.', 'logout', 1748886142),
+(2676, 'login', '\'Saniya\' has successfully logged in.', 'login', 1748886146),
+(2677, 'hr', 'Employee Location Allocation has been updated by \'Ashar Alam\'', 'add', 1748886528),
+(2678, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748887027),
+(2679, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748887046),
+(2680, 'user', 'Rights has been updated by \'Ashar Alam\'', 'update', 1748887594),
+(2681, 'logout', '\'Saniya\' has successfully logged out.', 'logout', 1748887599),
+(2682, 'login', '\'Saniya\' has successfully logged in.', 'login', 1748887605),
+(2683, 'hr', 'Employee Location Allocation has been updated by \'Ashar Alam\'', 'add', 1748887657),
+(2684, 'inventory', '\'Test for issue and dispense\' has been added by \'Ashar Alam\'', 'add', 1748889769),
+(2685, 'inventory', 'Requisition has been added by \'Ashar Alam\'', 'add', 1748889822),
+(2686, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1748890831),
+(2687, 'inventory', 'Requisition has been added by \'Ashar Alam\'', 'add', 1748892590),
+(2688, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1748972913),
+(2689, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1748972928),
+(2690, 'logout', '\'Ashar Alam\' has successfully logged out.', 'logout', 1748972933),
+(2691, 'login', '\'Saniya\' has successfully logged in.', 'login', 1748972937),
+(2692, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1748974612),
+(2693, 'inventory', 'External Transaction has been added by \'Saniya\'', 'add', 1748976256),
+(2694, 'inventory', 'External Transaction has been added by \'Saniya\'', 'add', 1748976324),
+(2695, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1748977693),
+(2696, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1748979018),
+(2697, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1748979045),
+(2698, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1748979167),
+(2699, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1749015598),
+(2700, 'module', 'Module Name \'Prefix Setup\' has been added by \'Ashar Alam\'', 'add', 1749022240),
+(2701, 'logout', '\'Ashar Alam\' has successfully logged out.', 'logout', 1749022638),
+(2702, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1749022645),
+(2703, 'hr', 'Prefix \'{ucfirst(sddssd)}\' has been inserted by \'Ashar Alam\'', 'add', 1749030082),
+(2704, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1749206479),
+(2705, 'hr', '\'Mr\' has been added by \'Ashar Alam\'', 'add', 1749207290),
+(2706, 'hr', '\'test\' has been added by \'Ashar Alam\'', 'add', 1749207306),
+(2707, 'hr', '\'sddsds\' has been added by \'Ashar Alam\'', 'add', 1749207443),
+(2708, 'hr', 'Status updated to \'Inactive\' by \'Ashar Alam\'', 'update', 1749208147),
+(2709, 'hr', 'Status updated to \'Active\' by \'Ashar Alam\'', 'update', 1749208149),
+(2710, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1749209111),
+(2711, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1749209359),
+(2712, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1749209366),
+(2713, 'hr', '\'Dr.\' has been added by \'Ashar Alam\'', 'add', 1749209374),
+(2714, 'hr', '\'Prof.\' has been added by \'Ashar Alam\'', 'add', 1749209384),
+(2715, 'hr', '\'Prof. Dr.\' has been added by \'Ashar Alam\'', 'add', 1749209391),
+(2716, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1749210625),
+(2717, 'hr', '\'Test Employee two\' has been added by \'Ashar Alam\'', 'add', 1749212609),
+(2718, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1749214130),
+(2719, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1749214136),
+(2720, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1749214302),
+(2721, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1749214450),
+(2722, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1749214627),
+(2723, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1749490743);
 
 -- --------------------------------------------------------
 
@@ -23855,8 +23942,9 @@ CREATE TABLE `material_consumption_requisition` (
 --
 
 INSERT INTO `material_consumption_requisition` (`id`, `code`, `org_id`, `site_id`, `transaction_type_id`, `inv_location_id`, `mr_code`, `patient_age`, `patient_gender_id`, `service_id`, `service_mode_id`, `billing_cc`, `physician_id`, `generic_id`, `qty`, `remarks`, `status`, `user_id`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
-(1, 'ZCG-MTC-00001', 4, 1, 6, 2, 'ZMTP-0000001', '3 years 7 months 8 days', 1, 5, 6, 8, 2, '4', '10', '', 1, 1, '2637', 1748445439, 1748445439, 1748445439),
-(2, 'ZCG-MTC-00002', 4, 1, 5, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '5', '5', '', 1, 1, '2639', 1748445471, 1748445471, 1748445471);
+(1, 'ZCG-MTC-00001', 4, 1, 6, 2, 'ZMTP-0000001', '3 years 7 months 14 days', 1, 5, 6, 8, 2, '4,122', '10,20', NULL, 1, 1, '2637,2686', 1748445439, 1748445439, 1748890831),
+(3, 'ZCG-MTC-00003', 4, 1, 15, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '3', '10', '', 1, 1, '2685', 1748889822, 1748889822, 1748889822),
+(4, 'ZCSN-MTC-00004', 4, 2, 15, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '5', '5', '', 1, 1, '2687', 1748892590, 1748892590, 1748892590);
 
 -- --------------------------------------------------------
 
@@ -24089,7 +24177,8 @@ INSERT INTO `modules` (`id`, `name`, `parent`, `user_id`, `logid`, `timestamp`, 
 (99, 'consumption', 'Material Management', 1, '2588', 1748025415, 1748025415),
 (100, 'inventory-return', 'Material Management', 1, '2589', 1748025431, 1748025431),
 (101, 'other-transactions', 'Material Management', 1, '2590', 1748025451, 1748025451),
-(102, 'reversal-of-transactions', 'Material Management', 1, '2591', 1748025464, 1748025464);
+(102, 'reversal-of-transactions', 'Material Management', 1, '2591', 1748025464, 1748025464),
+(103, 'prefix-setup', 'Human Resource', 1, '2700', 1749022240, 1749022240);
 
 -- --------------------------------------------------------
 
@@ -24372,6 +24461,34 @@ INSERT INTO `patient_inout` (`id`, `org_id`, `site_id`, `service_location_id`, `
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `prefix`
+--
+
+CREATE TABLE `prefix` (
+  `id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `logid` varchar(255) DEFAULT NULL,
+  `status` int(11) NOT NULL,
+  `effective_timestamp` int(11) NOT NULL,
+  `timestamp` int(11) NOT NULL,
+  `last_updated` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `prefix`
+--
+
+INSERT INTO `prefix` (`id`, `name`, `user_id`, `logid`, `status`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
+(2, 'Mr.', 1, '2705,2711', 1, 1749207240, 1749207290, 1749209359),
+(3, 'Ms.', 1, '2707,2708,2709,2710,2712', 1, 1749208140, 1749207443, 1749209366),
+(4, 'Dr.', 1, '2713', 1, 1749209100, 1749209374, 1749209374),
+(5, 'Prof.', 1, '2714', 1, 1749209100, 1749209384, 1749209384),
+(6, 'Prof. Dr.', 1, '2715', 1, 1749209100, 1749209391, 1749209391);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `procedure_coding`
 --
 
@@ -24539,7 +24656,8 @@ CREATE TABLE `req_medication_consumption` (
 --
 
 INSERT INTO `req_medication_consumption` (`id`, `code`, `transaction_type_id`, `inv_location_id`, `mr_code`, `gender_id`, `age`, `service_id`, `org_id`, `site_id`, `service_mode_id`, `service_type_id`, `service_group_id`, `responsible_physician`, `billing_cc`, `inv_generic_ids`, `dose`, `route_ids`, `frequency_ids`, `days`, `remarks`, `user_id`, `status`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
-(1, 'ZCG-MDC-00001', 6, 1, 'ZMTP-0000001', 1, '3 years 7 months 8 days', 5, 4, 1, 6, 2, 5, 2, 8, '1', '1', '1', '2', '1', '', 1, 1, '2635', 1748434337, 1748434337, 1748434337);
+(1, 'ZCG-MDC-00001', 6, 1, 'ZMTP-0000001', 1, '3 years 7 months 8 days', 5, 4, 1, 6, 2, 5, 2, 8, '1', '1', '1', '2', '1', '', 1, 1, '2635', 1748434337, 1748434337, 1748434337),
+(2, 'ZCG-MDC-00002', 6, 2, 'ZMTP-0000001', 1, '3 years 7 months 11 days', 5, 4, 1, 6, 2, 5, 2, 8, '3', '1', '2', '2', '1', '', 1, 1, '2663', 1748700638, 1748700638, 1748700638);
 
 -- --------------------------------------------------------
 
@@ -24574,6 +24692,7 @@ CREATE TABLE `rights` (
   `procedure_coding` varchar(100) DEFAULT NULL,
   `service_location_activation` varchar(100) NOT NULL,
   `gender_setup` varchar(100) DEFAULT NULL,
+  `prefix_setup` varchar(100) NOT NULL,
   `employee_status_setup` varchar(100) DEFAULT NULL,
   `employee_working_status_setup` varchar(100) DEFAULT NULL,
   `qualification_level_setup` varchar(100) DEFAULT NULL,
@@ -24647,12 +24766,12 @@ CREATE TABLE `rights` (
 -- Dumping data for table `rights`
 --
 
-INSERT INTO `rights` (`id`, `role_id`, `user_setup`, `user_roles`, `province`, `divisions`, `districts`, `service_modes`, `service_types`, `service_units`, `service_groups`, `service_code_directory_setup`, `cost_center_types`, `cost_center_setup`, `kpi_group`, `kpi_dimension`, `kpi_types`, `kpi_setup`, `organization_setup`, `site_setup`, `cost_center_activation`, `service_activation`, `kpi_activation`, `procedure_coding`, `service_location_activation`, `gender_setup`, `employee_status_setup`, `employee_working_status_setup`, `qualification_level_setup`, `cadre_setup`, `position_setup`, `employee_setup`, `employee_qualification_setup`, `employee_documents`, `employee_medical_license_setup`, `employee_salary_setup`, `employee_cost_center_allocation`, `employee_services_allocation`, `employee_inventory_location_allocation`, `service_location_setup`, `service_requisition_setup`, `service_location_scheduling`, `patient_registration`, `services_booking_for_patients`, `patient_arrival_and_departure`, `patient_welfare`, `medical_coding`, `vital_signs`, `encounters_and_procedures`, `investigation_tracking`, `item_category`, `item_sub_category`, `item_type`, `item_generic_setup`, `item_brand_setup`, `consumption_group`, `consumption_method`, `stock_monitoring`, `third_party_registration`, `inventory_source_destination_type`, `inventory_transaction_activity`, `transaction_types`, `purchase_order`, `work_order`, `external_transaction`, `issue_and_dispense`, `consumption`, `inventory_return`, `other_transactions`, `reversal_of_transactions`, `medication_routes`, `medication_frequency`, `requisition_for_material_consumption`, `chart_of_accounts_strategy`, `chart_of_accounts_strategy_setup`, `transaction_sources_or_destinations`, `financial_ledger_types`, `payroll_additions_setup`, `payroll_deduction_setup`, `finance_transaction_types`, `finance_receiving`, `finance_payment`, `item_rates`, `service_rates`, `payroll`, `taxation`, `ledger`, `msd_comprehensive_report`, `modules`, `user_id`, `logid`, `timestamp`, `last_updated`) VALUES
-(1, 1, '1,1,1,1', '1,1,1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1,1', '1,1,1,1,1', '1,1', '1,1', '1,1', '1,1', '1,1', '1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1', 1, '4177', 1711305977, 1712922951),
-(4, 6, '1,1,1,1', '0,1,0,0,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '1,1,1,1', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '1,1,1,1', '0,0,0,0', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '0,1,0,0', '1,1,1,1,1', '1,1,1,1,1', '1,1', '1,1,1', '0,0', '0,0', '0,0', '0,0', '0,1,0,0', '0,1,0,0', '1,1,1,1', '0,1,0,0', '1,1,1,1', '0,1,0,0', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '0,1', 1, '2598', 1722412048, 1748028569),
-(5, 7, '0,0,0,0', '0,0,0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '1,1,1,1', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1,1', '1,1,1,1,1', '0,0', '0,0', '', '', '', '', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '0,0,0,0', '0,0', 1, '2242', 1727084179, 1743708077),
-(9, 10, '0,0,0,0', '0,0,0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '1,1,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0,0', '0,0,0,0,0', '0,0', '0,0', '', '', '', '', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', 1, '2273', 1744557936, 1744557936),
-(11, 11, '0,0,0,0', '0,0,0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0,0', '0,0,0,0,0', '0,0', '0,0,0', '0,0', '0,0', '0,0', '0,1', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0', 1, '2600', 1748028802, 1748029441);
+INSERT INTO `rights` (`id`, `role_id`, `user_setup`, `user_roles`, `province`, `divisions`, `districts`, `service_modes`, `service_types`, `service_units`, `service_groups`, `service_code_directory_setup`, `cost_center_types`, `cost_center_setup`, `kpi_group`, `kpi_dimension`, `kpi_types`, `kpi_setup`, `organization_setup`, `site_setup`, `cost_center_activation`, `service_activation`, `kpi_activation`, `procedure_coding`, `service_location_activation`, `gender_setup`, `prefix_setup`, `employee_status_setup`, `employee_working_status_setup`, `qualification_level_setup`, `cadre_setup`, `position_setup`, `employee_setup`, `employee_qualification_setup`, `employee_documents`, `employee_medical_license_setup`, `employee_salary_setup`, `employee_cost_center_allocation`, `employee_services_allocation`, `employee_inventory_location_allocation`, `service_location_setup`, `service_requisition_setup`, `service_location_scheduling`, `patient_registration`, `services_booking_for_patients`, `patient_arrival_and_departure`, `patient_welfare`, `medical_coding`, `vital_signs`, `encounters_and_procedures`, `investigation_tracking`, `item_category`, `item_sub_category`, `item_type`, `item_generic_setup`, `item_brand_setup`, `consumption_group`, `consumption_method`, `stock_monitoring`, `third_party_registration`, `inventory_source_destination_type`, `inventory_transaction_activity`, `transaction_types`, `purchase_order`, `work_order`, `external_transaction`, `issue_and_dispense`, `consumption`, `inventory_return`, `other_transactions`, `reversal_of_transactions`, `medication_routes`, `medication_frequency`, `requisition_for_material_consumption`, `chart_of_accounts_strategy`, `chart_of_accounts_strategy_setup`, `transaction_sources_or_destinations`, `financial_ledger_types`, `payroll_additions_setup`, `payroll_deduction_setup`, `finance_transaction_types`, `finance_receiving`, `finance_payment`, `item_rates`, `service_rates`, `payroll`, `taxation`, `ledger`, `msd_comprehensive_report`, `modules`, `user_id`, `logid`, `timestamp`, `last_updated`) VALUES
+(1, 1, '1,1,1,1', '1,1,1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1,1', '1,1,1,1,1', '1,1', '1,1,1', '1,1', '1,1', '1,1', '1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1', 1, '4177', 1711305977, 1712922951),
+(4, 6, '1,1,1,1', '0,1,0,0,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '1,1,1,1', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '0,1,0,0', '1,1,1,1', '0,0,0,0', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '0,1,0,0', '1,1,1,1', '0,1,0,0', '0,1,0,0', '0,1,0,0', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '0,1,0,0', '1,1,1,1,1', '1,1,1,1,1', '1,1', '1,1,1', '0,0', '0,0', '0,0', '0,0', '0,1,0,0', '0,1,0,0', '1,1,1,1', '0,1,0,0', '1,1,1,1', '0,1,0,0', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '0,1', 1, '2680', 1722412048, 1748887594),
+(5, 7, '0,0,0,0', '0,0,0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '1,1,1,1', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1,1', '1,1,1,1,1', '0,0', '0,0,0', '0,0', '0,0', '0,0', '0,0', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1', '1,1,1,1', '1,1,1,1', '1,1,1,1', '0,0,0,0', '0,0', 1, '2242', 1727084179, 1743708077),
+(9, 10, '0,0,0,0', '0,0,0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '1,1,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0,0', '0,0,0,0,0', '0,0', '0,0,0', '0,0', '0,0', '0,0', '0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', 1, '2273', 1744557936, 1744557936),
+(11, 11, '0,0,0,0', '0,0,0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0,0', '0,0,0,0,0', '0,0', '0,0,0', '0,0', '0,0', '0,0', '0,1', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0,0,0', '0,0', 1, '2600', 1748028802, 1748029441);
 
 -- --------------------------------------------------------
 
@@ -25103,6 +25222,7 @@ INSERT INTO `stock_monitoring` (`id`, `org_id`, `site_id`, `item_generic_id`, `i
 CREATE TABLE `third_party` (
   `id` int(11) NOT NULL,
   `org_id` int(11) NOT NULL,
+  `prefix_id` int(11) NOT NULL,
   `type` varchar(100) NOT NULL,
   `category` varchar(100) NOT NULL,
   `corporate_name` varchar(255) DEFAULT NULL,
@@ -25124,10 +25244,10 @@ CREATE TABLE `third_party` (
 -- Dumping data for table `third_party`
 --
 
-INSERT INTO `third_party` (`id`, `org_id`, `type`, `category`, `corporate_name`, `person_name`, `person_email`, `person_cell`, `landline`, `address`, `remarks`, `status`, `user_id`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
-(1, 4, 'v', 'c', 'sdsdsd', 'Vendor Name', 'ihammad25@gmail.com', '2232323', NULL, 'sdsdsdsd', NULL, 1, 1, '1812,1813,1814', 1735209353, 1735206972, 1735209353),
-(2, 4, 'd', 'i', 'sdsdsdsd', 'Donor Name', 'Hammadiqbal.esire@gmail.com', '92332349578', NULL, 'Sdsdsd Sdsdsdsd Sdsdsdsd Sdsdsd', NULL, 1, 1, '1815,1816,1817', 1735211160, 1735211198, 1735213384),
-(3, 4, 'v', 'i', NULL, 'Hammad Iqbal', 'ihammad25@gmail.com', '03323402486', NULL, 'test address test address test address test address test address test address test address test address', NULL, 1, 1, '1932', 1735923540, 1735923585, 1735923585);
+INSERT INTO `third_party` (`id`, `org_id`, `prefix_id`, `type`, `category`, `corporate_name`, `person_name`, `person_email`, `person_cell`, `landline`, `address`, `remarks`, `status`, `user_id`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
+(1, 4, 3, 'v', 'c', 'sdsdsd', 'Vendor Name', 'ihammad25@gmail.com', '2232323', NULL, 'sdsdsdsd', NULL, 1, 1, '1812,1813,1814', 1735209353, 1735206972, 1735209353),
+(2, 4, 2, 'd', 'i', 'sdsdsdsd', 'Donor Name', 'Hammadiqbal.esire@gmail.com', '92332349578', NULL, 'Sdsdsd Sdsdsdsd Sdsdsdsd Sdsdsd', NULL, 1, 1, '1815,1816,1817', 1735211160, 1735211198, 1735213384),
+(3, 4, 2, 'v', 'i', NULL, 'Hammad Iqbal', 'Ihammad25@gmail.com', '03323402486', NULL, 'Test Address Test Address Test Address Test Address Test Address Test Address Test Address Test Address', NULL, 1, 1, '1932,2716,2722', 1735923540, 1735923585, 1749214627);
 
 -- --------------------------------------------------------
 
@@ -25189,8 +25309,8 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`id`, `name`, `email`, `password`, `role_id`, `org_id`, `is_employee`, `emp_id`, `user_id`, `image`, `logid`, `status`, `password_reset_token`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
-(1, 'Ashar Alam', 'ihammad25@gmail.com', '$2y$10$BDy1OWRB7TYAmvvv8SGYf.B6d1nJuB/ojNI8f1t187kao4fwSghZa', 1, 0, 0, 0, 1, NULL, '296,300,301,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330,331,332,333,334,335,337,338,339,340,341,342,343,344,345,346,347,348,349,351,353,354,355,359,360,361,362,363,364,365,366,367,368,369,371,372,373,374,375,376,377,378,379,380,381,382,383,384,385,386,387,388,389,390,391,392,393,394,395,396,397,415,456,464,484,516,517,540,610,611,612,625,632,635,647,954,955,969,970,1014,1082,1083,1089,1090,1096,1097,1098,1099,1100,1140,1160,1164,1172,1173,1183,1204,1234,1244,1245,1246,1247,1248,1249,1250,1251,1252,1253,1254,1255,1256,1257,1258,1259,1260,1261,1262,1263,1288,1291,1304,1313,1338,1341,1349,1350,1357,1372,1381,1383,1389,1392,1393,1407,1408,1413,1414,1415,1417,1421,1427,1430,1446,1454,1474,1527,1549,1552,1553,1557,1558,1567,1568,1580,1589,1603,1604,1621,1652,1657,1700,1716,1733,1734,1740,1749,1753,1754,1755,1756,1791,1801,1806,1807,1855,1861,1863,1875,1928,1929,1930,1931,1932,1945,1984,1994,2009,2026,2033,2056,2057,2061,2062,2063,2067,2069,2087,2107,2138,2140,2141,2145,2146,2147,2149,2150,2175,2176,2177,2178,2208,2219,2220,2228,2230,2242,2263,2295,2301,2308,2319,2321,2333,2343,2344,2353,2381,2382,2383,2384,2406,2407,2408,2412,2421,2422,2427,2436,2437,2438,2439,2442,2454,2464,2498,2581,2588,2596,2640,2646,2845,2868,2967,3022,3023,3024,3025,3036,3073,3123,3242,3277,3301,3302,3305,3324,3354,3355,3364,3365,3367,3368,3369,3370,3371,3372,3373,3380,3386,3389,3406,3432,3439,3440,3464,3483,3499,3500,3503,3504,3513,3522,3528,3529,3536,3545,3571,3577,3578,3587,3594,3600,3604,3605,3606,3607,3608,3635,3656,3664,3778,3782,3784,3787,3789,3790,3802,3808,3812,3813,3814,3818,3822,3824,3825,3826,3827,3908,3910,3911,3912,3913,3914,3917,3929,3931,3932,3934,3937,3938,3939,3941,3948,3950,3954,3957,3958,3959,3960,3962,3964,3967,3978,3979,3986,3987,3997,3998,4011,4017,4018,4019,4028,4052,4053,4054,4055,4056,4057,4070,4071,4082,4083,4116,4125,4131,4132,4135,4136,4149,4156,4157,4160,4161,4170,4171,4178,4179,4187,4188,4205,4206,4207,4208,4209,4210,4213,4214,4215,4216,4217,4218,4219,4220,4221,4222,4236,1,2,38,39,48,49,51,52,53,54,55,61,62,68,69,203,204,207,208,209,210,213,255,256,259,260,265,290,305,363,368,369,376,504,506,508,510,512,519,520,522,525,531,536,546,547,557,558,561,584,588,590,597,602,603,604,605,606,608,613,637,677,687,693,694,696,697,707,738,745,768,771,772,784,791,794,801,962,963,964,965,966,967,968,969,970,971,972,973,974,975,976,977,1007,1012,1013,1016,1019,1023,1029,1031,1036,1037,1039,1040,1042,1045,1047,1048,1052,1103,1146,1156,1169,1170,1173,1192,1213,1214,1217,1218,1238,1240,1243,1251,1252,1255,1256,1261,1264,1265,1270,1271,1272,1273,1274,1275,1276,1279,1281,1298,1323,1324,1327,1328,1340,1348,1353,1362,1370,1379,1380,1381,1382,1384,1385,1386,1387,1388,1390,1413,1450,1461,1468,1472,1504,1510,1511,1518,1526,1530,1531,1532,1534,1537,1540,1541,1542,1601,1608,1637,1659,1661,1670,1686,1692,1694,1695,1696,1698,1699,1705,1718,1724,1727,1728,1743,1744,1745,1753,1755,1756,1759,1760,1761,1762,1763,1767,1782,1783,1786,1787,1788,1789,1791,1796,1797,1799,1802,1804,1807,1810,1811,1818,1819,1821,1822,1824,1825,1835,1836,1838,1849,1850,1851,1852,1856,1861,1862,1868,1869,1870,1877,1880,1888,1894,1897,1914,1918,1921,1923,1924,1931,1939,1940,1941,1942,1943,1944,1960,1961,1962,1963,1965,1967,1968,1971,1979,1983,2016,2017,2019,2023,2024,2043,2048,2061,2089,2090,2097,2101,2102,2115,2124,2125,2136,2141,2142,2147,2159,2203,2204,2205,2207,2209,2210,2211,2212,2213,2214,2216,2219,2220,2229,2231,2232,2233,2234,2247,2249,2252,2257,2258,2264,2265,2291,2292,2293,2294,2302,2303,2305,2311,2322,2324,2325,2332,2334,2337,2338,2339,2358,2359,2360,2365,2368,2373,2386,2393,2394,2395,2396,2398,2399,2400,2408,2415,2416,2417,2470,2471,2494,2498,2508,2509,2510,2511,2513,2515,2516,2527,2534,2538,2539,2541,2546,2547,2562,2563,2564,2566,2567,2568,2569,2571,2572,2573,2579,2580,2586,2592,2593,2594,2595,2601,2608,2619,2623,2624,2630,2636', 1, NULL, 1688324760, 1688324767, 1713021527),
-(6, 'Saniya', 'saniya@zmtclinics.org', '$2y$10$BDy1OWRB7TYAmvvv8SGYf.B6d1nJuB/ojNI8f1t187kao4fwSghZa', 6, 4, 1, 2, 5, NULL, '1025,1032,1033,1034,1035,1038,1041,1044,1050,1051,1157,1158,1171,1172,1193,1212,1215,1216,1219,1221,1222,1223,1224,1241,1242,1253,1254,1257,1260,1266,1267,1268,1269,1277,1278,1282,1283,1284,1285,1286,1287,1288,1289,1290,1291,1292,1293,1295,1296,1297,1299,1300,1316,1317,1318,1320,1321,1322,1329,1337,1338,1339,1351,1352,1372,1422,1439,1460,1465,1469,1480,1483,1484,1493,1494,1525,1535,1536,1544,1571,1602,1643,1671,1678,1679,1784,1785,1790,1800,1801,1805,1806,1853,1863,2103,2202,2206,2215,2217,2228,2235,2237,2238,2240,2241,2244,2245,2250,2253,2304,2312,2316,2321,2328,2329,2331,2335,2340,2342,2343,2346,2347,2349,2350,2361,2366,2401,2403,2404,2406,2407,2409,2472,2499,2512,2530,2536,2542,2551,2570,2574,2581,2587,2602,2606', 1, NULL, 1722495300, 1722495333, 1722495333),
+(1, 'Ashar Alam', 'ihammad25@gmail.com', '$2y$10$BDy1OWRB7TYAmvvv8SGYf.B6d1nJuB/ojNI8f1t187kao4fwSghZa', 1, 0, 0, 0, 1, NULL, '296,300,301,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330,331,332,333,334,335,337,338,339,340,341,342,343,344,345,346,347,348,349,351,353,354,355,359,360,361,362,363,364,365,366,367,368,369,371,372,373,374,375,376,377,378,379,380,381,382,383,384,385,386,387,388,389,390,391,392,393,394,395,396,397,415,456,464,484,516,517,540,610,611,612,625,632,635,647,954,955,969,970,1014,1082,1083,1089,1090,1096,1097,1098,1099,1100,1140,1160,1164,1172,1173,1183,1204,1234,1244,1245,1246,1247,1248,1249,1250,1251,1252,1253,1254,1255,1256,1257,1258,1259,1260,1261,1262,1263,1288,1291,1304,1313,1338,1341,1349,1350,1357,1372,1381,1383,1389,1392,1393,1407,1408,1413,1414,1415,1417,1421,1427,1430,1446,1454,1474,1527,1549,1552,1553,1557,1558,1567,1568,1580,1589,1603,1604,1621,1652,1657,1700,1716,1733,1734,1740,1749,1753,1754,1755,1756,1791,1801,1806,1807,1855,1861,1863,1875,1928,1929,1930,1931,1932,1945,1984,1994,2009,2026,2033,2056,2057,2061,2062,2063,2067,2069,2087,2107,2138,2140,2141,2145,2146,2147,2149,2150,2175,2176,2177,2178,2208,2219,2220,2228,2230,2242,2263,2295,2301,2308,2319,2321,2333,2343,2344,2353,2381,2382,2383,2384,2406,2407,2408,2412,2421,2422,2427,2436,2437,2438,2439,2442,2454,2464,2498,2581,2588,2596,2640,2646,2845,2868,2967,3022,3023,3024,3025,3036,3073,3123,3242,3277,3301,3302,3305,3324,3354,3355,3364,3365,3367,3368,3369,3370,3371,3372,3373,3380,3386,3389,3406,3432,3439,3440,3464,3483,3499,3500,3503,3504,3513,3522,3528,3529,3536,3545,3571,3577,3578,3587,3594,3600,3604,3605,3606,3607,3608,3635,3656,3664,3778,3782,3784,3787,3789,3790,3802,3808,3812,3813,3814,3818,3822,3824,3825,3826,3827,3908,3910,3911,3912,3913,3914,3917,3929,3931,3932,3934,3937,3938,3939,3941,3948,3950,3954,3957,3958,3959,3960,3962,3964,3967,3978,3979,3986,3987,3997,3998,4011,4017,4018,4019,4028,4052,4053,4054,4055,4056,4057,4070,4071,4082,4083,4116,4125,4131,4132,4135,4136,4149,4156,4157,4160,4161,4170,4171,4178,4179,4187,4188,4205,4206,4207,4208,4209,4210,4213,4214,4215,4216,4217,4218,4219,4220,4221,4222,4236,1,2,38,39,48,49,51,52,53,54,55,61,62,68,69,203,204,207,208,209,210,213,255,256,259,260,265,290,305,363,368,369,376,504,506,508,510,512,519,520,522,525,531,536,546,547,557,558,561,584,588,590,597,602,603,604,605,606,608,613,637,677,687,693,694,696,697,707,738,745,768,771,772,784,791,794,801,962,963,964,965,966,967,968,969,970,971,972,973,974,975,976,977,1007,1012,1013,1016,1019,1023,1029,1031,1036,1037,1039,1040,1042,1045,1047,1048,1052,1103,1146,1156,1169,1170,1173,1192,1213,1214,1217,1218,1238,1240,1243,1251,1252,1255,1256,1261,1264,1265,1270,1271,1272,1273,1274,1275,1276,1279,1281,1298,1323,1324,1327,1328,1340,1348,1353,1362,1370,1379,1380,1381,1382,1384,1385,1386,1387,1388,1390,1413,1450,1461,1468,1472,1504,1510,1511,1518,1526,1530,1531,1532,1534,1537,1540,1541,1542,1601,1608,1637,1659,1661,1670,1686,1692,1694,1695,1696,1698,1699,1705,1718,1724,1727,1728,1743,1744,1745,1753,1755,1756,1759,1760,1761,1762,1763,1767,1782,1783,1786,1787,1788,1789,1791,1796,1797,1799,1802,1804,1807,1810,1811,1818,1819,1821,1822,1824,1825,1835,1836,1838,1849,1850,1851,1852,1856,1861,1862,1868,1869,1870,1877,1880,1888,1894,1897,1914,1918,1921,1923,1924,1931,1939,1940,1941,1942,1943,1944,1960,1961,1962,1963,1965,1967,1968,1971,1979,1983,2016,2017,2019,2023,2024,2043,2048,2061,2089,2090,2097,2101,2102,2115,2124,2125,2136,2141,2142,2147,2159,2203,2204,2205,2207,2209,2210,2211,2212,2213,2214,2216,2219,2220,2229,2231,2232,2233,2234,2247,2249,2252,2257,2258,2264,2265,2291,2292,2293,2294,2302,2303,2305,2311,2322,2324,2325,2332,2334,2337,2338,2339,2358,2359,2360,2365,2368,2373,2386,2393,2394,2395,2396,2398,2399,2400,2408,2415,2416,2417,2470,2471,2494,2498,2508,2509,2510,2511,2513,2515,2516,2527,2534,2538,2539,2541,2546,2547,2562,2563,2564,2566,2567,2568,2569,2571,2572,2573,2579,2580,2586,2592,2593,2594,2595,2601,2608,2619,2623,2624,2630,2636,2644,2645,2646,2647,2648,2649,2650,2651,2655,2656,2658,2664,2665,2688,2689,2690,2699,2701,2702,2704,2723', 1, NULL, 1688324760, 1688324767, 1713021527),
+(6, 'Saniya', 'saniya@zmtclinics.org', '$2y$10$BDy1OWRB7TYAmvvv8SGYf.B6d1nJuB/ojNI8f1t187kao4fwSghZa', 6, 4, 1, 2, 5, NULL, '1025,1032,1033,1034,1035,1038,1041,1044,1050,1051,1157,1158,1171,1172,1193,1212,1215,1216,1219,1221,1222,1223,1224,1241,1242,1253,1254,1257,1260,1266,1267,1268,1269,1277,1278,1282,1283,1284,1285,1286,1287,1288,1289,1290,1291,1292,1293,1295,1296,1297,1299,1300,1316,1317,1318,1320,1321,1322,1329,1337,1338,1339,1351,1352,1372,1422,1439,1460,1465,1469,1480,1483,1484,1493,1494,1525,1535,1536,1544,1571,1602,1643,1671,1678,1679,1784,1785,1790,1800,1801,1805,1806,1853,1863,2103,2202,2206,2215,2217,2228,2235,2237,2238,2240,2241,2244,2245,2250,2253,2304,2312,2316,2321,2328,2329,2331,2335,2340,2342,2343,2346,2347,2349,2350,2361,2366,2401,2403,2404,2406,2407,2409,2472,2499,2512,2530,2536,2542,2551,2570,2574,2581,2587,2602,2606,2652,2654,2657,2668,2672,2673,2675,2676,2681,2682,2691', 1, NULL, 1722495300, 1722495333, 1722495333),
 (8, 'seeru', 'seeru@zmtclinics.org', '$2y$10$MFsK9CJjJrDIzklmNebrce3KudA70hz2BZy09JNJc.X9iyvpPeorC', 7, 4, 0, 0, 1, NULL, '1347,1349,1350,1355,1356,1359,1360,1363,1369,1371,1378', 1, NULL, 1727084640, 1727084859, 1727084859),
 (9, 'test employee', 'admin@zmtclinics.org', '$2y$10$u9WFDnZRl9JPIW3.Z7XOGu/qxiYXGxt7Vgl90peXU8nFk.J8S6YEy', 8, 4, 1, 1, 1, NULL, '2208', 1, NULL, 1739870220, 1739870343, 1739870343);
 
@@ -25704,6 +25824,12 @@ ALTER TABLE `patient_inout`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indexes for table `prefix`
+--
+ALTER TABLE `prefix`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indexes for table `procedure_coding`
 --
 ALTER TABLE `procedure_coding`
@@ -25951,7 +26077,7 @@ ALTER TABLE `drug_history`
 -- AUTO_INCREMENT for table `employee`
 --
 ALTER TABLE `employee`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `emp_cadre`
@@ -26053,7 +26179,7 @@ ALTER TABLE `finance_transaction_type`
 -- AUTO_INCREMENT for table `gender`
 --
 ALTER TABLE `gender`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `icd_code`
@@ -26071,7 +26197,7 @@ ALTER TABLE `immunization_history`
 -- AUTO_INCREMENT for table `inventory_balance`
 --
 ALTER TABLE `inventory_balance`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=166;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=181;
 
 --
 -- AUTO_INCREMENT for table `inventory_brand`
@@ -26095,7 +26221,7 @@ ALTER TABLE `inventory_generic`
 -- AUTO_INCREMENT for table `inventory_management`
 --
 ALTER TABLE `inventory_management`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=167;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=181;
 
 --
 -- AUTO_INCREMENT for table `inventory_source_destination_type`
@@ -26119,7 +26245,7 @@ ALTER TABLE `inventory_transaction_activity`
 -- AUTO_INCREMENT for table `inventory_transaction_type`
 --
 ALTER TABLE `inventory_transaction_type`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `inventory_type`
@@ -26173,13 +26299,13 @@ ALTER TABLE `ledger_types`
 -- AUTO_INCREMENT for table `logs`
 --
 ALTER TABLE `logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2641;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2724;
 
 --
 -- AUTO_INCREMENT for table `material_consumption_requisition`
 --
 ALTER TABLE `material_consumption_requisition`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `medical_diagnosis`
@@ -26203,7 +26329,7 @@ ALTER TABLE `medication_routes`
 -- AUTO_INCREMENT for table `modules`
 --
 ALTER TABLE `modules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=103;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
 
 --
 -- AUTO_INCREMENT for table `obsteric_history`
@@ -26248,6 +26374,12 @@ ALTER TABLE `patient_inout`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
+-- AUTO_INCREMENT for table `prefix`
+--
+ALTER TABLE `prefix`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
 -- AUTO_INCREMENT for table `procedure_coding`
 --
 ALTER TABLE `procedure_coding`
@@ -26275,7 +26407,7 @@ ALTER TABLE `req_epi`
 -- AUTO_INCREMENT for table `req_medication_consumption`
 --
 ALTER TABLE `req_medication_consumption`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `rights`

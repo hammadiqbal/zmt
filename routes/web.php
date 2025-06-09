@@ -360,6 +360,13 @@ Route::get('hr/gender-status', [App\Http\Controllers\HRController::class, 'Updat
 Route::get('hr/updategender/{id}', [App\Http\Controllers\HRController::class, 'UpdateGenderModal'])->name('UpdateGenderModal');
 Route::post('hr/update-gender/{id}', [App\Http\Controllers\HRController::class, 'UpdateGender'])->name('UpdateGender');
 
+Route::get('prefix-setup', [App\Http\Controllers\HRController::class, 'PrefixSetup'])->name('prefix-setup');
+Route::post('hr/add_prefix', [App\Http\Controllers\HRController::class, 'AddPrefix'])->name('AddPrefix');
+Route::get('hr/prefixdata', [App\Http\Controllers\HRController::class, 'GetPrefixData'])->name('GetPrefixData');
+Route::get('hr/prefix-status', [App\Http\Controllers\HRController::class, 'UpdatePrefixStatus'])->name('UpdatePrefixStatus');
+Route::get('hr/updateprefix/{id}', [App\Http\Controllers\HRController::class, 'UpdatePrefixModal'])->name('UpdatePrefixModal');
+Route::post('hr/update-prefix/{id}', [App\Http\Controllers\HRController::class, 'UpdatePrefix'])->name('UpdatePrefix');
+
 Route::get('employee-status', [App\Http\Controllers\HRController::class, 'EmployeeStatus'])->name('employee-status');
 Route::post('hr/addempStatus', [App\Http\Controllers\HRController::class, 'AddEmployeeStatus'])->name('hr.addempStatus');
 Route::get('hr/empStatusdata', [App\Http\Controllers\HRController::class, 'GetEmployeeStatusData'])->name('hr.empStatusdata');
@@ -529,7 +536,7 @@ Route::get('/work-order/{id}/pdf', [InventoryController::class, 'generatePdfWO']
 // Route::get('inventory/getsiterequisition', [InventoryController::class, 'GetSiteRequisition'])->name('GetSiteRequisition');
 
 
-Route::get('inventory/gettransactiontypeet', [InventoryController::class, 'GetTransactionTypeExternalTransaction'])->name('inventory/gettransactiontypeet');
+Route::get('inventory/gettransactiontypeim', [InventoryController::class, 'GetTransactionTypeInventoryManagement'])->name('inventory/gettransactiontypeim');
 Route::get('inventory/getmaterialtransactiontypes', [App\Http\Controllers\InventoryController::class, 'GetMaterialManagementTransactionTypes'])->name('GetMaterialManagementTransactionTypes');
 Route::get('external-transaction', [App\Http\Controllers\InventoryController::class, 'ShowExternalTransaction'])->name('external-transaction');
 Route::post('inventory/addexternaltransaction', [InventoryController::class, 'AddExternalTransaction'])->name('AddExternalTransaction');

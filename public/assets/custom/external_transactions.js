@@ -71,7 +71,7 @@ $(document).ready(function() {
             });
         
             $.ajax({
-                url: 'inventory/gettransactiontypeet',
+                url: 'inventory/gettransactiontypeim',
                 type: 'GET',
                 data: {
                     transactionTypeId: transactionTypeID,

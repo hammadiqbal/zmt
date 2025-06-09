@@ -17,6 +17,7 @@ use App\Http\Requests\EmployeeCCRequest;
 use App\Http\Requests\EmpServiceAllocationRequest;
 use App\Http\Requests\EmployeeLocationAllocationRequest;
 use App\Http\Requests\EmployeeDocumentRequest;
+use App\Http\Requests\PrefixSetupRequest;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use App\Models\Logs;
@@ -25,6 +26,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\File;
 use Yajra\DataTables\Facades\DataTables;
 use App\Models\EmployeeGender;
+use App\Models\PrefixSetup;
 use App\Models\EmployeeStatus;
 use App\Models\EmployeeWorkingStatus;
 use App\Models\EmployeeQualificationLevel;
@@ -354,6 +356,477 @@ class HRController extends Controller
         $GenderLog->save();
         return response()->json(['success' => 'Gender updated successfully']);
     }
+
+    public function PrefixSetup()
+    {
+        $colName = 'prefix_setup';
+        if (PermissionDenied($colName)) {
+            abort(403); 
+        }
+        $user = auth()->user();
+        return view('dashboard.prefix_setup', compact('user'));
+    }
+
+    public function AddPrefix(PrefixSetupRequest $request)
+    {
+        $rights = $this->rights;
+        $add = explode(',', $rights->prefix_setup)[0];
+        if($add == 0)
+        {
+            abort(403, 'Forbidden');
+        }
+        $PrefixName = trim($request->input('prefix_name'));
+        $Edt = $request->input('prefix_edt');
+        $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
+        $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
+        $EffectDateTime->subMinute(1);
+        if ($EffectDateTime->isPast()) {
+            $status = 1; //Active
+        } else {
+            $status = 0; //Inactive
+
+        }
+
+        $session = auth()->user();
+        $sessionName = $session->name;
+        $sessionId = $session->id;
+
+        $last_updated = $this->currentDatetime;
+        $timestamp = $this->currentDatetime;
+        $logId = null;
+
+        $PrefixExists = PrefixSetup::where('name', $PrefixName)
+        ->exists();
+        if ($PrefixExists) {
+            return response()->json(['info' => 'Prefix already exists.']);
+        }
+        else
+        {
+            $Prefix = new PrefixSetup();
+            $Prefix->name = $PrefixName;
+            $Prefix->status = $status;
+            $Prefix->user_id = $sessionId;
+            $Prefix->last_updated = $last_updated;
+            $Prefix->timestamp = $timestamp;
+            $Prefix->effective_timestamp = $Edt;
+            $Prefix->save();
+
+            if (empty($Prefix->id)) {
+                return response()->json(['error' => 'Failed to create Prefix.']);
+            }
+
+            $logs = Logs::create([
+                'module' => 'hr',
+                'content' => "'{$PrefixName}' has been added by '{$sessionName}'",
+                'event' => 'add',
+                'timestamp' => $timestamp,
+            ]);
+            $logId = $logs->id;
+            $Prefix->logid = $logs->id;
+            $Prefix->save();
+            return response()->json(['success' => 'Prefix created successfully']);
+        }
+
+    }
+
+    public function GetPrefixData(Request $request)
+    {
+        $rights = $this->rights;
+        $view = explode(',', $rights->prefix_setup)[1];
+        if($view == 0)
+        {
+            abort(403, 'Forbidden');
+        }
+        $Prefixes = PrefixSetup::select('*')->orderBy('id', 'desc');
+        // ->get()
+        // return DataTables::of($EmployeeGenders)
+        return DataTables::eloquent($Prefixes)
+            ->filter(function ($query) use ($request) {
+                if ($request->has('search') && $request->search['value']) {
+                    $search = $request->search['value'];
+                    $query->where(function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                            ->orWhere('id', 'like', "%{$search}%")
+                            ->orWhere('status', 'like', "%{$search}%")
+                            ->orWhere('effective_timestamp', 'like', "%{$search}%");
+                    });
+                }
+            })
+            ->addColumn('id_raw', function ($Prefix) {
+                return $Prefix->id;  // Raw ID value
+            })
+            ->editColumn('id', function ($Prefix) {
+                $session = auth()->user();
+                $sessionName = $session->name;
+                $PrefixName = ucfirst($Prefix->name);
+                $effectiveDate = Carbon::createFromTimestamp($Prefix->effective_timestamp)->format('l d F Y - h:i A');
+                $timestamp = Carbon::createFromTimestamp($Prefix->timestamp)->format('l d F Y - h:i A');
+                $lastUpdated = Carbon::createFromTimestamp($Prefix->last_updated)->format('l d F Y - h:i A');
+                $createdByName = getUserNameById($Prefix->user_id);
+
+                $createdInfo = "
+                        <b>Created By:</b> " . ucwords($createdByName) . "  <br>
+                        <b>Effective Date&amp;Time:</b> " . $effectiveDate . " <br>
+                        <b>RecordedAt:</b> " . $timestamp ." <br>
+                        <b>LastUpdated:</b> " . $lastUpdated;
+
+                return $PrefixName
+                    . '<hr class="mt-1 mb-2">'
+                    . '<span class="label label-info popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $createdInfo .'">'
+                    . '<i class="fa fa-toggle-right"></i> View Details'
+                    . '</span>';
+            })
+            ->addColumn('action', function ($Prefix) {
+                    $PrefixId = $Prefix->id;
+                    $logId = $Prefix->logid;
+                    $Rights = $this->rights;
+                    $edit = explode(',', $Rights->prefix_setup)[2];
+                    $actionButtons = '';
+                    if ($edit == 1) {
+                        $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 edit-prefix" data-prefix-id="'.$PrefixId.'">'
+                        . '<i class="fa fa-edit"></i> Edit'
+                        . '</button>';
+                    }
+                    $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
+                    . '<i class="fa fa-eye"></i> View Logs'
+                    . '</button>';
+                   
+                    return $Prefix->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
+                   
+            })
+            ->editColumn('status', function ($Prefix) {
+                $rights = $this->rights;
+                $updateStatus = explode(',', $rights->prefix_setup)[3];
+                return $updateStatus == 1 ? ($Prefix->status ? '<span class="label label-success prefix_status cursor-pointer" data-id="'.$Prefix->id.'" data-status="'.$Prefix->status.'">Active</span>' : '<span class="label label-danger prefix_status cursor-pointer" data-id="'.$Prefix->id.'" data-status="'.$Prefix->status.'">Inactive</span>') : ($Prefix->status ? '<span class="label label-success">Active</span>' : '<span class="label label-danger">Inactive</span>');
+
+            })
+            ->rawColumns(['action', 'status',
+            'id'])
+            ->make(true);
+    }
+
+    public function UpdatePrefixStatus(Request $request)
+    {
+        $rights = $this->rights;
+        $UpdateStatus = explode(',', $rights->prefix_setup)[3];
+        if($UpdateStatus == 0)
+        {
+            abort(403, 'Forbidden');
+        }
+        $PrefixID = $request->input('id');
+        $Status = $request->input('status');
+        $CurrentTimestamp = $this->currentDatetime;
+        $Prefix = PrefixSetup::find($PrefixID);
+
+        if($Status == 0)
+        {
+            $UpdateStatus = 1;
+            $statusLog = 'Active';
+            $Prefix->effective_timestamp = $CurrentTimestamp;
+        }
+        else{
+            $UpdateStatus = 0;
+            $statusLog = 'Inactive';
+
+        }
+        $Prefix->status = $UpdateStatus;
+        $Prefix->last_updated = $CurrentTimestamp;
+
+        $session = auth()->user();
+        $sessionName = $session->name;
+        $sessionId = $session->id;
+
+        $logs = Logs::create([
+            'module' => 'hr',
+            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
+            'event' => 'update',
+            'timestamp' => $this->currentDatetime,
+        ]);
+        $PrefixLog = PrefixSetup::where('id', $PrefixID)->first();
+        $logIds = $PrefixLog->logid ? explode(',', $PrefixLog->logid) : [];
+        $logIds[] = $logs->id;
+        $PrefixLog->logid = implode(',', $logIds);
+        $PrefixLog->save();
+
+        $Prefix->save();
+        return response()->json(['success' => true, 200]);
+    }
+
+    public function UpdatePrefixModal($id)
+    {
+        $rights = $this->rights;
+        $edit = explode(',', $rights->prefix_setup)[2];
+        if($edit == 0)
+        {
+            abort(403, 'Forbidden');
+        }
+        $Prefix = PrefixSetup::find($id);
+        $PrefixName = ucwords($Prefix->name);
+        $effective_timestamp = $Prefix->effective_timestamp;
+        $effective_timestamp = Carbon::createFromTimestamp($effective_timestamp);
+        $effective_timestamp = $effective_timestamp->format('l d F Y - h:i A');
+
+        $data = [
+            'id' => $id,
+            'name' => $PrefixName,
+            'effective_timestamp' => $effective_timestamp,
+        ];
+
+        return response()->json($data);
+    }
+
+    public function UpdatePrefix(Request $request, $id)
+    {
+        $rights = $this->rights;
+        $edit = explode(',', $rights->prefix_setup)[2];
+        if($edit == 0)
+        {
+            abort(403, 'Forbidden');
+        }
+        $Prefix = PrefixSetup::findOrFail($id);
+
+        $Prefix->name = $request->input('u_prefix');
+        $effective_date = $request->input('u_effective_timestamp');
+        $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
+        $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
+        $EffectDateTime->subMinute(1);
+
+        if ($EffectDateTime->isPast()) {
+            $status = 1; //Active
+        } else {
+             $status = 0; //Inactive
+        }
+
+        $Prefix->effective_timestamp = $effective_date;
+        $Prefix->last_updated = $this->currentDatetime;
+        $Prefix->status = $status;
+
+        $session = auth()->user();
+        $sessionName = $session->name;
+        $sessionId = $session->id;
+
+        $Prefix->save();
+
+        if (empty($Prefix->id)) {
+            return response()->json(['error' => 'Failed to update Prefix. Please try again']);
+        }
+        $logs = Logs::create([
+            'module' => 'hr',
+            'content' => "Data has been updated by '{$sessionName}'",
+            'event' => 'update',
+            'timestamp' => $this->currentDatetime,
+        ]);
+        $PrefixLog = PrefixSetup::where('id', $Prefix->id)->first();
+        $logIds = $PrefixLog->logid ? explode(',', $PrefixLog->logid) : [];
+        $logIds[] = $logs->id;
+        $PrefixLog->logid = implode(',', $logIds);
+        $PrefixLog->save();
+        return response()->json(['success' => 'Prefix updated successfully']);
+    }
+
+    // public function AddPrefix(PrefixSetupRequest $request)
+    // {
+    //     $rights = $this->rights;
+    //     $add = explode(',', $rights->prefix_setup)[0];
+    //     if($add == 0)
+    //     {
+    //         abort(403, 'Forbidden');
+    //     }
+
+    //     $prefix_name = trim($request->input('prefix_name'));
+    //     $effective_date = $request->input('effective_timestamp');
+    //     $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
+    //     $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
+    //     $EffectDateTime->subMinute(1);
+
+    //     if ($EffectDateTime->isPast()) {
+    //         $status = 1; // Active
+    //     } else {
+    //         $status = 0; // Inactive
+    //     }
+
+    //     $session = auth()->user();
+    //     $sessionName = $session->name;
+    //     $sessionId = $session->id;
+
+    //     $last_updated = $this->currentDatetime;
+    //     $timestamp = $this->currentDatetime;
+
+    //     // Create log entry
+    //     $logs = Logs::create([
+    //         'module' => 'hr',
+    //         'content' => "Prefix has been inserted by '{$sessionName}'",
+    //         'event' => 'insert',
+    //         'timestamp' => $timestamp,
+    //     ]);
+
+    //     $prefix = PrefixSetup::create([
+    //         'name' => $prefix_name,
+    //         'user_id' => $sessionId,
+    //         'logid' => $logs->id,
+    //         'status' => $status,
+    //         'effective_timestamp' => $effective_date,
+    //         'timestamp' => $timestamp,
+    //         'last_updated' => $last_updated
+    //     ]);
+
+    //     if (empty($prefix->id)) {
+    //         return response()->json(['error' => 'Failed to add prefix. Please try again']);
+    //     }
+
+    //     return response()->json(['success' => 'Prefix added successfully']);
+    // }
+
+    // public function GetPrefixData(Request $request)
+    // {
+    //     $rights = $this->rights;
+    //     $view = explode(',', $rights->prefix_setup)[1];
+    //     if($view == 0)
+    //     {
+    //         abort(403, 'Forbidden');
+    //     }
+
+    //     $data = PrefixSetup::select('*');
+        
+    //     return DataTables::of($data)
+    //         ->addIndexColumn()
+    //         ->addColumn('action', function($row) use ($rights){
+    //             $btn = '';
+    //             $edit = explode(',', $rights->prefix_setup)[2];
+    //             $updateStatus = explode(',', $rights->prefix_setup)[3];
+                
+    //             if($edit == 1) {
+    //                 $btn .= '<button type="button" data-id="'.$row->id.'" class="btn btn-primary btn-sm edit-prefix"><i class="fas fa-edit"></i></button> ';
+    //             }
+                
+    //             if($updateStatus == 1) {
+    //                 if($row->status == 1) {
+    //                     $btn .= '<button type="button" data-id="'.$row->id.'" data-status="0" class="btn btn-danger btn-sm update-status"><i class="fas fa-times"></i></button>';
+    //                 } else {
+    //                     $btn .= '<button type="button" data-id="'.$row->id.'" data-status="1" class="btn btn-success btn-sm update-status"><i class="fas fa-check"></i></button>';
+    //                 }
+    //             }
+                
+    //             return $btn;
+    //         })
+    //         ->rawColumns(['action'])
+    //         ->make(true);
+    // }
+
+    // public function UpdatePrefixStatus(Request $request)
+    // {
+    //     $rights = $this->rights;
+    //     $updateStatus = explode(',', $rights->prefix_setup)[3];
+    //     if($updateStatus == 0)
+    //     {
+    //         abort(403, 'Forbidden');
+    //     }
+
+    //     $id = $request->input('id');
+    //     $status = $request->input('status');
+        
+    //     $prefix = PrefixSetup::find($id);
+    //     if(!$prefix) {
+    //         return response()->json(['error' => 'Prefix not found']);
+    //     }
+
+    //     $session = auth()->user();
+    //     $sessionName = $session->name;
+
+    //     $prefix->status = $status;
+    //     $prefix->last_updated = $this->currentDatetime;
+        
+    //     if($prefix->save()) {
+    //         $logs = Logs::create([
+    //             'module' => 'hr',
+    //             'content' => "Status has been updated by '{$sessionName}'",
+    //             'event' => 'update',
+    //             'timestamp' => $this->currentDatetime,
+    //         ]);
+
+    //         $logIds = $prefix->logid ? explode(',', $prefix->logid) : [];
+    //         $logIds[] = $logs->id;
+    //         $prefix->logid = implode(',', $logIds);
+    //         $prefix->save();
+
+    //         return response()->json(['success' => 'Status updated successfully']);
+    //     }
+
+    //     return response()->json(['error' => 'Failed to update status']);
+    // }
+
+    // public function UpdatePrefixModal($id)
+    // {
+    //     $rights = $this->rights;
+    //     $edit = explode(',', $rights->prefix_setup)[2];
+    //     if($edit == 0)
+    //     {
+    //         abort(403, 'Forbidden');
+    //     }
+
+    //     $prefix = PrefixSetup::find($id);
+    //     $prefixName = ucwords($prefix->name);
+    //     $effective_timestamp = $prefix->effective_timestamp;
+    //     $effective_timestamp = Carbon::createFromTimestamp($effective_timestamp);
+    //     $effective_timestamp = $effective_timestamp->format('l d F Y - h:i A');
+
+    //     $data = [
+    //         'id' => $id,
+    //         'name' => $prefixName,
+    //         'effective_timestamp' => $effective_timestamp,
+    //     ];
+
+    //     return response()->json($data);
+    // }
+
+    // public function UpdatePrefix(Request $request, $id)
+    // {
+    //     $rights = $this->rights;
+    //     $edit = explode(',', $rights->prefix_setup)[2];
+    //     if($edit == 0)
+    //     {
+    //         abort(403, 'Forbidden');
+    //     }
+
+    //     $prefix = PrefixSetup::findOrFail($id);
+
+    //     $prefix->name = $request->input('u_prefix');
+    //     $effective_date = $request->input('u_effective_timestamp');
+    //     $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
+    //     $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
+    //     $EffectDateTime->subMinute(1);
+
+    //     if ($EffectDateTime->isPast()) {
+    //         $status = 1; // Active
+    //     } else {
+    //         $status = 0; // Inactive
+    //     }
+
+    //     $prefix->effective_timestamp = $effective_date;
+    //     $prefix->status = $status;
+    //     $prefix->last_updated = $this->currentDatetime;
+
+    //     if($prefix->save()) {
+    //         $session = auth()->user();
+    //         $sessionName = $session->name;
+
+    //         $logs = Logs::create([
+    //             'module' => 'hr',
+    //             'content' => "Data has been updated by '{$sessionName}'",
+    //             'event' => 'update',
+    //             'timestamp' => $this->currentDatetime,
+    //         ]);
+
+    //         $logIds = $prefix->logid ? explode(',', $prefix->logid) : [];
+    //         $logIds[] = $logs->id;
+    //         $prefix->logid = implode(',', $logIds);
+    //         $prefix->save();
+
+    //         return response()->json(['success' => 'Prefix updated successfully']);
+    //     }
+
+    //     return response()->json(['error' => 'Failed to update prefix']);
+    // }
 
     public function GetSelectedEmpStatus(Request $request)
     {
@@ -1959,8 +2432,9 @@ class HRController extends Controller
         $EmpWorkingStatuses = EmployeeWorkingStatus::where('status', 1)->where('job_continue', 1)->get();
         $Provinces = Province::where('status', 1)->get();
         $Employees = Employee::where('status', 1)->get();
+        $Prefixes = PrefixSetup::where('status', 1)->get();
 
-        return view('dashboard.employee', compact('user','Genders','Organizations','Cadres','Positions','QualificationLevels','EmpStatuses','EmpWorkingStatuses','Provinces','Employees'));
+        return view('dashboard.employee', compact('user','Prefixes','Genders','Organizations','Cadres','Positions','QualificationLevels','EmpStatuses','EmpWorkingStatuses','Provinces','Employees'));
     }
 
     public function AddEmployee(EmployeeRequest $request)
@@ -1985,6 +2459,7 @@ class HRController extends Controller
         $Org = ($request->input('emp_org'));
         $Site = ($request->input('emp_site'));
         $CostCenter = ($request->input('emp_cc'));
+        $Prefix = ($request->input('emp_prefix'));
         $Cadre = ($request->input('emp_cadre'));
         $Position = ($request->input('emp_position'));
         $weekHrs = $request->input('emp_weekHrs');
@@ -2068,6 +2543,7 @@ class HRController extends Controller
        
         $Employee = new Employee();
         $Employee->name = $Name;
+        $Employee->prefix_id = $Prefix;
         $Employee->guardian_name = $Guardian;
         $Employee->guardian_relation = $GuardianRelation;
         $Employee->next_of_kin = $NextOfKin;
@@ -2192,6 +2668,7 @@ class HRController extends Controller
         'province.name as provinceName',
         'division.name as divisionName',
         'district.name as districtName',
+        'prefix.name as Prefix',
         'costcenter.name as cc_name')
         ->leftJoin('organization', 'organization.id', '=', 'employee.org_id')
         ->join('costcenter', 'costcenter.id', '=', 'employee.cc_id')
@@ -2203,7 +2680,8 @@ class HRController extends Controller
         ->join('province', 'province.id', '=', 'employee.province_id')
         ->join('division', 'division.id', '=', 'employee.division_id')
         ->join('district', 'district.id', '=', 'employee.district_id')
-        ->join('emp_working_status', 'emp_working_status.id', '=', 'employee.work_status_id');
+        ->join('emp_working_status', 'emp_working_status.id', '=', 'employee.work_status_id')
+        ->join('prefix', 'prefix.id', '=', 'employee.prefix_id');
         
         if($sessionOrg != '0')
         {
@@ -2242,7 +2720,7 @@ class HRController extends Controller
                 $session = auth()->user();
                 $sessionName = $session->name;
                 $sessionId = $session->id;
-                $empName = ucwords($Employee->name);
+                $empName = $Employee->Prefix.' '.ucwords($Employee->name);
                 $genderName = ucwords($Employee->genderName);
                 $effectiveDate = Carbon::createFromTimestamp($Employee->effective_timestamp)->format('l d F Y - h:i A');
                 $timestamp = Carbon::createFromTimestamp($Employee->timestamp)->format('l d F Y - h:i A');
@@ -2342,7 +2820,7 @@ class HRController extends Controller
                     $view = explode(',', $Rights->employee_setup)[1];
                     $actionButtons = '';
                     if ($edit == 1) {
-                        $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 edit-employee" data-employee-id="'.$EmployeeId.'">'
+                        $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 edit-employee mb-2" data-employee-id="'.$EmployeeId.'">'
                         . '<i class="fa fa-edit"></i> Edit'
                         . '</button>';
                     }
@@ -2460,6 +2938,7 @@ class HRController extends Controller
         'costcenter.name as cc_name',
         'province.name as province_name',
         'division.name as division_name',
+        'prefix.name as Prefix',
         'district.name as district_name')
         ->join('gender', 'gender.id', '=', 'employee.gender_id')
         ->join('organization', 'organization.id', '=', 'employee.org_id')
@@ -2473,6 +2952,7 @@ class HRController extends Controller
         ->join('province', 'province.id', '=', 'employee.province_id')
         ->join('division', 'division.id', '=', 'employee.division_id')
         ->join('district', 'district.id', '=', 'employee.district_id')
+        ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
         ->find($id);
 
         $empName = $Employee->name;
@@ -2548,6 +3028,7 @@ class HRController extends Controller
 
         $data = [
             'empName' => ucwords($empName),
+            'Prefix' => ucwords($Employee->Prefix),
             'GuardianName' => ucwords($GuardianName),
             'GuardianRelation' => ucwords($GuardianRelation),
             'NextOfKin' => ucwords($NextOfKin),
@@ -2702,6 +3183,7 @@ class HRController extends Controller
         $data = [
             'id' => $id,
             'empName' => ucwords($empName),
+            'Prefix' => ($Employee->prefix_id),
             'GuardianName' => ucwords($GuardianName),
             'GuardianRelation' => ucwords($GuardianRelation),
             'empNextOfKin' => ucwords($empNextOfKin),
@@ -2767,6 +3249,7 @@ class HRController extends Controller
         $Employee = Employee::findOrFail($id);
         $Employee->name = trim($request->input('u_emp_name'));
         $Employee->guardian_name = trim($request->input('u_guardian_name'));
+        $Employee->prefix_id = trim($request->input('u_emp_prefix'));
         $Employee->guardian_relation = trim($request->input('u_guardian_relation'));
         $Employee->next_of_kin = trim($request->input('u_emp_nextofkin'));
         $Employee->next_of_kin_relation = trim($request->input('u_nextofkin_relation'));
@@ -2805,12 +3288,16 @@ class HRController extends Controller
 
         $Email = $request->input('u_emp_email');
         if(!empty($Email)){
-            $EmployeeExists = Employee::where('email', $Email)->exists();
+            $EmployeeExists = Employee::where('email', $Email)
+            ->where('id', '!=', $id)  // Exclude current employee
+            ->exists();
             if ($EmployeeExists) {
                 return response()->json(['info' => 'Employee already exists.']);
             }
 
-            $userExists = Users::where('email', $Email)->exists();
+            $userExists = Users::where('email', $Email)
+            ->where('emp_id', '!=', $id)  
+            ->exists();
             if ($userExists) {
                 return response()->json(['info' => 'This email is already associated with a registered user.']);
             }

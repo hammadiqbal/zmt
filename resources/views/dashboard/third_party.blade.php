@@ -33,7 +33,7 @@
         <div class="col-md-12 d-flex justify-content-center">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">Home</li>
-                <li class="breadcrumb-item">Settings</li>
+                <li class="breadcrumb-item">Material Management</li>
                 <li class="breadcrumb-item active">Third Party Registration</li>
             </ol>
         </div>
@@ -148,6 +148,23 @@
                                                                     <input type="text" placeholder="Enter Corporate Name" class="form-control input-sm" name="tp_corporate_name">
                                                                 </div>
                                                                 <span class="text-danger" id="tp_corporate_name_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Select Prefix</label>
+                                                                    <select class="form-control selecter p-0" name="tp_prefix" id="tp_prefix" style="color:#222d32">
+                                                                        @foreach ($Prefixes as $Prefix)
+                                                                            <option value="{{ $Prefix['id'] }}"> {{ $Prefix['name'] }}</option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                    <span class="bar"></span>
+                                                                </div>
+                                                                <span class="text-danger" id="tp_prefix_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -327,6 +344,17 @@
                                                     <input type="text" name="u_tp_corporate_name" class="form-control u_tp_corporate_name">
                                                 </div>
                                             </div>
+                                            
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label class="control-label">Update Prefix</label>
+                                                    <select class="form-control selecter p-0" name="u_tp_prefix" id="u_tp_prefix" style="color:#222d32">
+                                                        @foreach ($Prefixes as $Prefix)
+                                                            <option value="{{ $Prefix['id'] }}"> {{ $Prefix['name'] }}</option>
+                                                        @endforeach
+                                                    </select>                                               
+                                                </div>
+                                            </div>
 
                                             <div class="col-md-6">
                                                 <div class="form-group">
@@ -334,7 +362,6 @@
                                                     <input type="text" name="u_tp_name" required class="form-control u_tp_name">
                                                 </div>
                                             </div>
-
 
                                             <div class="col-md-6">
                                                 <div class="form-group">

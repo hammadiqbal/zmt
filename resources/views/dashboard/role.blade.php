@@ -54,7 +54,7 @@
                 @endphp
                 @if ($add == 1)
                 <div class="col-auto">
-                    <button type="button" class="btn btn-primary p-2" data-toggle="modal" data-target="#add-user">
+                    <button type="button" class="btn btn-primary p-2 add-user">
                         <i class="fa fa-user-plus"></i> Add User Role
                     </button>
                 </div>

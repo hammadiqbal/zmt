@@ -33,7 +33,7 @@
         <div class="col-md-12 d-flex justify-content-center">
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">Home</li>
-                <li class="breadcrumb-item">Settings</li>
+                <li class="breadcrumb-item">Human Resource</li>
                 <li class="breadcrumb-item active">Employee Qualification Setup</li>
             </ol>
         </div>

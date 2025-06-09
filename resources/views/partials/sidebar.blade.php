@@ -314,6 +314,7 @@
 
                     @php
                         $hideGender = true;
+                        $hidePrefix = true;
                         $hideEmpStatus = true;
                         $hideEmpWorkingStatus = true;
                         $hideQuaificationLevel = true;
@@ -331,6 +332,10 @@
                         $hideGenderValues = explode(',', $rights->gender_setup);
                         if (in_array('1', $hideGenderValues)) {
                             $hideGender = false;
+                        }
+                        $hidePrefixValues = explode(',', $rights->prefix_setup);
+                        if (in_array('1', $hidePrefixValues)) {
+                            $hidePrefix = false;
                         }
                         $hideEmpStatusValues = explode(',', $rights->employee_status_setup);
                         if (in_array('1', $hideEmpStatusValues)) {
@@ -385,11 +390,14 @@
                             $hideEmpLocationAllocation = false;
                         }
                     @endphp
-                    @if (!$hideGender || !$hideEmpStatus || !$hideEmpWorkingStatus || !$hideQuaificationLevel || !$hideCadre || !$hidePosition || !$hideEmployee || !$hideEmpQualificationSetup || !$hideEmpDocumentsSetupValues || !$hideEmpMedicalLicense || !$hideEmpSalarySetup || !$hideEmpCCAllocation || !$hideEmpServiceAllocation)
+                    @if ( !$hideGender || !$hidePrefix || !$hideEmpStatus || !$hideEmpWorkingStatus || !$hideQuaificationLevel || !$hideCadre || !$hidePosition || !$hideEmployee || !$hideEmpQualificationSetup || !$hideEmpDocumentsSetupValues || !$hideEmpMedicalLicense || !$hideEmpSalarySetup || !$hideEmpCCAllocation || !$hideEmpServiceAllocation)
                         <li> <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false"><i class="mdi mdi-human"></i><span class="hide-menu">Human Resource</span></a>
                             <ul aria-expanded="false" class="collapse">
                                 @if (!$hideGender)
                                 <li><a href="{{ route('employee-gender') }}">Gender Setup</a></li>
+                                @endif
+                                @if (!$hidePrefix)
+                                <li><a href="{{ route('prefix-setup') }}">Prefix Setup</a></li>
                                 @endif
                                 @if (!$hideEmpStatus)
                                     <li><a href="{{ route('employee-status') }}">Employee Status Setup</a></li>

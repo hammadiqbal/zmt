@@ -29,6 +29,7 @@ class ThirdPartyRegistrationRequest extends FormRequest
             'tp_email' => 'required|email',
             'tp_cell' => ['required', 'regex:/^[+]?[\d-]+$/'],
             'tp_address' => 'required|string',
+            'tp_prefix' => 'required',
             'tp_edt' => 'required',
         ];
     }
@@ -45,6 +46,7 @@ class ThirdPartyRegistrationRequest extends FormRequest
             'tp_cell.required' => 'The cell number field is required.',
             'tp_cell.regex' => 'The cell number must be in the format: +920000000000',
             'tp_address.string' => 'This field should contain only alphabetic characters.',
+            'tp_prefix.required' => 'This field is required.',
             'tp_edt.required' => 'The effective date and time field is required.',
         ];
     }

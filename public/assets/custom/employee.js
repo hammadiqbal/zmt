@@ -64,6 +64,7 @@ $(document).ready(function() {
         var Org = $('#emp_org').val();
         var Site = $('#emp_site').val();
         var CostCenter = $('#emp_cc').val();
+        var Prefix = $('#emp_prefix').val();
         var Cadre = $('#emp_cadre').val();
         var reportTo = $('#emp_reportto').val();
         var qualificationLevel = $('#emp_qual_lvl').val();
@@ -88,6 +89,7 @@ $(document).ready(function() {
         formData.append('emp_org', Org);
         formData.append('emp_site', Site);
         formData.append('emp_cc', CostCenter);
+        formData.append('emp_prefix', Prefix);
         formData.append('emp_cadre', Cadre);
         formData.append('emp_reportto', reportTo);
         formData.append('emp_qual_lvl', qualificationLevel);
@@ -342,7 +344,7 @@ $(document).ready(function() {
                 $('#ajax-loader').hide();
                 var imgPath = response.Image;
                 $('#empImg').attr('src', imgPath);
-                $('#empName').text(response.empName);
+                $('#empName').text(response.Prefix + ' ' + response.empName);      
                 $('#empAddress').text(response.Address);
                 $('#empMailingAddress').text(response.MailingAddress);
                 $('#empOldcode').text(response.OldCode);
@@ -432,7 +434,7 @@ $(document).ready(function() {
                 var MailingAddress = response.MailingAddress;
                 var image = response.Image;
                 // var language = response.language;
-
+                $('#u_emp_prefix').val(response.Prefix).change();
                 const languages = ["Urdu", "English", "Sindhi", "Balochi", "Punjabi", "Pashto", "Hindko", "Siraiki", "Memoni", "Gujrati", "Brahui", "Shina", "Burushaski", "Wakhi", "Balti", "Kashmiri", "Khowar"];
                 let languageOptions = '<option selected>' + response.language + '</option>';
                 for (let language of languages) {

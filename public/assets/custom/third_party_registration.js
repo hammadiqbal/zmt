@@ -190,7 +190,7 @@ $(document).ready(function() {
                 width: "300px"
             },
             {
-                targets: 4,
+                targets: 5,
                 width: "300px"
             }
         ]
@@ -271,7 +271,8 @@ $(document).ready(function() {
                     $('.u_tp_corporate_name').prop('required', false);
                 }
                 $('.u_registration_type').val(response.registrationType).change();
-              
+                $('#u_tp_prefix').val(response.prefixId).change();
+
                 $('.u_vendor_cat').val(response.vendorCat).change();
                 $('.u_vendor_cat').change(function() {
                     var selectedType = $(this).val();

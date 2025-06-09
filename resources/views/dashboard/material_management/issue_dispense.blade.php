@@ -404,6 +404,20 @@ border: 1px solid rgba(0,0,0,.15);
                                                                     </div>
                                                                 </div>
                                                             </div>
+
+                                                            {{-- <div class="col-md-6 brand_details">
+                                                                <div class="form-group row">
+                                                                    <div class="col-md-12">
+                                                                        <div class="form-group has-custom m-b-5">
+                                                                            <label class="control-label">Select Frequency</label>
+                                                                            <select class="form-control selecter p-0 id_frequency" name="id_frequency[]" style="color:#222d32">
+                                                                                
+                                                                            </select>
+                                                                        </div>
+                                                                        <span class="text-danger id_frequency_error"></span>
+                                                                    </div>
+                                                                </div>
+                                                            </div> --}}
         
                                                             <div class="col-md-6 brand_details">
                                                                 <div class="form-group row">

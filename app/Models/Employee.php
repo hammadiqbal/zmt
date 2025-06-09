@@ -10,7 +10,7 @@ class Employee extends Model
     use HasFactory;
     protected $table = 'employee';
     public $timestamps = false;
-    protected $fillable = ['name',  'guardian_name', 'guardian_relation', 'next_of_kin',
+    protected $fillable = ['name', 'prefix_id', 'guardian_name', 'guardian_relation', 'next_of_kin',
     'next_of_kin_relation','old_code', 'gender_id', 'language', 'religion',
     'marital_status', 'dob', 'org_id', 'site_id', 'cc_id', 'cadre_id',
     'position_id', 'week_hrs', 'report_to', 'q_level_id',
