@@ -12,6 +12,8 @@ only and in source all locations should show. -->
 For inventory Balance we have to store balance for org, site and locations if source or destination
 are locations then we have to store balance for both source or destination according to source action
 and destination action.
+check location_id and location balance in inventory_balance table
+test throughky for external transaction and issue and dispense bith modules
 
 <!-- there is an issue in max qty in respond button -->
 
@@ -28,13 +30,11 @@ second go demandqty must change like 5 - 3 = 2 and on second go user can issue o
 <!-- 2.	This Prefix filed will be available before Name in a) Employee Setup / Add Employee, b) Third Party Registration / Register a Third Party -->
 <!-- 3.	Both Employee names and Third-Party Focal Person’s names will be displayed by joining prefix with name everywhere. -->
 
+
+
 ...........................................................................
 changing before going to live server
-create table name prefix
-update module table
-create column in rights table name prefix_setup
-create column prefix_id in third_party and employee table
-
+create 2 columns in inventory_balance table source_balance and destination_balance
 ............................................................................
 when mutiple time ajax run error change the .change function with like this   
  $(siteSelector).off('change.siteLookup').on('change.siteLookup', function(){

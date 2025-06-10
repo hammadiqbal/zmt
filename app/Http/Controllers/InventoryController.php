@@ -7230,7 +7230,6 @@ class InventoryController extends Controller
     }
 
     public function GetTransactionTypeInventoryManagement(Request $request)
-    public function GetTransactionTypeInventoryManagement(Request $request)
     {
         $siteId            = $request->input('siteId');
         $transactionTypeId = $request->input('transactionTypeId');
@@ -7576,8 +7575,13 @@ class InventoryController extends Controller
         $ExternalTransaction->logid = $logs->id;
         $ExternalTransaction->save();
 
+        // $rule = DB::table('inventory_transaction_type')
+        // ->select('applicable_location_to','source_action','destination_action')
+        // ->where('id', $TransactionTypeID)
+        // ->first();
+
         $rule = DB::table('inventory_transaction_type')
-        ->select('applicable_location_to','source_action','destination_action')
+        ->select('applicable_location_to', 'source_action', 'destination_action', 'source_location_type', 'destination_location_type')
         ->where('id', $TransactionTypeID)
         ->first();
 
@@ -7585,6 +7589,8 @@ class InventoryController extends Controller
         ? $rule->source_action
         : $rule->destination_action;
 
+        $sourceType = DB::table('inventory_source_destination_type')->where('id', $rule->source_location_type)->value('name');
+        $destinationType = DB::table('inventory_source_destination_type')->where('id', $rule->destination_location_type)->value('name');
         $count = max(
             count($Generics),
             count($Brands),
@@ -7592,6 +7598,67 @@ class InventoryController extends Controller
             count($Quantities)
         );
 
+        // for ($i = 0; $i < $count; $i++) {
+        //     $genId   = $Generics[$i]   ?? null;
+        //     $brandId = $Brands[$i]     ?? null;
+        //     $batchNo = $Batches[$i]    ?? null;
+        //     $qty     = (int) ($Quantities[$i] ?? 0);
+        //     $expTs   = $timestamps[$i] ?? null;
+
+        //     if (! $genId || ! $brandId || ! $batchNo) {
+        //         continue;
+        //     }
+
+        //     $prevOrgRow = InventoryBalance::where('generic_id', $genId)
+        //         ->where('brand_id',  $brandId)
+        //         ->where('batch_no',  $batchNo)
+        //         ->where('org_id',    $Organization)
+        //         ->orderBy('id', 'desc')
+        //         ->first();
+        //     $prevOrgBalance = $prevOrgRow->org_balance ?? 0;
+
+        //     $prevSiteRow = InventoryBalance::where('generic_id', $genId)
+        //     ->where('brand_id',  $brandId)
+        //     ->where('batch_no',  $batchNo)
+        //     ->where('org_id',    $Organization)
+        //     ->where('site_id',   $Site)
+        //     ->orderBy('id', 'desc')
+        //     ->first();
+        //     $prevSiteBalance = $prevSiteRow->site_balance ?? 0;
+
+        //     switch ($useAction) {
+        //         case 'a':  // add
+        //             $newOrgBalance  = $prevOrgBalance  + $qty;
+        //             $newSiteBalance = $prevSiteBalance + $qty;
+        //             break;
+        //         case 's':  // subtract
+        //         case 'r':  // reverse (treat like subtract)
+        //             $newOrgBalance  = $prevOrgBalance  - $qty;
+        //             $newSiteBalance = $prevSiteBalance - $qty;
+        //             break;
+        //         default:   // 'n' or no‐op
+        //             $newOrgBalance  = $prevOrgBalance;
+        //             $newSiteBalance = $prevSiteBalance;
+        //     }
+
+        //     $dateTime   = Carbon::createFromTimestamp($timestampNow)->format('d-M-Y H:i');
+        //     $remarkText = "Transaction by {$session->name} on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSiteBalance}";
+        
+        //     InventoryBalance::create([
+        //         'management_id' => $ExternalTransaction->id,
+        //         'generic_id'    => $genId,
+        //         'brand_id'      => $brandId,
+        //         'batch_no'      => $batchNo,
+        //         'expiry_date'   => $expTs,
+        //         'org_id'        => $Organization,
+        //         'site_id'       => $Site,
+        //         'org_balance'   => $newOrgBalance,
+        //         'site_balance'  => $newSiteBalance,
+        //         'remarks'       => $remarkText,
+        //         'timestamp'     => $timestampNow,
+        //     ]);
+        // }
+       
         for ($i = 0; $i < $count; $i++) {
             $genId   = $Generics[$i]   ?? null;
             $brandId = $Brands[$i]     ?? null;
@@ -7603,6 +7670,7 @@ class InventoryController extends Controller
                 continue;
             }
 
+            //  --- Calculate org and site balances ---
             $prevOrgRow = InventoryBalance::where('generic_id', $genId)
                 ->where('brand_id',  $brandId)
                 ->where('batch_no',  $batchNo)
@@ -7612,12 +7680,12 @@ class InventoryController extends Controller
             $prevOrgBalance = $prevOrgRow->org_balance ?? 0;
 
             $prevSiteRow = InventoryBalance::where('generic_id', $genId)
-            ->where('brand_id',  $brandId)
-            ->where('batch_no',  $batchNo)
-            ->where('org_id',    $Organization)
-            ->where('site_id',   $Site)
-            ->orderBy('id', 'desc')
-            ->first();
+                ->where('brand_id',  $brandId)
+                ->where('batch_no',  $batchNo)
+                ->where('org_id',    $Organization)
+                ->where('site_id',   $Site)
+                ->orderBy('id', 'desc')
+                ->first();
             $prevSiteBalance = $prevSiteRow->site_balance ?? 0;
 
             switch ($useAction) {
@@ -7634,23 +7702,170 @@ class InventoryController extends Controller
                     $newOrgBalance  = $prevOrgBalance;
                     $newSiteBalance = $prevSiteBalance;
             }
-
             $dateTime   = Carbon::createFromTimestamp($timestampNow)->format('d-M-Y H:i');
             $remarkText = "Transaction by {$session->name} on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSiteBalance}";
         
-            InventoryBalance::create([
-                'management_id' => $ExternalTransaction->id,
-                'generic_id'    => $genId,
-                'brand_id'      => $brandId,
-                'batch_no'      => $batchNo,
-                'expiry_date'   => $expTs,
-                'org_id'        => $Organization,
-                'site_id'       => $Site,
-                'org_balance'   => $newOrgBalance,
-                'site_balance'  => $newSiteBalance,
-                'remarks'       => $remarkText,
-                'timestamp'     => $timestampNow,
-            ]);
+            // 
+
+            // --- Both source and destination are locations ---
+            if (strtolower($sourceType) === 'inventory location' && $Source && strtolower($destinationType) === 'inventory location' && $Destination) {
+                // Source location row
+                $prevSourceLocRow = InventoryBalance::where('generic_id', $genId)
+                    ->where('brand_id',  $brandId)
+                    ->where('batch_no',  $batchNo)
+                    ->where('org_id',    $Organization)
+                    ->where('site_id',   $Site)
+                    ->where('location_id', $Source)
+                    ->orderBy('id', 'desc')
+                    ->first();
+                $prevSourceLocBalance = $prevSourceLocRow->location_balance ?? 0;
+
+                if ($rule->source_action === 'a') {
+                    $newSourceLocBalance = $prevSourceLocBalance + $qty;
+                } elseif ($rule->source_action === 's' || $rule->source_action === 'r') {
+                    $newSourceLocBalance = $prevSourceLocBalance - $qty;
+                } else {
+                    $newSourceLocBalance = $prevSourceLocBalance;
+                }
+
+                InventoryBalance::create([
+                    'management_id'    => $ExternalTransaction->id,
+                    'generic_id'       => $genId,
+                    'brand_id'         => $brandId,
+                    'batch_no'         => $batchNo,
+                    'org_id'           => $Organization,
+                    'site_id'          => $Site,
+                    'org_balance'      => $newOrgBalance,
+                    'site_balance'     => $newSiteBalance,
+                    'location_id'      => $Source,
+                    'location_balance' => $newSourceLocBalance,
+                    'remarks'          => $remarkText,
+                    'timestamp'        => $timestampNow,
+                ]);
+
+                // Destination location row
+                $prevDestLocRow = InventoryBalance::where('generic_id', $genId)
+                    ->where('brand_id',  $brandId)
+                    ->where('batch_no',  $batchNo)
+                    ->where('org_id',    $Organization)
+                    ->where('site_id',   $Site)
+                    ->where('location_id', $Destination)
+                    ->orderBy('id', 'desc')
+                    ->first();
+                $prevDestLocBalance = $prevDestLocRow->location_balance ?? 0;
+
+                if ($rule->destination_action === 'a') {
+                    $newDestLocBalance = $prevDestLocBalance + $qty;
+                } elseif ($rule->destination_action === 's' || $rule->destination_action === 'r') {
+                    $newDestLocBalance = $prevDestLocBalance - $qty;
+                } else {
+                    $newDestLocBalance = $prevDestLocBalance;
+                }
+
+                InventoryBalance::create([
+                    'management_id'    => $ExternalTransaction->id,
+                    'generic_id'       => $genId,
+                    'brand_id'         => $brandId,
+                    'batch_no'         => $batchNo,
+                    'org_id'           => $Organization,
+                    'site_id'          => $Site,
+                    'org_balance'      => $newOrgBalance,
+                    'site_balance'     => $newSiteBalance,
+                    'location_id'      => $Destination,
+                    'location_balance' => $newDestLocBalance,
+                    'remarks'          => $remarkText,
+                    'timestamp'        => $timestampNow,
+                ]);
+            }
+            // --- Only source is a location ---
+            elseif (strtolower($sourceType) === 'inventory location' && $Source) {
+                $prevLocRow = InventoryBalance::where('generic_id', $genId)
+                    ->where('brand_id',  $brandId)
+                    ->where('batch_no',  $batchNo)
+                    ->where('org_id',    $Organization)
+                    ->where('site_id',   $Site)
+                    ->where('location_id', $Source)
+                    ->orderBy('id', 'desc')
+                    ->first();
+                $prevLocBalance = $prevLocRow->location_balance ?? 0;
+
+                if ($rule->source_action === 'a') {
+                    $newLocBalance = $prevLocBalance + $qty;
+                } elseif ($rule->source_action === 's' || $rule->source_action === 'r') {
+                    $newLocBalance = $prevLocBalance - $qty;
+                } else {
+                    $newLocBalance = $prevLocBalance;
+                }
+
+                InventoryBalance::create([
+                    'management_id'    => $ExternalTransaction->id,
+                    'generic_id'       => $genId,
+                    'brand_id'         => $brandId,
+                    'batch_no'         => $batchNo,
+                    'org_id'           => $Organization,
+                    'site_id'          => $Site,
+                    'org_balance'      => $newOrgBalance,
+                    'site_balance'     => $newSiteBalance,
+                    'location_id'      => $Source,
+                    'location_balance' => $newLocBalance,
+                    'remarks'          => $remarkText,
+                    'timestamp'        => $timestampNow,
+                ]);
+            }
+            // --- Only destination is a location ---
+            elseif (strtolower($destinationType) === 'inventory location' && $Destination) {
+
+                $prevLocRow = InventoryBalance::where('generic_id', $genId)
+                    ->where('brand_id',  $brandId)
+                    ->where('batch_no',  $batchNo)
+                    ->where('org_id',    $Organization)
+                    ->where('site_id',   $Site)
+                    ->where('location_id', $Destination)
+                    ->orderBy('id', 'desc')
+                    ->first();
+                $prevLocBalance = $prevLocRow->location_balance ?? 0;
+
+                if ($rule->destination_action === 'a') {
+                    $newLocBalance = $prevLocBalance + $qty;
+                } elseif ($rule->destination_action === 's' || $rule->destination_action === 'r') {
+                    $newLocBalance = $prevLocBalance - $qty;
+                } else {
+                    $newLocBalance = $prevLocBalance;
+                }
+                // dd($newLocBalance, $Destination)
+                InventoryBalance::create([
+                    'management_id'    => $ExternalTransaction->id,
+                    'generic_id'       => $genId,
+                    'brand_id'         => $brandId,
+                    'batch_no'         => $batchNo,
+                    'org_id'           => $Organization,
+                    'site_id'          => $Site,
+                    'org_balance'      => $newOrgBalance,
+                    'site_balance'     => $newSiteBalance,
+                    'location_id'      => $Destination,
+                    'location_balance' => $newLocBalance,
+                    'remarks'          => $remarkText,
+                    'timestamp'        => $timestampNow,
+                ]);
+            }
+            // --- Neither is a location: just org/site balances, location fields null ---
+            else {
+
+                InventoryBalance::create([
+                    'management_id'    => $ExternalTransaction->id,
+                    'generic_id'       => $genId,
+                    'brand_id'         => $brandId,
+                    'batch_no'         => $batchNo,
+                    'org_id'           => $Organization,
+                    'site_id'          => $Site,
+                    'org_balance'      => $newOrgBalance,
+                    'site_balance'     => $newSiteBalance,
+                    'location_id'      => null,
+                    'location_balance' => null,
+                    'remarks'          => $remarkText,
+                    'timestamp'        => $timestampNow,
+                ]);
+            }
         }
 
         return response()->json(['success' => 'External Transaction added successfully']);
@@ -8082,6 +8297,7 @@ class InventoryController extends Controller
             // ->mergeBindings($combined))
             ->addColumn('id_raw', fn($row) => $row->id)
             ->editColumn('id', function ($row) {
+
                 $timestamp = Carbon::createFromTimestamp($row->timestamp)->format('l d F Y - h:i A');
                 $effectiveDate = Carbon::createFromTimestamp($row->effective_timestamp)->format('l d F Y - h:i A');
 
@@ -8107,6 +8323,7 @@ class InventoryController extends Controller
                     .'<b>Billing CC</b>: '.$row->billingCC;
             })
             ->editColumn('InventoryDetails', function ($row) {
+
                 $Rights = $this->rights;
                 $respond = explode(',', $Rights->issue_and_dispense)[2];
                 
@@ -9214,10 +9431,22 @@ class InventoryController extends Controller
         }
 
         // Get transaction type rule for balance calculation
+        // $rule = DB::table('inventory_transaction_type')
+        //     ->select('applicable_location_to', 'source_action', 'destination_action')
+        //     ->where('id', $validated['id_transactiontype'])
+        //     ->first();
+
         $rule = DB::table('inventory_transaction_type')
-            ->select('applicable_location_to', 'source_action', 'destination_action')
-            ->where('id', $validated['id_transactiontype'])
-            ->first();
+        ->select('applicable_location_to', 'source_action', 'destination_action', 'source_location_type', 'destination_location_type')
+        ->where('id', $validated['id_transactiontype'])
+        ->first();
+
+        $useAction = $rule->applicable_location_to === 'source'
+        ? $rule->source_action
+        : $rule->destination_action;
+
+        $sourceType = DB::table('inventory_source_destination_type')->where('id', $rule->source_location_type)->value('name');
+        $destinationType = DB::table('inventory_source_destination_type')->where('id', $rule->destination_location_type)->value('name');
 
         // Process each item separately for inventory_balance
         for ($i = 0; $i < $itemCount; $i++) {
@@ -9225,46 +9454,242 @@ class InventoryController extends Controller
             $brandId = $validated['id_brand'][$i];
             $batchNo = $validated['id_batch'][$i];
             $qty = (int)$validated['id_qty'][$i];
-            $expTs = Carbon::createFromFormat('Y-m-d', $validated['id_expiry'][$i])->timestamp;
+            // $expTs = Carbon::createFromFormat('Y-m-d', $validated['id_expiry'][$i])->timestamp;
+            if (! $genId || ! $brandId || ! $batchNo) {
+                continue;
+            }
 
-            // Get previous balances
+            //  --- Calculate org and site balances ---
             $prevOrgRow = InventoryBalance::where('generic_id', $genId)
-                ->where('brand_id', $brandId)
-                ->where('batch_no', $batchNo)
-                ->where('org_id', $validated['id_org'])
+                ->where('brand_id',  $brandId)
+                ->where('batch_no',  $batchNo)
+                ->where('org_id',    $validated['id_org'])
                 ->orderBy('id', 'desc')
                 ->first();
-            $prevOrgBalance = $prevOrgRow ? $prevOrgRow->org_balance : 0;
+            $prevOrgBalance = $prevOrgRow->org_balance ?? 0;
 
             $prevSiteRow = InventoryBalance::where('generic_id', $genId)
-                ->where('brand_id', $brandId)
-                ->where('batch_no', $batchNo)
-                ->where('org_id', $validated['id_org'])
-                ->where('site_id', $validated['id_site'])
+                ->where('brand_id',  $brandId)
+                ->where('batch_no',  $batchNo)
+                ->where('org_id',    $validated['id_org'])
+                ->where('site_id',   $validated['id_site'])
                 ->orderBy('id', 'desc')
                 ->first();
-            $prevSiteBalance = $prevSiteRow ? $prevSiteRow->site_balance : 0;
+            $prevSiteBalance = $prevSiteRow->site_balance ?? 0;
 
-            $newOrgBalance = $prevOrgBalance - $qty;
-            $newSiteBalance = $prevSiteBalance - $qty;
-
-            $dateTime = Carbon::createFromTimestamp(now()->timestamp)->format('d-M-Y H:i');
+            switch ($useAction) {
+                case 'a':  // add
+                    $newOrgBalance  = $prevOrgBalance  + $qty;
+                    $newSiteBalance = $prevSiteBalance + $qty;
+                    break;
+                case 's':  // subtract
+                case 'r':  // reverse (treat like subtract)
+                    $newOrgBalance  = $prevOrgBalance  - $qty;
+                    $newSiteBalance = $prevSiteBalance - $qty;
+                    break;
+                default:   // 'n' or no‐op
+                    $newOrgBalance  = $prevOrgBalance;
+                    $newSiteBalance = $prevSiteBalance;
+            }
+              $dateTime = Carbon::createFromTimestamp(now()->timestamp)->format('d-M-Y H:i');
             $remarkText = "Issue & Dispense Transaction by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSiteBalance}";
 
+            if (strtolower($sourceType) === 'inventory location' && $validated['id_source'] && strtolower($destinationType) === 'inventory location' && $validated['id_destination']) {
+                // Source location row
+                $prevSourceLocRow = InventoryBalance::where('generic_id', $genId)
+                    ->where('brand_id',  $brandId)
+                    ->where('batch_no',  $batchNo)
+                    ->where('org_id',    $validated['id_org'])
+                    ->where('site_id',   $validated['id_site'])
+                    ->where('location_id', $validated['id_source'])
+                    ->orderBy('id', 'desc')
+                    ->first();
+                $prevSourceLocBalance = $prevSourceLocRow->location_balance ?? 0;
+
+                if ($rule->source_action === 'a') {
+                    $newSourceLocBalance = $prevSourceLocBalance + $qty;
+                } elseif ($rule->source_action === 's' || $rule->source_action === 'r') {
+                    $newSourceLocBalance = $prevSourceLocBalance - $qty;
+                } else {
+                    $newSourceLocBalance = $prevSourceLocBalance;
+                }
+
+                InventoryBalance::create([
+                    'management_id'    => $inventory->id,
+                    'generic_id'       => $genId,
+                    'brand_id'         => $brandId,
+                    'batch_no'         => $batchNo,
+                    'org_id'           => $validated['id_org'],
+                    'site_id'          => $validated['id_site'],
+                    'org_balance'      => $newOrgBalance,
+                    'site_balance'     => $newSiteBalance,
+                    'location_id'      => $validated['id_source'],
+                    'location_balance' => $newSourceLocBalance,
+                    'remarks'          => "Source Location Update | " . $remarkText,
+                    'timestamp'        => now()->timestamp,
+                ]);
+
+                // Destination location row
+                $prevDestLocRow = InventoryBalance::where('generic_id', $genId)
+                    ->where('brand_id',  $brandId)
+                    ->where('batch_no',  $batchNo)
+                    ->where('org_id',    $validated['id_org'])
+                    ->where('site_id',   $validated['id_site'])
+                    ->where('location_id', $validated['id_destination'])
+                    ->orderBy('id', 'desc')
+                    ->first();
+                $prevDestLocBalance = $prevDestLocRow->location_balance ?? 0;
+
+                if ($rule->destination_action === 'a') {
+                    $newDestLocBalance = $prevDestLocBalance + $qty;
+                } elseif ($rule->destination_action === 's' || $rule->destination_action === 'r') {
+                    $newDestLocBalance = $prevDestLocBalance - $qty;
+                } else {
+                    $newDestLocBalance = $prevDestLocBalance;
+                }
+
+                InventoryBalance::create([
+                    'management_id'    => $inventory->id,
+                    'generic_id'       => $genId,
+                    'brand_id'         => $brandId,
+                    'batch_no'         => $batchNo,
+                    'org_id'           => $validated['id_org'],
+                    'site_id'          => $validated['id_site'],
+                    'org_balance'      => $newOrgBalance,
+                    'site_balance'     => $newSiteBalance,
+                    'location_id'      => $validated['id_destination'],
+                    'location_balance' => $newDestLocBalance,
+                    'remarks'          => "Destination Location Update | " . $remarkText,
+                    'timestamp'        => now()->timestamp,
+                ]);
+            }
+            // --- Only source is a location ---
+            elseif (strtolower($sourceType) === 'inventory location' && $validated['id_source']) {
+                $prevLocRow = InventoryBalance::where('generic_id', $genId)
+                    ->where('brand_id',  $brandId)
+                    ->where('batch_no',  $batchNo)
+                    ->where('org_id',    $validated['id_org'])
+                    ->where('site_id',   $validated['id_site'])
+                    ->where('location_id', $validated['id_source'])
+                    ->orderBy('id', 'desc')
+                    ->first();
+                $prevLocBalance = $prevLocRow->location_balance ?? 0;
+
+                if ($rule->source_action === 'a') {
+                    $newLocBalance = $prevLocBalance + $qty;
+                } elseif ($rule->source_action === 's' || $rule->source_action === 'r') {
+                    $newLocBalance = $prevLocBalance - $qty;
+                } else {
+                    $newLocBalance = $prevLocBalance;
+                }
+
+                InventoryBalance::create([
+                    'management_id'    => $inventory->id,
+                    'generic_id'       => $genId,
+                    'brand_id'         => $brandId,
+                    'batch_no'         => $batchNo,
+                    'org_id'           => $validated['id_org'],
+                    'site_id'          => $validated['id_site'],
+                    'org_balance'      => $newOrgBalance,
+                    'site_balance'     => $newSiteBalance,
+                    'location_id'      => $Source,
+                    'location_balance' => $newLocBalance,
+                    'remarks'          => "Source Location Update | " . $remarkText,
+                    'timestamp'        => now()->timestamp,
+                ]);
+            }
+            // --- Only destination is a location ---
+            elseif (strtolower($destinationType) === 'inventory location' && $validated['id_destination']) {
+
+                $prevLocRow = InventoryBalance::where('generic_id', $genId)
+                    ->where('brand_id',  $brandId)
+                    ->where('batch_no',  $batchNo)
+                    ->where('org_id',    $validated['id_org'])
+                    ->where('site_id',   $validated['id_site'])
+                    ->where('location_id', $validated['id_destination'])
+                    ->orderBy('id', 'desc')
+                    ->first();
+                $prevLocBalance = $prevLocRow->location_balance ?? 0;
+
+                if ($rule->destination_action === 'a') {
+                    $newLocBalance = $prevLocBalance + $qty;
+                } elseif ($rule->destination_action === 's' || $rule->destination_action === 'r') {
+                    $newLocBalance = $prevLocBalance - $qty;
+                } else {
+                    $newLocBalance = $prevLocBalance;
+                }
+                // dd($newLocBalance, $Destination)
+                InventoryBalance::create([
+                    'management_id'    => $inventory->id,
+                    'generic_id'       => $genId,
+                    'brand_id'         => $brandId,
+                    'batch_no'         => $batchNo,
+                    'org_id'           => $validated['id_org'],
+                    'site_id'          => $validated['id_site'],
+                    'org_balance'      => $newOrgBalance,
+                    'site_balance'     => $newSiteBalance,
+                    'location_id'      => $$validated['id_destination'],
+                    'location_balance' => $newLocBalance,
+                    'remarks'          => "Destination Location Update | " . $remarkText,
+                    'timestamp'        => now()->timestamp,
+                ]);
+            }
+            // --- Neither is a location: just org/site balances, location fields null ---
+            else {
+                InventoryBalance::create([
+                    'management_id'    => $inventory->id,
+                    'generic_id'       => $genId,
+                    'brand_id'         => $brandId,
+                    'batch_no'         => $batchNo,
+                    'org_id'           => $validated['id_org'],
+                    'site_id'          => $validated['id_site'],
+                    'org_balance'      => $newOrgBalance,
+                    'site_balance'     => $newSiteBalance,
+                    'location_id'      => null,
+                    'location_balance' => null,
+                    'remarks'          => $remarkText,
+                    'timestamp'        => now()->timestamp,
+                ]);
+            }
+
+            // Get previous balances
+            // $prevOrgRow = InventoryBalance::where('generic_id', $genId)
+            //     ->where('brand_id', $brandId)
+            //     ->where('batch_no', $batchNo)
+            //     ->where('org_id', $validated['id_org'])
+            //     ->orderBy('id', 'desc')
+            //     ->first();
+            // $prevOrgBalance = $prevOrgRow ? $prevOrgRow->org_balance : 0;
+
+            // $prevSiteRow = InventoryBalance::where('generic_id', $genId)
+            //     ->where('brand_id', $brandId)
+            //     ->where('batch_no', $batchNo)
+            //     ->where('org_id', $validated['id_org'])
+            //     ->where('site_id', $validated['id_site'])
+            //     ->orderBy('id', 'desc')
+            //     ->first();
+            // $prevSiteBalance = $prevSiteRow ? $prevSiteRow->site_balance : 0;
+
+            // $newOrgBalance = $prevOrgBalance - $qty;
+            // $newSiteBalance = $prevSiteBalance - $qty;
+
+            // $dateTime = Carbon::createFromTimestamp(now()->timestamp)->format('d-M-Y H:i');
+            // $remarkText = "Issue & Dispense Transaction by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSiteBalance}";
+
             // Create inventory balance record
-            InventoryBalance::create([
-                'management_id' => $inventory->id,
-                'generic_id' => $genId,
-                'brand_id' => $brandId,
-                'batch_no' => $batchNo,
-                'expiry_date' => $expTs,
-                'org_id' => $validated['id_org'],
-                'site_id' => $validated['id_site'],
-                'org_balance' => $newOrgBalance,
-                'site_balance' => $newSiteBalance,
-                'remarks' => $remarkText,
-                'timestamp' => now()->timestamp,
-            ]);
+            // InventoryBalance::create([
+            //     'management_id' => $inventory->id,
+            //     'generic_id' => $genId,
+            //     'brand_id' => $brandId,
+            //     'batch_no' => $batchNo,
+            //     // 'expiry_date' => $expTs,
+            //     'org_id' => $validated['id_org'],
+            //     'site_id' => $validated['id_site'],
+            //     'org_balance' => $newOrgBalance,
+            //     'site_balance' => $newSiteBalance,
+            //     'remarks' => $remarkText,
+            //     'timestamp' => now()->timestamp,
+            // ]);
         }
 
         if ($success) {

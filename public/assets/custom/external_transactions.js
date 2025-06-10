@@ -1,6 +1,7 @@
 $(document).ready(function() {
     //Open External Transaction Modal
     $(document).on('click', '.add-externaltransactions', function() {
+        // $('.text-danger').show();
         $('.duplicate:not(:first)').remove();
         $('.duplicate').each(function(){
             $(this).find('input[type="text"], input[type="number"], textarea').val('');

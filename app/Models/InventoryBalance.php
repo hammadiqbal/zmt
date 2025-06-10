@@ -19,6 +19,8 @@ class InventoryBalance extends Model
         'batch_no',
         'org_balance',
         'site_balance',
+        'location_id',
+        'location_balance',
         'remarks',
         'timestamp',
     ];
