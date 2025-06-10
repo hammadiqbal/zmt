@@ -34,7 +34,7 @@ second go demandqty must change like 5 - 3 = 2 and on second go user can issue o
 
 ...........................................................................
 changing before going to live server
-create 2 columns in inventory_balance table source_balance and destination_balance
+create 2 columns in inventory_balance table location_id and and location_balance
 ............................................................................
 when mutiple time ajax run error change the .change function with like this   
  $(siteSelector).off('change.siteLookup').on('change.siteLookup', function(){
