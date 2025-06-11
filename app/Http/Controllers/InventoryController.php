@@ -7688,6 +7688,14 @@ class InventoryController extends Controller
                 ->first();
             $prevSiteBalance = $prevSiteRow->site_balance ?? 0;
 
+            if (in_array($useAction, ['s', 'r'])) {
+                if ($qty > $prevSiteBalance) {
+                    return response()->json([
+                        'info' => "Transaction failed: Available balance is $prevSiteBalance"
+                    ]);
+                }
+            }
+
             switch ($useAction) {
                 case 'a':  // add
                     $newOrgBalance  = $prevOrgBalance  + $qty;
@@ -7704,8 +7712,6 @@ class InventoryController extends Controller
             }
             $dateTime   = Carbon::createFromTimestamp($timestampNow)->format('d-M-Y H:i');
             $remarkText = "Transaction by {$session->name} on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSiteBalance}";
-        
-            // 
 
             // --- Both source and destination are locations ---
             if (strtolower($sourceType) === 'inventory location' && $Source && strtolower($destinationType) === 'inventory location' && $Destination) {
@@ -7911,7 +7917,6 @@ class InventoryController extends Controller
         ->leftJoin('inventory_brand', 'inventory_brand.id', '=', 'inventory_management.brand_id')
         ->where('inventory_transaction_activity.name', 'external transaction') 
         ->orderBy('inventory_management.id', 'desc');
-        // ->get();
 
         // 3) Filter by user's org if needed
         $session = auth()->user();
@@ -7919,6 +7924,7 @@ class InventoryController extends Controller
         if ($sessionOrg != '0') {
             $ExternalTransactions->where('inventory_management.org_id', '=', $sessionOrg);
         }
+        //  $ExternalTransactions->get();
 
         // 4) Return DataTables
         // return DataTables::of($ExternalTransactions)
@@ -7932,8 +7938,8 @@ class InventoryController extends Controller
                         ->orWhere('org_site.name','like', "%{$search}%")
                         ->orWhere('inventory_management.transaction_qty','like', "%{$search}%")
                         ->orWhere('inventory_management.batch_no','like', "%{$search}%")
-                        ->orWhere('inventory_generic.name','like', "%{$search}%")
-                        ->orWhere('inventory_brand.name','like', "%{$search}%")
+                        ->orWhereRaw("FIND_IN_SET((SELECT id FROM inventory_generic WHERE name LIKE ? LIMIT 1), inventory_management.inv_generic_id)", ["%{$search}%"])
+                        ->orWhereRaw("FIND_IN_SET((SELECT id FROM inventory_brand WHERE name LIKE ? LIMIT 1), inventory_management.brand_id)", ["%{$search}%"])
                         ->orWhere('inventory_management.ref_document_no','like', "%{$search}%")
                         ->orWhere('inventory_management.remarks','like', "%{$search}%");
                     });
@@ -8070,13 +8076,38 @@ class InventoryController extends Controller
                     $balRow = InventoryBalance::where('generic_id', $genericId)
                     ->where('brand_id',   $brandId)
                     ->where('batch_no',   $batchNo)
+                    ->where('org_id', $row->org_id)
+                    ->where('site_id', $row->site_id)
                     ->orderBy('id', 'desc')
                     ->first();
 
                     $orgBal  = $balRow->org_balance  ?? 0;
                     $siteBal = $balRow->site_balance ?? 0;
-                    $title   = "Org Balance: {$orgBal}\nSite Balance: {$siteBal}";
 
+                    $locationBalances = InventoryBalance::where('generic_id', $genericId)
+                    ->where('brand_id', $brandId)
+                    ->where('batch_no', $batchNo)
+                    ->where('org_id', $row->org_id)
+                    ->where('site_id', $row->site_id)
+                    ->whereNotNull('location_id')
+                    ->orderBy('id', 'desc') // ensures latest comes first
+                    ->get()
+                    ->groupBy('location_id')
+                    ->filter(function ($records) {
+                        // only keep the group if the most recent record has balance > 0
+                        $latest = $records->first();
+                        return $latest && $latest->location_balance > 0;
+                    })
+                    ->map(function ($records, $locId) {
+                        $latest = $records->first();
+                        $locName = DB::table('service_location')->where('id', $locId)->value('name') ?? 'Unknown';
+                        return $locName . ': ' . ($latest->location_balance ?? 0);
+                    })
+                    ->values()
+                    ->toArray();
+
+              
+                    $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
 
                     $formattedExpiry = is_numeric($expiry)
                         ? \Carbon\Carbon::createFromTimestamp($expiry)->format('d-M-Y')
@@ -8092,7 +8123,7 @@ class InventoryController extends Controller
                     $sno = $i + 1;
                     $bg  = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
 
-                    $html .= '<tr class="balance-row" data-org-balance="'.$orgBal.'" data-site-balance="'.$siteBal.'" style="background-color:'.$bg.';cursor:pointer;">'
+                    $html .= '<tr class="balance-row" data-org-balance="'.$orgBal.'" data-site-balance="'.$siteBal.'" data-loc-balance="'.$locationJson.'" style="background-color:'.$bg.';cursor:pointer;">'
                         . '<td style="padding:8px;border:1px solid #ccc;">'.$sno.'</td>'
                         . '<td style="padding:8px;border:1px solid #ccc;">'.$genericName.'</td>'
                         . '<td style="padding:8px;border:1px solid #ccc;">'.$brandName.'</td>'
@@ -8375,7 +8406,7 @@ class InventoryController extends Controller
                         $isResponded = array_key_exists($currentGenericId, $respondedEntries);
 
 
-                        $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A'];
+                        $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A', 'locBalance' => 'N/A'];
 
                         if ($isDirectEntry) {
                             $balanceInfo = DB::table('inventory_management')
@@ -8401,9 +8432,34 @@ class InventoryController extends Controller
                                     ->orderBy('id', 'desc')
                                     ->value('site_balance') ?? 'N/A';
 
+                                $locationBalances = InventoryBalance::where('generic_id', $currentGenericId)
+                                    ->where('brand_id', $balanceInfo->brand_id)
+                                    ->where('batch_no', $balanceInfo->batch_no)
+                                    ->where('org_id', $row->org_id)
+                                    ->where('site_id', $row->site_id)
+                                    ->whereNotNull('location_id')
+                                    ->orderBy('id', 'desc') // ensures latest comes first
+                                    ->get()
+                                    ->groupBy('location_id')
+                                    ->filter(function ($records) {
+                                        // only keep the group if the most recent record has balance > 0
+                                        $latest = $records->first();
+                                        return $latest && $latest->location_balance > 0;
+                                    })
+                                    ->map(function ($records, $locId) {
+                                        $latest = $records->first();
+                                        $locName = DB::table('service_location')->where('id', $locId)->value('name') ?? 'Unknown';
+                                        return $locName . ': ' . ($latest->location_balance ?? 0);
+                                    })
+                                    ->values()
+                                    ->toArray();
+                        
+                                $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
+
                                 $balances = [
                                     'orgBalance' => $orgBalance,
-                                    'siteBalance' => $siteBalance
+                                    'siteBalance' => $siteBalance,
+                                    'locBalance' => $locationJson
                                 ];
                             }
                         } else if (!empty($row->referenceNumber) && $isResponded) {
@@ -8431,9 +8487,35 @@ class InventoryController extends Controller
                                     ->orderBy('id', 'desc')
                                     ->value('site_balance') ?? 'N/A';
 
+                                $locationBalances = InventoryBalance::where('generic_id', $currentGenericId)
+                                    ->where('brand_id', $respondedEntry->brand_id)
+                                    ->where('batch_no', $respondedEntry->batch_no)
+                                    ->where('org_id', $row->org_id)
+                                    ->where('site_id', $row->site_id)
+                                    ->whereNotNull('location_id')
+                                    ->orderBy('id', 'desc') // ensures latest comes first
+                                    ->get()
+                                    ->groupBy('location_id')
+                                    ->filter(function ($records) {
+                                        // only keep the group if the most recent record has balance > 0
+                                        $latest = $records->first();
+                                        return $latest && $latest->location_balance > 0;
+                                    })
+                                    ->map(function ($records, $locId) {
+                                        $latest = $records->first();
+                                        $locName = DB::table('service_location')->where('id', $locId)->value('name') ?? 'Unknown';
+                                        return $locName . ': ' . ($latest->location_balance ?? 0);
+                                    })
+                                    ->values()
+                                    ->toArray();
+                        
+                                $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
+
                                 $balances = [
                                     'orgBalance' => $orgBalance,
-                                    'siteBalance' => $siteBalance
+                                    'siteBalance' => $siteBalance,
+                                    'locBalance' => $locationJson
+
                                 ];
                             }
                         }
@@ -8489,7 +8571,7 @@ class InventoryController extends Controller
                         $orgBal = 'N/A';
                         $siteBal = 'N/A';
                 
-                        $tableRows .= '<tr style="background-color:'.$bg.';" class="balance-row" data-org-balance="'.$balances['orgBalance'].'" data-site-balance="'.$balances['siteBalance'].'">'
+                        $tableRows .= '<tr style="background-color:'.$bg.';" class="balance-row" data-loc-balance="'.$balances['locBalance'].'" data-org-balance="'.$balances['orgBalance'].'" data-site-balance="'.$balances['siteBalance'].'">'
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$currentGenericId] ?? 'N/A').'</td>'
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($dose[$i] ?? 'N/A').'</td>'
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($routes[$routeIds[$i]] ?? 'N/A').'</td>'
@@ -8623,7 +8705,8 @@ class InventoryController extends Controller
                         //     ];
                         // }
 
-                        $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A'];
+                        // $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A'];
+                        $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A', 'locBalance' => 'N/A'];
 
                         if ($isDirectEntry) {
                             $balanceInfo = DB::table('inventory_management')
@@ -8649,9 +8732,35 @@ class InventoryController extends Controller
                                     ->orderBy('id', 'desc')
                                     ->value('site_balance') ?? 'N/A';
 
+                                $locationBalances = InventoryBalance::where('generic_id', $currentGenericId)
+                                    ->where('brand_id', $balanceInfo->brand_id)
+                                    ->where('batch_no', $balanceInfo->batch_no)
+                                    ->where('org_id', $row->org_id)
+                                    ->where('site_id', $row->site_id)
+                                    ->whereNotNull('location_id')
+                                    ->orderBy('id', 'desc') // ensures latest comes first
+                                    ->get()
+                                    ->groupBy('location_id')
+                                    ->filter(function ($records) {
+                                        // only keep the group if the most recent record has balance > 0
+                                        $latest = $records->first();
+                                        return $latest && $latest->location_balance > 0;
+                                    })
+                                    ->map(function ($records, $locId) {
+                                        $latest = $records->first();
+                                        $locName = DB::table('service_location')->where('id', $locId)->value('name') ?? 'Unknown';
+                                        return $locName . ': ' . ($latest->location_balance ?? 0);
+                                    })
+                                    ->values()
+                                    ->toArray();
+                        
+                                $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
+
                                 $balances = [
                                     'orgBalance' => $orgBalance,
-                                    'siteBalance' => $siteBalance
+                                    'siteBalance' => $siteBalance,
+                                    'locBalance' => $locationJson
+
                                 ];
                             }
                         } else if (!empty($row->referenceNumber) && $respondedQtys) {
@@ -8679,9 +8788,35 @@ class InventoryController extends Controller
                                     ->orderBy('id', 'desc')
                                     ->value('site_balance') ?? 'N/A';
 
+                                $locationBalances = InventoryBalance::where('generic_id', $currentGenericId)
+                                    ->where('brand_id', $respondedEntry->brand_id)
+                                    ->where('batch_no', $respondedEntry->batch_no)
+                                    ->where('org_id', $row->org_id)
+                                    ->where('site_id', $row->site_id)
+                                    ->whereNotNull('location_id')
+                                    ->orderBy('id', 'desc') // ensures latest comes first
+                                    ->get()
+                                    ->groupBy('location_id')
+                                    ->filter(function ($records) {
+                                        // only keep the group if the most recent record has balance > 0
+                                        $latest = $records->first();
+                                        return $latest && $latest->location_balance > 0;
+                                    })
+                                    ->map(function ($records, $locId) {
+                                        $latest = $records->first();
+                                        $locName = DB::table('service_location')->where('id', $locId)->value('name') ?? 'Unknown';
+                                        return $locName . ': ' . ($latest->location_balance ?? 0);
+                                    })
+                                    ->values()
+                                    ->toArray();
+                        
+                                $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
+
                                 $balances = [
                                     'orgBalance' => $orgBalance,
-                                    'siteBalance' => $siteBalance
+                                    'siteBalance' => $siteBalance,
+                                    'locBalance' => $locationJson
+
                                 ];
                             }
                         }
@@ -8714,7 +8849,7 @@ class InventoryController extends Controller
                             $actionBtn = 'N/A';
                         }
                 
-                        $tableRows .= '<tr style="background-color:'.$bg.';" class="balance-row" data-org-balance="'.$balances['orgBalance'].'" data-site-balance="'.$balances['siteBalance'].'">'
+                        $tableRows .= '<tr style="background-color:'.$bg.';" class="balance-row" data-loc-balance="'.$balances['locBalance'].'" data-org-balance="'.$balances['orgBalance'].'" data-site-balance="'.$balances['siteBalance'].'">'
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$currentGenericId] ?? 'N/A').'</td>'
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($demandQty[$i] ?? 'N/A').'</td>';
                         
@@ -9425,17 +9560,6 @@ class InventoryController extends Controller
         $inventory->timestamp = now()->timestamp;
         $inventory->last_updated = now()->timestamp;
 
-        if (!$inventory->save()) {
-            $success = false;
-            $message = 'Failed to save inventory record';
-        }
-
-        // Get transaction type rule for balance calculation
-        // $rule = DB::table('inventory_transaction_type')
-        //     ->select('applicable_location_to', 'source_action', 'destination_action')
-        //     ->where('id', $validated['id_transactiontype'])
-        //     ->first();
-
         $rule = DB::table('inventory_transaction_type')
         ->select('applicable_location_to', 'source_action', 'destination_action', 'source_location_type', 'destination_location_type')
         ->where('id', $validated['id_transactiontype'])
@@ -9448,18 +9572,75 @@ class InventoryController extends Controller
         $sourceType = DB::table('inventory_source_destination_type')->where('id', $rule->source_location_type)->value('name');
         $destinationType = DB::table('inventory_source_destination_type')->where('id', $rule->destination_location_type)->value('name');
 
+
+        foreach ($validated['id_generic'] as $i => $genId) {
+            $brandId = $validated['id_brand'][$i];
+            $batchNo = $validated['id_batch'][$i];
+            $qty = (int) $validated['id_qty'][$i];
+            // dd($sourceType, $validated['id_source'], $validated['id_org'], $validated['id_site'], $genId, $brandId, $batchNo, $qty);
+            if (strtolower($sourceType) === 'inventory location' && $validated['id_source'] && in_array($rule->source_action, ['s', 'r'])) {
+                $sourceLocBalance = InventoryBalance::where('generic_id', $genId)
+                    ->where('brand_id', $brandId)
+                    ->where('batch_no', $batchNo)
+                    ->where('org_id', $validated['id_org'])
+                    ->where('site_id', $validated['id_site'])
+                    ->where('location_id', $validated['id_source'])
+                    ->orderBy('id', 'desc')
+                    ->value('location_balance') ?? 0;
+
+                if ($qty > $sourceLocBalance) {
+                    return response()->json([
+                        'info' => "Insufficient source location balance. Available: $sourceLocBalance, Requested: $qty"
+                    ]);
+                }
+            }
+
+            if (strtolower($destinationType) === 'inventory location' && $validated['id_destination'] && in_array($rule->destination_action, ['s', 'r'])) {
+                $destinationLocBalance = InventoryBalance::where('generic_id', $genId)
+                    ->where('brand_id', $brandId)
+                    ->where('batch_no', $batchNo)
+                    ->where('org_id', $validated['id_org'])
+                    ->where('site_id', $validated['id_site'])
+                    ->where('location_id', $validated['id_destination'])
+                    ->orderBy('id', 'desc')
+                    ->value('location_balance') ?? 0;
+
+                if ($qty > $destinationLocBalance) {
+                    return response()->json([
+                        'info' => "Insufficient destination location balance. Available: $destinationLocBalance, Requested: $qty"
+                    ]);
+                }
+            }
+
+           
+        }
+
+        if (!$inventory->save()) {
+            $success = false;
+            $message = 'Failed to save inventory record';
+        }
+
+        // Get transaction type rule for balance calculation
+        // $rule = DB::table('inventory_transaction_type')
+        //     ->select('applicable_location_to', 'source_action', 'destination_action')
+        //     ->where('id', $validated['id_transactiontype'])
+        //     ->first();
+
+
         // Process each item separately for inventory_balance
         for ($i = 0; $i < $itemCount; $i++) {
             $genId = $validated['id_generic'][$i];
             $brandId = $validated['id_brand'][$i];
             $batchNo = $validated['id_batch'][$i];
             $qty = (int)$validated['id_qty'][$i];
+            
             // $expTs = Carbon::createFromFormat('Y-m-d', $validated['id_expiry'][$i])->timestamp;
             if (! $genId || ! $brandId || ! $batchNo) {
                 continue;
             }
 
-            //  --- Calculate org and site balances ---
+
+
             $prevOrgRow = InventoryBalance::where('generic_id', $genId)
                 ->where('brand_id',  $brandId)
                 ->where('batch_no',  $batchNo)
@@ -9477,6 +9658,7 @@ class InventoryController extends Controller
                 ->first();
             $prevSiteBalance = $prevSiteRow->site_balance ?? 0;
 
+
             switch ($useAction) {
                 case 'a':  // add
                     $newOrgBalance  = $prevOrgBalance  + $qty;
@@ -9491,7 +9673,7 @@ class InventoryController extends Controller
                     $newOrgBalance  = $prevOrgBalance;
                     $newSiteBalance = $prevSiteBalance;
             }
-              $dateTime = Carbon::createFromTimestamp(now()->timestamp)->format('d-M-Y H:i');
+            $dateTime = Carbon::createFromTimestamp(now()->timestamp)->format('d-M-Y H:i');
             $remarkText = "Issue & Dispense Transaction by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSiteBalance}";
 
             if (strtolower($sourceType) === 'inventory location' && $validated['id_source'] && strtolower($destinationType) === 'inventory location' && $validated['id_destination']) {
@@ -9505,6 +9687,12 @@ class InventoryController extends Controller
                     ->orderBy('id', 'desc')
                     ->first();
                 $prevSourceLocBalance = $prevSourceLocRow->location_balance ?? 0;
+
+                // if (in_array($rule->source_action, ['s', 'r']) && $qty > $prevSourceLocBalance) {
+                //     return response()->json([
+                //         'info' => "Insufficient source location balance. Available: $prevSourceLocBalance, Requested: $qty"
+                //     ]);
+                // }
 
                 if ($rule->source_action === 'a') {
                     $newSourceLocBalance = $prevSourceLocBalance + $qty;
@@ -9525,7 +9713,7 @@ class InventoryController extends Controller
                     'site_balance'     => $newSiteBalance,
                     'location_id'      => $validated['id_source'],
                     'location_balance' => $newSourceLocBalance,
-                    'remarks'          => "Source Location Update | " . $remarkText,
+                    'remarks'          => $remarkText,
                     'timestamp'        => now()->timestamp,
                 ]);
 
@@ -9539,6 +9727,12 @@ class InventoryController extends Controller
                     ->orderBy('id', 'desc')
                     ->first();
                 $prevDestLocBalance = $prevDestLocRow->location_balance ?? 0;
+
+                // if (in_array($rule->destination_action, ['s', 'r']) && $qty > $prevDestLocBalance) {
+                //     return response()->json([
+                //         'info' => "Insufficient destination location balance. Available: $prevDestLocBalance, Requested: $qty"
+                //     ]);
+                // }
 
                 if ($rule->destination_action === 'a') {
                     $newDestLocBalance = $prevDestLocBalance + $qty;
@@ -9559,11 +9753,10 @@ class InventoryController extends Controller
                     'site_balance'     => $newSiteBalance,
                     'location_id'      => $validated['id_destination'],
                     'location_balance' => $newDestLocBalance,
-                    'remarks'          => "Destination Location Update | " . $remarkText,
+                    'remarks'          => $remarkText,
                     'timestamp'        => now()->timestamp,
                 ]);
             }
-            // --- Only source is a location ---
             elseif (strtolower($sourceType) === 'inventory location' && $validated['id_source']) {
                 $prevLocRow = InventoryBalance::where('generic_id', $genId)
                     ->where('brand_id',  $brandId)
@@ -9574,6 +9767,12 @@ class InventoryController extends Controller
                     ->orderBy('id', 'desc')
                     ->first();
                 $prevLocBalance = $prevLocRow->location_balance ?? 0;
+
+                // if (in_array($rule->source_action, ['s', 'r']) && $qty > $prevLocBalance) {
+                //     return response()->json([
+                //         'info' => "Insufficient source location balance. Available: $prevLocBalance, Requested: $qty"
+                //     ]);
+                // }
 
                 if ($rule->source_action === 'a') {
                     $newLocBalance = $prevLocBalance + $qty;
@@ -9592,13 +9791,12 @@ class InventoryController extends Controller
                     'site_id'          => $validated['id_site'],
                     'org_balance'      => $newOrgBalance,
                     'site_balance'     => $newSiteBalance,
-                    'location_id'      => $Source,
+                    'location_id'      => $validated['id_source'],
                     'location_balance' => $newLocBalance,
-                    'remarks'          => "Source Location Update | " . $remarkText,
+                    'remarks'          => $remarkText,
                     'timestamp'        => now()->timestamp,
                 ]);
             }
-            // --- Only destination is a location ---
             elseif (strtolower($destinationType) === 'inventory location' && $validated['id_destination']) {
 
                 $prevLocRow = InventoryBalance::where('generic_id', $genId)
@@ -9611,6 +9809,12 @@ class InventoryController extends Controller
                     ->first();
                 $prevLocBalance = $prevLocRow->location_balance ?? 0;
 
+                // if (in_array($rule->destination_action, ['s', 'r']) && $qty > $prevLocBalance) {
+                //     return response()->json([
+                //         'info' => "Insufficient destination location balance. Available: $prevLocBalance, Requested: $qty"
+                //     ]);
+                // }
+
                 if ($rule->destination_action === 'a') {
                     $newLocBalance = $prevLocBalance + $qty;
                 } elseif ($rule->destination_action === 's' || $rule->destination_action === 'r') {
@@ -9618,6 +9822,7 @@ class InventoryController extends Controller
                 } else {
                     $newLocBalance = $prevLocBalance;
                 }
+               
                 // dd($newLocBalance, $Destination)
                 InventoryBalance::create([
                     'management_id'    => $inventory->id,
@@ -9628,13 +9833,12 @@ class InventoryController extends Controller
                     'site_id'          => $validated['id_site'],
                     'org_balance'      => $newOrgBalance,
                     'site_balance'     => $newSiteBalance,
-                    'location_id'      => $$validated['id_destination'],
+                    'location_id'      => $validated['id_destination'],
                     'location_balance' => $newLocBalance,
-                    'remarks'          => "Destination Location Update | " . $remarkText,
+                    'remarks'          => $remarkText,
                     'timestamp'        => now()->timestamp,
                 ]);
             }
-            // --- Neither is a location: just org/site balances, location fields null ---
             else {
                 InventoryBalance::create([
                     'management_id'    => $inventory->id,

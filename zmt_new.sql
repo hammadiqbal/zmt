@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 09, 2025 at 07:42 PM
+-- Generation Time: Jun 11, 2025 at 11:21 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -864,7 +864,7 @@ CREATE TABLE `employee` (
 
 INSERT INTO `employee` (`id`, `name`, `prefix_id`, `guardian_name`, `guardian_relation`, `next_of_kin`, `next_of_kin_relation`, `old_code`, `gender_id`, `language`, `religion`, `marital_status`, `dob`, `org_id`, `site_id`, `cc_id`, `cadre_id`, `position_id`, `week_hrs`, `report_to`, `q_level_id`, `emp_status_id`, `work_status_id`, `leaving_date`, `joinig_date`, `address`, `mailing_address`, `province_id`, `division_id`, `district_id`, `cnic`, `cnic_expiry`, `mobile_no`, `additional_mobile_no`, `landline`, `email`, `image`, `status`, `user_id`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
 (1, 'Test Employee', 4, 'Test Employee One Father', 'Father', 'Test Employee One Next Of Kin', 'Brother', NULL, 2, 'Urdu', 'Islam', 'Married', 962456050, 4, 1, 63, 5, 10, 40, 0, 4, 2, 1, 0, 1719838450, 'Test Employee One Address', 'Test Mailing Address 2', 2, 2, 5, '4222277777779', 1706100850, '03009999999', '', NULL, 'admin@zmtclinics.org', 'Capture001.png', 1, 1, '1020,1159,1161,1162,1326,1391,1455,1660,1690,1982,2256,2718,2719,2720,2721', 1722494700, 1722494916, 1749214450),
-(2, 'Saniya', 4, 'Riaz Godil', 'Father', 'Maryam', 'Mother', NULL, 2, 'English,Urdu', 'Islam', 'Single', 957374900, 4, 1, 1, 1, 26, 48, 1, 4, 1, 1, 0, 1696699700, 'Flat # 1203, Taloo Gold Residency, Gulzar E Hijiri, Scheme 33', 'test mailing address 1', 2, 2, 6, '4210175388264', 1832321692, '03349272400', '', NULL, 'saniya@zmtclinics.org', 'logo (2).png', 1, 6, '1304,1307,1325,1432,1513,1662,1689,2193,2194,2195,2251,2355,2356,2357,2669,2674,2677,2683', 1725256200, 1725256331, 1730309300),
+(2, 'Saniya', 4, 'Riaz Godil', 'Father', 'Maryam', 'Mother', NULL, 2, 'English,Urdu', 'Islam', 'Single', 957374900, 4, 1, 1, 1, 26, 48, 1, 4, 1, 1, 0, 1696699700, 'Flat # 1203, Taloo Gold Residency, Gulzar E Hijiri, Scheme 33', 'test mailing address 1', 2, 2, 6, '4210175388264', 1832321692, '03349272400', '', NULL, 'saniya@zmtclinics.org', 'logo (2).png', 1, 6, '1304,1307,1325,1432,1513,1662,1689,2193,2194,2195,2251,2355,2356,2357,2669,2674,2677,2683,2781,2782,2783,2784,2785', 1725256200, 1725256331, 1730309300),
 (4, 'Test Employee One', 2, 'Test Father One', 'Father', 'Test Next Of Kin', 'Father', NULL, 1, 'Urdu', 'Islam', 'Single', 790374548, 4, 1, 8, 1, 4, 40, 0, 4, 1, 1, 0, 1737664148, 'Test Present Address Test Present Address Test Present Address Test Present Address Test Present Address', 'Test Mailing Address Test Mailing Address Test Mailing Address Test Mailing Address Test Mailing Address', 2, 2, 5, '4220118437422', 1832272148, '5454897987987', '', NULL, 'hammadiqbal.esire@gmail.com', 'fb-events - Copy - Copy (2).PNG', 1, 1, '1981,2641,2642,2643', 1737713160, 1737713692, 1748464148),
 (5, 'Test Employee two', 3, 'test father name', 'Father', 'nxxt of kin', 'Father', '', 2, 'urdu', 'Islam', 'Single', 1465215809, 4, 1, 8, 1, 2, 40, 0, 2, 1, 1, 0, 1749212609, 'test present address test present address test present address test present address test present address', 'test Mailing Address', 2, 2, 3, '4220118637411', 1938515009, '03323405869', NULL, NULL, 'ihammad256@gmail.com', 'Capture001.png', 1, 1, '2717', 1749212220, 1749212609, 1749212609);
 
@@ -983,8 +983,7 @@ CREATE TABLE `emp_inventory_location` (
 
 INSERT INTO `emp_inventory_location` (`id`, `org_id`, `site_id`, `emp_id`, `location_site`, `service_location_id`, `status`, `user_id`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
 (1, 4, '1', 1, '1', '[[\"1\",\"2\"]]', 1, 1, 1728499080, 1728330559, 1729275282),
-(2, 4, '1', 2, '1', '[[\"1\",\"9\",\"10\"]]', 1, 1, 1739786880, 1739786910, 1748887657);
-(2, 4, '1', 2, '1', '[[\"1\",\"9\",\"10\"]]', 1, 1, 1739786880, 1739786910, 1748887657);
+(2, 4, '1', 2, '1', '[[\"1\",\"2\",\"9\",\"10\",\"13\"]]', 1, 1, 1739786880, 1739786910, 1749673589);
 
 -- --------------------------------------------------------
 
@@ -19830,6 +19829,8 @@ CREATE TABLE `inventory_balance` (
   `batch_no` varchar(255) NOT NULL,
   `org_balance` int(11) NOT NULL,
   `site_balance` int(11) NOT NULL,
+  `location_id` int(11) NOT NULL,
+  `location_balance` int(11) NOT NULL,
   `remarks` text DEFAULT NULL,
   `timestamp` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -19838,153 +19839,30 @@ CREATE TABLE `inventory_balance` (
 -- Dumping data for table `inventory_balance`
 --
 
-INSERT INTO `inventory_balance` (`id`, `org_id`, `site_id`, `management_id`, `generic_id`, `brand_id`, `batch_no`, `org_balance`, `site_balance`, `remarks`, `timestamp`) VALUES
-(1, 4, 1, 1, 1, 1, '1111111', 100, 100, 'Transaction by Ashar Alam on 22-May-2025 12:50 | Batch: 1111111 | Qty: 100 | New Org Balance: 100 | New Site Balance: 100', 1747813819),
-(2, 4, 1, 2, 2, 2, '1111112', 100, 100, 'Transaction by Ashar Alam on 22-May-2025 12:50 | Batch: 1111112 | Qty: 100 | New Org Balance: 100 | New Site Balance: 100', 1747813819),
-(3, 4, 1, 3, 3, 3, '1111113', 100, 100, 'Transaction by Ashar Alam on 22-May-2025 12:50 | Batch: 1111113 | Qty: 100 | New Org Balance: 100 | New Site Balance: 100', 1747813819),
-(4, 4, 1, 4, 4, 4, '1111114', 100, 100, 'Transaction by Ashar Alam on 22-May-2025 12:50 | Batch: 1111114 | Qty: 100 | New Org Balance: 100 | New Site Balance: 100', 1747813819),
-(5, 4, 1, 5, 5, 5, '1111115', 100, 100, 'Transaction by Ashar Alam on 22-May-2025 12:50 | Batch: 1111115 | Qty: 100 | New Org Balance: 100 | New Site Balance: 100', 1747813819),
-(6, 4, 1, 6, 6, 6, '1111116', 100, 100, 'Transaction by Ashar Alam on 22-May-2025 12:50 | Batch: 1111116 | Qty: 100 | New Org Balance: 100 | New Site Balance: 100', 1747813819),
-(7, 4, 1, 7, 7, 7, '1111117', 100, 100, 'Transaction by Ashar Alam on 22-May-2025 12:50 | Batch: 1111117 | Qty: 100 | New Org Balance: 100 | New Site Balance: 100', 1747813819),
-(8, 4, 1, 8, 7, 8, '1111118', 100, 100, '', 1747813819),
-(9, 4, 1, 9, 8, 9, '1111119', 100, 100, '', 1747813819),
-(10, 4, 1, 10, 9, 10, '1111120', 100, 100, '', 1747813819),
-(11, 4, 1, 11, 10, 11, '1111121', 100, 100, '', 1747813819),
-(12, 4, 1, 12, 11, 12, '1111122', 100, 100, '', 1747813819),
-(13, 4, 1, 13, 12, 13, '1111123', 100, 100, '', 1747813819),
-(14, 4, 1, 14, 13, 14, '1111124', 100, 100, '', 1747813819),
-(15, 4, 1, 15, 14, 15, '1111125', 100, 100, '', 1747813819),
-(16, 4, 1, 16, 15, 16, '1111126', 100, 100, '', 1747813819),
-(17, 4, 1, 17, 16, 17, '1111127', 100, 100, '', 1747813819),
-(18, 4, 1, 18, 17, 18, '1111128', 100, 100, '', 1747813819),
-(19, 4, 1, 19, 18, 19, '1111129', 100, 100, '', 1747813819),
-(20, 4, 1, 20, 19, 20, '1111130', 100, 100, '', 1747813819),
-(21, 4, 1, 21, 20, 21, '1111131', 100, 100, '', 1747813819),
-(22, 4, 1, 22, 21, 22, '1111132', 100, 100, '', 1747813819),
-(23, 4, 1, 23, 19, 23, '1111133', 100, 100, '', 1747813819),
-(24, 4, 1, 24, 22, 24, '1111134', 100, 100, '', 1747813819),
-(25, 4, 1, 25, 23, 25, '1111135', 100, 100, '', 1747813819),
-(26, 4, 1, 26, 24, 26, '1111136', 100, 100, '', 1747813819),
-(27, 4, 1, 27, 24, 27, '1111137', 100, 100, '', 1747813819),
-(28, 4, 1, 28, 26, 28, '1111138', 100, 100, '', 1747813819),
-(29, 4, 1, 29, 27, 29, '1111139', 100, 100, '', 1747813819),
-(30, 4, 1, 30, 28, 30, '1111140', 100, 100, '', 1747813819),
-(31, 4, 1, 31, 29, 31, '1111141', 100, 100, '', 1747813819),
-(32, 4, 1, 32, 30, 32, '1111142', 100, 100, '', 1747813819),
-(33, 4, 1, 33, 31, 33, '1111143', 100, 100, '', 1747813819),
-(34, 4, 1, 34, 32, 34, '1111144', 100, 100, '', 1747813819),
-(35, 4, 1, 35, 33, 35, '1111145', 100, 100, '', 1747813819),
-(36, 4, 1, 36, 34, 36, '1111146', 100, 100, '', 1747813819),
-(37, 4, 1, 37, 35, 37, '1111147', 100, 100, '', 1747813819),
-(38, 4, 1, 38, 36, 38, '1111148', 100, 100, '', 1747813819),
-(39, 4, 1, 39, 37, 39, '1111149', 100, 100, '', 1747813819),
-(40, 4, 1, 40, 38, 40, '1111150', 100, 100, '', 1747813819),
-(41, 4, 1, 41, 39, 41, '1111151', 100, 100, '', 1747813819),
-(42, 4, 1, 42, 40, 42, '1111152', 100, 100, '', 1747813819),
-(43, 4, 1, 43, 41, 43, '1111153', 100, 100, '', 1747813819),
-(44, 4, 1, 44, 42, 44, '1111154', 100, 100, '', 1747813819),
-(45, 4, 1, 45, 43, 45, '1111155', 100, 100, '', 1747813819),
-(46, 4, 1, 46, 44, 46, '1111156', 100, 100, '', 1747813819),
-(47, 4, 1, 47, 45, 47, '1111157', 100, 100, '', 1747813819),
-(48, 4, 1, 48, 45, 48, '1111158', 100, 100, '', 1747813819),
-(49, 4, 1, 49, 47, 49, '1111159', 100, 100, '', 1747813819),
-(50, 4, 1, 50, 48, 50, '1111160', 100, 100, '', 1747813819),
-(51, 4, 1, 51, 49, 51, '1111161', 100, 100, '', 1747813819),
-(52, 4, 1, 52, 50, 52, '1111162', 100, 100, '', 1747813819),
-(53, 4, 1, 53, 51, 53, '1111163', 100, 100, '', 1747813819),
-(54, 4, 1, 54, 52, 54, '1111164', 100, 100, '', 1747813819),
-(55, 4, 1, 55, 53, 55, '1111165', 100, 100, '', 1747813819),
-(56, 4, 1, 56, 54, 56, '1111166', 100, 100, '', 1747813819),
-(57, 4, 1, 57, 204, 57, '1111167', 100, 100, '', 1747813819),
-(58, 4, 1, 58, 56, 58, '1111168', 100, 100, '', 1747813819),
-(59, 4, 1, 59, 57, 59, '1111169', 100, 100, '', 1747813819),
-(60, 4, 1, 60, 58, 60, '1111170', 100, 100, '', 1747813819),
-(61, 4, 1, 61, 59, 61, '1111171', 100, 100, '', 1747813819),
-(62, 4, 1, 62, 60, 62, '1111172', 100, 100, '', 1747813819),
-(63, 4, 1, 63, 61, 63, '1111173', 100, 100, '', 1747813819),
-(64, 4, 1, 64, 62, 64, '1111174', 100, 100, '', 1747813819),
-(65, 4, 1, 65, 63, 65, '1111175', 100, 100, '', 1747813819),
-(66, 4, 1, 66, 64, 66, '1111176', 100, 100, '', 1747813819),
-(67, 4, 1, 67, 65, 67, '1111177', 100, 100, '', 1747813819),
-(68, 4, 1, 68, 66, 68, '1111178', 100, 100, '', 1747813819),
-(69, 4, 1, 69, 67, 69, '1111179', 100, 100, '', 1747813819),
-(70, 4, 1, 70, 68, 70, '1111180', 100, 100, '', 1747813819),
-(71, 4, 1, 71, 69, 71, '1111181', 100, 100, '', 1747813819),
-(72, 4, 1, 72, 70, 72, '1111182', 100, 100, '', 1747813819),
-(73, 4, 1, 73, 71, 73, '1111183', 100, 100, '', 1747813819),
-(74, 4, 1, 74, 72, 74, '1111184', 100, 100, '', 1747813819),
-(75, 4, 1, 75, 73, 75, '1111185', 100, 100, '', 1747813819),
-(76, 4, 1, 76, 74, 76, '1111186', 100, 100, '', 1747813819),
-(77, 4, 1, 77, 75, 77, '1111187', 100, 100, '', 1747813819),
-(78, 4, 1, 78, 76, 78, '1111188', 100, 100, '', 1747813819),
-(79, 4, 1, 79, 76, 79, '1111189', 100, 100, '', 1747813819),
-(80, 4, 1, 80, 77, 80, '1111190', 100, 100, '', 1747813819),
-(81, 4, 1, 81, 78, 81, '1111191', 100, 100, '', 1747813819),
-(82, 4, 1, 82, 79, 82, '1111192', 100, 100, '', 1747813819),
-(83, 4, 1, 83, 80, 83, '1111193', 100, 100, '', 1747813819),
-(84, 4, 1, 84, 81, 84, '1111194', 100, 100, '', 1747813819),
-(85, 4, 1, 85, 82, 85, '1111195', 100, 100, '', 1747813819),
-(86, 4, 1, 86, 83, 86, '1111196', 100, 100, '', 1747813819),
-(87, 4, 1, 87, 84, 87, '1111197', 100, 100, '', 1747813819),
-(88, 4, 1, 88, 85, 88, '1111198', 100, 100, '', 1747813819),
-(89, 4, 1, 89, 86, 89, '1111199', 100, 100, '', 1747813819),
-(90, 4, 1, 90, 87, 90, '1111200', 100, 100, '', 1747813819),
-(91, 4, 1, 91, 87, 91, '1111201', 100, 100, '', 1747813819),
-(92, 4, 1, 92, 88, 92, '1111202', 100, 100, '', 1747813819),
-(93, 4, 1, 93, 89, 93, '1111203', 100, 100, '', 1747813819),
-(94, 4, 1, 94, 90, 94, '1111204', 100, 100, '', 1747813819),
-(95, 4, 1, 95, 91, 95, '1111205', 100, 100, '', 1747813819),
-(96, 4, 1, 96, 92, 96, '1111206', 100, 100, '', 1747813819),
-(97, 4, 1, 97, 93, 97, '1111207', 100, 100, '', 1747813819),
-(98, 4, 1, 98, 94, 98, '1111208', 100, 100, '', 1747813819),
-(99, 4, 1, 99, 95, 99, '1111209', 100, 100, '', 1747813819),
-(100, 4, 1, 100, 96, 100, '1111210', 100, 100, '', 1747813819),
-(101, 4, 1, 101, 97, 101, '1111211', 100, 100, '', 1747813819),
-(102, 4, 1, 102, 97, 102, '1111212', 100, 100, '', 1747813819),
-(103, 4, 1, 103, 98, 103, '1111213', 100, 100, '', 1747813819),
-(104, 4, 1, 104, 99, 104, '1111214', 100, 100, '', 1747813819),
-(105, 4, 1, 105, 100, 105, '1111215', 100, 100, '', 1747813819),
-(106, 4, 1, 106, 101, 106, '1111216', 100, 100, '', 1747813819),
-(107, 4, 1, 107, 101, 107, '1111217', 100, 100, '', 1747813819),
-(108, 4, 1, 108, 101, 108, '1111218', 100, 100, '', 1747813819),
-(109, 4, 1, 109, 101, 109, '1111219', 100, 100, '', 1747813819),
-(110, 4, 1, 110, 101, 110, '1111220', 100, 100, '', 1747813819),
-(111, 4, 1, 111, 101, 111, '1111221', 100, 100, '', 1747813819),
-(112, 4, 1, 112, 102, 112, '1111222', 100, 100, '', 1747813819),
-(113, 4, 1, 113, 103, 113, '1111223', 100, 100, '', 1747813819),
-(114, 4, 1, 114, 103, 114, '1111224', 100, 100, '', 1747813819),
-(115, 4, 1, 115, 104, 115, '1111225', 100, 100, '', 1747813819),
-(116, 4, 1, 116, 105, 116, '1111226', 100, 100, '', 1747813819),
-(117, 4, 1, 117, 106, 117, '1111227', 100, 100, '', 1747813819),
-(118, 4, 1, 118, 106, 118, '1111228', 100, 100, '', 1747813819),
-(119, 4, 1, 119, 107, 119, '1111229', 100, 100, '', 1747813819),
-(120, 4, 1, 120, 108, 120, '1111230', 100, 100, '', 1747813819),
-(121, 4, 1, 121, 109, 121, '1111231', 100, 100, '', 1747813819),
-(122, 4, 1, 122, 110, 122, '1111232', 100, 100, '', 1747813819),
-(123, 4, 1, 123, 111, 123, '1111233', 100, 100, '', 1747813819),
-(124, 4, 1, 124, 111, 124, '1111234', 100, 100, '', 1747813819),
-(125, 4, 1, 125, 112, 125, '1111235', 100, 100, '', 1747813819),
-(126, 4, 1, 126, 112, 126, '1111236', 100, 100, '', 1747813819),
-(127, 4, 1, 127, 113, 127, '1111237', 100, 100, '', 1747813819),
-(128, 4, 1, 128, 114, 128, '1111238', 100, 100, '', 1747813819),
-(129, 4, 1, 129, 114, 129, '1111239', 100, 100, '', 1747813819),
-(130, 4, 1, 130, 115, 130, '1111240', 100, 100, '', 1747813819),
-(131, 4, 1, 131, 116, 131, '1111241', 100, 100, '', 1747813819),
-(132, 4, 1, 132, 116, 132, '1111242', 100, 100, '', 1747813819),
-(133, 4, 1, 133, 117, 133, '1111243', 100, 100, '', 1747813819),
-(134, 4, 1, 134, 117, 134, '1111244', 100, 100, '', 1747813819),
-(135, 4, 1, 135, 118, 135, '1111245', 100, 100, '', 1747813819),
-(136, 4, 1, 136, 119, 136, '1111246', 100, 100, '', 1747813819),
-(137, 4, 1, 137, 82, 85, '1111195', 50, 50, 'Transaction by Ashar Alam on 22-May-2025 22:55 | Batch: 1111195 | Qty: 50 | New Org Balance: 50 | New Site Balance: 50', 1747936557),
-(138, 4, 1, 138, 128, 138, '12486792', 110, 110, 'Transaction by Ashar Alam on 25-May-2025 17:42 | Batch: 12486792 | Qty: 110 | New Org Balance: 110 | New Site Balance: 110', 1748176923),
-(139, 4, 2, 139, 128, 138, '125487122', 150, 150, 'Transaction by Ashar Alam on 25-May-2025 17:49 | Batch: 125487122 | Qty: 150 | New Org Balance: 150 | New Site Balance: 150', 1748177346),
-(140, 4, 1, 140, 11, 12, '45787787', 200, 200, 'Transaction by Ashar Alam on 26-May-2025 00:13 | Batch: 45787787 | Qty: 200 | New Org Balance: 200 | New Site Balance: 200', 1748200432),
-(141, 4, 1, 140, 16, 17, '48778877', 100, 100, 'Transaction by Ashar Alam on 26-May-2025 00:13 | Batch: 48778877 | Qty: 100 | New Org Balance: 100 | New Site Balance: 100', 1748200432),
-(147, 4, 1, 149, 5, 5, '1111115', 96, 96, 'Transaction by Ashar Alam on 27-May-2025 23:59 | Batch: 1111115 | Qty: 96 | New Org Balance: 4 | New Site Balance: 4', 1748372386),
-(177, 4, 1, 177, 4, 4, 'test2batch', 500, 500, 'Transaction by Ashar Alam on 04-Jun-2025 00:30 | Batch: test2batch | Qty: 500 | New Org Balance: 500 | New Site Balance: 500', 1748979018),
-(178, 4, 1, 178, 4, 4, 'testbatch', 8, 8, 'Transaction by Ashar Alam on 04-Jun-2025 00:30 | Batch: testbatch | Qty: 8 | New Org Balance: 8 | New Site Balance: 8', 1748979045),
-(179, 4, 1, 179, 4, 4, 'test5batch', 7, 7, 'Transaction by Ashar Alam on 04-Jun-2025 00:32 | Batch: test5batch | Qty: 7 | New Org Balance: 7 | New Site Balance: 7', 1748979167),
-(180, 4, 1, 180, 4, 4, 'test5batch', 0, 0, 'Issue & Dispense Transaction by Ashar Alam on 04-Jun-2025 00:45 | Batch: test5batch | Qty: 7 | New Org Balance: 0 | New Site Balance: 0', 1748979934);
+INSERT INTO `inventory_balance` (`id`, `org_id`, `site_id`, `management_id`, `generic_id`, `brand_id`, `batch_no`, `org_balance`, `site_balance`, `location_id`, `location_balance`, `remarks`, `timestamp`) VALUES
+(1, 4, 1, 1, 1, 1, '111111', 100, 100, 10, 100, 'Transaction by Ashar Alam on 11-Jun-2025 23:04 | Batch: 111111 | Qty: 100 | New Org Balance: 100 | New Site Balance: 100', 1749665083),
+(2, 4, 1, 1, 2, 2, '111112', 150, 150, 10, 150, 'Transaction by Ashar Alam on 11-Jun-2025 23:04 | Batch: 111112 | Qty: 150 | New Org Balance: 150 | New Site Balance: 150', 1749665083),
+(3, 4, 1, 1, 2, 2, '111113', 50, 50, 10, 50, 'Transaction by Ashar Alam on 11-Jun-2025 23:04 | Batch: 111113 | Qty: 50 | New Org Balance: 50 | New Site Balance: 50', 1749665083),
+(4, 4, 1, 2, 4, 4, '111114', 200, 200, 10, 200, 'Transaction by Saniya on 11-Jun-2025 23:06 | Batch: 111114 | Qty: 200 | New Org Balance: 200 | New Site Balance: 200', 1749665170),
+(5, 4, 1, 2, 4, 4, '111115', 50, 50, 10, 50, 'Transaction by Saniya on 11-Jun-2025 23:06 | Batch: 111115 | Qty: 50 | New Org Balance: 50 | New Site Balance: 50', 1749665170),
+(6, 4, 1, 3, 1, 1, '111111', 150, 150, 10, 150, 'Transaction by Saniya on 11-Jun-2025 23:06 | Batch: 111111 | Qty: 50 | New Org Balance: 150 | New Site Balance: 150', 1749665202),
+(7, 4, 1, 4, 5, 5, '111117', 50, 50, 10, 50, 'Transaction by Saniya on 11-Jun-2025 23:09 | Batch: 111117 | Qty: 50 | New Org Balance: 50 | New Site Balance: 50', 1749665346),
+(8, 4, 1, 4, 6, 6, '111118', 100, 100, 10, 100, 'Transaction by Saniya on 11-Jun-2025 23:09 | Batch: 111118 | Qty: 100 | New Org Balance: 100 | New Site Balance: 100', 1749665346),
+(9, 4, 1, 4, 7, 7, '111118', 150, 150, 10, 150, 'Transaction by Saniya on 11-Jun-2025 23:09 | Batch: 111118 | Qty: 150 | New Org Balance: 150 | New Site Balance: 150', 1749665346),
+(10, 4, 1, 4, 10, 11, '111119', 200, 200, 10, 200, 'Transaction by Saniya on 11-Jun-2025 23:09 | Batch: 111119 | Qty: 200 | New Org Balance: 200 | New Site Balance: 200', 1749665346),
+(11, 4, 1, 5, 3, 3, '111120', 30, 30, 10, 30, 'Transaction by Ashar Alam on 11-Jun-2025 23:10 | Batch: 111120 | Qty: 30 | New Org Balance: 30 | New Site Balance: 30', 1749665443),
+(12, 4, 1, 5, 8, 9, '111121', 200, 200, 10, 200, 'Transaction by Ashar Alam on 11-Jun-2025 23:10 | Batch: 111121 | Qty: 200 | New Org Balance: 200 | New Site Balance: 200', 1749665443),
+(13, 4, 1, 6, 12, 13, '111123', 50, 50, 10, 50, 'Transaction by Ashar Alam on 11-Jun-2025 23:13 | Batch: 111123 | Qty: 50 | New Org Balance: 50 | New Site Balance: 50', 1749665633),
+(14, 4, 1, 7, 2, 2, '111124', 20, 20, 10, 20, 'Transaction by Ashar Alam on 11-Jun-2025 23:15 | Batch: 111124 | Qty: 20 | New Org Balance: 20 | New Site Balance: 20', 1749665719),
+(15, 4, 1, 8, 2, 2, '111112', 70, 70, 10, 70, 'Transaction by Ashar Alam on 11-Jun-2025 23:29 | Batch: 111112 | Qty: 80 | New Org Balance: 70 | New Site Balance: 70', 1749666564),
+(16, 4, 1, 11, 2, 2, '111112', 20, 20, 10, 20, 'Transaction by Ashar Alam on 11-Jun-2025 23:37 | Batch: 111112 | Qty: 50 | New Org Balance: 20 | New Site Balance: 20', 1749667046),
+(26, 4, 1, 20, 4, 4, '111115', 40, 40, 10, 40, 'Issue & Dispense Transaction by Saniya on 12-Jun-2025 01:38 | Batch: 111115 | Qty: 10 | New Org Balance: 40 | New Site Balance: 40', 1749674335),
+(27, 4, 1, 21, 2, 2, '111124', 15, 15, 10, 15, 'Issue & Dispense Transaction by Saniya on 12-Jun-2025 01:42 | Batch: 111124 | Qty: 5 | New Org Balance: 15 | New Site Balance: 15', 1749674531),
+(28, 4, 1, 21, 2, 2, '111124', 15, 15, 9, 5, 'Issue & Dispense Transaction by Saniya on 12-Jun-2025 01:42 | Batch: 111124 | Qty: 5 | New Org Balance: 15 | New Site Balance: 15', 1749674531),
+(29, 4, 1, 22, 3, 3, '111120', 28, 28, 10, 28, 'Issue & Dispense Transaction by Ashar Alam on 12-Jun-2025 01:44 | Batch: 111120 | Qty: 2 | New Org Balance: 28 | New Site Balance: 28', 1749674693),
+(30, 4, 1, 22, 3, 3, '111120', 28, 28, 1, 2, 'Issue & Dispense Transaction by Ashar Alam on 12-Jun-2025 01:44 | Batch: 111120 | Qty: 2 | New Org Balance: 28 | New Site Balance: 28', 1749674693),
+(31, 4, 1, 23, 3, 3, '111120', 30, 30, 8, 2, 'Issue & Dispense Transaction by Ashar Alam on 12-Jun-2025 01:46 | Batch: 111120 | Qty: 2 | New Org Balance: 30 | New Site Balance: 30', 1749674809),
+(32, 4, 1, 23, 3, 3, '111120', 30, 30, 1, 0, 'Issue & Dispense Transaction by Ashar Alam on 12-Jun-2025 01:46 | Batch: 111120 | Qty: 2 | New Org Balance: 30 | New Site Balance: 30', 1749674809);
 
 -- --------------------------------------------------------
 
@@ -20459,151 +20337,21 @@ CREATE TABLE `inventory_management` (
 --
 
 INSERT INTO `inventory_management` (`id`, `transaction_type_id`, `org_id`, `site_id`, `ref_document_no`, `third_paty_id`, `mr_code`, `service_id`, `service_mode_id`, `billing_cc`, `performing_cc`, `resp_physician`, `source`, `destination`, `source_balance`, `destination_balance`, `site_balance`, `org_balance`, `remarks`, `inv_generic_id`, `brand_id`, `batch_no`, `expiry_date`, `transaction_qty`, `demand_qty`, `status`, `user_id`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
-(1, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '1', '1', '1111111', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(2, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '2', '2', '1111112', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(3, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '3', '3', '1111113', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(4, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '4', '4', '1111114', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(5, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '5', '5', '1111115', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(6, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '6', '6', '1111116', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(7, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '7', '7', '1111117', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(8, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '7', '8', '1111118', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(9, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '8', '9', '1111119', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(10, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '9', '10', '1111120', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(11, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '10', '11', '1111121', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(12, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '11', '12', '1111122', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(13, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '12', '13', '1111123', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(14, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '13', '14', '1111124', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(15, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '14', '15', '1111125', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(16, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '15', '16', '1111126', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(17, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '16', '17', '1111127', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(18, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '17', '18', '1111128', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(19, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '18', '19', '1111129', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(20, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '19', '20', '1111130', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(21, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '20', '21', '1111131', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(22, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '21', '22', '1111132', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(23, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '19', '23', '1111133', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(24, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '22', '24', '1111134', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(25, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '23', '25', '1111135', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(26, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '24', '26', '1111136', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(27, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '24', '27', '1111137', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(28, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '26', '28', '1111138', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(29, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '27', '29', '1111139', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(30, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '28', '30', '1111140', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(31, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '29', '31', '1111141', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(32, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '30', '32', '1111142', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(33, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '31', '33', '1111143', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(34, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '32', '34', '1111144', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(35, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '33', '35', '1111145', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(36, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '34', '36', '1111146', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(37, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '35', '37', '1111147', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(38, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '36', '38', '1111148', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(39, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '37', '39', '1111149', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(40, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '38', '40', '1111150', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(41, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '39', '41', '1111151', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(42, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '40', '42', '1111152', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(43, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '41', '43', '1111153', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(44, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '42', '44', '1111154', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(45, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '43', '45', '1111155', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(46, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '44', '46', '1111156', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(47, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '45', '47', '1111157', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(48, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '45', '48', '1111158', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(49, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '47', '49', '1111159', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(50, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '48', '50', '1111160', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(51, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '49', '51', '1111161', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(52, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '50', '52', '1111162', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(53, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '51', '53', '1111163', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(54, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '52', '54', '1111164', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(55, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '53', '55', '1111165', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(56, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '54', '56', '1111166', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(57, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '204', '57', '1111167', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(58, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '56', '58', '1111168', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(59, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '57', '59', '1111169', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(60, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '58', '60', '1111170', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(61, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '59', '61', '1111171', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(62, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '60', '62', '1111172', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(63, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '61', '63', '1111173', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(64, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '62', '64', '1111174', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(65, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '63', '65', '1111175', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(66, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '64', '66', '1111176', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(67, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '65', '67', '1111177', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(68, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '66', '68', '1111178', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(69, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '67', '69', '1111179', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(70, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '68', '70', '1111180', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(71, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '69', '71', '1111181', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(72, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '70', '72', '1111182', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(73, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '71', '73', '1111183', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(74, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '72', '74', '1111184', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(75, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '73', '75', '1111185', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(76, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '74', '76', '1111186', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(77, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '75', '77', '1111187', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(78, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '76', '78', '1111188', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(79, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '76', '79', '1111189', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(80, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '77', '80', '1111190', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(81, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '78', '81', '1111191', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(82, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '79', '82', '1111192', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(83, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '80', '83', '1111193', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(84, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '81', '84', '1111194', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(85, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '82', '85', '1111195', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(86, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '83', '86', '1111196', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(87, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '84', '87', '1111197', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(88, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '85', '88', '1111198', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(89, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '86', '89', '1111199', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(90, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '87', '90', '1111200', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(91, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '87', '91', '1111201', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(92, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '88', '92', '1111202', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(93, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '89', '93', '1111203', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(94, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '90', '94', '1111204', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(95, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '91', '95', '1111205', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(96, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '92', '96', '1111206', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(97, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '93', '97', '1111207', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(98, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '94', '98', '1111208', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(99, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '95', '99', '1111209', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(100, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '96', '100', '1111210', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(101, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '97', '101', '1111211', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(102, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '97', '102', '1111212', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(103, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '98', '103', '1111213', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(104, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '99', '104', '1111214', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(105, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '100', '105', '1111215', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(106, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '101', '106', '1111216', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(107, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '101', '107', '1111217', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(108, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '101', '108', '1111218', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(109, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '101', '109', '1111219', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(110, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '101', '110', '1111220', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(111, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '101', '111', '1111221', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(112, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '102', '112', '1111222', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(113, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '103', '113', '1111223', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(114, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '103', '114', '1111224', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(115, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '104', '115', '1111225', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(116, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '105', '116', '1111226', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(117, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '106', '117', '1111227', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(118, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '106', '118', '1111228', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(119, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '107', '119', '1111229', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(120, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '108', '120', '1111230', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(121, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '109', '121', '1111231', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(122, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '110', '122', '1111232', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(123, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '111', '123', '1111233', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(124, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '111', '124', '1111234', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(125, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '112', '125', '1111235', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(126, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '112', '126', '1111236', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(127, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '113', '127', '1111237', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(128, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '114', '128', '1111238', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(129, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '114', '129', '1111239', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(130, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '115', '130', '1111240', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(131, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '116', '131', '1111241', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(132, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '116', '132', '1111242', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(133, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '117', '133', '1111243', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(134, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '117', '134', '1111244', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(135, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '118', '135', '1111245', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(136, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '119', '136', '1111246', '1810972219', '100', NULL, 1, 1, '', 1747813819, 1747813819, 1747813819),
-(137, 4, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '10', '3', NULL, NULL, NULL, NULL, NULL, '82,81', '85,86', '1111195,1111195', '1747936557,1747936557', '50', NULL, 1, 1, '2582', 1747936557, 1747936557, 1747936557),
-(138, 2, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '128', '138', '12486792', '1779799323', '110', NULL, 1, 1, '2604', 1748176923, 1748176923, 1748176923),
-(139, 2, 4, 2, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '128', '138', '125487122', '1811335747', '150', NULL, 1, 1, '2605', 1748177346, 1748177346, 1748177346),
-(140, 3, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '2', '10', NULL, NULL, NULL, NULL, NULL, '11,16', '12,17', '45787787,48778877', '1779822832,1758914032', '200,100', NULL, 1, 1, '2607', 1748200432, 1748200432, 1748200432),
-(149, 4, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '10', '3', NULL, NULL, NULL, NULL, NULL, '5', '5', '1111115', '1748285987', '4', NULL, 1, 1, '2629', 1748372386, 1748372386, 1748372386),
-(177, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '4', '4', 'test2batch', '1780601418', '500', NULL, 1, 1, '2696', 1748979018, 1748979018, 1748979018),
-(178, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '4', '4', 'testbatch', '1843759845', '8', NULL, 1, 1, '2697', 1748979045, 1748979045, 1748979045),
-(179, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '4', '4', 'test5batch', '1757014367', '7', NULL, 1, 1, '2698', 1748979167, 1748979167, 1748979167),
-(180, 6, 4, 1, 'ZCG-MTC-00001', NULL, 'ZMTP-0000001', 5, 6, 8, 0, 2, '13', 'ZMTP-0000001', NULL, NULL, NULL, NULL, NULL, '4', '4', 'test5batch', '1757015134', '7', '10', 1, 1, '1', 1748979934, 1748979934, 1748979934);
+(1, 1, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '1,2,2', '1,2,2', '111111,111112,111113', '1781287483,1757700283,1768241083', '100,150,50', NULL, 1, 1, '2765', 1749665083, 1749665083, 1749665083),
+(2, 2, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 64, NULL, '1', '10', NULL, NULL, NULL, NULL, NULL, '4,4', '4,4', '111114,111115', '1812823570,1760292370', '200,50', NULL, 1, 6, '2766', 1749665170, 1749665170, 1749665170),
+(3, 2, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 63, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '1', '1', '111111', '1781287602', '50', NULL, 1, 6, '2767', 1749665202, 1749665202, 1749665202),
+(4, 3, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 33, NULL, '2', '10', NULL, NULL, NULL, NULL, NULL, '5,6,7,10', '5,6,7,11', '111117,111118,111118,111119', '1812823746,1781287746,1757700546,1812823746', '50,100,150,200', NULL, 1, 6, '2768', 1749665346, 1749665346, 1749665346),
+(5, 2, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '3,8', '3,9', '111120,111121', '1812823843,1757700643', '30,200', NULL, 1, 1, '2769', 1749665443, 1749665443, 1749665443),
+(6, 2, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '12', '13', '111123', '1760292833', '50', NULL, 1, 1, '2770', 1749665633, 1749665633, 1749665633),
+(7, 2, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '3', '10', NULL, NULL, NULL, NULL, NULL, '2', '2', '111124', '1751307319', '20', NULL, 1, 1, '2771', 1749665719, 1749665719, 1749665719),
+(8, 4, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '10', '3', NULL, NULL, NULL, NULL, NULL, '2', '2', '111112', '1757701764', '80', NULL, 1, 1, '2772', 1749666564, 1749666564, 1749666564),
+(9, 4, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '10', '3', NULL, NULL, NULL, NULL, NULL, '2', '2', '111112', '1765564418', '90', NULL, 1, 1, '2773', 1749666818, 1749666818, 1749666818),
+(10, 4, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '10', '3', NULL, NULL, NULL, NULL, NULL, '2', '2', '111112', '1760294215', '90', NULL, 1, 1, '2774', 1749667015, 1749667015, 1749667015),
+(11, 4, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, '10', '3', NULL, NULL, NULL, NULL, NULL, '2', '2', '111112', '1757702246', '50', NULL, 1, 1, '2775', 1749667046, 1749667046, 1749667046),
+(20, 6, 4, 1, 'ZCG-MTC-00002', NULL, 'ZMTP-0000001', 46, 16, 33, 33, 4, '10', 'ZMTP-0000001', NULL, NULL, NULL, NULL, NULL, '4', '4', '111115', '1760215135', '10', '10', 1, 6, '6', 1749674335, 1749674335, 1749674335),
+(21, 5, 4, 1, 'ZCG-MTC-00001', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '10', '9', NULL, NULL, NULL, NULL, NULL, '2', '2', '111124', '1751229731', '5', '5', 1, 6, '6', 1749674531, 1749674531, 1749674531),
+(22, 5, 4, 1, 'ZCG-MTC-00001', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '10', '1', NULL, NULL, NULL, NULL, NULL, '3', '3', '111120', '1812746693', '2', '3', 1, 1, '1', 1749674693, 1749674693, 1749674693),
+(23, 15, 4, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '8', '1', NULL, NULL, NULL, NULL, NULL, '3', '3', '111120', '1812746809', '2', '2', 1, 1, '1', 1749674809, 1749674809, 1749674809);
 
 -- --------------------------------------------------------
 
@@ -20785,13 +20533,11 @@ CREATE TABLE `inventory_transaction_type` (
 
 INSERT INTO `inventory_transaction_type` (`id`, `name`, `activity_type`, `request_mandatory`, `request_location_mandatory`, `source_location_type`, `source_action`, `destination_location_type`, `destination_action`, `service_location_id`, `applicable_location_to`, `transaction_expired_status`, `org_id`, `status`, `user_id`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
 (1, 'Material Receiving - Opening Balance', '1', 'n', 'n', 1, 'n', 4, 'a', '10', 'destination', 'n', 4, 1, 1, '2178,2678,2679', 1739776440, 1739776534, 1748887046),
-(1, 'Material Receiving - Opening Balance', '1', 'n', 'n', 1, 'n', 4, 'a', '10', 'destination', 'n', 4, 1, 1, '2178,2678,2679', 1739776440, 1739776534, 1748887046),
 (2, 'Material Receiving - Procurement', '1', 'n', 'n', 1, 'n', 4, 'a', '10', 'destination', 'n', 4, 1, 1, '2179,2223,2226', 1739776440, 1739776577, 1743094950),
 (3, 'Material Receiving - Donation In Kind', '1', 'n', 'n', 2, 'n', 4, 'a', '10', 'destination', 'n', 4, 1, 1, '2180,2222,2225,2556,2557', 1739776440, 1739776609, 1747770609),
 (4, 'Material Return From Store To Vendor', '1', 'n', 'n', 4, 's', 1, 'n', '10', 'source', 'y', 4, 1, 1, '2181,2221,2224', 1739776440, 1739776645, 1743094928),
-(5, 'Issue From Store To Service Location', '2', 'n', 'y', 4, 's', 4, 'a', '9,10,11,13', 'source', 'n', 4, 1, 1, '2182,2351,2352,2353,2504,2505,2506,2615,2620,2621,2628,2638,2640,2659,2660,2661,2662,2666,2667,2670,2671', 1739776440, 1739776681, 1748885817),
-(5, 'Issue From Store To Service Location', '2', 'n', 'y', 4, 's', 4, 'a', '9,10,11,13', 'source', 'n', 4, 1, 1, '2182,2351,2352,2353,2504,2505,2506,2615,2620,2621,2628,2638,2640,2659,2660,2661,2662,2666,2667,2670,2671', 1739776440, 1739776681, 1748885817),
-(6, 'Direct Dispensing To Patient', '2', 'y', 'y', 4, 's', 3, 'n', '9,13', 'source', 'n', 4, 1, 1, '2183,2502,2503', 1739776440, 1739776717, 1746642301),
+(5, 'Issue From Store To Service Location', '2', 'y', 'y', 4, 's', 4, 'a', '9,10,13', 'source', 'n', 4, 1, 1, '2182,2351,2352,2353,2504,2505,2506,2615,2620,2621,2628,2638,2640,2659,2660,2661,2662,2666,2667,2670,2671,2777,2787', 1739776440, 1739776681, 1749674470),
+(6, 'Direct Dispensing To Patient', '2', 'y', 'y', 4, 's', 3, 'n', '9,10,13', 'source', 'n', 4, 1, 1, '2183,2502,2503,2786', 1739776440, 1739776717, 1749674309),
 (7, 'Patient Material Consumption', '3', 'n', 'n', 4, 's', 3, 'n', '1,2,4', 'source', 'n', 4, 1, 1, '2184', 1739776440, 1739776753, 1739776753),
 (8, 'General Material Consumption', '3', 'n', 'n', 4, 's', 5, 'n', '1,2,4', 'source', 'n', 4, 1, 1, '2185', 1739776440, 1739776793, 1739776793),
 (9, 'Patient Material Return after Issue', '4', 'n', 'n', 4, 's', 4, 'a', '9,13', 'destination', 'y', 4, 1, 1, '2186', 1739776440, 1739776835, 1739776835),
@@ -20800,9 +20546,7 @@ INSERT INTO `inventory_transaction_type` (`id`, `name`, `activity_type`, `reques
 (12, 'Material Internal Transfer', '5', 'n', 'n', 4, 's', 4, 'a', '10', 'source', 'y', 4, 1, 1, '2189,2192', 1739776440, 1739776944, 1739783714),
 (13, 'Material Condemnation', '5', 'n', 'n', 4, 's', 5, 'n', '10', 'source', 'y', 4, 1, 1, '2190', 1739776440, 1739776981, 1739776981),
 (14, 'Reversal of Transaction', '6', 'n', 'n', 5, 'r', 5, 'r', '14', 'not applicable', 'n', 4, 1, 1, '2191', 1739776440, 1739777022, 1739777022),
-(15, 'Test for issue and dispense', '2', 'y', 'y', 4, 'a', 4, 's', '3,8,9,10,1', 'source', 'y', 4, 1, 1, '2684', 1748889660, 1748889769, 1748889769);
-(14, 'Reversal of Transaction', '6', 'n', 'n', 5, 'r', 5, 'r', '14', 'not applicable', 'n', 4, 1, 1, '2191', 1739776440, 1739777022, 1739777022),
-(15, 'Test for issue and dispense', '2', 'y', 'y', 4, 'a', 4, 's', '3,8,9,10,1', 'source', 'y', 4, 1, 1, '2684', 1748889660, 1748889769, 1748889769);
+(15, 'Return From Service Location To Store', '2', 'n', 'y', 4, 'a', 4, 's', '3,8,9,10,1', 'source', 'y', 4, 1, 1, '2684,2776,2778', 1748889660, 1748889769, 1749672633);
 
 -- --------------------------------------------------------
 
@@ -23909,7 +23653,72 @@ INSERT INTO `logs` (`id`, `module`, `content`, `event`, `timestamp`) VALUES
 (2720, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1749214302),
 (2721, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1749214450),
 (2722, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1749214627),
-(2723, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1749490743);
+(2723, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1749490743),
+(2724, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1749493507),
+(2725, 'hr', 'Data has been updated by \'Ashar Alam\'', 'update', 1749493515),
+(2726, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1749573086),
+(2727, 'logout', '\'Ashar Alam\' has successfully logged out.', 'logout', 1749573625),
+(2728, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1749573629),
+(2729, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749580199),
+(2730, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749580248),
+(2731, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749580294),
+(2732, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749581577),
+(2733, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749581671),
+(2734, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749582212),
+(2735, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749582234),
+(2736, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749582927);
+INSERT INTO `logs` (`id`, `module`, `content`, `event`, `timestamp`) VALUES
+(2737, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749582968),
+(2738, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749583025),
+(2739, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749583103),
+(2740, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749583139),
+(2741, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749583185),
+(2742, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749583210),
+(2743, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749583236),
+(2744, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749583337),
+(2745, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749583424),
+(2746, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749583595),
+(2747, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749583678),
+(2748, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749583833),
+(2749, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749583878),
+(2750, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749584002),
+(2751, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749584048),
+(2752, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749584091),
+(2753, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749584235),
+(2754, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749584278),
+(2755, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749584315),
+(2756, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749584338),
+(2757, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749584412),
+(2758, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749584467),
+(2759, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749584548),
+(2760, 'login', '\'Ashar Alam\' has successfully logged in.', 'login', 1749664587),
+(2761, 'login', '\'Saniya\' has successfully logged in.', 'login', 1749664786),
+(2762, 'inventory', 'Requisition has been added by \'Ashar Alam\'', 'add', 1749664824),
+(2763, 'inventory', 'Requisition has been added by \'Saniya\'', 'add', 1749664865),
+(2764, 'patient_medical_record', 'Requisition For Medication Consumption has been added by \'Saniya\'', 'add', 1749664945),
+(2765, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749665083),
+(2766, 'inventory', 'External Transaction has been added by \'Saniya\'', 'add', 1749665170),
+(2767, 'inventory', 'External Transaction has been added by \'Saniya\'', 'add', 1749665202),
+(2768, 'inventory', 'External Transaction has been added by \'Saniya\'', 'add', 1749665346),
+(2769, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749665443),
+(2770, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749665633),
+(2771, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749665719),
+(2772, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749666564),
+(2773, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749666818),
+(2774, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749667015),
+(2775, 'inventory', 'External Transaction has been added by \'Ashar Alam\'', 'add', 1749667046),
+(2776, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1749668498),
+(2777, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1749672442),
+(2778, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1749672633),
+(2779, 'inventory', 'Requisition has been added by \'Saniya\'', 'add', 1749672824),
+(2780, 'inventory', 'Requisition has been added by \'Saniya\'', 'add', 1749673233),
+(2781, 'hr', 'Employee Location Allocation has been updated by \'Saniya\'', 'add', 1749673304),
+(2782, 'hr', 'Employee Location Allocation has been updated by \'Saniya\'', 'add', 1749673507),
+(2783, 'hr', 'Employee Location Allocation has been updated by \'Saniya\'', 'add', 1749673522),
+(2784, 'hr', 'Employee Location Allocation has been updated by \'Saniya\'', 'add', 1749673539),
+(2785, 'hr', 'Employee Location Allocation has been updated by \'Saniya\'', 'add', 1749673589),
+(2786, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1749674309),
+(2787, 'inventory', 'Data has been updated by \'Ashar Alam\'', 'update', 1749674470);
 
 -- --------------------------------------------------------
 
@@ -23947,12 +23756,8 @@ CREATE TABLE `material_consumption_requisition` (
 --
 
 INSERT INTO `material_consumption_requisition` (`id`, `code`, `org_id`, `site_id`, `transaction_type_id`, `inv_location_id`, `mr_code`, `patient_age`, `patient_gender_id`, `service_id`, `service_mode_id`, `billing_cc`, `physician_id`, `generic_id`, `qty`, `remarks`, `status`, `user_id`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
-(1, 'ZCG-MTC-00001', 4, 1, 6, 2, 'ZMTP-0000001', '3 years 7 months 14 days', 1, 5, 6, 8, 2, '4,122', '10,20', NULL, 1, 1, '2637,2686', 1748445439, 1748445439, 1748890831),
-(3, 'ZCG-MTC-00003', 4, 1, 15, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '3', '10', '', 1, 1, '2685', 1748889822, 1748889822, 1748889822),
-(4, 'ZCSN-MTC-00004', 4, 2, 15, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '5', '5', '', 1, 1, '2687', 1748892590, 1748892590, 1748892590);
-(1, 'ZCG-MTC-00001', 4, 1, 6, 2, 'ZMTP-0000001', '3 years 7 months 14 days', 1, 5, 6, 8, 2, '4,122', '10,20', NULL, 1, 1, '2637,2686', 1748445439, 1748445439, 1748890831),
-(3, 'ZCG-MTC-00003', 4, 1, 15, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '3', '10', '', 1, 1, '2685', 1748889822, 1748889822, 1748889822),
-(4, 'ZCSN-MTC-00004', 4, 2, 15, 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '5', '5', '', 1, 1, '2687', 1748892590, 1748892590, 1748892590);
+(1, 'ZCG-MTC-00001', 4, 1, 5, 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2,3', '5,3', '', 1, 6, '2779', 1749672824, 1749672824, 1749672824),
+(2, 'ZCG-MTC-00002', 4, 1, 6, 1, 'ZMTP-0000001', '3 years 7 months 23 days', 1, 46, 16, 33, 4, '4', '10', '', 1, 6, '2780', 1749673233, 1749673233, 1749673233);
 
 -- --------------------------------------------------------
 
@@ -24492,7 +24297,7 @@ INSERT INTO `prefix` (`id`, `name`, `user_id`, `logid`, `status`, `effective_tim
 (3, 'Ms.', 1, '2707,2708,2709,2710,2712', 1, 1749208140, 1749207443, 1749209366),
 (4, 'Dr.', 1, '2713', 1, 1749209100, 1749209374, 1749209374),
 (5, 'Prof.', 1, '2714', 1, 1749209100, 1749209384, 1749209384),
-(6, 'Prof. Dr.', 1, '2715', 1, 1749209100, 1749209391, 1749209391);
+(6, 'Prof. Dr.', 1, '2715,2724,2725', 1, 1749209100, 1749209391, 1749493515);
 
 -- --------------------------------------------------------
 
@@ -24664,10 +24469,7 @@ CREATE TABLE `req_medication_consumption` (
 --
 
 INSERT INTO `req_medication_consumption` (`id`, `code`, `transaction_type_id`, `inv_location_id`, `mr_code`, `gender_id`, `age`, `service_id`, `org_id`, `site_id`, `service_mode_id`, `service_type_id`, `service_group_id`, `responsible_physician`, `billing_cc`, `inv_generic_ids`, `dose`, `route_ids`, `frequency_ids`, `days`, `remarks`, `user_id`, `status`, `logid`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
-(1, 'ZCG-MDC-00001', 6, 1, 'ZMTP-0000001', 1, '3 years 7 months 8 days', 5, 4, 1, 6, 2, 5, 2, 8, '1', '1', '1', '2', '1', '', 1, 1, '2635', 1748434337, 1748434337, 1748434337),
-(2, 'ZCG-MDC-00002', 6, 2, 'ZMTP-0000001', 1, '3 years 7 months 11 days', 5, 4, 1, 6, 2, 5, 2, 8, '3', '1', '2', '2', '1', '', 1, 1, '2663', 1748700638, 1748700638, 1748700638);
-(1, 'ZCG-MDC-00001', 6, 1, 'ZMTP-0000001', 1, '3 years 7 months 8 days', 5, 4, 1, 6, 2, 5, 2, 8, '1', '1', '1', '2', '1', '', 1, 1, '2635', 1748434337, 1748434337, 1748434337),
-(2, 'ZCG-MDC-00002', 6, 2, 'ZMTP-0000001', 1, '3 years 7 months 11 days', 5, 4, 1, 6, 2, 5, 2, 8, '3', '1', '2', '2', '1', '', 1, 1, '2663', 1748700638, 1748700638, 1748700638);
+(1, 'ZCG-MDC-00001', 6, 1, 'ZMTP-0000001', 1, '3 years 7 months 22 days', 5, 4, 1, 6, 2, 5, 2, 8, '6,10', '5,15', '1,1', '13,9', '7,7', '', 6, 1, '2764', 1749664945, 1749664945, 1749664945);
 
 -- --------------------------------------------------------
 
@@ -25319,8 +25121,8 @@ CREATE TABLE `user` (
 --
 
 INSERT INTO `user` (`id`, `name`, `email`, `password`, `role_id`, `org_id`, `is_employee`, `emp_id`, `user_id`, `image`, `logid`, `status`, `password_reset_token`, `effective_timestamp`, `timestamp`, `last_updated`) VALUES
-(1, 'Ashar Alam', 'ihammad25@gmail.com', '$2y$10$BDy1OWRB7TYAmvvv8SGYf.B6d1nJuB/ojNI8f1t187kao4fwSghZa', 1, 0, 0, 0, 1, NULL, '296,300,301,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330,331,332,333,334,335,337,338,339,340,341,342,343,344,345,346,347,348,349,351,353,354,355,359,360,361,362,363,364,365,366,367,368,369,371,372,373,374,375,376,377,378,379,380,381,382,383,384,385,386,387,388,389,390,391,392,393,394,395,396,397,415,456,464,484,516,517,540,610,611,612,625,632,635,647,954,955,969,970,1014,1082,1083,1089,1090,1096,1097,1098,1099,1100,1140,1160,1164,1172,1173,1183,1204,1234,1244,1245,1246,1247,1248,1249,1250,1251,1252,1253,1254,1255,1256,1257,1258,1259,1260,1261,1262,1263,1288,1291,1304,1313,1338,1341,1349,1350,1357,1372,1381,1383,1389,1392,1393,1407,1408,1413,1414,1415,1417,1421,1427,1430,1446,1454,1474,1527,1549,1552,1553,1557,1558,1567,1568,1580,1589,1603,1604,1621,1652,1657,1700,1716,1733,1734,1740,1749,1753,1754,1755,1756,1791,1801,1806,1807,1855,1861,1863,1875,1928,1929,1930,1931,1932,1945,1984,1994,2009,2026,2033,2056,2057,2061,2062,2063,2067,2069,2087,2107,2138,2140,2141,2145,2146,2147,2149,2150,2175,2176,2177,2178,2208,2219,2220,2228,2230,2242,2263,2295,2301,2308,2319,2321,2333,2343,2344,2353,2381,2382,2383,2384,2406,2407,2408,2412,2421,2422,2427,2436,2437,2438,2439,2442,2454,2464,2498,2581,2588,2596,2640,2646,2845,2868,2967,3022,3023,3024,3025,3036,3073,3123,3242,3277,3301,3302,3305,3324,3354,3355,3364,3365,3367,3368,3369,3370,3371,3372,3373,3380,3386,3389,3406,3432,3439,3440,3464,3483,3499,3500,3503,3504,3513,3522,3528,3529,3536,3545,3571,3577,3578,3587,3594,3600,3604,3605,3606,3607,3608,3635,3656,3664,3778,3782,3784,3787,3789,3790,3802,3808,3812,3813,3814,3818,3822,3824,3825,3826,3827,3908,3910,3911,3912,3913,3914,3917,3929,3931,3932,3934,3937,3938,3939,3941,3948,3950,3954,3957,3958,3959,3960,3962,3964,3967,3978,3979,3986,3987,3997,3998,4011,4017,4018,4019,4028,4052,4053,4054,4055,4056,4057,4070,4071,4082,4083,4116,4125,4131,4132,4135,4136,4149,4156,4157,4160,4161,4170,4171,4178,4179,4187,4188,4205,4206,4207,4208,4209,4210,4213,4214,4215,4216,4217,4218,4219,4220,4221,4222,4236,1,2,38,39,48,49,51,52,53,54,55,61,62,68,69,203,204,207,208,209,210,213,255,256,259,260,265,290,305,363,368,369,376,504,506,508,510,512,519,520,522,525,531,536,546,547,557,558,561,584,588,590,597,602,603,604,605,606,608,613,637,677,687,693,694,696,697,707,738,745,768,771,772,784,791,794,801,962,963,964,965,966,967,968,969,970,971,972,973,974,975,976,977,1007,1012,1013,1016,1019,1023,1029,1031,1036,1037,1039,1040,1042,1045,1047,1048,1052,1103,1146,1156,1169,1170,1173,1192,1213,1214,1217,1218,1238,1240,1243,1251,1252,1255,1256,1261,1264,1265,1270,1271,1272,1273,1274,1275,1276,1279,1281,1298,1323,1324,1327,1328,1340,1348,1353,1362,1370,1379,1380,1381,1382,1384,1385,1386,1387,1388,1390,1413,1450,1461,1468,1472,1504,1510,1511,1518,1526,1530,1531,1532,1534,1537,1540,1541,1542,1601,1608,1637,1659,1661,1670,1686,1692,1694,1695,1696,1698,1699,1705,1718,1724,1727,1728,1743,1744,1745,1753,1755,1756,1759,1760,1761,1762,1763,1767,1782,1783,1786,1787,1788,1789,1791,1796,1797,1799,1802,1804,1807,1810,1811,1818,1819,1821,1822,1824,1825,1835,1836,1838,1849,1850,1851,1852,1856,1861,1862,1868,1869,1870,1877,1880,1888,1894,1897,1914,1918,1921,1923,1924,1931,1939,1940,1941,1942,1943,1944,1960,1961,1962,1963,1965,1967,1968,1971,1979,1983,2016,2017,2019,2023,2024,2043,2048,2061,2089,2090,2097,2101,2102,2115,2124,2125,2136,2141,2142,2147,2159,2203,2204,2205,2207,2209,2210,2211,2212,2213,2214,2216,2219,2220,2229,2231,2232,2233,2234,2247,2249,2252,2257,2258,2264,2265,2291,2292,2293,2294,2302,2303,2305,2311,2322,2324,2325,2332,2334,2337,2338,2339,2358,2359,2360,2365,2368,2373,2386,2393,2394,2395,2396,2398,2399,2400,2408,2415,2416,2417,2470,2471,2494,2498,2508,2509,2510,2511,2513,2515,2516,2527,2534,2538,2539,2541,2546,2547,2562,2563,2564,2566,2567,2568,2569,2571,2572,2573,2579,2580,2586,2592,2593,2594,2595,2601,2608,2619,2623,2624,2630,2636,2644,2645,2646,2647,2648,2649,2650,2651,2655,2656,2658,2664,2665,2688,2689,2690,2699,2701,2702,2704,2723', 1, NULL, 1688324760, 1688324767, 1713021527),
-(6, 'Saniya', 'saniya@zmtclinics.org', '$2y$10$BDy1OWRB7TYAmvvv8SGYf.B6d1nJuB/ojNI8f1t187kao4fwSghZa', 6, 4, 1, 2, 5, NULL, '1025,1032,1033,1034,1035,1038,1041,1044,1050,1051,1157,1158,1171,1172,1193,1212,1215,1216,1219,1221,1222,1223,1224,1241,1242,1253,1254,1257,1260,1266,1267,1268,1269,1277,1278,1282,1283,1284,1285,1286,1287,1288,1289,1290,1291,1292,1293,1295,1296,1297,1299,1300,1316,1317,1318,1320,1321,1322,1329,1337,1338,1339,1351,1352,1372,1422,1439,1460,1465,1469,1480,1483,1484,1493,1494,1525,1535,1536,1544,1571,1602,1643,1671,1678,1679,1784,1785,1790,1800,1801,1805,1806,1853,1863,2103,2202,2206,2215,2217,2228,2235,2237,2238,2240,2241,2244,2245,2250,2253,2304,2312,2316,2321,2328,2329,2331,2335,2340,2342,2343,2346,2347,2349,2350,2361,2366,2401,2403,2404,2406,2407,2409,2472,2499,2512,2530,2536,2542,2551,2570,2574,2581,2587,2602,2606,2652,2654,2657,2668,2672,2673,2675,2676,2681,2682,2691', 1, NULL, 1722495300, 1722495333, 1722495333),
+(1, 'Ashar Alam', 'ihammad25@gmail.com', '$2y$10$BDy1OWRB7TYAmvvv8SGYf.B6d1nJuB/ojNI8f1t187kao4fwSghZa', 1, 0, 0, 0, 1, NULL, '296,300,301,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330,331,332,333,334,335,337,338,339,340,341,342,343,344,345,346,347,348,349,351,353,354,355,359,360,361,362,363,364,365,366,367,368,369,371,372,373,374,375,376,377,378,379,380,381,382,383,384,385,386,387,388,389,390,391,392,393,394,395,396,397,415,456,464,484,516,517,540,610,611,612,625,632,635,647,954,955,969,970,1014,1082,1083,1089,1090,1096,1097,1098,1099,1100,1140,1160,1164,1172,1173,1183,1204,1234,1244,1245,1246,1247,1248,1249,1250,1251,1252,1253,1254,1255,1256,1257,1258,1259,1260,1261,1262,1263,1288,1291,1304,1313,1338,1341,1349,1350,1357,1372,1381,1383,1389,1392,1393,1407,1408,1413,1414,1415,1417,1421,1427,1430,1446,1454,1474,1527,1549,1552,1553,1557,1558,1567,1568,1580,1589,1603,1604,1621,1652,1657,1700,1716,1733,1734,1740,1749,1753,1754,1755,1756,1791,1801,1806,1807,1855,1861,1863,1875,1928,1929,1930,1931,1932,1945,1984,1994,2009,2026,2033,2056,2057,2061,2062,2063,2067,2069,2087,2107,2138,2140,2141,2145,2146,2147,2149,2150,2175,2176,2177,2178,2208,2219,2220,2228,2230,2242,2263,2295,2301,2308,2319,2321,2333,2343,2344,2353,2381,2382,2383,2384,2406,2407,2408,2412,2421,2422,2427,2436,2437,2438,2439,2442,2454,2464,2498,2581,2588,2596,2640,2646,2845,2868,2967,3022,3023,3024,3025,3036,3073,3123,3242,3277,3301,3302,3305,3324,3354,3355,3364,3365,3367,3368,3369,3370,3371,3372,3373,3380,3386,3389,3406,3432,3439,3440,3464,3483,3499,3500,3503,3504,3513,3522,3528,3529,3536,3545,3571,3577,3578,3587,3594,3600,3604,3605,3606,3607,3608,3635,3656,3664,3778,3782,3784,3787,3789,3790,3802,3808,3812,3813,3814,3818,3822,3824,3825,3826,3827,3908,3910,3911,3912,3913,3914,3917,3929,3931,3932,3934,3937,3938,3939,3941,3948,3950,3954,3957,3958,3959,3960,3962,3964,3967,3978,3979,3986,3987,3997,3998,4011,4017,4018,4019,4028,4052,4053,4054,4055,4056,4057,4070,4071,4082,4083,4116,4125,4131,4132,4135,4136,4149,4156,4157,4160,4161,4170,4171,4178,4179,4187,4188,4205,4206,4207,4208,4209,4210,4213,4214,4215,4216,4217,4218,4219,4220,4221,4222,4236,1,2,38,39,48,49,51,52,53,54,55,61,62,68,69,203,204,207,208,209,210,213,255,256,259,260,265,290,305,363,368,369,376,504,506,508,510,512,519,520,522,525,531,536,546,547,557,558,561,584,588,590,597,602,603,604,605,606,608,613,637,677,687,693,694,696,697,707,738,745,768,771,772,784,791,794,801,962,963,964,965,966,967,968,969,970,971,972,973,974,975,976,977,1007,1012,1013,1016,1019,1023,1029,1031,1036,1037,1039,1040,1042,1045,1047,1048,1052,1103,1146,1156,1169,1170,1173,1192,1213,1214,1217,1218,1238,1240,1243,1251,1252,1255,1256,1261,1264,1265,1270,1271,1272,1273,1274,1275,1276,1279,1281,1298,1323,1324,1327,1328,1340,1348,1353,1362,1370,1379,1380,1381,1382,1384,1385,1386,1387,1388,1390,1413,1450,1461,1468,1472,1504,1510,1511,1518,1526,1530,1531,1532,1534,1537,1540,1541,1542,1601,1608,1637,1659,1661,1670,1686,1692,1694,1695,1696,1698,1699,1705,1718,1724,1727,1728,1743,1744,1745,1753,1755,1756,1759,1760,1761,1762,1763,1767,1782,1783,1786,1787,1788,1789,1791,1796,1797,1799,1802,1804,1807,1810,1811,1818,1819,1821,1822,1824,1825,1835,1836,1838,1849,1850,1851,1852,1856,1861,1862,1868,1869,1870,1877,1880,1888,1894,1897,1914,1918,1921,1923,1924,1931,1939,1940,1941,1942,1943,1944,1960,1961,1962,1963,1965,1967,1968,1971,1979,1983,2016,2017,2019,2023,2024,2043,2048,2061,2089,2090,2097,2101,2102,2115,2124,2125,2136,2141,2142,2147,2159,2203,2204,2205,2207,2209,2210,2211,2212,2213,2214,2216,2219,2220,2229,2231,2232,2233,2234,2247,2249,2252,2257,2258,2264,2265,2291,2292,2293,2294,2302,2303,2305,2311,2322,2324,2325,2332,2334,2337,2338,2339,2358,2359,2360,2365,2368,2373,2386,2393,2394,2395,2396,2398,2399,2400,2408,2415,2416,2417,2470,2471,2494,2498,2508,2509,2510,2511,2513,2515,2516,2527,2534,2538,2539,2541,2546,2547,2562,2563,2564,2566,2567,2568,2569,2571,2572,2573,2579,2580,2586,2592,2593,2594,2595,2601,2608,2619,2623,2624,2630,2636,2644,2645,2646,2647,2648,2649,2650,2651,2655,2656,2658,2664,2665,2688,2689,2690,2699,2701,2702,2704,2723,2726,2727,2728,2760', 1, NULL, 1688324760, 1688324767, 1713021527),
+(6, 'Saniya', 'saniya@zmtclinics.org', '$2y$10$BDy1OWRB7TYAmvvv8SGYf.B6d1nJuB/ojNI8f1t187kao4fwSghZa', 6, 4, 1, 2, 5, NULL, '1025,1032,1033,1034,1035,1038,1041,1044,1050,1051,1157,1158,1171,1172,1193,1212,1215,1216,1219,1221,1222,1223,1224,1241,1242,1253,1254,1257,1260,1266,1267,1268,1269,1277,1278,1282,1283,1284,1285,1286,1287,1288,1289,1290,1291,1292,1293,1295,1296,1297,1299,1300,1316,1317,1318,1320,1321,1322,1329,1337,1338,1339,1351,1352,1372,1422,1439,1460,1465,1469,1480,1483,1484,1493,1494,1525,1535,1536,1544,1571,1602,1643,1671,1678,1679,1784,1785,1790,1800,1801,1805,1806,1853,1863,2103,2202,2206,2215,2217,2228,2235,2237,2238,2240,2241,2244,2245,2250,2253,2304,2312,2316,2321,2328,2329,2331,2335,2340,2342,2343,2346,2347,2349,2350,2361,2366,2401,2403,2404,2406,2407,2409,2472,2499,2512,2530,2536,2542,2551,2570,2574,2581,2587,2602,2606,2652,2654,2657,2668,2672,2673,2675,2676,2681,2682,2691,2761', 1, NULL, 1722495300, 1722495333, 1722495333),
 (8, 'seeru', 'seeru@zmtclinics.org', '$2y$10$MFsK9CJjJrDIzklmNebrce3KudA70hz2BZy09JNJc.X9iyvpPeorC', 7, 4, 0, 0, 1, NULL, '1347,1349,1350,1355,1356,1359,1360,1363,1369,1371,1378', 1, NULL, 1727084640, 1727084859, 1727084859),
 (9, 'test employee', 'admin@zmtclinics.org', '$2y$10$u9WFDnZRl9JPIW3.Z7XOGu/qxiYXGxt7Vgl90peXU8nFk.J8S6YEy', 8, 4, 1, 1, 1, NULL, '2208', 1, NULL, 1739870220, 1739870343, 1739870343);
 
@@ -26207,7 +26009,7 @@ ALTER TABLE `immunization_history`
 -- AUTO_INCREMENT for table `inventory_balance`
 --
 ALTER TABLE `inventory_balance`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=181;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT for table `inventory_brand`
@@ -26231,7 +26033,7 @@ ALTER TABLE `inventory_generic`
 -- AUTO_INCREMENT for table `inventory_management`
 --
 ALTER TABLE `inventory_management`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=181;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `inventory_source_destination_type`
@@ -26255,7 +26057,6 @@ ALTER TABLE `inventory_transaction_activity`
 -- AUTO_INCREMENT for table `inventory_transaction_type`
 --
 ALTER TABLE `inventory_transaction_type`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
@@ -26310,14 +26111,13 @@ ALTER TABLE `ledger_types`
 -- AUTO_INCREMENT for table `logs`
 --
 ALTER TABLE `logs`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2724;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2788;
 
 --
 -- AUTO_INCREMENT for table `material_consumption_requisition`
 --
 ALTER TABLE `material_consumption_requisition`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `medical_diagnosis`
@@ -26419,8 +26219,7 @@ ALTER TABLE `req_epi`
 -- AUTO_INCREMENT for table `req_medication_consumption`
 --
 ALTER TABLE `req_medication_consumption`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `rights`
