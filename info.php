@@ -13,7 +13,7 @@ For inventory Balance we have to store balance for org, site and locations if so
 are locations then we have to store balance for both source or destination according to source action
 and destination action.
 check location_id and location balance in inventory_balance table
-test throughky for external transaction and issue and dispense bith modules
+test throughly for external transaction and issue and dispense bith modules
 
 <!-- there is an issue in max qty in respond button -->
 
@@ -29,12 +29,21 @@ second go demandqty must change like 5 - 3 = 2 and on second go user can issue o
 <!-- 1.	A new form will be created for Prefix Setup, see Table H-14 -->
 <!-- 2.	This Prefix filed will be available before Name in a) Employee Setup / Add Employee, b) Third Party Registration / Register a Third Party -->
 <!-- 3.	Both Employee names and Third-Party Focal Person’s names will be displayed by joining prefix with name everywhere. -->
+<!-- 
+HUMAN RESOURCE / EMPLOYEE SETUP
+1.	The email should be editable, but as soon as it is modified, a pop-up should give message “The email address of this employee has been modified, 
+a new password has been emailed to the employee for login”. -->
+<!-- 2.	At the backend, a) email will be updated in User setup, b) current session will be logged out, c) email will be sent to employee with new password. -->
 
+<!-- HUMAN RESOURCE / EMPLOYEE COST CENTER ALLOCATION
+1.	Headcount Cost Center should be displayed on Cost Allocation when Employee is selected to avoid any mistake in selection
+ -->
 
 
 ...........................................................................
 changing before going to live server
-create 2 columns in inventory_balance table source_balance and destination_balance
+create 2 columns in inventory_balance table add location_id and and location_balance
+create sessions table
 ............................................................................
 when mutiple time ajax run error change the .change function with like this   
  $(siteSelector).off('change.siteLookup').on('change.siteLookup', function(){

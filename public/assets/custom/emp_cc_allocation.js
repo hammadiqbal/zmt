@@ -105,6 +105,7 @@ $(document).ready(function() {
     
     //Open Add Employee CC Setup
     $(document).on('click', '.addEmpCC', function() {
+        $('#s_empcc_costcenter').hide();
         var orgId = $('#empcc_org').val();
         if(orgId)
         {
@@ -149,6 +150,38 @@ $(document).ready(function() {
         SiteChangeEmployees('#emp_headcountsite', '#show_emp', '#add_empCC');
         $('.emp_costcenter').html("<option selected disabled value=''>Select Cost Center</option>").prop('disabled', true);
         $('#add-empcc').modal('show');
+    });
+    $(document).on('change', '.emp-id', function() {
+        var empId = $(this).val();
+        let requestData = {
+            empId: empId,
+        };
+          $.ajax({
+                url: 'hr/getemployeedetails',
+                type: 'GET',
+                data: requestData,
+                beforeSend: function() {
+                    Swal.fire({
+                        title: "Processing",
+                        allowOutsideClick: false,
+                        willOpen: () => {
+                            Swal.showLoading();
+                        },
+                        showConfirmButton: false
+                    });
+                },
+                success: function(response) {
+                    Swal.close();
+                    const ccName = response[0].ccName;
+                    $('#empcc_costcenter').val(ccName).prop('disabled', true);
+                    $('#s_empcc_costcenter').show();
+                },
+                error: function(error) {
+                    console.log(error);
+                    Swal.close();
+                }
+        });
+        
     });
     //Open Add Employee CC Setup
 

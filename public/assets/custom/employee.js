@@ -995,7 +995,7 @@ $(document).ready(function() {
                 else if (fieldName == 'success')
                 {
                     Swal.fire({
-                        text: fieldErrors,
+                        html: fieldErrors,
                         icon: fieldName,
                         allowOutsideClick: false,
                         confirmButtonText: 'OK'

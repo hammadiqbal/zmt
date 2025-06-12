@@ -127,7 +127,14 @@ $(document).ready(function() {
     var viewinventoryCat =  $('#view-inventorycategory').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/inventory/inventorycategory',
+        // ajax: '/inventory/inventorycategory',
+        ajax: {
+            url: '/inventory/inventorycategory',
+            data: function (d) {
+                d.cg = $('#fb_cg').val();  
+                d.cm = $('#fb_cm').val();    
+            }
+        },
         order: [[0, 'desc']],
         columns: [
             { data: 'id_raw', name: 'id_raw', visible: false },
@@ -147,6 +154,16 @@ $(document).ready(function() {
                 width: "250px"
             }
         ]
+    });
+
+    $('#fb_cg, #fb_cm').on('change', function () {
+        viewinventoryCat.ajax.reload();  
+    });
+
+    $('.clearFilter').on('click', function () {
+        $('#fb_cg').val($('#fb_cg option:first').val()).change();
+        $('#fb_cm').val($('#fb_cm option:first').val()).change();
+        viewinventoryCat.ajax.reload();   
     });
 
     viewinventoryCat.on('draw.dt', function() {

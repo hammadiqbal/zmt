@@ -1270,6 +1270,8 @@ $(document).ready(function() {
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 $('#add-issuedispense').modal('hide');
+                                $('#view-issuedispense').DataTable().ajax.reload();
+                                $('#add_issuedispense')[0].reset();
                             }
                         });
                     }

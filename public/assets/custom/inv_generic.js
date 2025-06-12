@@ -169,7 +169,14 @@ $(document).ready(function() {
     var viewinventorygeneric =  $('#view-invgeneric').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/inventory/invgeneric',
+        ajax: {
+            url: '/inventory/invgeneric',
+            data: function (d) {
+                d.cat = $('#fb_cat').val();  
+                d.subcat = $('#fb_subcat').val();  
+                d.type = $('#fb_type').val();  
+            }
+        },
         order: [[0, 'desc']],
         columns: [
             { data: 'id_raw', name: 'id_raw', visible: false },
@@ -211,6 +218,17 @@ $(document).ready(function() {
                 width: "250px"
             }
         ]
+    });
+
+    $('#fb_cat,#fb_subcat,#fb_type').on('change', function () {
+        viewinventorygeneric.ajax.reload();  
+    });
+
+    $('.clearFilter').on('click', function () {
+        $('#fb_cat').val($('#fb_cat option:first').val()).change();
+        $('#fb_subcat').val($('#fb_subcat option:first').val()).change();
+        $('#fb_type').val($('#fb_type option:first').val()).change();
+        viewinventorygeneric.ajax.reload();   
     });
 
     viewinventorygeneric.on('draw.dt', function() {

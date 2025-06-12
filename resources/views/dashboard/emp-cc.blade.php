@@ -130,6 +130,18 @@
                                                         </div>
                                                     </div>
 
+                                                     <div class="col-md-6" id="s_empcc_costcenter">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Head Count CostCenter</label>
+                                                                    <input type="text" class="form-control" id="empcc_costcenter">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+
                                                     <div class="col-md-6">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">

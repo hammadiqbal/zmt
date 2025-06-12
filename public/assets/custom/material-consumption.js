@@ -32,6 +32,7 @@ $(document).ready(function() {
                 });
             });
             fetchTransactionTypes(orgId, '#mc_transactiontype', true, function(data) {
+                $('#mc_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',false);
                 if (data && data.length > 0) {
                     $.each(data, function(key, value) {
                         $('#mc_transactiontype').append('<option value="' + value.id + '">' + value.name + '</option>');

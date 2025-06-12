@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\Http\Requests\GenderRequest;
 use App\Http\Requests\EmpStatusRequest;
 use App\Http\Requests\EmpWorkingStatusRequest;
@@ -51,6 +52,8 @@ use App\Models\FinancialPayrollDeduction;
 use App\Models\EmployeeLocationAllocation;
 use App\Models\EmployeeDocuments;
 use App\Mail\EmployeeRegistration;
+use App\Mail\EmpEmailUpdate;
+use Illuminate\Support\Facades\Hash;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class HRController extends Controller
@@ -2397,8 +2400,14 @@ class HRController extends Controller
     public function GetEmployeeDetails(Request $request)
     {
         $empId = $request->input('empId');
-        $Employee = Employee::where('id', $empId)
-                     ->get();
+        // $Employee = Employee::where('id', $empId)
+        //              ->get();
+
+        $Employee = Employee::select('employee.*','costcenter.name as ccName')
+        ->join('costcenter', 'costcenter.id', '=', 'employee.cc_id')
+        ->where('employee.id', $empId)
+        ->get();
+
 
         return response()->json($Employee);
     }
@@ -2820,16 +2829,16 @@ class HRController extends Controller
                     $view = explode(',', $Rights->employee_setup)[1];
                     $actionButtons = '';
                     if ($edit == 1) {
-                        $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 edit-employee mb-2" data-employee-id="'.$EmployeeId.'">'
+                        $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 mt-1 edit-employee" data-employee-id="'.$EmployeeId.'">'
                         . '<i class="fa fa-edit"></i> Edit'
                         . '</button>';
                     }
-                    $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
+                    $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal mt-1" data-log-id="'.$logId.'">'
                     . '<i class="fa fa-eye"></i> View Logs'
                     . '</button>';
 
                     if ($view == 1) {
-                        $actionButtons .= '<button type="button" class="btn btn-outline-secondary mt-2 employee-detail" data-emp-id="'.$EmployeeId.'">'
+                        $actionButtons .= '<button type="button" class="btn btn-outline-secondary mt-1 employee-detail" data-emp-id="'.$EmployeeId.'">'
                         . '<i class="fa fa-plus-circle"></i> View All Details'
                         . '</button>';
                     }
@@ -3247,7 +3256,11 @@ class HRController extends Controller
             abort(403, 'Forbidden');
         } 
         $Employee = Employee::findOrFail($id);
-        $Employee->name = trim($request->input('u_emp_name'));
+        $oldEmail = $Employee->email;
+
+
+        $EmployeeName = trim($request->input('u_emp_name'));
+        $Employee->name = $EmployeeName;
         $Employee->guardian_name = trim($request->input('u_guardian_name'));
         $Employee->prefix_id = trim($request->input('u_emp_prefix'));
         $Employee->guardian_relation = trim($request->input('u_guardian_relation'));
@@ -3281,21 +3294,22 @@ class HRController extends Controller
         $Employee->additional_mobile_no = trim($request->input('u_emp_additional_cell'));
         $Employee->landline = $request->input('u_emp_landline');
 
-        $Employee->email = $request->input('u_emp_email');
+        $newEmail = $request->input('u_emp_email');
+        $Employee->email = $newEmail;
         $Employee->address = $request->input('u_emp_address');
         $Employee->mailing_address = $request->input('u_emp_mailingaddress');
         $empImg = $request->file('u_empImg');
 
-        $Email = $request->input('u_emp_email');
-        if(!empty($Email)){
-            $EmployeeExists = Employee::where('email', $Email)
+
+        if(!empty($newEmail)){
+            $EmployeeExists = Employee::where('email', $newEmail)
             ->where('id', '!=', $id)  // Exclude current employee
             ->exists();
             if ($EmployeeExists) {
                 return response()->json(['info' => 'Employee already exists.']);
             }
 
-            $userExists = Users::where('email', $Email)
+            $userExists = Users::where('email', $newEmail)
             ->where('emp_id', '!=', $id)  
             ->exists();
             if ($userExists) {
@@ -3303,17 +3317,17 @@ class HRController extends Controller
             }
         }
 
-        if (isset($empImg)) {
-            $oldImagePath = public_path('assets/emp/' . $id . '_' .$Employee->image);
-            if (File::exists($oldImagePath)) {
-                File::delete($oldImagePath);
-            }
-            $ImgName = $empImg->getClientOriginalName();
-            $Employee->image = $ImgName;
-            $ImgName = $id . '_' . $ImgName;
-            // $orglogo->storeAs('public/assets/organization', $logoFileName);
-            $empImg->move(public_path('assets/emp'), $ImgName);
-        }
+        // if (isset($empImg)) {
+        //     $oldImagePath = public_path('assets/emp/' . $id . '_' .$Employee->image);
+        //     if (File::exists($oldImagePath)) {
+        //         File::delete($oldImagePath);
+        //     }
+        //     $ImgName = $empImg->getClientOriginalName();
+        //     $Employee->image = $ImgName;
+        //     $ImgName = $id . '_' . $ImgName;
+        //     // $orglogo->storeAs('public/assets/organization', $logoFileName);
+        //     $empImg->move(public_path('assets/emp'), $ImgName);
+        // }
 
 
         $empDOB = $request->input('u_emp_dob');
@@ -3360,7 +3374,49 @@ class HRController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
+        $emailPasswordUpdated = false;
+        if($oldEmail != $newEmail)
+        {
+            $userStatus = Users::where('emp_id', $id)->first();
+            if ($userStatus) {
+                try {
+                    $pwd = Str::random(8);
+                    $password = Hash::make($pwd);
+
+                    Mail::to($newEmail)->send(new EmpEmailUpdate($oldEmail, $newEmail, $EmployeeName,$pwd,$sessionName));
+
+                    $userStatus->email  = $newEmail;
+                    $userStatus->password = $password;
+                    $userStatus->save();
+                    DB::table('sessions')->where('user_id', $userStatus->id)->delete();
+
+                    $emailPasswordUpdated = true;
+
+
+                }
+                catch (TransportExceptionInterface $ex)
+                {
+                    return response()->json(['info' => 'There is an issue with updated email. Please try again!.']);
+                }
+                // return response()->json(['info' => 'This email is already associated with a registered user.']);
+            }
+           
+        }
+        
+        if (isset($empImg)) {
+            $oldImagePath = public_path('assets/emp/' . $id . '_' .$Employee->image);
+            if (File::exists($oldImagePath)) {
+                File::delete($oldImagePath);
+            }
+            $ImgName = $empImg->getClientOriginalName();
+            $Employee->image = $ImgName;
+            $ImgName = $id . '_' . $ImgName;
+            // $orglogo->storeAs('public/assets/organization', $logoFileName);
+            $empImg->move(public_path('assets/emp'), $ImgName);
+        }
         $Employee->save();
+
+        // $Employee->save();
         if (empty($Employee->id)) {
             return response()->json(['error' => 'Failed to update Employee. Please try again']);
         }
@@ -3377,7 +3433,12 @@ class HRController extends Controller
         $EmployeeLog->logid = implode(',', $logIds);
         $EmployeeLog->save();
 
-        return response()->json(['success' => 'Employee updated successfully']);
+        $successMessage = '<b>Employee details updated successfully.</b>';
+        
+        if ($emailPasswordUpdated) {
+            $successMessage .= '<br>The email address of this employee has been updated, and a new password has been emailed to the employee for login.';
+        }
+        return response()->json(['success' => $successMessage]);
     }
 
     public function GetSalaryEmployee(Request $request)
@@ -4892,10 +4953,12 @@ class HRController extends Controller
     {
         $rights = $this->rights;
         $view = explode(',', $rights->employee_cost_center_allocation)[1];
-        if($view == 0)
+        $add = explode(',', $rights->employee_cost_center_allocation)[0];
+        if($view == 0 || $add == 0)
         {
             abort(403, 'Forbidden');
         }
+
         $Employee = DB::table('employee')
         ->join('emp_cc', 'employee.id', '=', 'emp_cc.emp_id')
         ->join('organization', 'organization.id', '=', 'emp_cc.org_id')
@@ -4918,6 +4981,8 @@ class HRController extends Controller
             'emp_cc.status as status',
         )
         ->first();
+
+        dd($Employee);
 
         $org_id = $Employee->org_id;
         $headcount_site_id = $Employee->headcount_site_id;

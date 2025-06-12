@@ -388,6 +388,8 @@ $(document).ready(function() {
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 $('#add-externaltransactions').modal('hide');
+                                $('#view-externaltransactions').DataTable().ajax.reload();
+                                $('#add_externaltransactions')[0].reset();
                             }
                         });
                     }
