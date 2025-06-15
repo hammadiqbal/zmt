@@ -119,7 +119,14 @@ $(document).ready(function() {
     var viewservices =  $('#view-services').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/services/getservices',
+        ajax: {
+            url: '/services/getservices',
+            data: function (d) {
+                d.type = $('#fb_st').val();  
+                d.group = $('#fb_sg').val();  
+                d.unit = $('#fb_su').val();  
+            }
+        },
         order: [[0, 'desc']],
         columns: [
             { data: 'id_raw', name: 'id_raw', visible: false },
@@ -152,6 +159,18 @@ $(document).ready(function() {
                 width: "250px"
             }
         ]
+    });
+
+    
+    $('#fb_st,#fb_sg,#fb_su').on('change', function () {
+        viewservices.ajax.reload();  
+    });
+
+    $('.clearFilter').on('click', function () {
+        $('#fb_st').val($('#fb_st option:first').val()).change();
+        $('#fb_sg').val($('#fb_sg option:first').val()).change();
+        $('#fb_su').val($('#fb_su option:first').val()).change();
+        viewservices.ajax.reload();   
     });
 
     viewservices.on('draw.dt', function() {

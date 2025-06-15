@@ -3730,7 +3730,10 @@ class InventoryController extends Controller
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
-        return view('dashboard.stock_monitoring', compact('user','Organizations'));
+        $Sites = Site::where('status', 1)->get();
+        $Generics = InventoryGeneric::where('status', 1)->get();
+        $Brands = InventoryBrand::where('status', 1)->get();
+        return view('dashboard.stock_monitoring', compact('user','Organizations','Sites','Generics','Brands'));
     }
 
     public function AddStockMonitoring(StockMonitoringRequest $request)
@@ -3854,6 +3857,15 @@ class InventoryController extends Controller
         if($sessionOrg != '0')
         {
             $StockMonitoringData->where('stock_monitoring.org_id', '=', $sessionOrg);
+        }
+        if ($request->has('site') && $request->site != '' && $request->site != 'Loading...') {
+            $StockMonitoringData->where('stock_monitoring.site_id', $request->site);
+        }
+        if ($request->has('generic') && $request->generic != '' && $request->generic != 'Loading...') {
+            $StockMonitoringData->where('stock_monitoring.item_generic_id', $request->generic);
+        }
+        if ($request->has('brand') && $request->brand != '' && $request->brand != 'Loading...') {
+            $StockMonitoringData->where('stock_monitoring.item_brand_id', $request->brand);
         }
         $StockMonitoringData = $StockMonitoringData;
         // ->get()

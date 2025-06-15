@@ -164,7 +164,14 @@ $(document).ready(function() {
     var viewStockMonitoring =  $('#view-stockmonitoring').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/inventory/viewstockmonitoring',
+        ajax: {
+            url: '/inventory/viewstockmonitoring',
+            data: function (d) {
+                d.site = $('#fb_site').val();  
+                d.generic = $('#fb_generic').val();  
+                d.brand = $('#fb_brand').val();  
+            }
+        },
         order: [[0, 'desc']],
         columns: [
             { data: 'id_raw', name: 'id_raw', visible: false },
@@ -193,7 +200,16 @@ $(document).ready(function() {
             }
         ]
     });
+    $('#fb_site,#fb_generic,#fb_brand').on('change', function () {
+        viewStockMonitoring.ajax.reload();  
+    });
 
+    $('.clearFilter').on('click', function () {
+        $('#fb_site,#fb_generic,#fb_brand').each(function() {
+            $(this).val($(this).find('option:first').val()).change();
+        });
+        viewStockMonitoring.ajax.reload();   
+    });
     viewStockMonitoring.on('draw.dt', function() {
         $('[data-toggle="popover"]').popover({
             html: true

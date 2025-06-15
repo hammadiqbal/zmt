@@ -139,7 +139,14 @@ $(document).ready(function() {
     var ActivatedCCData =  $('#view-ccactivation').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/costcenter/getactivateccdata',
+        ajax: {
+            url: '/costcenter/getactivateccdata',
+            data: function (d) {
+                d.site = $('#fb_site').val();  
+                d.costcenter = $('#fb_cc').val();  
+                d.cc_type = $('#fb_cct').val();  
+            }
+        },
         order: [[0, 'desc']],
         columns: [
             { data: 'id_raw', name: 'id_raw', visible: false },
@@ -166,6 +173,18 @@ $(document).ready(function() {
                 width: "250px"
             }
         ]
+    });
+
+    
+    $('#fb_site,#fb_cc,#fb_cct').on('change', function () {
+        ActivatedCCData.ajax.reload();  
+    });
+
+    $('.clearFilter').on('click', function () {
+        $('#fb_site').val($('#fb_site option:first').val()).change();
+        $('#fb_cc').val($('#fb_cc option:first').val()).change();
+        $('#fb_cct').val($('#fb_cct option:first').val()).change();
+        ActivatedCCData.ajax.reload();   
     });
 
     ActivatedCCData.on('draw.dt', function() {

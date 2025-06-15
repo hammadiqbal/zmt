@@ -175,6 +175,57 @@
             @endif
 
             @if ($view == 1)
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card-body">
+                        <div class="row align-items-center mb-1">
+                            <div class="col-auto filterToggle" style="cursor: pointer;">
+                                <span>Filter</span>
+                            </div>
+                            <div class="filterToggle" style="margin-bottom:-8px;cursor: pointer;">
+                                <span>
+                                    <div bis_skin_checked="1">
+                                        <span class="b-plp_actions-refinements_toggle_icon">
+                                            <svg width="19" height="24" viewBox="0 0 19 24" fill="none" focusable="false">
+                                                <path fill-rule="evenodd" clip-rule="evenodd" d="M0.0126953 9.3H2.67911C2.98774 10.0064 3.69257 10.5 4.5127 10.5C5.33282 10.5 6.03765 10.0064 6.34628 9.3H18.0127V7.7H6.34628C6.03765 6.99364 5.33282 6.5 4.5127 6.5C3.69257 6.5 2.98774 6.99364 2.67911 7.7H0.0126953V9.3ZM14.3463 16.3H18.0127V14.7H14.3463C14.0377 13.9936 13.3328 13.5 12.5127 13.5C11.6926 13.5 10.9877 13.9936 10.6791 14.7H0.0126953V16.3H10.6791C10.9877 17.0064 11.6926 17.5 12.5127 17.5C13.3328 17.5 14.0377 17.0064 14.3463 16.3Z" fill="currentColor"></path>
+                                            </svg>
+                                        </span>
+                                    </div>
+                                </span>
+                            </div>
+                        
+                            <!-- Clear Button -->
+                            <div class="col-auto ml-auto">
+                                <button class="btn btn-outline-secondary btn-sm clearFilter" type="button">
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-body filterData">
+                            <div class="row justify-content-center align-items-center">
+                                
+                                <div class="col-md-4">
+                                    <div class="form-group row">
+                                        <div class="col-md-12">
+                                            <div class="form-group has-custom m-b-5">
+                                                <label class="filterlabel">Cadre</label>
+                                                <select class="form-control selecter p-0" id="fb_cadre" style="color:#222d32">
+                                                    <option selected disabled >Select Cadre</option>
+                                                    @foreach ($empCadres as $empCadre)
+                                                        <option value="{{ $empCadre['id'] }}"> {{ $empCadre['name'] }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                           
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="table-responsive m-t-40">
                 <table id="view-empPosition" class="table table-bordered table-striped">
                     <thead>

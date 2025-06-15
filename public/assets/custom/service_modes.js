@@ -110,7 +110,12 @@ $(document).ready(function() {
     var viewserviceMode =  $('#view-servicemode').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/services/servicemode',
+        ajax: {
+            url: '/services/servicemode',
+            data: function (d) {
+                d.billingmode = $('#fb_bm').val();  
+            }
+        },
         order: [[0, 'desc']],
         columns: [
             { data: 'id_raw', name: 'id_raw', visible: false },
@@ -141,6 +146,16 @@ $(document).ready(function() {
             }
         ]
     });
+
+    $('#fb_bm').on('change', function () {
+        viewserviceMode.ajax.reload();  
+    });
+
+    $('.clearFilter').on('click', function () {
+        $('#fb_bm').val($('#fb_bm option:first').val()).change();
+        viewserviceMode.ajax.reload();   
+    });
+
 
     viewserviceMode.on('draw.dt', function() {
         $('[data-toggle="popover"]').popover({

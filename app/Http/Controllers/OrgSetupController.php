@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\OrganizationRequest;
+use App\Http\Requests\ReferralSiteRequest;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
@@ -15,6 +16,7 @@ use App\Models\Organization;
 use App\Models\Province;
 use App\Models\District;
 use App\Models\Division;
+use App\Models\ReferralSite;
 use App\Mail\OrganizationRegistration;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Illuminate\Support\Facades\Auth;
@@ -595,5 +597,360 @@ class OrgSetupController extends Controller
         ->where('inventory_transaction_type.id', $transactiontypeID)
         ->get();
         return response()->json($Organization);
+    }
+
+    public function ShowReferralSite()
+    {
+        $colName = 'referral_site';
+        if (PermissionDenied($colName)) {
+            abort(403); 
+        }
+        $user = auth()->user();
+        // $roles = OrganizationRole::all();
+        // return view('dashboard.organization', compact('roles'));
+        $ProvinceData = Province::where('status', 1)->get();
+        $Organizations = Organization::where('status', 1)->get();
+        
+        return view('dashboard.referral_site', compact('ProvinceData','user','Organizations'));
+    }
+
+    public function AddReferralSite(ReferralSiteRequest $request)
+    {
+        $rights = $this->rights;
+        $add = explode(',', $rights->referral_site)[0];
+        if($add == 0)
+        {
+            abort(403, 'Forbidden');
+        }
+        $Description = $request->input('rf_desc');
+        $Organization = $request->input('rf_org');
+        $Province = $request->input('rf_province');
+        $Division = $request->input('rf_division');
+        $District = $request->input('rf_district');
+        $Cell = $request->input('rf_cell');
+        $landline = $request->input('rf_landline');
+        $Remarks = $request->input('rf_remarks');
+        $Edt = $request->input('rf_edt');
+        $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
+        $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
+        $EffectDateTime->subMinute(1);
+        if ($EffectDateTime->isPast()) {
+            $status = 1;
+        } else {
+            $status = 0;
+        }
+
+        $session = auth()->user();
+        $sessionName = $session->name;
+        $sessionId = $session->id;
+
+        $last_updated = $this->currentDatetime;
+        $timestamp = $this->currentDatetime;
+        $logId = null;
+
+        $CGExists = ReferralSite::where('org_id', $Organization)
+        ->where('name', $Description)
+        ->where('province_id', $Province)
+        ->where('division_id', $Division)
+        ->where('district_id', $District)
+        ->exists();
+
+        if ($CGExists) {
+            return response()->json(['info' => 'Referral Site already exists.']);
+        }
+        else
+        {
+            $ReferralSite = new ReferralSite();
+            $ReferralSite->org_id = $Organization;
+            $ReferralSite->name = $Description;
+            $ReferralSite->province_id = $Province;
+            $ReferralSite->division_id = $Division;
+            $ReferralSite->district_id = $District;
+            $ReferralSite->cell = $Cell;
+            $ReferralSite->landline = $landline;
+            $ReferralSite->remarks = $Remarks;
+            $ReferralSite->status = $status;
+            $ReferralSite->user_id = $sessionId;
+            $ReferralSite->last_updated = $last_updated;
+            $ReferralSite->timestamp = $timestamp;
+            $ReferralSite->effective_timestamp = $Edt;
+
+            $ReferralSite->save();
+
+            if (empty($ReferralSite->id)) {
+                return response()->json(['error' => 'Failed to create Referral Site.']);
+            }
+
+            $logs = Logs::create([
+                'module' => 'site',
+                'content' => "'{$Description}' has been added by '{$sessionName}'",
+                'event' => 'add',
+                'timestamp' => $timestamp,
+            ]);
+            $logId = $logs->id;
+            $ReferralSite->logid = $logs->id;
+            $ReferralSite->save();
+            return response()->json(['success' => 'Referral Site Added successfully']);
+        }
+    }
+
+    public function ShowReferralSiteDate(Request $request)
+    {
+        $rights = $this->rights;
+        $view = explode(',', $rights->referral_site)[1];
+        if($view == 0)
+        {
+            abort(403, 'Forbidden');
+        }
+        $ReferralSites = ReferralSite::select('referral_site.*',
+        'organization.organization as orgName','province.name as provinceName',
+        'division.name as divisionName','district.name as districtName')
+        ->join('organization', 'organization.id', '=', 'referral_site.org_id')
+        ->join('province', 'province.id', '=', 'referral_site.province_id')
+        ->join('division', 'division.id', '=', 'referral_site.division_id')
+        ->join('district', 'district.id', '=', 'referral_site.district_id')
+        ->orderBy('referral_site.id', 'desc');
+
+        $session = auth()->user();
+        $sessionOrg = $session->org_id;
+        if($sessionOrg != '0')
+        {
+            $ReferralSites->where('referral_site.org_id', '=', $sessionOrg);
+        }
+        $ReferralSites = $ReferralSites;
+        // ->get()
+        // return DataTables::of($Vendors)
+        return DataTables::eloquent($ReferralSites)
+            ->filter(function ($query) use ($request) {
+                if ($request->has('search') && $request->search['value']) {
+                    $search = $request->search['value'];
+                    $query->where(function ($q) use ($search) {
+                        $q->where('referral_site.name', 'like', "%{$search}%")
+                        ->orWhere('referral_site.cell', 'like', "%{$search}%")
+                        ->orWhere('referral_site.landline', 'like', "%{$search}%")
+                        ->orWhere('referral_site.remarks', 'like', "%{$search}%")
+                        ->orWhere('organization.organization', 'like', "%{$search}%")
+                        ->orWhere('province.name', 'like', "%{$search}%")
+                        ->orWhere('division.name', 'like', "%{$search}%")
+                        ->orWhere('district.name', 'like', "%{$search}%");
+                    });
+                }
+            })
+            ->addColumn('id_raw', function ($ReferralSite) {
+                return $ReferralSite->id; 
+            })
+            ->editColumn('id', function ($ReferralSite) {
+                $session = auth()->user();
+                $effectiveDate = Carbon::createFromTimestamp($ReferralSite->effective_timestamp)->format('l d F Y - h:i A');
+                $timestamp = Carbon::createFromTimestamp($ReferralSite->timestamp)->format('l d F Y - h:i A');
+                $lastUpdated = Carbon::createFromTimestamp($ReferralSite->last_updated)->format('l d F Y - h:i A');
+                $createdByName = getUserNameById($ReferralSite->user_id);
+                $createdInfo = "
+                        <b>Created By:</b> " . ucwords($createdByName) . "  <br>
+                        <b>Effective Date&amp;Time:</b> " . $effectiveDate . " <br>
+                        <b>RecordedAt:</b> " . $timestamp ." <br>
+                        <b>LastUpdated:</b> " . $lastUpdated;
+
+                $Name = $ReferralSite->name;
+                $sessionOrg = $session->org_id;
+                $orgName = '';
+                if($sessionOrg == 0)
+                {
+                    $orgName ='<b>Organization:</b> '.ucwords($ReferralSite->orgName).'<hr class="mt-1 mb-1">';
+                }
+                return ucwords($Name)
+                    . '<hr class="mt-1 mb-1">'
+                    . $orgName
+                    .'<b>Remarks:</b> '.($ReferralSite->remarks ? ucwords($ReferralSite->remarks) : 'N/A').'<hr class="mt-1 mb-1">'
+                    . '<span class="label label-info popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $createdInfo .'">'
+                    . '<i class="fa fa-toggle-right"></i> View Details'
+                    . '</span>';
+            })
+            ->editColumn('address', function ($ReferralSite) {
+                $Province = $ReferralSite->provinceName;
+                $Division = $ReferralSite->divisionName;
+                $District = $ReferralSite->districtName;
+                return '<b>Province:</b> '.ucwords($Province).'<br>'
+                    . '<hr class="mt-1 mb-2">'
+                    .'<b>Division:</b> '.ucwords($Division).'<br>'
+                    . '<hr class="mt-1 mb-2">'
+                    .'<b>District:</b> '.ucwords($District).'<br>';
+            })
+            ->editColumn('contact', function ($ReferralSite) {
+                return '<b>Cell #:</b> '.($ReferralSite->cell ? ucwords($ReferralSite->cell) : 'N/A').'<br>'
+                    . '<hr class="mt-1 mb-2">'
+                    .'<b>Landline #:</b> '.($ReferralSite->landline ? ucwords($ReferralSite->landline) : 'N/A').'<br>';
+            })
+            ->addColumn('action', function ($ReferralSite) {
+                    $ReferralSiteId = $ReferralSite->id;
+                    $logId = $ReferralSite->logid;
+                    $Rights = $this->rights;
+                    $edit = explode(',', $Rights->referral_site)[2];
+                    $actionButtons = '';
+                    if ($edit == 1) {
+                        $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 edit-rs" data-cg-id="'.$ReferralSiteId.'">'
+                        . '<i class="fa fa-edit"></i> Edit'
+                        . '</button>';
+                    }
+                    $actionButtons .='<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
+                    . '<i class="fa fa-eye"></i> View Logs'
+                    . '</button>';
+                    return $ReferralSite->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
+
+            })
+            ->editColumn('status', function ($ReferralSite) {
+                $rights = $this->rights;
+                $updateStatus = explode(',', $rights->referral_site)[3];
+                return $updateStatus == 1 ? ($ReferralSite->status ? '<span class="label label-success rs_status cursor-pointer" data-id="'.$ReferralSite->id.'" data-status="'.$ReferralSite->status.'">Active</span>' : '<span class="label label-danger rs_status cursor-pointer" data-id="'.$ReferralSite->id.'" data-status="'.$ReferralSite->status.'">Inactive</span>') : ($ReferralSite->status ? '<span class="label label-success">Active</span>' : '<span class="label label-danger">Inactive</span>');
+
+            })
+            ->rawColumns(['action', 'status','address','contact',
+            'id'])
+            ->make(true);
+    }
+
+    public function UpdateReferralSiteStatus(Request $request)
+    {
+        $rights = $this->rights;
+        $UpdateStatus = explode(',', $rights->referral_site)[3];
+        if($UpdateStatus == 0)
+        {
+            abort(403, 'Forbidden');
+        }
+        $ReferralSiteID = $request->input('id');
+        $Status = $request->input('status');
+        $CurrentTimestamp = $this->currentDatetime;
+        $ReferralSite = ReferralSite::find($ReferralSiteID);
+
+        if($Status == 0)
+        {
+            $UpdateStatus = 1;
+            $statusLog = 'Active';
+            $ReferralSite->effective_timestamp = $CurrentTimestamp;
+        }
+        else{
+            $UpdateStatus = 0;
+            $statusLog = 'Inactive';
+
+        }
+        $ReferralSite->status = $UpdateStatus;
+        $ReferralSite->last_updated = $CurrentTimestamp;
+
+        $session = auth()->user();
+        $sessionName = $session->name;
+        $sessionId = $session->id;
+
+        $logs = Logs::create([
+            'module' => 'referral_site',
+            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
+            'event' => 'update',
+            'timestamp' => $this->currentDatetime,
+        ]);
+        $ReferralSiteLog = ReferralSite::where('id', $ReferralSiteID)->first();
+        $logIds = $ReferralSiteLog->logid ? explode(',', $ReferralSiteLog->logid) : [];
+        $logIds[] = $logs->id;
+        $ReferralSiteLog->logid = implode(',', $logIds);
+        $ReferralSiteLog->save();
+
+        $ReferralSite->save();
+        return response()->json(['success' => true, 200]);
+    }
+
+    public function UpdateReferralSiteModal($id)
+    {
+        $rights = $this->rights;
+        $edit = explode(',', $rights->referral_site)[2];
+        if($edit == 0)
+        {
+            abort(403, 'Forbidden');
+        }
+        $ReferralSite = ReferralSite::select('referral_site.*',
+        'organization.organization as org_name',
+        'province.name as province_name',
+        'division.name as division_name',
+        'district.name as district_name')
+        ->join('organization', 'organization.id', '=', 'referral_site.org_id')
+        ->join('province', 'province.id', '=', 'referral_site.province_id')
+        ->join('division', 'division.id', '=', 'referral_site.division_id')
+        ->join('district', 'district.id', '=', 'referral_site.district_id')
+        ->find($id);
+
+        $data = [
+            'id' => $ReferralSite->id,
+            'org_id' => $ReferralSite->org_id,
+            'org_name' => $ReferralSite->org_name,
+            'name' => $ReferralSite->name,
+            'province_id' => $ReferralSite->province_id,
+            'province_name' => $ReferralSite->province_name,
+            'division_id' => $ReferralSite->division_id,
+            'division_name' => $ReferralSite->division_name,
+            'district_id' => $ReferralSite->district_id,
+            'district_name' => $ReferralSite->district_name,
+            'cell' => $ReferralSite->cell,
+            'landline' => $ReferralSite->landline,
+            'remarks' => $ReferralSite->remarks,
+            'effective_timestamp' => Carbon::createFromTimestamp($ReferralSite->effective_timestamp)->format('l d F Y - h:i A')
+        ];
+
+        return response()->json($data);
+    }
+
+    public function UpdateReferralSite(Request $request, $id)
+    {
+        $rights = $this->rights;
+        $edit = explode(',', $rights->referral_site)[2];
+        if($edit == 0)
+        {
+            abort(403, 'Forbidden');
+        }
+
+        $ReferralSite = ReferralSite::findOrFail($id);
+        
+        $ReferralSite->org_id = $request->input('u_rf_org');
+        $ReferralSite->name = trim($request->input('u_rf_desc'));
+        $ReferralSite->province_id = $request->input('u_rf_province');
+        $ReferralSite->division_id = $request->input('u_rf_division');
+        $ReferralSite->district_id = $request->input('u_rf_district');
+        $ReferralSite->cell = $request->input('u_rf_cell');
+        $ReferralSite->landline = $request->input('u_rf_landline');
+        $ReferralSite->remarks = trim($request->input('u_rf_remarks'));
+
+        $effective_date = $request->input('u_rf_edt');
+        $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
+        $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
+        $EffectDateTime->subMinute(1);
+        if ($EffectDateTime->isPast()) {
+            $status = 1; //Active
+        } else {
+            $status = 0; //Inactive
+        }
+
+        $ReferralSite->effective_timestamp = $effective_date;
+        $ReferralSite->last_updated = $this->currentDatetime;
+        $ReferralSite->status = $status;
+
+        $session = auth()->user();
+        $sessionName = $session->name;
+
+        $ReferralSite->save();
+
+        if (empty($ReferralSite->id)) {
+            return response()->json(['error' => 'Failed to update Referral Site. Please try again']);
+        }
+
+        $logs = Logs::create([
+            'module' => 'referral_site',
+            'content' => "Data has been updated by '{$sessionName}'",
+            'event' => 'update',
+            'timestamp' => $this->currentDatetime,
+        ]);
+
+        $ReferralSiteLog = ReferralSite::where('id', $id)->first();
+        $logIds = $ReferralSiteLog->logid ? explode(',', $ReferralSiteLog->logid) : [];
+        $logIds[] = $logs->id;
+        $ReferralSiteLog->logid = implode(',', $logIds);
+        $ReferralSiteLog->save();
+
+        return response()->json(['success' => 'Referral Site updated successfully']);
     }
 }

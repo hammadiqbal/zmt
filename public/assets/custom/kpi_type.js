@@ -114,10 +114,16 @@ $(document).ready(function() {
         //Add KPI Type
     
         // View KPI Type Data
-        var viewkpiMode =  $('#view-kpitype').DataTable({
+        var viewkpiType =  $('#view-kpitype').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '/kpi/kpitype',
+            ajax: {
+                url: '/kpi/kpitype',
+                data: function (d) {
+                    d.kpi_group = $('#fb_kg').val();  
+                    d.kpi_dimension = $('#fb_kd').val();  
+                }
+            },
             order: [[0, 'desc']],
             columns: [
                 { data: 'id_raw', name: 'id_raw', visible: false },
@@ -148,18 +154,27 @@ $(document).ready(function() {
                 }
             ]
         });
+        $('#fb_kg,#fb_kd').on('change', function () {
+            viewkpiType.ajax.reload();  
+        });
+
+        $('.clearFilter').on('click', function () {
+            $('#fb_kg').val($('#fb_kg option:first').val()).change();
+            $('#fb_kd').val($('#fb_kd option:first').val()).change();
+            viewkpiType.ajax.reload();   
+        });
     
-        viewkpiMode.on('draw.dt', function() {
+        viewkpiType.on('draw.dt', function() {
             $('[data-toggle="popover"]').popover({
                 html: true
             });
         });
         // Show the loader before an AJAX request is made
-        viewkpiMode.on('preXhr.dt', function() {
+        viewkpiType.on('preXhr.dt', function() {
             $('#ajax-loader').show();
         });
         // Hide the loader after the AJAX request is complete
-        viewkpiMode.on('xhr.dt', function() {
+        viewkpiType.on('xhr.dt', function() {
             $('#ajax-loader').hide();
         });
         // View KPI Type Data

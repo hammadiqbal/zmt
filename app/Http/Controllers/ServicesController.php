@@ -34,6 +34,7 @@ use App\Models\ServiceRequisitionSetup;
 use App\Models\RequisitionForEPI;
 use App\Models\ActivatedLocations;
 use App\Models\PatientArrivalDeparture;
+use App\Models\Site;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -150,6 +151,11 @@ class ServicesController extends Controller
             abort(403, 'Forbidden');
         }
         $ServiceModes = ServiceMode::select('*')->orderBy('id', 'desc');
+        if ($request->has('billingmode') && $request->billingmode != '' && $request->billingmode != 'Loading...') {
+            $ServiceModes->where('service_mode.billing_mode', $request->billingmode);
+        }
+        $ServiceModes = $ServiceModes;
+
         // ->get()
         // return DataTables::of($ServiceModes)
         return DataTables::eloquent($ServiceModes)
@@ -987,7 +993,12 @@ class ServicesController extends Controller
         $ServiceGroups = ServiceGroup::select('service_group.*', 'service_type.name as type_name')
         ->join('service_type', 'service_type.id', '=', 'service_group.type_id')
         ->orderBy('service_group.id', 'desc');
+
+        if ($request->has('type') && $request->type != '' && $request->type != 'Loading...') {
+            $ServiceGroups->where('service_group.type_id', $request->type);
+        }
         // ->get();
+
 
         // return DataTables::of($ServiceGroups)
         return DataTables::eloquent($ServiceGroups)
@@ -1205,8 +1216,9 @@ class ServicesController extends Controller
         }
         $user = auth()->user();
         $serviceGroups = ServiceGroup::where('status', 1)->get();
+        $serviceTypes = ServiceType::where('status', 1)->get();
         $serviceUnits = ServiceUnit::where('status', 1)->get();
-        return view('dashboard.service', compact('user','serviceGroups','serviceUnits'));
+        return view('dashboard.service', compact('user','serviceGroups','serviceUnits','serviceTypes'));
     }
 
     public function AddServices(ServiceRequest $request)
@@ -1292,7 +1304,19 @@ class ServicesController extends Controller
         ->join('service_unit', 'service_unit.id', '=', 'services.unit_id')
         ->join('service_type', 'service_type.id', '=', 'service_group.type_id')
         ->orderBy('services.id', 'desc');
+
+        if ($request->has('type') && $request->type != '' && $request->type != 'Loading...') {
+            $Services->where('service_group.type_id', $request->type);
+        }
+        if ($request->has('group') && $request->group != '' && $request->group != 'Loading...') {
+            $Services->where('services.group_id', $request->group);
+        }
+        if ($request->has('unit') && $request->unit != '' && $request->unit != 'Loading...') {
+            $Services->where('services.unit_id', $request->unit);
+        }
+
         // ->get();
+
 
         // return DataTables::of($Services)
         return DataTables::eloquent($Services)
@@ -1536,8 +1560,14 @@ class ServicesController extends Controller
         ->where('status', 1)
         ->get();
 
+        $Sites = Site::where('status', 1)->get();
+        $CostCenters = CostCenter::where('status', 1)->get();
+        $ServiceTypes = ServiceType::where('status', 1)->get();
+        $ServiceGroups = ServiceGroup::where('status', 1)->get();
+        $RawServiceModes = ServiceMode::where('status', 1)->get();
 
-        return view('dashboard.service-activation', compact('user','Organizations','ServiceModes'));
+
+        return view('dashboard.service-activation', compact('user','Organizations','ServiceModes','Sites','CostCenters','ServiceTypes','ServiceGroups','RawServiceModes'));
     }
 
     public function ActivateService(ServiceActivationRequest $request)
@@ -1664,6 +1694,30 @@ class ServicesController extends Controller
         {
             $ServiceActivations->where('activated_service.org_id', '=', $sessionOrg);
         }
+        
+        if ($request->has('site') && $request->site != '' && $request->site != 'Loading...') {
+            $ServiceActivations->where('activated_service.site_id', $request->site);
+        } 
+        
+        if ($request->has('costcenter') && $request->costcenter != '' && $request->costcenter != 'Loading...') {
+            $ServiceActivations->where(function($query) use ($request) {
+                $query->whereRaw("FIND_IN_SET(?, activated_service.ordering_cc_ids)", [$request->costcenter])
+                      ->orWhereRaw("FIND_IN_SET(?, activated_service.performing_cc_ids)", [$request->costcenter]);
+            });
+        }
+        
+        if ($request->has('service_type') && $request->service_type != '' && $request->service_type != 'Loading...') {
+            $ServiceActivations->where('service_type.id', $request->service_type);
+        } 
+
+        if ($request->has('service_group') && $request->service_group != '' && $request->service_group != 'Loading...') {
+            $ServiceActivations->where('service_group.id', $request->service_group);
+        } 
+      
+        if ($request->has('service_mode') && $request->service_mode != '' && $request->service_mode != 'Loading...') {
+            $ServiceActivations->whereRaw("FIND_IN_SET(?, activated_service.servicemode_ids)", [$request->service_mode]);
+        }
+
         $ServiceActivations = $ServiceActivations;
         // ->get();
         // return DataTables::of($ServiceActivations)
@@ -2609,8 +2663,9 @@ class ServicesController extends Controller
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
+        $Sites = Site::where('status', 1)->get();
 
-        return view('dashboard.service-location-activation', compact('user','Organizations'));
+        return view('dashboard.service-location-activation', compact('user','Organizations','Sites'));
     }
 
     public function GetNotActivatedServiceLocation(Request $request)
@@ -2786,6 +2841,9 @@ class ServicesController extends Controller
         {
             $ActivatedLocations->where('activated_location.org_id', '=', $sessionOrg);
         }
+        if ($request->has('site') && $request->site != '' && $request->site != 'Loading...') {
+            $ActivatedLocations->where('activated_location.site_id', $request->site);
+        } 
         $ActivatedLocations = $ActivatedLocations;
         // ->get()
 

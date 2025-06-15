@@ -430,6 +430,10 @@ class CostCenterController extends Controller
         'cc_type.ordering as orderingStatus','cc_type.performing as performingStatus')
         ->join('cc_type', 'cc_type.id', '=', 'costcenter.cc_type')
         ->orderBy('costcenter.id', 'desc');
+
+        if ($request->has('cc_type') && $request->cc_type != '' && $request->cc_type != 'Loading...') {
+            $CostCenters->where('costcenter.cc_type', $request->cc_type);
+        }
         // ->get();
 
         // return DataTables::of($CostCenters)
@@ -785,7 +789,11 @@ class CostCenterController extends Controller
         ->orderBy('category', 'asc') // Order by category to simplify display
         ->get();
 
-        return view('dashboard.cc-activation', compact('user','Organizations','CostCenters'));
+        $RawCostCenters = CostCenter::where('status', 1)->get();
+        $CCTypes = CCType::where('status', 1)->get();
+        $Sites = Site::where('status', 1)->get();
+
+        return view('dashboard.cc-activation', compact('user','Organizations','CostCenters','RawCostCenters','Sites','CCTypes'));
     }
 
     public function GetNotActivatedCC(Request $request)
@@ -941,6 +949,19 @@ class CostCenterController extends Controller
         {
             $ActivatedCC->where('activated_cc.org_id', '=', $sessionOrg);
         }
+
+        if ($request->has('site') && $request->site != '' && $request->site != 'Loading...') {
+            $ActivatedCC->where('activated_cc.site_id', $request->site);
+        } 
+        
+        if ($request->has('costcenter') && $request->costcenter != '' && $request->costcenter != 'Loading...') {
+            $ActivatedCC->where('activated_cc.cc_id', $request->costcenter);
+        } 
+        
+        if ($request->has('cc_type') && $request->cc_type != '' && $request->cc_type != 'Loading...') {
+            $ActivatedCC->where('costcenter.cc_type', $request->cc_type);
+        } 
+
         $ActivatedCC = $ActivatedCC;
         // ->get()
 

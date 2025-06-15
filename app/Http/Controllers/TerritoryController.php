@@ -128,19 +128,19 @@ class TerritoryController extends Controller
         $user = auth()->user();
 
         $currentDate = $this->currentDatetime;
-        $provinces = Province::where('effective_timestamp', '<=', $currentDate)
-        ->where('status', 1)->get();
-        $ProvinceData = [];
-        foreach ($provinces as $province)
-        {
-            $province_id = $province->id;
-            $province_name = $province->name;
-            $ProvinceData[] = [
-                'province_id' => $province_id,
-                'province_name' => ucfirst($province_name),
-            ];
+        $ProvinceData = Province::where('status', 1)->select('id', 'name')->get();        
+        // ->where('status', 1)->get();
+        // $ProvinceData = [];
+        // foreach ($provinces as $province)
+        // {
+        //     $province_id = $province->id;
+        //     $province_name = $province->name;
+        //     $ProvinceData[] = [
+        //         'province_id' => $province_id,
+        //         'province_name' => ucfirst($province_name),
+        //     ];
 
-        }
+        // }
 
         return view('dashboard.division', compact('ProvinceData','user'));
     }
@@ -223,31 +223,36 @@ class TerritoryController extends Controller
         $user = auth()->user();
 
         $currentDate = $this->currentDatetime;
-        $provinces = Province::where('effective_timestamp', '<=', $currentDate)
-        ->where('status', 1)->get();
-        $ProvinceData = [];
-        foreach ($provinces as $province)
-        {
-            $province_id = $province->id;
-            $province_name = $province->name;
-            $ProvinceData[] = [
-                'province_id' => $province_id,
-                'province_name' => ucfirst($province_name),
-            ];
+        $ProvinceData = Province::where('status', 1)->select('id', 'name')->get();        
 
-        }
-        $divisions = Division::where('effective_timestamp', '<=', $currentDate)
-        ->where('status', 1)->get();
-        $DivisionData = [];
-        foreach ($divisions as $division)
-        {
-            $division_id = $division->id;
-            $division_name = $division->name;
-            $DivisionData[] = [
-                'division_id' => $division_id,
-                'division_name' => ucfirst($division_name),
-            ];
-        }
+        // $provinces = Province::where('effective_timestamp', '<=', $currentDate)
+        // ->where('status', 1)->get();
+        // $ProvinceData = [];
+        // foreach ($provinces as $province)
+        // {
+        //     $province_id = $province->id;
+        //     $province_name = $province->name;
+        //     $ProvinceData[] = [
+        //         'province_id' => $province_id,
+        //         'province_name' => ucfirst($province_name),
+        //     ];
+
+        // }
+
+        $DivisionData = Division::where('status', 1)->select('id', 'name')->get();        
+
+        // $divisions = Division::where('effective_timestamp', '<=', $currentDate)
+        // ->where('status', 1)->get();
+        // $DivisionData = [];
+        // foreach ($divisions as $division)
+        // {
+        //     $division_id = $division->id;
+        //     $division_name = $division->name;
+        //     $DivisionData[] = [
+        //         'division_id' => $division_id,
+        //         'division_name' => ucfirst($division_name),
+        //     ];
+        // }
         return view('dashboard.district', compact('ProvinceData', 'DivisionData','user'));
     }
 
@@ -340,6 +345,7 @@ class TerritoryController extends Controller
             abort(403, 'Forbidden');
         }
         $Provinces = Province::select('*')->orderBy('id', 'desc');
+      
         // ->get()
         // return DataTables::of($Provinces)
         return DataTables::eloquent($Provinces)
@@ -423,6 +429,9 @@ class TerritoryController extends Controller
         // $Divisions = Division::select('*')->get();
         $Divisions = Division::select('division.*', 'province.name as province_name')
         ->join('province', 'province.id', '=', 'division.province_id');
+        if ($request->has('province') && $request->province != '' && $request->province != 'Loading...') {
+            $Divisions->where('division.province_id', $request->province);
+        }
         // ->get();
         // return DataTables::of($Divisions)
         return DataTables::eloquent($Divisions)
@@ -509,6 +518,13 @@ class TerritoryController extends Controller
         'province.name as province_name')
         ->join('province', 'province.id', '=', 'district.province_id')
         ->join('division', 'division.id', '=', 'district.division_id');
+
+        if ($request->has('province') && $request->province != '' && $request->province != 'Loading...') {
+            $Districts->where('district.province_id', $request->province);
+        }
+        if ($request->has('division') && $request->division != '' && $request->division != 'Loading...') {
+            $Districts->where('district.division_id', $request->division);
+        }
         // ->get();
         // return DataTables::of($Districts)
         return DataTables::eloquent($Districts)
@@ -842,10 +858,21 @@ class TerritoryController extends Controller
 
     public function UpdateSelectedDistrict(Request $request)
     {
-        $divisionid = $request->input('divisionId');
-        $district = District::where('division_id', $divisionid)
-                    ->where('status', 1)
-                    ->get();
+        // $divisionid = $request->input('divisionId');
+        // $district = District::where('division_id', $divisionid)
+        //             ->where('status', 1)
+        //             ->get();
+        $district = District::where('status', 1);
+
+        if ($request->has('divisionId')) {
+            $divisionid = $request->input('divisionId');
+            $district = $district->where('division_id', $divisionid);
+        }
+        if ($request->has('districtId')) {
+            $districtId = $request->input('districtId');
+            $district = $district->where('id', '!=', $districtId);
+        }
+        $district = $district->get();
 
 
         return response()->json($district);

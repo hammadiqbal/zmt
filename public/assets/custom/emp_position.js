@@ -132,7 +132,12 @@ $(document).ready(function() {
         var viewempPosition =  $('#view-empPosition').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '/hr/emppositiondata',
+            ajax: {
+                url: '/hr/emppositiondata',
+                data: function (d) {
+                    d.cadre = $('#fb_cadre').val();  
+                }
+            },
             order: [[0, 'desc']],
             columns: [
                 { data: 'id_raw', name: 'id_raw', visible: false },
@@ -156,6 +161,17 @@ $(document).ready(function() {
                     width: "250px"
                 }
             ]
+        });
+
+        $('#fb_cadre').on('change', function () {
+            viewempPosition.ajax.reload();  
+        });
+
+        $('.clearFilter').on('click', function () {
+            $('#fb_cadre').each(function() {
+                $(this).val($(this).find('option:first').val()).change();
+            });
+            viewempPosition.ajax.reload();   
         });
     
         viewempPosition.on('draw.dt', function() {

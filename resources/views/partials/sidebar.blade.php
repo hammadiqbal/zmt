@@ -227,6 +227,7 @@
                     @php
                         $hideOrganization = true;
                         $hideSite = true;
+                        $hidereferralSite = true;
 
                         $hideOrganizationValues = explode(',', $rights->organization_setup);
                         if (in_array('1', $hideOrganizationValues)) {
@@ -235,6 +236,10 @@
                         $hideSiteValues = explode(',', $rights->site_setup);
                         if (in_array('1', $hideSiteValues)) {
                             $hideSite = false;
+                        }
+                        $hidereferralSiteValues = explode(',', $rights->referral_site);
+                        if (in_array('1', $hidereferralSiteValues)) {
+                            $hidereferralSite = false;
                         }
                     @endphp
 
@@ -247,6 +252,10 @@
 
                                 @if (!$hideSite)
                                 <li><a href="{{ route('site-setup') }}">Site Setup</a></li>
+                                @endif
+
+                                @if (!$hidereferralSite)
+                                <li><a href="{{ route('referral-setup') }}">Referral Site Setup</a></li>
                                 @endif
                             </ul>
                         </li>

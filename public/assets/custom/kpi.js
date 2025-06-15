@@ -113,7 +113,14 @@ $(document).ready(function() {
     var viewkpi =  $('#view-kpi').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/kpi/kpi',
+        ajax: {
+            url: '/kpi/kpi',
+            data: function (d) {
+                d.kpi_group = $('#fb_kg').val();  
+                d.kpi_dimension = $('#fb_kd').val();  
+                d.kpi_type = $('#fb_kt').val();  
+            }
+        },
         order: [[0, 'desc']],
         columns: [
             { data: 'id_raw', name: 'id_raw', visible: false },
@@ -147,6 +154,17 @@ $(document).ready(function() {
                 width: "250px"
             }
         ]
+    });
+
+    $('#fb_kt,#fb_kg,#fb_kd').on('change', function () {
+        viewkpi.ajax.reload();  
+    });
+
+    $('.clearFilter').on('click', function () {
+        $('#fb_kg').val($('#fb_kg option:first').val()).change();
+        $('#fb_kd').val($('#fb_kd option:first').val()).change();
+        $('#fb_kt').val($('#fb_kt option:first').val()).change();
+        viewkpi.ajax.reload();   
     });
 
     viewkpi.on('draw.dt', function() {

@@ -140,7 +140,12 @@ $(document).ready(function() {
     var ActivatedSLData =  $('#view-slactivation').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/services/getactivatesldata',
+        ajax: {
+            url: '/services/getactivatesldata',
+            data: function (d) {
+                d.site = $('#fb_site').val();  
+            }
+        },
         order: [[0, 'desc']],
         columns: [
             { data: 'id_raw', name: 'id_raw', visible: false },
@@ -151,6 +156,7 @@ $(document).ready(function() {
             { data: 'status', name: 'status' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
+        
         columnDefs: [
             {
                 targets: 1,
@@ -161,6 +167,17 @@ $(document).ready(function() {
                 width: "250px"
             }
         ]
+    });
+
+    $('#fb_site').on('change', function () {
+        ActivatedSLData.ajax.reload();  
+    });
+
+    $('.clearFilter').on('click', function () {
+        $('#fb_site').each(function() {
+            $(this).val($(this).find('option:first').val()).change();
+        });
+        ActivatedSLData.ajax.reload();   
     });
 
     ActivatedSLData.on('draw.dt', function() {

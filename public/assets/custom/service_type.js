@@ -125,7 +125,7 @@ $(document).ready(function() {
                 },
                 {
                     targets: 4,
-                    width: "250px"
+                    width: "300px"
                 }
             ]
         });

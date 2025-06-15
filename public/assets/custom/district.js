@@ -128,7 +128,13 @@ $(document).ready(function() {
          var viewdistrict =  $('#view-district').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '/territory/district',
+            ajax: {
+                url: '/territory/district',
+                data: function (d) {
+                    d.province = $('#fb_province').val();  
+                    d.division = $('#fb_division').val();  
+                }
+            },
             order: [[0, 'desc']],
             columns: [
                 { data: 'id_raw', name: 'id_raw', visible: false },
@@ -156,7 +162,18 @@ $(document).ready(function() {
                 }
             ]
         });
-    
+        
+        $('#fb_province,#fb_division').on('change', function () {
+            viewdistrict.ajax.reload();  
+        });
+
+        $('.clearFilter').on('click', function () {
+            $('#fb_province,#fb_division').each(function() {
+                $(this).val($(this).find('option:first').val()).change();
+            });
+            viewdistrict.ajax.reload();   
+        });
+
         viewdistrict.on('draw.dt', function() {
             $('[data-toggle="popover"]').popover({
                 html: true
@@ -204,7 +221,6 @@ $(document).ready(function() {
     
     //Update District Modal
     $(document).on('click', '.edit-district', function() {
-
         var districtId = $(this).data('district-id');
         var url = '/territory/district/' + districtId;
         $('#ajax-loader').show();

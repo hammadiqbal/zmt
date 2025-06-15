@@ -708,7 +708,7 @@ $(document).ready(function() {
                     url: 'territory/updatedistrict',
                     type: 'GET',
                     data: {
-                        divisionId: response.divisionId,
+                        districtId: response.districtId,
                     },
                     beforeSend: function() {
                         $('#up_district').append('<option>Loading...</option>');

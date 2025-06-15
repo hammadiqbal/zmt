@@ -136,6 +136,19 @@ Route::get('orgSetup/GetOrganization', [OrgSetupController::class, 'GetSelectedO
 Route::get('orgSetup/GetTransactionTypeOrganization', [OrgSetupController::class, 'GetSelectedTransactionTypeOrganization'])->name('orgSetup/GetTransactionTypeOrganization');
 //Organization
 
+// Referral Site Setup
+Route::get('referral-setup', [App\Http\Controllers\OrgSetupController::class, 'ShowReferralSite'])->name('referral-setup');
+Route::post('orgSetup/addreferralsite', [OrgSetupController::class, 'AddReferralSite'])->name('AddReferralSite');
+Route::get('orgSetup/viewreferralsite', [App\Http\Controllers\OrgSetupController::class, 'ShowReferralSiteDate'])->name('ShowReferralSiteDate');
+Route::get('orgSetup/rs-status', [App\Http\Controllers\OrgSetupController::class, 'UpdateReferralSiteStatus'])->name('UpdateReferralSiteStatus');
+Route::get('/orgSetup/updatereferralsite/{id}', [OrgSetupController::class, 'UpdateReferralSiteModal']);
+Route::post('/orgSetup/updatereferralsite/{id}', [OrgSetupController::class, 'UpdateReferralSite']);
+
+// Route::get('inventory/updateconsumptiongroup/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateConsumptionGroupModal'])->name('UpdateConsumptionGroupModal');
+// Route::post('inventory/update-consumptiongroup/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateConsumptionGroup'])->name('UpdateConsumptionGroup');
+
+// Referral Site Setup
+
 // User
 Route::get('user', [App\Http\Controllers\UserController::class, 'viewUser'])->name('user');
 Route::post('user/adduser', [UserController::class, 'AddUser'])->name('user.adduser');
@@ -348,9 +361,9 @@ Route::get('site/updatesite/{id}', [App\Http\Controllers\SiteSetupController::cl
 Route::post('site/update-site/{id}', [App\Http\Controllers\SiteSetupController::class, 'UpdateSiteData'])->name('UpdateSiteData');
 Route::get('site/getselectedsite', [SiteSetupController::class, 'GetSelectedSite'])->name('GetSelectedSite');
 Route::get('site/getsites', [SiteSetupController::class, 'GetSelectedSites'])->name('site/getsites');
-
-
 // Site Setup
+
+
 
 //HR
 Route::get('employee-gender', [App\Http\Controllers\HRController::class, 'EmployeeGender'])->name('employee-gender');
@@ -899,6 +912,7 @@ Route::get('medicalrecord/viewpatientattachment/{id}', [App\Http\Controllers\Pat
 // Route::post('/medicalrecord/update-reqepi/{id}', [App\Http\Controllers\PatientMedicalRecord::class, 'UpdateReqEPI'])->name('UpdateReqEPI');
 
 // Patient Medical Record
+
 
 
 

@@ -828,7 +828,7 @@ $(document).ready(function() {
                         url: 'territory/updatedistrict',
                         type: 'GET',
                         data: {
-                            divisionId: response.DivisionID,
+                            districtId: response.DistrictID,
                         },
                         beforeSend: function() {
                             $('#u_emp_district').append('<option>Loading...</option>');
@@ -881,7 +881,7 @@ $(document).ready(function() {
                                 $('#u_emp_district').append('<option>Loading...</option>');
                             },
                             success: function(resp) {
-                                    $('#u_emp_district').html("<option selected disabled value=''>Select District</option>");
+                                $('#u_emp_district').html("<option selected disabled value=''>Select District</option>");
                                 $.each(resp, function(key, value) {
                                     $('#u_emp_district').append('<option value="' + value.id + '">' + value.name + '</option>');
                                 });

@@ -118,7 +118,12 @@ $(document).ready(function() {
          var viewcostcenter =  $('#costcenter').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '/costcenter/ccdata',
+            ajax: {
+                url: '/costcenter/ccdata',
+                data: function (d) {
+                    d.cc_type = $('#fb_ct').val();  
+                }
+            },
             order: [[0, 'desc']],
             columns: [
                 { data: 'id_raw', name: 'id_raw', visible: false },
@@ -143,6 +148,15 @@ $(document).ready(function() {
                     width: "300px"
                 }
             ]
+        });
+
+        $('#fb_ct').on('change', function () {
+            viewcostcenter.ajax.reload();  
+        });
+
+        $('.clearFilter').on('click', function () {
+            $('#fb_ct').val($('#fb_ct option:first').val()).change();
+            viewcostcenter.ajax.reload();   
         });
     
         viewcostcenter.on('draw.dt', function() {

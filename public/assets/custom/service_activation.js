@@ -192,7 +192,18 @@ $(document).ready(function() {
     var ActivatedServiceData =  $('#view-serviceactivation').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/services/getactivateservicedata',
+        ordering: false,
+        // ajax: '/services/getactivateservicedata',
+        ajax: {
+            url: '/services/getactivateservicedata',
+            data: function (d) {
+                d.site = $('#fb_site').val();  
+                d.costcenter = $('#fb_cc').val();  
+                d.service_type = $('#fb_st').val();  
+                d.service_group = $('#fb_sg').val();  
+                d.service_mode = $('#fb_sm').val();  
+            }
+        },
         order: [[0, 'desc']],
         columns: [
             { data: 'id_raw', name: 'id_raw', visible: false },
@@ -209,6 +220,17 @@ $(document).ready(function() {
                 width: "250px"
             }
         ]
+    });
+
+    $('#fb_site,#fb_cc,#fb_st,#fb_sg,#fb_sm').on('change', function () {
+        ActivatedServiceData.ajax.reload();  
+    });
+
+    $('.clearFilter').on('click', function () {
+        $('#fb_site, #fb_cc, #fb_st, #fb_sg, #fb_sm').each(function() {
+            $(this).val($(this).find('option:first').val()).change();
+        });
+        ActivatedServiceData.ajax.reload();   
     });
 
     ActivatedServiceData.on('draw.dt', function() {

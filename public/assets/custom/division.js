@@ -118,7 +118,13 @@ $(document).ready(function() {
     var viewdivision =  $('#view-division').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/territory/division',
+        // ajax: '/territory/division',
+        ajax: {
+            url: '/territory/division',
+            data: function (d) {
+                d.province = $('#fb_province').val();  
+            }
+        },
         order: [[0, 'desc']],
         columns: [
             { data: 'id_raw', name: 'id_raw', visible: false },
@@ -145,6 +151,17 @@ $(document).ready(function() {
                 width: "200px"
             }
         ]
+    });
+
+    $('#fb_province').on('change', function () {
+        viewdivision.ajax.reload();  
+    });
+
+    $('.clearFilter').on('click', function () {
+        $('#fb_province').each(function() {
+            $(this).val($(this).find('option:first').val()).change();
+        });
+        viewdivision.ajax.reload();   
     });
 
     viewdivision.on('draw.dt', function() {

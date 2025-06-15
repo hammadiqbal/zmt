@@ -2124,6 +2124,10 @@ class HRController extends Controller
         {
             $EmployeePositions->where('emp_position.org_id', '=', $sessionOrg);
         }
+        if ($request->has('cadre') && $request->cadre != '' && $request->cadre != 'Loading...') {
+            $EmployeePositions->where('emp_position.cadre_id', $request->cadre);
+        }
+         
         $EmployeePositions = $EmployeePositions;
         // ->get()
 

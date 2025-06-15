@@ -149,7 +149,13 @@ $(document).ready(function() {
         var ActivatedKPIData =  $('#view-kpiactivation').DataTable({
             processing: true,
             serverSide: true,
-            ajax: '/kpi/getactivatekpidata',
+            ajax: {
+                url: '/kpi/getactivatekpidata',
+                data: function (d) {
+                    d.site = $('#fb_site').val();  
+                    d.costcenter = $('#fb_cc').val();  
+                }
+            },
             order: [[0, 'desc']],
             columns: [
                 { data: 'id_raw', name: 'id_raw', visible: false },
@@ -180,6 +186,16 @@ $(document).ready(function() {
                     width: "250px"
                 }
             ]
+        });
+        $('#fb_site,#fb_cc').on('change', function () {
+            ActivatedKPIData.ajax.reload();  
+        });
+
+        $('.clearFilter').on('click', function () {
+            $('#fb_site, #fb_cc').each(function() {
+                $(this).val($(this).find('option:first').val()).change();
+            });
+            ActivatedKPIData.ajax.reload();   
         });
     
         ActivatedKPIData.on('draw.dt', function() {

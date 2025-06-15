@@ -39,11 +39,47 @@ a new password has been emailed to the employee for login”. -->
 1.	Headcount Cost Center should be displayed on Cost Allocation when Employee is selected to avoid any mistake in selection
  -->
 
+ <!-- 1.	Apply filters in following screens in a sequential manner -->
+<!-- a.	Item Setup/Item Sub-Category Setup: 		Category
+b.	Item Setup/Item Type Setup: 			Category & Sub-Category
+c.	Item Setup/Item Generic Setup: 		Category, Sub-Category & Type
+d.	Item Setup/Item Brand Setup: 			Category, Sub-Category, Type & Generic -->
+<!-- e.	Services/Service Groups:			Service Type -->
+<!-- f.	Services/Service Code Directory:		Service Type & Group -->
+<!-- g.	Activations/Cost Centers Activation:		Site & CC Type -->
+<!-- h.	Activations/Activated Services:		Site,Service Type & Group, CC, and servicemodes -->
+<!-- h.	Activations/Service Location Activation:		Site -->
+<!-- i.	Human Resource/Position Setup:		Cadre -->
+<!-- j.	Territories/Divisions: 				Province -->
+<!-- k.	Territories/Districts: 				Province & Division -->
+<!-- l.	Cost Centers/Cost Center Setup:		CC Type -->
+<!-- m.	Key Performance Indicators/KPI Types:		KPI Group & Dimension -->
+<!-- n.	Key Performance Indicators/KPI Setup:		KPI Group, Dimension & Type -->
+<!-- o.	Material Management/Stock Monitoring:	Generic & Brand -->
+
+FRONT DESK SERVICES / OUTSOURCED SERVICES
+1.	A new form will be created in Front Desk module to record Outsourced Services on receiving of their bill, see Table F-9
+2.	Service ID will be generated (just like Patient Arrival & Departure Form)
+3.	Along with other details, will have to enter Referral Site Code
+4.	Service Mode will be Outsourced by Default (how to avoid Hard Code)
+5.	Service Type, Group and Code can be entered (Optional), if available in Service Code Directory
+6.	If the above fields are not filled, then an Open Text field will appear to record Service Description
+7.	Remarks will be Optional
+8.	Service Start Time, End Time and Billed Amount will have to entered
+<!-- 
+ORGANIZATION / REFERRAL SITE SETUP
+9.	A new form will be created in Organization module, similar to Site setup but with lesser fields, see Table M-20
+10.	Remarks and Contact numbers will be optional -->
+
+
+
 
 ...........................................................................
 changing before going to live server
 create 2 columns in inventory_balance table add location_id and and location_balance
 create sessions table
+create table name referral_site
+update module table
 ............................................................................
 when mutiple time ajax run error change the .change function with like this   
  $(siteSelector).off('change.siteLookup').on('change.siteLookup', function(){

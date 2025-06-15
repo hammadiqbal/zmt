@@ -22,6 +22,7 @@ use App\Models\CostCenter;
 use App\Models\ServiceMode;
 use App\Models\Service;
 use App\Models\KPIActivation;
+use App\Models\Site;
 
 class KeyPerformanceIndicatorController extends Controller
 {
@@ -685,6 +686,14 @@ class KeyPerformanceIndicatorController extends Controller
         ->join('kpi_group', 'kpi_group.id', '=', 'kpi_type.group_id')
         ->join('kpi_dimension', 'kpi_dimension.id', '=', 'kpi_type.dimension_id')
         ->orderBy('kpi_type.id', 'desc');
+
+        if ($request->has('kpi_group') && $request->kpi_group != '' && $request->kpi_group != 'Loading...') {
+            $KPITypes->where('kpi_type.group_id', $request->kpi_group);
+        }
+
+        if ($request->has('kpi_dimension') && $request->kpi_dimension != '' && $request->kpi_dimension != 'Loading...') {
+            $KPITypes->where('kpi_type.dimension_id', $request->kpi_dimension);
+        }
         // ->get();
         // return DataTables::of($KPITypes)
         return DataTables::eloquent($KPITypes)
@@ -913,7 +922,9 @@ class KeyPerformanceIndicatorController extends Controller
         }
         $user = auth()->user();
         $KPITypes = KPITypes::where('status', 1)->get();
-        return view('dashboard.kpi', compact('user','KPITypes'));
+        $KPIGroups = KPIGroups::where('status', 1)->get();
+        $KPIDimensions = KPIDimensions::where('status', 1)->get();
+        return view('dashboard.kpi', compact('user','KPITypes','KPIGroups','KPIDimensions'));
     }
 
     public function AddKPI(KPIRequest $request)
@@ -994,6 +1005,18 @@ class KeyPerformanceIndicatorController extends Controller
         ->join('kpi_group', 'kpi_group.id', '=', 'kpi_type.group_id')
         ->join('kpi_dimension', 'kpi_dimension.id', '=', 'kpi_type.dimension_id')
         ->orderBy('kpi.id', 'desc');
+
+        if ($request->has('kpi_group') && $request->kpi_group != '' && $request->kpi_group != 'Loading...') {
+            $KPIs->where('kpi_group.id', $request->kpi_group);
+        } 
+        
+        if ($request->has('kpi_dimension') && $request->kpi_dimension != '' && $request->kpi_dimension != 'Loading...') {
+            $KPIs->where('kpi_dimension.id', $request->kpi_dimension);
+        } 
+        
+        if ($request->has('kpi_type') && $request->kpi_type != '' && $request->kpi_type != 'Loading...') {
+            $KPIs->where('kpi.type_id', $request->kpi_type);
+        } 
         // ->get();
         // return DataTables::of($KPIs)
         return DataTables::eloquent($KPIs)
@@ -1219,9 +1242,11 @@ class KeyPerformanceIndicatorController extends Controller
         $user = auth()->user();
         $KPIs = KPI::where('status', 1)->get();
         $Organizations = Organization::where('status', 1)->get();
-        $Services = Service::where('status', 1)->get();
-        $ServiceModes = ServiceMode::where('status', 1)->get();
-        return view('dashboard.kpi-activation', compact('user','KPIs','Organizations','ServiceModes','Services'));
+        $Sites = Site::where('status', 1)->get();
+        $CostCenters = CostCenter::where('status', 1)->get();
+        // $Services = Service::where('status', 1)->get();
+        // $ServiceModes = ServiceMode::where('status', 1)->get();
+        return view('dashboard.kpi-activation', compact('user','KPIs','Organizations','Sites','CostCenters'));
     }
     public function ActivateKPI(KPIActivationRequest $request)
     {
@@ -1318,6 +1343,14 @@ class KeyPerformanceIndicatorController extends Controller
         {
             $KPIActivations->where('activated_kpi.org_id', '=', $sessionOrg);
         }
+                
+        if ($request->has('site') && $request->site != '' && $request->site != 'Loading...') {
+            $KPIActivations->where('activated_kpi.site_id', $request->site);
+        } 
+
+        if ($request->has('costcenter') && $request->costcenter != '' && $request->costcenter != 'Loading...') {
+            $KPIActivations->where('activated_kpi.cc_id', $request->costcenter);
+        } 
         $KPIActivations = $KPIActivations;
         // ->get()
         // return DataTables::of($KPIActivations)
