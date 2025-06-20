@@ -54,7 +54,7 @@
                 @endphp
                 @if ($add == 1)
                 <div class="col-auto">
-                    <button type="button" class="btn btn-primary p-2 add-user">
+                    <button type="button" class="btn btn-primary p-2 add-userrole">
                         <i class="fa fa-user-plus"></i> Add User Role
                     </button>
                 </div>
@@ -62,7 +62,7 @@
 
             </div>
             @if ($add == 1)
-            <div class="modal fade bs-example-modal-lg" id="add-user" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+            <div class="modal fade bs-example-modal-lg" id="add-userrole" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">

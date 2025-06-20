@@ -54,6 +54,7 @@ use App\Models\InventoryTransactionActivity;
 use App\Models\MedicationRoutes;
 use App\Models\MedicationFrequency;
 use App\Models\MaterialConsumptionRequisition;
+use App\Models\RequsitionForOtherTransaction;
 use App\Models\PurchaseOrder;
 use App\Models\WorkOrder;
 use App\Models\ServiceLocation;
@@ -5389,46 +5390,6 @@ class InventoryController extends Controller
         $TransactionTypes = $TransactionTypes->orderBy('id', 'ASC')->get();
         return response()->json($TransactionTypes);
     }
-    
-    // public function GetMaterialManagementTransactionTypes(Request $request)
-    // {
-    //     $orgId = $request->input('orgId');
-    //     $condition = $request->input('condition');
-
-    //     $query = DB::table('inventory_transaction_type AS itt')
-    //         ->select(
-    //             'itt.id',
-    //             'itt.name'
-    //         )
-    //         ->where('itt.status', 1);
-
-    //     if ($orgId !== 'null') {
-    //         $query->where('itt.org_id', $orgId);
-    //     }
-    //     if ($condition === 'external_transaction') {
-    //         $query->join(
-    //             'inventory_transaction_activity AS ita',
-    //             'ita.id',
-    //             '=',
-    //             'itt.activity_type'
-    //         )
-    //         ->where('ita.name', 'LIKE', '%External%');
-    //     }
-    //     if ($condition === 'issue_dispense') {
-    //         $query->join(
-    //             'inventory_transaction_activity AS ita',
-    //             'ita.id',
-    //             '=',
-    //             'itt.activity_type'
-    //         )
-    //         ->where('ita.name', 'LIKE', '%Issue%')
-    //         ->where('ita.name', 'LIKE', '%Dispense%');
-    //     }
-    //     $query->orderBy('itt.id', 'ASC');
-    //     $TransactionTypes = $query->get();
-
-    //     return response()->json($TransactionTypes);
-    // }
 
     public function GetMaterialManagementTransactionTypes(Request $request)
     {
@@ -6035,6 +5996,33 @@ class InventoryController extends Controller
         $MaterialConsumptionRequisitionLog->logid = implode(',', $logIds);
         $MaterialConsumptionRequisitionLog->save();
         return response()->json(['success' => 'Requisition For Material Consumption updated successfully']);
+    }
+
+    public function RequisitionOtherTransactions()
+    {
+        $colName = 'requisition_for_material_consumption';
+        if (PermissionDenied($colName)) {
+            abort(403); 
+        }
+        $user = auth()->user();
+        $isEmployee = $user->is_employee;
+        $empId      = $user->emp_id;
+        $roleId     = $user->role_id;
+
+        //  if ($roleId != 1 && $isEmployee == 1) {
+        //     $empInv = DB::table('emp_inventory_location')
+        //         ->where('site_id', $siteId)
+        //         ->where('emp_id', $empId)
+        //         ->where('status', 1)
+        //         ->first();
+        //  }
+        $ServiceLocations = ServiceLocation::select('id', 'name')->where('status', 1)->get();
+        $Generics = InventoryGeneric::select('inventory_generic.id', 'inventory_generic.name')
+        ->join('inventory_category', 'inventory_category.id', '=', 'inventory_generic.cat_id')
+        ->where('inventory_generic.status', 1)
+        ->where('inventory_category.name', 'not like', 'Medicine%')
+        ->get();
+        return view('dashboard.req_other_transaction', compact('user','ServiceLocations','Generics'));
     }
 
     public function PurchaseOrder()

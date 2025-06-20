@@ -141,8 +141,10 @@ Route::get('referral-setup', [App\Http\Controllers\OrgSetupController::class, 'S
 Route::post('orgSetup/addreferralsite', [OrgSetupController::class, 'AddReferralSite'])->name('AddReferralSite');
 Route::get('orgSetup/viewreferralsite', [App\Http\Controllers\OrgSetupController::class, 'ShowReferralSiteDate'])->name('ShowReferralSiteDate');
 Route::get('orgSetup/rs-status', [App\Http\Controllers\OrgSetupController::class, 'UpdateReferralSiteStatus'])->name('UpdateReferralSiteStatus');
-Route::get('/orgSetup/updatereferralsite/{id}', [OrgSetupController::class, 'UpdateReferralSiteModal']);
-Route::post('/orgSetup/updatereferralsite/{id}', [OrgSetupController::class, 'UpdateReferralSite']);
+Route::get('orgSetup/updatereferralsite/{id}', [OrgSetupController::class, 'UpdateReferralSiteModal']);
+Route::post('orgSetup/updatereferralsite/{id}', [OrgSetupController::class, 'UpdateReferralSite']);
+Route::get('orgSetup/getreferralsites', [OrgSetupController::class, 'GetSelectedReferralSites'])->name('orgSetup/getreferralsites');
+
 
 // Route::get('inventory/updateconsumptiongroup/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateConsumptionGroupModal'])->name('UpdateConsumptionGroupModal');
 // Route::post('inventory/update-consumptiongroup/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateConsumptionGroup'])->name('UpdateConsumptionGroup');
@@ -628,6 +630,15 @@ Route::get('inventory/materialconsumption-status', [App\Http\Controllers\Invento
 Route::get('inventory/updatematerialconsumption/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumptionModal'])->name('UpdateMaterialConsumptionModal');
 Route::post('inventory/update-materialconsumption/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumption'])->name('UpdateMaterialConsumption');
 
+Route::get('req-other-transaction', [App\Http\Controllers\InventoryController::class, 'RequisitionOtherTransactions'])->name('req-other-transaction');
+// Route::get('inventory/gettransactiontypes', [App\Http\Controllers\InventoryController::class, 'GetTransactionTypes'])->name('GetTransactionTypes');
+// Route::post('inventory/addmaterialconsumption', [InventoryController::class, 'AddMaterialConsumptionRequisition'])->name('AddMaterialConsumptionRequisition');
+// Route::get('inventory/materialconsumption', [App\Http\Controllers\InventoryController::class, 'GetMaterialConsumptionData'])->name('GetMaterialConsumptionData');
+// Route::get('inventory/materialconsumption-status', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumptionStatus'])->name('UpdateMaterialConsumptionStatus');
+// Route::get('inventory/updatematerialconsumption/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumptionModal'])->name('UpdateMaterialConsumptionModal');
+// Route::post('inventory/update-materialconsumption/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumption'])->name('UpdateMaterialConsumption');
+
+
 Route::get('inventory/getbatchno', [InventoryController::class, 'GetBatchNo'])->name('GetBatchNo');
 // Route::get('inventory/getexpiryrate', [InventoryController::class, 'GetBatchExpiryRate'])->name('GetBatchExpiryRate');
 Route::get('inventory/getorganizationgeneric', [InventoryController::class, 'GetOrgItemGeneric'])->name('GetOrgItemGeneric');
@@ -680,6 +691,8 @@ Route::get('patient/patientdetail/{id}', [App\Http\Controllers\PatientController
 Route::get('patient/patient-status', [App\Http\Controllers\PatientController::class, 'UpdatePatientStatus'])->name('UpdatePatientStatus');
 Route::get('patient/updatepatient/{id}', [App\Http\Controllers\PatientController::class, 'UpdatePatientModal'])->name('UpdatePatientModal');
 Route::post('patient/update-patient/{id}', [App\Http\Controllers\PatientController::class, 'UpdatePatient'])->name('UpdatePatient');
+Route::get('/patient/print-card/{id}', [App\Http\Controllers\PatientController::class, 'printPatientCard'])->name('patient.printCard');
+
 //Patient Setup
 
 
@@ -692,6 +705,16 @@ Route::get('patient/patientinout-status', [App\Http\Controllers\PatientControlle
 Route::post('patient/serviceend', [PatientController::class, 'EndService'])->name('EndService');
 Route::get('patient/updatepatientinout/{id}', [App\Http\Controllers\PatientController::class, 'UpdatePatientInOutModal'])->name('UpdatePatientInOutModal');
 Route::post('patient/update-patientinout/{id}', [App\Http\Controllers\PatientController::class, 'UpdatePatientInOut'])->name('UpdatePatientInOut');
+//Patient Arrival & Departure Setup
+
+Route::get('outsourced-services', [App\Http\Controllers\PatientController::class, 'OutsourcedServices'])->name('outsourced-services');
+// Route::get('patient/pad_details/{mr}', [App\Http\Controllers\PatientController::class, 'PatientArrivalDepartureDetail'])->name('PatientArrivalDepartureDetail');
+// Route::post('patient/addpatientarrival', [PatientController::class, 'AddPatientArrival'])->name('AddPatientArrival');
+// Route::get('patient/patientarrivaldeparture', [App\Http\Controllers\PatientController::class, 'GetPatientArrivalDepartureDetails'])->name('GetPatientArrivalDepartureDetails');
+// Route::get('patient/patientinout-status', [App\Http\Controllers\PatientController::class, 'UpdatePatientArrivalDepartureStatus'])->name('UpdatePatientArrivalDepartureStatus');
+// Route::post('patient/serviceend', [PatientController::class, 'EndService'])->name('EndService');
+// Route::get('patient/updatepatientinout/{id}', [App\Http\Controllers\PatientController::class, 'UpdatePatientInOutModal'])->name('UpdatePatientInOutModal');
+// Route::post('patient/update-patientinout/{id}', [App\Http\Controllers\PatientController::class, 'UpdatePatientInOut'])->name('UpdatePatientInOut');
 //Patient Arrival & Departure Setup
 
 // Finance

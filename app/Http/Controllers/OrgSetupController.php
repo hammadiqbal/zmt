@@ -953,4 +953,16 @@ class OrgSetupController extends Controller
 
         return response()->json(['success' => 'Referral Site updated successfully']);
     }
+
+    
+    public function GetSelectedReferralSites(Request $request)
+    {
+        $orgId = $request->input('orgId');
+        $ReferralSites = ReferralSite::where('org_id', $orgId)
+                    ->where('status', 1)
+                      ->orderBy('id', 'ASC')
+                    ->get();
+
+        return response()->json($ReferralSites);
+    }
 }

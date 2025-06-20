@@ -39,7 +39,7 @@
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">Home</li>
                 <li class="breadcrumb-item">Settings</li>
-                <li class="breadcrumb-item active">Requisition For Material Consumption</li>
+                <li class="breadcrumb-item active">Requisition For Other Transactions</li>
             </ol>
         </div>
     </div>
@@ -48,33 +48,33 @@
         <div class="card-body">
             <div class="row">
                 <div class="col">
-                    <h4 class="card-title">All Requisition For Material Consumptions</h4>
+                    <h4 class="card-title">All Requisition For Other Transactions</h4>
                 </div>
                 @php
-                $MaterialConsumption = explode(',', $rights->requisition_for_material_consumption);
-                $add = $MaterialConsumption[0];
-                $view = $MaterialConsumption[1];
-                $edit = $MaterialConsumption[2];
-                $updateStatus = $MaterialConsumption[3];
+                $Requisition_for_other_transaction = explode(',', $rights->requisition_for_other_transaction);
+                $add = $Requisition_for_other_transaction[0];
+                $view = $Requisition_for_other_transaction[1];
+                $edit = $Requisition_for_other_transaction[2];
+                $updateStatus = $Requisition_for_other_transaction[3];
                 @endphp
                 @if ($add == 1)
                 <div class="col-auto">
-                    <button type="button" class="btn btn-primary p-2 add-materialconsumption">
-                        <i class="mdi mdi-clipboard-account"></i> Add Requisition For Material Consumption
+                    <button type="button" class="btn btn-primary p-2 add-othertransaction">
+                        <i class="mdi mdi-clipboard-account"></i> Add Requisition For Other Transactions
                     </button>
                 </div>
                 @endif
             </div>
 
             @if ($add == 1)
-            <div class="modal fade bs-example-modal-lg" id="add-materialconsumption" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+            <div class="modal fade bs-example-modal-lg" id="add-othertransaction" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h4 class="modal-title" id="myLargeModalLabel">Add Requisition For Material Consumption</h4>
+                            <h4 class="modal-title" id="myLargeModalLabel">Add Requisition For Other Transactions</h4>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         </div>
-                        <form id="add_materialconsumption" method="post" enctype="multipart/form-data">
+                        <form id="add_othertransaction" method="post" enctype="multipart/form-data">
                             @csrf
                             <div class="modal-body">
                                 <!-- Row -->
@@ -85,7 +85,7 @@
                                                 <div class="row">
                                                     @if($user->org_id != 0)
                                                     <div class="userOrganization">
-                                                        <select class="form-contro selecter p-0" id="mc_org" name="mc_org">
+                                                        <select class="form-contro selecter p-0" id="rot_org" name="rot_org">
                                                             <option selected value='{{ $user->org_id }}'>{{ $user->orgName }}</option>
                                                         </select>
                                                     </div>
@@ -95,11 +95,11 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Organization</label>
-                                                                    <select class="form-control selecter p-0" name="mc_org" id="mc_org" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="rot_org" id="rot_org" style="color:#222d32">
                                                                     </select>
                                                                     <span class="bar"></span>
                                                                 </div>
-                                                                <span class="text-danger" id="mc_org_error"></span>
+                                                                <span class="text-danger" id="rot_org_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -110,11 +110,11 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Site</label>
-                                                                    <select class="form-control selecter p-0" name="mc_site" id="mc_site" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="rot_site" id="rot_site" style="color:#222d32">
                                                                     </select>
                                                                     <span class="bar"></span>
                                                                 </div>
-                                                                <span class="text-danger" id="mc_site_error"></span>
+                                                                <span class="text-danger" id="rot_site_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -124,11 +124,11 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Transaction Type</label>
-                                                                    <select class="form-control selecter p-0" name="mc_transactiontype" id="mc_transactiontype" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="rot_transactiontype" id="rot_transactiontype" style="color:#222d32">
                                                                     </select>
                                                                     <span class="bar"></span>
                                                                 </div>
-                                                                <span class="text-danger" id="mc_transactiontype_error"></span>
+                                                                <span class="text-danger" id="rot_transactiontype_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -138,39 +138,14 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Select Inventory Locations </label>
-                                                                    <select class="form-control selecter p-0" name="mc_inv_location" id="mc_inv_location" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="rot_inv_location" id="rot_inv_location" style="color:#222d32">
                                                                         <option selected disabled >Select Inventory Location</option>
                                                                         @foreach ($ServiceLocations as $ServiceLocation)
                                                                             <option value="{{ $ServiceLocation['id'] }}">{{ $ServiceLocation['name'] }}</option>
                                                                         @endforeach
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="mc_inv_location_error"></span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-
-                                                    <div class="col-md-6" id="patientSelect">
-                                                        <div class="form-group row">
-                                                            <div class="col-md-12">
-                                                                <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Patient MR# <small class="text-danger mr_optional" style="font-size:11px;">(Optional)</small></label>
-                                                                    <select class="form-control selecter p-0" name="mc_patient" id="mc_patient" style="color:#222d32">
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="col-md-6" id="serviceSelect">
-                                                        <div class="form-group row">
-                                                            <div class="col-md-12">
-                                                                <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Select Service</label>
-                                                                    <select class="form-control selecter p-0" name="mc_service" id="mc_service" style="color:#222d32">
-                                                                    </select>
-                                                                </div>
+                                                                <span class="text-danger" id="rot_inv_location_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -179,8 +154,8 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label for="mc_remarks">Enter Remarks <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                                    <textarea class="form-control" rows="1" placeholder="Enter Remarks" name="mc_remarks" id="mc_remarks"></textarea>
+                                                                    <label for="rot_remarks">Enter Remarks <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                                    <textarea class="form-control" rows="1" placeholder="Enter Remarks" name="rot_remarks" id="rot_remarks"></textarea>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -195,10 +170,10 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Select Item Generic</label>
-                                                                    <select class="form-control selecter p-0 mc_itemgeneric" name="mc_itemgeneric[]" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0 rot_itemgeneric" name="rot_itemgeneric[]" style="color:#222d32">
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger mc_itemgeneric_error"></span>
+                                                                <span class="text-danger rot_itemgeneric_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -208,9 +183,9 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Enter Demand Qty</label>
-                                                                    <input type="number" class="form-control input-sm" placeholder="Demand Qty.." name="mc_qty[]">
+                                                                    <input type="number" class="form-control input-sm" placeholder="Demand Qty.." name="rot_qty[]">
                                                                 </div>
-                                                                <span class="text-danger mc_qty_error"></span>
+                                                                <span class="text-danger rot_qty_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -238,7 +213,7 @@
 
             @if ($view == 1)
             <div class="table-responsive m-t-40">
-                <table id="view-materialconsumption" class="table table-bordered table-striped">
+                <table id="view-othertransaction" class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th></th>
@@ -256,14 +231,14 @@
     </div>
 
     @if ($edit == 1)
-    <div class="modal fade bs-example-modal-lg" id="edit-materialconsumption" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal fade bs-example-modal-lg" id="edit-othertransaction" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="myLargeModalLabel">Update Patient Details</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
-                <form id="update_materialconsumption" method="post" enctype="multipart/form-data">
+                <form id="update_othertransaction" method="post" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">
                         <input type="hidden" class="form-control u_mc-id" name="u_mc-id">
@@ -279,7 +254,7 @@
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
                                                             <label class="control-label">Update Organization</label>
-                                                            <select class="form-control selecter p-0" name="u_mc_org" required id="u_mc_org" style="color:#222d32">
+                                                            <select class="form-control selecter p-0" name="u_rot_org" required id="u_rot_org" style="color:#222d32">
                                                             </select>
                                                         </div>
                                                     </div>
@@ -292,7 +267,7 @@
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
                                                             <label class="control-label">Update Site</label>
-                                                            <select class="form-control selecter p-0" name="u_mc_site" required id="u_mc_site" style="color:#222d32">
+                                                            <select class="form-control selecter p-0" name="u_rot_site" required id="u_rot_site" style="color:#222d32">
                                                             </select>
                                                         </div>
                                                     </div>
@@ -305,7 +280,7 @@
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
                                                             <label class="control-label">Update Transaction type</label>
-                                                            <select class="form-control selecter p-0" name="u_mc_transactionType" required id="u_mc_transactionType" style="color:#222d32">
+                                                            <select class="form-control selecter p-0" name="u_rot_transactiontype" required id="u_rot_transactiontype" style="color:#222d32">
                                                             </select>
                                                         </div>
                                                     </div>
@@ -317,7 +292,7 @@
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
                                                             <label class="control-label">Update Inventory Location</label>
-                                                            <select class="form-control selecter p-0" name="u_mc_inv_location" id="u_mc_inv_location" style="color:#222d32">
+                                                            <select class="form-control selecter p-0" name="u_rot_inv_location" id="u_rot_inv_location" style="color:#222d32">
                                                                 @foreach ($ServiceLocations as $ServiceLocation)
                                                                     <option value="{{ $ServiceLocation['id'] }}">{{ $ServiceLocation['name'] }}</option>
                                                                 @endforeach
@@ -356,7 +331,7 @@
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
                                                             <label class="control-label">Update Remarks <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                            <textarea class="form-control" rows="1" id="u_mc_remarks" name="u_mc_remarks" spellcheck="false"></textarea>
+                                                            <textarea class="form-control" rows="1" id="u_rot_remarks" name="u_rot_remarks" spellcheck="false"></textarea>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -406,4 +381,4 @@
             minDate: new Date() 
         });
     </script>
-    <script src="{{ asset('assets/custom/material-consumption.js') }}"></script>
+    <script src="{{ asset('assets/custom/req_other_transaction.js') }}"></script>

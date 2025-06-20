@@ -457,6 +457,7 @@
                     $hidePatientRegistration = true;
                     $hideServiceBookingPatient = true;
                     $hidePatientArrivalDeparture = true;
+                    $hideOutsourcedServices = true;
                     $hidePatientWelfare = true;
 
                     $hideServiceLocationSchedulingValues = explode(',', $rights->service_location_scheduling);
@@ -475,13 +476,17 @@
                     if (in_array('1', $hidePatientArrivalDepartureValues)) {
                         $hidePatientArrivalDeparture = false;
                     }
+                    $hideOutsourcedServicesValues = explode(',', $rights->outsourced_services);
+                    if (in_array('1', $hideOutsourcedServicesValues)) {
+                        $hideOutsourcedServices = false;
+                    }
                     $hidePatientWelfareValues = explode(',', $rights->patient_welfare);
                     if (in_array('1', $hidePatientWelfareValues)) {
                         $hidePatientWelfare = false;
                     }
                     @endphp
 
-                    @if (!$hideServiceLocationScheduling || !$hidePatientRegistration || !$hideServiceBookingPatient || !$hidePatientArrivalDeparture || !$hidePatientWelfare)
+                    @if (!$hideServiceLocationScheduling || !$hidePatientRegistration || !$hideServiceBookingPatient || !$hidePatientArrivalDeparture || !$hideOutsourcedServicesValues || !$hidePatientWelfare)
                         <li> <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false"><i class="mdi mdi-crosshairs-gps"></i><span class="hide-menu">Front Desk Services</span></a>
                             <ul aria-expanded="false" class="collapse">
                             
@@ -497,6 +502,9 @@
                                 @endif
                                 @if (!$hidePatientArrivalDeparture)
                                     <li><a href="{{ route('patient-inout') }}">Patient Arrival & Departure</a></li>
+                                @endif
+                                  @if (!$hidePatientArrivalDeparture)
+                                    <li><a href="{{ route('outsourced-services') }}">Outsourced Services</a></li>
                                 @endif
                                 @if (!$hidePatientWelfare)
                                     <li><a href="#">Patient Welfare</a></li>
@@ -646,6 +654,7 @@
                     $hideMedicationRoutes = true;
                     $hideMedicationFrequency = true;
                     $hideRequisitionMaterialConsumption = true;
+                    $hideRequisitionOtherTransaction = true;
                     $hideThirdPartyRegistration = true;
                     $hideConsumptionGroup = true;
                     $hideConsumptionMethod = true;
@@ -721,9 +730,13 @@
                     if (in_array('1', $hideMedicationFrequencyValues)) {
                         $hideMedicationFrequency = false;
                     }
-                    $hideRequisitionMaterialConsumptionValues = explode(',', $rights->requisition_for_material_consumption);
+                    $hideRequisitionMaterialConsumptionValues = explode(',', $rights->requisition_for_other_transaction);
                     if (in_array('1', $hideRequisitionMaterialConsumptionValues)) {
                         $hideRequisitionMaterialConsumption = false;
+                    }
+                    $hideRequisitionOtherTransactionValues = explode(',', $rights->requisition_for_other_transaction);
+                    if (in_array('1', $hideRequisitionOtherTransactionValues)) {
+                        $hideRequisitionOtherTransaction = false;
                     }
                     $hideThirdPartyRegistrationValues = explode(',', $rights->third_party_registration);
                     if (in_array('1', $hideThirdPartyRegistrationValues)) {
@@ -752,7 +765,7 @@
 
 
                     @endphp
-                    @if (!$hideItemCat || !$hideItemSubCat || !$hideItemType || !$hideItemGenericSetup || !$hideItemBrand || !$hideTransactionType || !$hidePurchaseOrder || !$hideWorkOrder || !$hideMedicationRoutes || !$hideMedicationFrequency || !$hideRequisitionMaterialConsumption)
+                    @if (!$hideItemCat || !$hideItemSubCat || !$hideItemType || !$hideItemGenericSetup || !$hideItemBrand || !$hideTransactionType || !$hidePurchaseOrder || !$hideWorkOrder || !$hideMedicationRoutes || !$hideMedicationFrequency || !$hideRequisitionMaterialConsumption || !$hideRequisitionOtherTransaction)
                          <li> <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false"><i class="mdi mdi-database"></i><span class="hide-menu">Material Management</span></a>
                             <ul aria-expanded="false" class="collapse">
                                 @if (!$hideItemCat || !$hideItemSubCat || !$hideItemType || !$hideItemGenericSetup || !$hideItemBrand)
@@ -895,6 +908,9 @@
                                 @endif
                                 @if (!$hideRequisitionMaterialConsumption)
                                     <li><a href="{{ route('material-consumption') }}">Requisition For Material Consumption</a></li>
+                                @endif
+                                 @if (!$hideRequisitionOtherTransaction)
+                                    <li><a href="{{ route('req-other-transaction') }}">Requisition For Other Transactions</a></li>
                                 @endif
                             </ul>
                         </li>

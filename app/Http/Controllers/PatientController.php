@@ -317,8 +317,8 @@ class PatientController extends Controller
     public function GetPatientData(Request $request)
     {
         $rights = $this->rights;
-        $edit = explode(',', $rights->patient_registration)[1];
-        if($edit == 0)
+        $view = explode(',', $rights->patient_registration)[1];
+        if($view == 0)
         {
             abort(403, 'Forbidden');
         }
@@ -505,6 +505,13 @@ class PatientController extends Controller
                     $actionButtons .= '<button type="button" class="btn btn-outline-secondary mt-2 patient-detail" data-patient-id="'.$PatientId.'">'
                     . '<i class="fa fa-plus-circle"></i> View All Details'
                     . '</button>';
+
+                    // $actionButtons .= '<button type="button" class="btn btn-outline-secondary mt-2 patient-detail" data-patient-id="'.$PatientId.'">'
+                    // . '<i class="fa fa-plus-circle"></i> View All Details'
+                    // . '</button>';
+                    $actionButtons .= '<br><a href="/patient/print-card/' . $Patient->id . '" target="_blank" class="btn btn-primary mt-2 print-card-link blinking" data-emp-id="' . $Patient->id . '">
+                        <i class="fa fa-print"></i> Print Card
+                    </a>';
                     return $Patient->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
            
             })
@@ -517,6 +524,21 @@ class PatientController extends Controller
             ->rawColumns(['action', 'status','identity','contact',
             'patient_detail'])
             ->make(true);
+    }
+
+    public function printPatientCard($id)
+    {
+        $rights = $this->rights;
+        $view = explode(',', $rights->patient_registration)[1];
+        if($view == 0)
+        {
+            abort(403, 'Forbidden');
+        }
+        $patient = PatientRegistration::select('patient.*', 'gender.name as genderName')
+            ->leftJoin('gender', 'gender.id', '=', 'patient.gender_id')
+            ->findOrFail($id);
+
+        return view('dashboard.patient_card', compact('patient'));
     }
     public function UpdatePatientStatus(Request $request)
     {
@@ -1889,4 +1911,22 @@ class PatientController extends Controller
         $PatientArrivalDepartureLog->save();
         return response()->json(['success' => ' Patient Arrival & Departure Details updated successfully']);
     }
+
+    public function OutsourcedServices()
+    {
+        $colName = 'outsourced_services';
+        if (PermissionDenied($colName)) {
+            abort(403); 
+        }
+        $user = auth()->user();
+        // $Provinces = Province::where('status', 1)->get();
+        // $ServiceBookings = ServiceBooking::select('remarks','id')->where('status', 1)->get();
+        // $UserorgId = $user->org_id;
+        // $orgCode = Organization::where('id', $UserorgId)->value('code');
+        $Organizations = Organization::select('id', 'organization')->where('status', 1)->get();
+        $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc')->get();
+
+        return view('dashboard.outsourced-services', compact('user','Organizations','Patients'));
+    }
+
 }

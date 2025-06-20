@@ -302,6 +302,14 @@ $(document).ready(function() {
     });
     // View Employee
 
+    // Print Employee Card
+    $(document).on('click', '.print-card', function() {
+        var empId = $(this).data('emp-id');
+        var url = '/hr/print-card/' + empId;
+        window.open(url, '_blank', 'width=400,height=600');
+    });
+    // Print Employee Card
+
     // Update Employee Status
     $(document).on('click', '.employee_status', function() {
         var id = $(this).data('id');

@@ -2845,7 +2845,9 @@ class HRController extends Controller
                         $actionButtons .= '<button type="button" class="btn btn-outline-secondary mt-1 employee-detail" data-emp-id="'.$EmployeeId.'">'
                         . '<i class="fa fa-plus-circle"></i> View All Details'
                         . '</button>';
+                        
                     }
+ 
                    
                     return $Employee->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
 
@@ -2860,6 +2862,7 @@ class HRController extends Controller
             'id','placement','workStatus','contactDetails'])
             ->make(true);
     }
+
 
     public function EmployeeProfileCompletion($employeeId)
     {
@@ -4829,9 +4832,18 @@ class HRController extends Controller
     {
         $siteId = $request->input('siteId');
 
-        $Physicians = Employee::where('employee.site_id', $siteId)
+        // $Physicians = Employee::where('employee.site_id', $siteId)
+        // ->where('employee.status', 1)
+        // ->get(['employee.*']);
+        $Physicians = Employee::join('prefix', 'prefix.id', '=', 'employee.prefix_id')
+        ->where('employee.site_id', $siteId)
         ->where('employee.status', 1)
-        ->get(['employee.*']);
+        ->whereRaw('LOWER(prefix.name) LIKE ?', ['%dr.%'])
+        ->get([
+            'employee.id',
+            'employee.name',
+            'prefix.name as prefix'
+        ]);
 
         return response()->json($Physicians);
     }

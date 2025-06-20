@@ -250,6 +250,9 @@ $(document).ready(function() {
 
 // Role and Rights
 $(document).ready(function() {
+    $(document).on('click', '.add-userrole', function() {
+        $('#add-userrole').modal('show');
+    });
     //Add ROle
     $('#add_role').submit(function(e) {
         e.preventDefault(); // Prevent the form from submitting normally
@@ -318,7 +321,7 @@ $(document).ready(function() {
                                 confirmButtonText: 'OK'
                             }).then((result) => {
                                 if (result.isConfirmed) {
-                                    $('#add-user').modal('hide');
+                                    $('#add-userrole').modal('hide');
                                     $('#view-roles').DataTable().ajax.reload(); // Refresh DataTable
                                     $('#add_role')[0].reset();
                                     $('.text-danger').hide();
