@@ -164,7 +164,7 @@ $(document).ready(function() {
             },
             {
                 targets: 4,
-                width: "250px"
+                width: "350px"
             }
         ]
     });

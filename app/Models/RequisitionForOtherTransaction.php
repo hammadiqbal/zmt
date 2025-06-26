@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RequsitionForOtherTransaction extends Model
+class RequisitionForOtherTransaction extends Model
 {
     use HasFactory;
 

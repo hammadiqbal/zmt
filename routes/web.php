@@ -563,6 +563,11 @@ Route::get('inventory/issuedispense', [App\Http\Controllers\InventoryController:
 Route::get('inventory/respond-issuedispense', [App\Http\Controllers\InventoryController::class, 'RespondIssueDispense'])->name('RespondIssueDispense');
 Route::post('inventory/addissuedispense', [InventoryController::class, 'AddIssueDispense'])->name('AddIssueDispense');
 
+Route::get('other-transactions', [App\Http\Controllers\InventoryController::class, 'ShowOtherTransactions'])->name('other-transactions');
+Route::get('inventory/othertransaction', [App\Http\Controllers\InventoryController::class, 'GetOtherTransactionData'])->name('GetOtherTransactionData');
+Route::get('inventory/respond-othertransaction', [App\Http\Controllers\InventoryController::class, 'RespondOtherTransaction'])->name('RespondOtherTransaction');
+Route::post('inventory/addothertransaction', [InventoryController::class, 'AddOtherTransaction'])->name('AddOtherTransaction');
+
 Route::get('inventory-generic', [App\Http\Controllers\InventoryController::class, 'InventoryGeneric'])->name('inventory-generic');
 Route::post('inventory/addinvgeneric', [InventoryController::class, 'AddInventoryGeneric'])->name('AddInventoryGeneric');
 Route::get('inventory/invgeneric', [App\Http\Controllers\InventoryController::class, 'GetInventoryGenericData'])->name('GetInventoryGenericData');
@@ -631,12 +636,11 @@ Route::get('inventory/updatematerialconsumption/{id}', [App\Http\Controllers\Inv
 Route::post('inventory/update-materialconsumption/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumption'])->name('UpdateMaterialConsumption');
 
 Route::get('req-other-transaction', [App\Http\Controllers\InventoryController::class, 'RequisitionOtherTransactions'])->name('req-other-transaction');
-// Route::get('inventory/gettransactiontypes', [App\Http\Controllers\InventoryController::class, 'GetTransactionTypes'])->name('GetTransactionTypes');
-// Route::post('inventory/addmaterialconsumption', [InventoryController::class, 'AddMaterialConsumptionRequisition'])->name('AddMaterialConsumptionRequisition');
-// Route::get('inventory/materialconsumption', [App\Http\Controllers\InventoryController::class, 'GetMaterialConsumptionData'])->name('GetMaterialConsumptionData');
-// Route::get('inventory/materialconsumption-status', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumptionStatus'])->name('UpdateMaterialConsumptionStatus');
-// Route::get('inventory/updatematerialconsumption/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumptionModal'])->name('UpdateMaterialConsumptionModal');
-// Route::post('inventory/update-materialconsumption/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumption'])->name('UpdateMaterialConsumption');
+Route::post('inventory/addreqothertransaction', [InventoryController::class, 'AddRequisitionOtherTransactions'])->name('AddRequisitionOtherTransactions');
+Route::get('inventory/reqothertransaction', [App\Http\Controllers\InventoryController::class, 'GetRequisitionOtherTransactionsData'])->name('GetRequisitionOtherTransactionsData');
+Route::get('inventory/reqothertransaction-status', [App\Http\Controllers\InventoryController::class, 'UpdateRequisitionOtherTransactionStatus'])->name('UpdateRequisitionOtherTransactionStatus');
+Route::get('inventory/updatereqothertransaction/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateRequisitionOtherTransactionModal'])->name('UpdateRequisitionOtherTransactionModal');
+Route::post('inventory/update-reqothertransaction/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateRequisitionOtherTransaction'])->name('UpdateRequisitionOtherTransaction');
 
 
 Route::get('inventory/getbatchno', [InventoryController::class, 'GetBatchNo'])->name('GetBatchNo');

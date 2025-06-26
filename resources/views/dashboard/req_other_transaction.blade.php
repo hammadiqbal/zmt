@@ -59,7 +59,7 @@
                 @endphp
                 @if ($add == 1)
                 <div class="col-auto">
-                    <button type="button" class="btn btn-primary p-2 add-othertransaction">
+                    <button type="button" class="btn btn-primary p-2 add-reqothertransaction">
                         <i class="mdi mdi-clipboard-account"></i> Add Requisition For Other Transactions
                     </button>
                 </div>
@@ -67,14 +67,14 @@
             </div>
 
             @if ($add == 1)
-            <div class="modal fade bs-example-modal-lg" id="add-othertransaction" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+            <div class="modal fade bs-example-modal-lg" id="add-reqothertransaction" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h4 class="modal-title" id="myLargeModalLabel">Add Requisition For Other Transactions</h4>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         </div>
-                        <form id="add_othertransaction" method="post" enctype="multipart/form-data">
+                        <form id="add_reqothertransaction" method="post" enctype="multipart/form-data">
                             @csrf
                             <div class="modal-body">
                                 <!-- Row -->
@@ -139,10 +139,6 @@
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Select Inventory Locations </label>
                                                                     <select class="form-control selecter p-0" name="rot_inv_location" id="rot_inv_location" style="color:#222d32">
-                                                                        <option selected disabled >Select Inventory Location</option>
-                                                                        @foreach ($ServiceLocations as $ServiceLocation)
-                                                                            <option value="{{ $ServiceLocation['id'] }}">{{ $ServiceLocation['name'] }}</option>
-                                                                        @endforeach
                                                                     </select>
                                                                 </div>
                                                                 <span class="text-danger" id="rot_inv_location_error"></span>
@@ -213,12 +209,11 @@
 
             @if ($view == 1)
             <div class="table-responsive m-t-40">
-                <table id="view-othertransaction" class="table table-bordered table-striped">
+                <table id="view-reqothertransaction" class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th></th>
                             <th>Requisition Details</th>
-                            <th>Patient Details</th>
                             <th>Item Details</th>
                             <th>Status</th>
                             <th>Action</th>
@@ -231,17 +226,17 @@
     </div>
 
     @if ($edit == 1)
-    <div class="modal fade bs-example-modal-lg" id="edit-othertransaction" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal fade bs-example-modal-lg" id="edit-reqothertransaction" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="myLargeModalLabel">Update Patient Details</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
-                <form id="update_othertransaction" method="post" enctype="multipart/form-data">
+                <form id="update_reqothertransaction" method="post" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">
-                        <input type="hidden" class="form-control u_mc-id" name="u_mc-id">
+                        <input type="hidden" class="form-control u_rot-id" name="u_rot-id">
                         <div class="row">
                             <div class="col-lg-12">
                                 <div class="card-body">
@@ -274,7 +269,6 @@
                                                 </div>
                                             </div>
 
-
                                             <div class="col-md-6">
                                                 <div class="form-group row m-b-5">
                                                     <div class="col-md-12">
@@ -293,33 +287,6 @@
                                                         <div class="form-group m-b-5">
                                                             <label class="control-label">Update Inventory Location</label>
                                                             <select class="form-control selecter p-0" name="u_rot_inv_location" id="u_rot_inv_location" style="color:#222d32">
-                                                                @foreach ($ServiceLocations as $ServiceLocation)
-                                                                    <option value="{{ $ServiceLocation['id'] }}">{{ $ServiceLocation['name'] }}</option>
-                                                                @endforeach
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-6">
-                                                <div class="form-group row m-b-5">
-                                                    <div class="col-md-12">
-                                                        <div class="form-group m-b-5">
-                                                            <label class="control-label">Update Patient MR# <small class="text-danger umr_optional" style="font-size:11px;">(Optional)</small></label>
-                                                            <select class="form-control selecter p-0" name="u_mc_patient"  id="u_mc_patient" style="color:#222d32">
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="col-md-6" id="u_serviceSelect">
-                                                <div class="form-group row m-b-5">
-                                                    <div class="col-md-12">
-                                                        <div class="form-group m-b-5">
-                                                            <label class="control-label">Update Service <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                            <select class="form-control selecter p-0" name="u_mc_service"  id="u_mc_service" style="color:#222d32">
                                                             </select>
                                                         </div>
                                                     </div>
@@ -338,14 +305,15 @@
                                             </div>
                                           
                                         </div>
+
                                         <div class="uduplicate">
                                         </div>
 
                                         <div class="d-flex justify-content-center pt-3">
-                                            <button type="button" id="umc_addmore" class="btn btn-success mr-2">
+                                            <button type="button" id="urot_addmore" class="btn btn-success mr-2">
                                             <i class="mdi mdi-plus"></i> Add More</button>
 
-                                            <button type="button" id="umc_remove" class="btn btn-danger mr-2"> 
+                                            <button type="button" id="urot_remove" class="btn btn-danger mr-2"> 
                                             <i class="mdi mdi-minus"></i> Remove</button>
                                         </div>
                                     </div>

@@ -4,13 +4,32 @@ $(document).ready(function() {
         $('.duplicate:not(:first)').remove();
         $('#rmc_transaction_type').html("<option selected disabled value=''>Select Transaction Type</option>");
         var orgId = $('#rmc_orgid').val();
-        fetchTransactionTypes(orgId, '#rmc_transaction_type', true, function(data) {
-            if (data && data.length > 0) {
-                $.each(data, function(key, value) {
-                    $('#rmc_transaction_type').append('<option data-type="' + value.transaction_type + '" value="' + value.id + '">' + value.name + '</option>');
-                });
-            }
+        var siteId = $('#rmc_siteid').val();
+        // fetchTransactionTypes(orgId, '#rmc_transaction_type', true, function(data) {
+        //     if (data && data.length > 0) {
+        //         $.each(data, function(key, value) {
+        //             $('#rmc_transaction_type').append('<option data-type="' + value.transaction_type + '" value="' + value.id + '">' + value.name + '</option>');
+        //         });
+        //     }
+        // });
+
+        fetchMaterialManagementTransactionTypes(orgId, '#rmc_transaction_type','issue_dispense','y', function(data) {
+            $.each(data, function(key, value) {
+                $('#rmc_transaction_type').append('<option value="' + value.id + '">' + value.name + '</option>');
+            });
         });
+
+
+        fetchActiveSL(siteId, '#rmc_inv_location', function(data) {
+            $.each(data, function(key, value) {
+                $('#rmc_inv_location').append('<option value="' + value.location_id + '">' + value.name + '</option>');
+            });
+        });
+
+        // $('#rmc_inv_location').html("<option selected disabled value=''>Select Inventory Location</option>").prop('disabled', true);
+        // SiteChangeActivatedServiceLocation(siteId,'#rmc_inv_location', '#add_reqmc',true );
+        
+
         $(".rmc_inv_generic, .rmc_route, .rmc_frequency").each(function() {
             $(this).val($(this).find("option:first").val()).change();
         });
@@ -208,16 +227,34 @@ $(document).ready(function() {
                 $('#u_rmc_remarks').val(response.Remarks);
                 $('#reqmc_id').val(response.id);
                 $('#u_rmc_transaction_type').html("<option selected value='"+response.TransactionTypeId+"'>" + response.TransactionType + "</option>");
-                fetchTransactionTypes(response.orgId, '#u_mc_transactionType', true, function(data) {
-                    if (data && data.length > 0) {
-                        $.each(data, function(key, value) {
-                            if(value.id != response.TransactionTypeId){
-                                $('#u_rmc_transaction_type').append('<option value="' + value.id + '">' + value.name + '</option>');
-                            }
-                        });
-                    } 
+                // fetchTransactionTypes(response.orgId, '#u_mc_transactionType', true, function(data) {
+                //     if (data && data.length > 0) {
+                //         $.each(data, function(key, value) {
+                //             if(value.id != response.TransactionTypeId){
+                //                 $('#u_rmc_transaction_type').append('<option value="' + value.id + '">' + value.name + '</option>');
+                //             }
+                //         });
+                //     } 
+                // });
+
+                fetchMaterialManagementTransactionTypes(response.orgId, '#u_rmc_transaction_type','issue_dispense','y', function(data) {
+                    $.each(data, function(key, value) {
+                        if(value.id != response.TransactionTypeId){
+                            $('#u_rmc_transaction_type').append('<option value="' + value.id + '">' + value.name + '</option>');
+                        }
+                    });
                 });
-                $('#u_rmc_inv_location').val(response.ServiceLocationId).change();
+
+                // $('#u_rmc_inv_location').val(response.ServiceLocationId).change();
+                $('#u_rmc_inv_location').html("<option selected value="+ response.ServiceLocationId +">" + response.ServiceLocation + "</option>");
+                fetchActiveSL(response.siteId, '#u_rmc_inv_location', function(data) {
+                    $.each(data, function(key, value) {
+                        if(value.location_id != response.ServiceLocationId)
+                        {
+                            $('#u_rmc_inv_location').append('<option value="' + value.location_id + '">' + value.name + '</option>');
+                        }
+                    });
+                });
 
                 var genericIds = response.genericIds.split(',');
                 var genericNames = response.genericNames.split(',');

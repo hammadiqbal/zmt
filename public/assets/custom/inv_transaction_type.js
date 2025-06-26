@@ -212,7 +212,15 @@ $(document).ready(function() {
         columnDefs: [
             {
                 targets: 1,
-                width: "300px"
+                width: "250px"
+            },
+            {
+                targets: 2,
+                width: "250px"
+            },
+            {
+                targets: 3,
+                width: "250px"
             },
             {
                 targets: 5,

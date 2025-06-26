@@ -203,7 +203,7 @@
                                                             </li>
                                                             @endif
 
-                                                            @if($moduleName == 'issue_and_dispense')
+                                                            @if($moduleName == 'issue_and_dispense' OR $moduleName == 'other_transactions')
                                                             <li>
                                                                 <input type="checkbox" name="{{ $moduleName }}[]" class="check update_status" id="minimal-checkbox-{{ $moduleName }}-{{ $key+3 }}" {{$editChecked}}>
                                                                 <label for="minimal-checkbox-{{ $moduleName }}-{{ $key+3 }}">Respond</label>

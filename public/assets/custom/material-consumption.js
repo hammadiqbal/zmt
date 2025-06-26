@@ -17,8 +17,8 @@ $(document).ready(function() {
             });
             $('#mc_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',true);
             OrgChangeSites('#mc_org', '#mc_site', '#add_materialconsumption');
-            $('#mc_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
-            OrgChangeTransactionTypes('#mc_org', '#mc_transactiontype', '#add_materialconsumption',true);
+            // $('#mc_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
+            // OrgChangeTransactionTypes('#mc_org', '#mc_transactiontype', '#add_materialconsumption',true);
             
             $('.mc_itemgeneric').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
             OrgChangeInventoryGeneric('#mc_org', '.mc_itemgeneric', '#add_materialconsumption');
@@ -31,14 +31,14 @@ $(document).ready(function() {
                     $('#mc_site').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
-            fetchTransactionTypes(orgId, '#mc_transactiontype', true, function(data) {
-                $('#mc_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',false);
-                if (data && data.length > 0) {
-                    $.each(data, function(key, value) {
-                        $('#mc_transactiontype').append('<option value="' + value.id + '">' + value.name + '</option>');
-                    });
-                } 
-            });
+            // fetchTransactionTypes(orgId, '#mc_transactiontype', true, function(data) {
+            //     $('#mc_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',false);
+            //     if (data && data.length > 0) {
+            //         $.each(data, function(key, value) {
+            //             $('#mc_transactiontype').append('<option value="' + value.id + '">' + value.name + '</option>');
+            //         });
+            //     } 
+            // });
              $('.mc_itemgeneric').html("<option selected disabled value=''>Select Item Generic</option>");
             fetchOrganizationItemGeneric(orgId, '.mc_itemgeneric', function(data) {
                 $.each(data, function(key, value) {
@@ -47,13 +47,20 @@ $(document).ready(function() {
             });
             
         }
+
+        $('#mc_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
+        SiteChangeMaterialManagementTransactionTypes('#mc_site','#mc_org', '#mc_transactiontype', '#add_materialconsumption','issue_dispense','y');
+
+        $('#mc_inv_location').html("<option selected disabled value=''>Select Inventory Location</option>").prop('disabled', true);
+        SiteChangeActivatedServiceLocation('#mc_site','#mc_inv_location', '#add_materialconsumption',true );
+
         $('#mc_patient').html("<option selected disabled value=''>Select Patient MR#</option>").prop('disabled',true);
         SiteChangeMRCode('#mc_site', '#mc_patient', '#add_materialconsumption', 'materialConsumption');
         MRChangeService('#mc_patient', '#mc_service');
 
         $(document).off('change', '#mc_transactiontype').on('change', '#mc_transactiontype', function() {
             let transactionTypeID = $(this).val();
-            let siteId = $('#mc_site').val();  // you must already have a selected site
+            let siteId = $('#mc_site').val(); 
             if (!siteId) {
                 Swal.fire({
                     icon: 'warning',
@@ -85,6 +92,7 @@ $(document).ready(function() {
                     siteId: siteId
                 },
                 success: function(resp) {
+                    console.log(resp);
                     Swal.close();
                     let sourceType = (resp.Source || '').toLowerCase();
                     let destType = (resp.Destination || '').toLowerCase();
@@ -100,6 +108,17 @@ $(document).ready(function() {
                             .prop('required', false)
                             .removeAttr('data-validation-required');
                     }
+                    // if (resp.LocationMandatory && resp.LocationMandatory.toLowerCase() === 'y') {
+                    //     // Show the inventory location dropdown
+                    //     $('.mc_inv_location').show(); // Add a class to the container div for easy selection
+                    //     $('#mc_inv_location').prop('required', true);
+                    // } else {
+                    //     // Hide the inventory location dropdown and set value to 0
+                    //     $('.mc_inv_location').hide();
+                    //     // $('#mc_inv_location').val(0).prop('required', false);
+                    //     $('#mc_inv_location').html("<option selected value='0'>0</option>").prop('required',true);
+
+                    // }
                 },
                 error: function(xhr, status, error) {
                     Swal.close();
@@ -390,21 +409,43 @@ $(document).ready(function() {
                 }, function(error) {
                     console.log(error);
                 },response.siteId);
-                OrgChangeSites('#u_mc_org', '#u_mc_site', '#activate_cc');
+                OrgChangeSites('#u_mc_org', '#u_mc_site', '#update_materialconsumption');
 
-                $('#u_mc_transactionType').html("<option selected value='"+response.transactionTypeId+"'>" + response.transactionType + "</option>").trigger('change');
-                fetchTransactionTypes(response.orgId, '#u_mc_transactionType', true, function(data) {
-                    if (data && data.length > 0) {
-                        $.each(data, function(key, value) {
-                            if(value.id != response.transactionTypeId){
-                                $('#u_mc_transactionType').append('<option value="' + value.id + '">' + value.name + '</option>');
-                            }
-                        });
-                    } 
+                // $('#u_mc_transactionType').html("<option selected value='"+response.transactionTypeId+"'>" + response.transactionType + "</option>").trigger('change');
+                // fetchTransactionTypes(response.orgId, '#u_mc_transactionType', true, function(data) {
+                //     if (data && data.length > 0) {
+                //         $.each(data, function(key, value) {
+                //             if(value.id != response.transactionTypeId){
+                //                 $('#u_mc_transactionType').append('<option value="' + value.id + '">' + value.name + '</option>');
+                //             }
+                //         });
+                //     } 
+                // });
+
+                $('#u_mc_transactionType').html("<option selected value="+ response.transactionTypeId +">" + response.transactionType + "</option>");
+                fetchMaterialManagementTransactionTypes(response.orgId, '#u_mc_transactionType','issue_dispense','y', function(data) {
+                    $.each(data, function(key, value) {
+                        if(value.id != response.transactionTypeId)
+                        {
+                            $('#u_mc_transactionType').append('<option value="' + value.id + '">' + value.name + '</option>');
+                        }
+                    });
                 });
-                OrgChangeTransactionTypes('#u_mc_org', '#u_mc_transactionType', '#add_materialconsumption',true);
 
-                $('#u_mc_inv_location').val(response.ServiceLocationId).change();
+                OrgChangeTransactionTypes('#u_mc_org', '#u_mc_transactionType', '#update_materialconsumption',true);
+
+                // $('#u_mc_inv_location').val(response.ServiceLocationId).change();
+                $('#u_mc_inv_location').html("<option selected value="+ response.ServiceLocationId +">" + response.ServiceLocationName + "</option>");
+                fetchActiveSL(response.siteId, '#u_mc_inv_location', function(data) {
+                    $.each(data, function(key, value) {
+                        if(value.location_id != response.ServiceLocationId)
+                        {
+                            $('#u_mc_inv_location').append('<option value="' + value.location_id + '">' + value.name + '</option>');
+                        }
+                    });
+                });
+
+
                 fetchPatientMR(response.siteId, '#u_mc_patient', 'materialConsumption', function(data) {
                     $('#u_mc_patient').empty();
                     $('#u_mc_patient').find('option:contains("Loading...")').remove();
@@ -549,7 +590,7 @@ $(document).ready(function() {
                         '<div class="form-group row">' +
                         '<div class="col-md-12">' +
                         '<div class="form-group has-custom m-b-5">' +
-                        '<label class="control-label">Update Dose</label>' +
+                        '<label class="control-label">Update Demand Qty</label>' +
                         '<input type="number" class="form-control input-sm" required name="u_mc_qty[]" value="' + Qty[i] + '">' +
                         '</div>' +
                         '<span class="text-danger u_mc_qty_error"></span>' +

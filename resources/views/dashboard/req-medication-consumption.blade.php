@@ -246,6 +246,7 @@
                         <form id="add_reqmc" method="post">
                             <input type="hidden" id="rmc_orgid" value=" {{ $PatientDetails->orgId }}">
                             <input type="hidden" name="rmc_mr" value=" {{ $PatientDetails->patientMR }}">
+                            <input type="hidden" id="rmc_siteid" value=" {{ $PatientDetails->siteId }}">
                             @csrf
                             <div class="modal-body">
                                 <!-- Row -->
@@ -274,10 +275,10 @@
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Select Inventory Locations </label>
                                                                     <select class="form-control selecter p-0" name="rmc_inv_location" id="rmc_inv_location" style="color:#222d32">
-                                                                        <option selected disabled >Select Inventory Location</option>
+                                                                        {{-- <option selected disabled >Select Inventory Location</option>
                                                                         @foreach ($ServiceLocations as $ServiceLocation)
                                                                             <option value="{{ $ServiceLocation['id'] }}">{{ $ServiceLocation['name'] }}</option>
-                                                                        @endforeach
+                                                                        @endforeach --}}
                                                                     </select>
                                                                 </div>
                                                                 <span class="text-danger" id="rmc_inv_location_error"></span>

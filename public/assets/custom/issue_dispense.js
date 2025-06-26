@@ -264,36 +264,40 @@ $(document).ready(function() {
                         $('#id_dl').hide();
                     }
                     
-                    $('#id_source')
-                        .empty()
-                        .append('<option selected disabled value="">Select Source</option>');
+                   
         
                     if (resp.sourceData && resp.sourceData.length > 0) {
+                         $('#id_source')
+                        .empty()
+                        .append('<option selected disabled value="">Select Source</option>').prop('disabled', false);
                         resp.sourceData.forEach(function(item) {
                             let displayText = item.name || item.person_name || item.patient_name || 'Unnamed';
                             $('#id_source').append(
                                 '<option value="' + item.id + '">' + displayText + '</option>'
                             );
                         });
-                        $('#id_source').prop('disabled', false);
                     } else {
-                        $('#id_source').prop('disabled', true);
-                    }
-        
-                    $('#id_destination')
+                        $('#id_source')
                         .empty()
-                        .append('<option selected disabled value="">Select Destination</option>');
+                        .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
+                    }
+
         
                     if (resp.destinationData && resp.destinationData.length > 0) {
+                        $('#id_destination')
+                        .empty()
+                        .append('<option selected disabled value="">Select Destination</option>').prop('disabled', false);
+
                         resp.destinationData.forEach(function(item) {
                             let displayText = item.name || item.person_name || item.patient_name ||'Unnamed';
                             $('#id_destination').append(
                                 '<option value="' + item.id + '">' + displayText + '</option>'
                             );
                         });
-                        $('#id_destination').prop('disabled', false);
                     } else {
-                        $('#id_destination').prop('disabled', true);
+                        $('#id_destination')
+                        .empty()
+                        .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
                     }
 
                     let mrSelected = $('#id_mr').val(); // Get selected MR number
@@ -334,12 +338,12 @@ $(document).ready(function() {
                         }
                     }
 
-                    if (!sourceTypenew.includes('patient')) {
-                        $('#id_source').prop('disabled', false);
-                    }
-                    if (!destinationTypenew.includes('patient')) {
-                        $('#id_destination').prop('disabled', false);
-                    }
+                    // if (!sourceTypenew.includes('patient')) {
+                    //     $('#id_source').prop('disabled', false);
+                    // }
+                    // if (!destinationTypenew.includes('patient')) {
+                    //     $('#id_destination').prop('disabled', false);
+                    // }
 
                     $('#id_mr').off('change.idMr').on ('change.idMr', function(){
                         let mrSelectedNow = $(this).val();
@@ -419,7 +423,8 @@ $(document).ready(function() {
             const genericId = currentRow.find('.id_generic').val();
             const brandId = $(this).val();
             const $brand = $(this);
-
+            // console.log($brand);
+            
             if (!orgId || !siteId || !genericId || !brandId) {
                 Swal.fire(
                     'Missing Information',
@@ -433,8 +438,8 @@ $(document).ready(function() {
                     .val('');
                 return;
             }
-
-            handleBatchNumberCheck(orgId, siteId, genericId, brandId, $brand, currentRow, 'newIssue');
+            // handleBatchNumberCheck(orgId, siteId, genericId, brandId, $brand, currentRow, 'newIssue');
+            handleBatchNumberCheck(orgId, siteId, genericId, brandId, currentRow, 'newIssue','#add-issuedispense', {batchSelector: '.id_batch',brandSelector: '.id_brand', qtySelector: '.id_qty', expirySelector: '.id_expiry'});
         });
 
         $('#add-issuedispense').modal('show');
@@ -506,7 +511,7 @@ $(document).ready(function() {
             },
             {
                 targets: 2,
-                width: "250px"
+                width: "300px"
             },
             {
                 targets: 3,
@@ -750,6 +755,44 @@ $(document).ready(function() {
                         .append(infoHtml)
                         .show();
             
+
+                        
+                        if (resp.sourceData && resp.sourceData.length > 0) {
+                             $('#id_source')
+                            .empty()
+                            .append('<option selected disabled value="">Select Source</option>').prop('disabled', false);
+                            resp.sourceData.forEach(function(item) {
+                                let displayText = item.name || item.person_name || item.patient_name || 'Unnamed';
+                                $('#id_source').append(
+                                    '<option value="' + item.id + '">' + displayText + '</option>'
+                                );
+                            });
+                            
+                        } else {
+                            $('#id_source')
+                            .empty()
+                            .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
+                        }
+            
+
+            
+                        if (resp.destinationData && resp.destinationData.length > 0) {
+                            resp.destinationData.forEach(function(item) {
+                                $('#id_destination')
+                                .empty()
+                                .append('<option selected disabled value="">Select Destination</option>').prop('disabled', false);
+                                let displayText = item.name || item.person_name || item.patient_name ||'Unnamed';
+                                $('#id_destination').append(
+                                    '<option value="' + item.id + '">' + displayText + '</option>'
+                                );
+                            });
+                
+                        } else {
+                            $('#id_destination')
+                            .empty()
+                            .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
+                        }
+
                         let sourceType = (resp.Source || '').toLowerCase();
                         if (sourceType.includes('location')) {
                             $('#id_sl').show();
@@ -767,6 +810,10 @@ $(document).ready(function() {
                         if (destType.includes('location')) {
                             $('#id_dl').show();
                             $('#id_dl label').text('Inventory Destination Location');
+                            $('#id_destination')
+                            .empty()
+                            .append(`<option selected value="${data.inv_location_id}">${data.location_name}</option>`)
+                            .prop('disabled', true);
                         }
                         else if (destType.includes('patient')) {
                             $('#id_dl').show();
@@ -774,38 +821,6 @@ $(document).ready(function() {
                         }
                         else {
                             $('#id_dl').hide();
-                        }
-                        
-                        $('#id_source')
-                            .empty()
-                            .append('<option selected disabled value="">Select Source</option>');
-            
-                        if (resp.sourceData && resp.sourceData.length > 0) {
-                            resp.sourceData.forEach(function(item) {
-                                let displayText = item.name || item.person_name || item.patient_name || 'Unnamed';
-                                $('#id_source').append(
-                                    '<option value="' + item.id + '">' + displayText + '</option>'
-                                );
-                            });
-                            $('#id_source').prop('disabled', false);
-                        } else {
-                            $('#id_source').prop('disabled', true);
-                        }
-            
-                        $('#id_destination')
-                            .empty()
-                            .append('<option selected disabled value="">Select Destination</option>');
-            
-                        if (resp.destinationData && resp.destinationData.length > 0) {
-                            resp.destinationData.forEach(function(item) {
-                                let displayText = item.name || item.person_name || item.patient_name ||'Unnamed';
-                                $('#id_destination').append(
-                                    '<option value="' + item.id + '">' + displayText + '</option>'
-                                );
-                            });
-                            $('#id_destination').prop('disabled', false);
-                        } else {
-                            $('#id_destination').prop('disabled', true);
                         }
 
                         let mrSelected = $('#id_mr').val(); // Get selected MR number
@@ -846,12 +861,12 @@ $(document).ready(function() {
                             }
                         }
 
-                        if (!sourceTypenew.includes('patient')) {
-                            $('#id_source').prop('disabled', false);
-                        }
-                        if (!destinationTypenew.includes('patient')) {
-                            $('#id_destination').prop('disabled', false);
-                        }
+                        // if (!sourceTypenew.includes('patient')) {
+                        //     $('#id_source').prop('disabled', false);
+                        // }
+                        // if (!destinationTypenew.includes('patient')) {
+                        //     $('#id_destination').prop('disabled', false);
+                        // }
 
                         $('#id_mr').off('change.idMr').on ('change.idMr', function(){
                             let mrSelectedNow = $(this).val();
@@ -964,8 +979,6 @@ $(document).ready(function() {
                     $qtyInput.attr('max', demandQty);
                     $qtyInput.attr('placeholder', `Max: ${demandQty} (Demand Qty)`);
                 }
-                 
-
                 // $qtyInput.val('').prop('disabled', false);
                 // $row.find('.id_demand_qty').val(data.demand_qty).prop('disabled', true);
                 // $row.find('input[name="id_qty[]"]').val('').prop('disabled', false);
@@ -977,12 +990,12 @@ $(document).ready(function() {
                 $row.find('.id_generic'),
                 $row.find('.id_brand'),
                 $row.find('.id_batch'),
+                $row.find('.id_qty'),
                 $row.find('.id_expiry'),
                 respond,
+                {batchSelector: '.id_batch',brandSelector: '.id_brand', qtySelector: '.id_qty', expirySelector: '.id_expiry'},
                 '#add-issuedispense'
             );
-
-            
 
             $('#add-issuedispense').modal('show');
             setTimeout(function(){

@@ -845,7 +845,6 @@
                                 @if (!$hideThirdPartyRegistration)
                                     <li><a href="{{ route('third-party-registration') }}">Third Party Registration</a></li>
                                 @endif
-                                
                                 {{-- @if (!$hideTransactionType)
                                     <li><a href="{{ route('inventory-transaction-type') }}">Transaction Types</a></li>
                                 @endif --}}
@@ -870,6 +869,11 @@
                                         @endif
                                     </ul>
                                     <ul aria-expanded="false" class="collapse">
+                                        @if (!$hideOtherTransaction)
+                                            <li><a href="{{ route('other-transactions') }}">Other Transactions</a></li>
+                                        @endif
+                                    </ul>
+                                    <ul aria-expanded="false" class="collapse">
                                         @if (!$hideIssueDispense)
                                             <li><a href="{{ route('issue-dispense') }}">Issue & Dispense</a></li>
                                         @endif
@@ -885,11 +889,7 @@
                                             <li><a>Return</a></li>
                                         @endif
                                     </ul>
-                                    <ul aria-expanded="false" class="collapse">
-                                        @if (!$hideOtherTransaction)
-                                            <li><a>Other Transactions</a></li>
-                                        @endif
-                                    </ul>
+                             
                                     <ul aria-expanded="false" class="collapse">
                                         @if (!$hideReversalTransaction)
                                             <li><a>Reversal Of Transactions</a></li>

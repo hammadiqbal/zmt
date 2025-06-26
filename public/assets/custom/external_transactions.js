@@ -210,7 +210,10 @@ $(document).ready(function() {
        
         $('.et_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
         // GenericChangeBrand('.et_generic', '.et_brand', '#add_externaltransactions');
-        $('#add-externaltransactions').modal('show');
+       $('#add-externaltransactions').modal({
+            backdrop: 'static',
+            keyboard: false 
+        }); 
     });
 
     // $(document).on('change', '.et_generic', function() {

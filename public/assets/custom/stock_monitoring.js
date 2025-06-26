@@ -35,7 +35,7 @@ $(document).ready(function() {
             OrgChangeInventoryGeneric('#sm_org', '#sm_generic', '#add_stockmonitoring');
         }
         $('#sm_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', true);
-        SiteChangeActivatedServiceLocation('#sm_site','#sm_location', '#add_stockmonitoring');
+        SiteChangeActivatedServiceLocation('#sm_site','#sm_location', '#add_stockmonitoring',false);
         
         $('#sm_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
         GenericChangeBrand('#sm_generic', '#sm_brand', '#add_stockmonitoring');
@@ -312,13 +312,15 @@ $(document).ready(function() {
                 $('#u_sm_servicelocation').html("<option selected value="+ response.serviceLocationId +">" + response.serviceLocation + "</option>");
                 fetchActiveSL(response.siteId, '#u_sm_servicelocation', function(data) {
                     $.each(data, function(key, value) {
-                        if(response.serviceLocationId != value.id)
+                        if(value.location_id != response.serviceLocationId)
                         {
+                            console.log(response.serviceLocationId,value.name,value.id);
                             $('#u_sm_servicelocation').append('<option value="' + value.id + '">' + value.name + '</option>');
                         }
                     });
                 });
-                SiteChangeActivatedServiceLocation('#u_sm_site','#u_sm_servicelocation', '#u_stockmonitoring');
+                
+                SiteChangeActivatedServiceLocation('#u_sm_site','#u_sm_servicelocation', '#u_stockmonitoring',false);
 
 
                 $('#u_sm_min_stock').val(response.minStock);

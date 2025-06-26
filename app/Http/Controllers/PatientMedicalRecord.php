@@ -2823,7 +2823,7 @@ class PatientMedicalRecord extends Controller
         $ServiceLocations = ServiceLocation::select('id', 'name')->where('status', 1)->get();
         $PatientDetails = PatientRegistration::select(
             'patient.name as patientName', 'gender.name as gender','organization.organization as orgName',
-            'organization.id as orgId',
+            'organization.id as orgId','org_site.id as siteId',
             'org_site.name as siteName','patient.dob as patientDOB','patient.mr_code as patientMR',
             'employee.name as responsiblePhysician','billingCC.name as billingCCName',
             'patient_inout.status as patientInOutStatus'

@@ -133,17 +133,17 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-6 mc_inv_location">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Select Inventory Locations </label>
                                                                     <select class="form-control selecter p-0" name="mc_inv_location" id="mc_inv_location" style="color:#222d32">
-                                                                        <option selected disabled >Select Inventory Location</option>
+                                                                        {{-- <option selected disabled >Select Inventory Location</option>
                                                                         @foreach ($ServiceLocations as $ServiceLocation)
                                                                             <option value="{{ $ServiceLocation['id'] }}">{{ $ServiceLocation['name'] }}</option>
-                                                                        @endforeach
-                                                                    </select>
+                                                                        @endforeach--}}
+                                                                    </select> 
                                                                 </div>
                                                                 <span class="text-danger" id="mc_inv_location_error"></span>
                                                             </div>
@@ -318,9 +318,9 @@
                                                         <div class="form-group m-b-5">
                                                             <label class="control-label">Update Inventory Location</label>
                                                             <select class="form-control selecter p-0" name="u_mc_inv_location" id="u_mc_inv_location" style="color:#222d32">
-                                                                @foreach ($ServiceLocations as $ServiceLocation)
+                                                                {{-- @foreach ($ServiceLocations as $ServiceLocation)
                                                                     <option value="{{ $ServiceLocation['id'] }}">{{ $ServiceLocation['name'] }}</option>
-                                                                @endforeach
+                                                                @endforeach --}}
                                                             </select>
                                                         </div>
                                                     </div>
