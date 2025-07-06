@@ -27,8 +27,8 @@ class IssueDispenseRequest extends FormRequest
             'id_org' => 'required|exists:organization,id',
             'id_site' => 'required|exists:org_site,id',
             'id_transactiontype' => 'required|exists:inventory_transaction_type,id',
-            'id_source' => 'required',
-            'id_destination' => 'required',
+            'id_source' => 'nullable',
+            'id_destination' => 'nullable',
             'id_generic' => 'required|array',
             'id_generic.*' => 'required|exists:inventory_generic,id',
             'id_brand' => 'required|array',
@@ -44,6 +44,13 @@ class IssueDispenseRequest extends FormRequest
             'id_demand_qty.*' => 'nullable|numeric',
         ];
 
+        if ($this->input('source_applicable') == '1') {
+            $rules['id_source'] = 'required';
+        }
+        if ($this->input('destination_applicable') == '1') {
+            $rules['id_destination'] = 'required';
+        }
+
         // Add conditional validation for MR related fields
         $sourceType = $this->input('source_type');
 
@@ -57,6 +64,11 @@ class IssueDispenseRequest extends FormRequest
                 $rules['id_billingcc'] = 'nullable|exists:costcenter,id';
                 $rules['id_performing_cc'] = 'nullable';
                 $rules['id_physician'] = 'nullable|exists:employee,id';
+                $rules['id_duration'] = 'nullable';
+                $rules['id_frequency'] = 'nullable';
+                $rules['id_route'] = 'nullable';
+                $rules['id_dose'] = 'nullable';
+
             } else {
                 // If no MR, all service-related fields are optional
                 $rules['id_mr'] = 'nullable';
@@ -65,6 +77,10 @@ class IssueDispenseRequest extends FormRequest
                 $rules['id_billingcc'] = 'nullable';
                 $rules['id_performing_cc'] = 'nullable';
                 $rules['id_physician'] = 'nullable';
+                $rules['id_duration'] = 'nullable';
+                $rules['id_frequency'] = 'nullable';
+                $rules['id_route'] = 'nullable';
+                $rules['id_dose'] = 'nullable';
             }
         } else {
             // For non-material source (medication)
@@ -76,6 +92,10 @@ class IssueDispenseRequest extends FormRequest
                 $rules['id_billingcc'] = 'required|exists:costcenter,id';
                 $rules['id_performing_cc'] = 'required';
                 $rules['id_physician'] = 'required|exists:employee,id';
+                $rules['id_duration'] = 'required';
+                $rules['id_frequency'] = 'required';
+                $rules['id_route'] = 'required';
+                $rules['id_dose'] = 'required';
             } else {
                 // If no MR, make fields optional
                 $rules['id_mr'] = 'nullable';
@@ -84,6 +104,10 @@ class IssueDispenseRequest extends FormRequest
                 $rules['id_billingcc'] = 'nullable';
                 $rules['id_performing_cc'] = 'nullable';
                 $rules['id_physician'] = 'nullable';
+                $rules['id_duration'] = 'nullable';
+                $rules['id_frequency'] = 'nullable';
+                $rules['id_route'] = 'nullable';
+                $rules['id_dose'] = 'nullable';
             }
         }
         // if ($this->filled('id_mr')) {
@@ -139,7 +163,11 @@ class IssueDispenseRequest extends FormRequest
             'id_servicemode.required' => 'Service Mode is required when MR is provided',
             'id_billingcc.required' => 'Billing Cost Center is required when MR is provided',
             'id_performing_cc.required' => 'Performing Cost Center is required when MR is provided',
-            'id_physician.required' => 'Physician is required when MR is provided'
+            'id_physician.required' => 'Physician is required when MR is provided',
+            'id_duration.required' => 'This field is required',
+            'id_frequency.required' => 'This field is required',
+            'id_dose.required' => 'This field is required',
+            'id_route.required' => 'This field is required'
         ];
     }
 

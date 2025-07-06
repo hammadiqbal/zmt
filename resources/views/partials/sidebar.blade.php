@@ -881,7 +881,7 @@
                                   
                                     <ul aria-expanded="false" class="collapse">
                                         @if (!$hideConsumption)
-                                            <li><a>Consumption</a></li>
+                                            <li><a href="{{ route('consumption') }}">Consumption</a></li>
                                         @endif
                                     </ul>
                                     <ul aria-expanded="false" class="collapse">

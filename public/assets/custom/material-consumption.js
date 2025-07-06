@@ -318,7 +318,7 @@ $(document).ready(function() {
             },
               {
                 targets: 2,
-                width: "300px"
+                width: "250px"
             },
               {
                 targets: 3,

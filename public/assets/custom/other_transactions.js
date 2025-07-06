@@ -31,12 +31,6 @@ $(document).ready(function() {
                     $('#ot_site').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
-            fetchOrgPatient(orgId, '#ot_mr', function(data) {
-                $('#ot_mr').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', false);
-                $.each(data, function(key, value) {
-                    $('#ot_mr').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name +'</option>');
-                });
-            });
             $('.ot_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', false);
             fetchOrganizationItemGeneric(orgId, '.ot_generic', function(data) {
                 $.each(data, function(key, value) {
@@ -365,7 +359,6 @@ $(document).ready(function() {
             // $('#mrService,.mr-dependent').show();
             // if (data.source === 'material' && !data.mr_code) {
             $('#od_sl, #od_dl').hide();
-            
             $('#add_othertransaction')[0].reset();
 
             // if ($('#source_type').length) {
@@ -724,8 +717,6 @@ $(document).ready(function() {
         if ($('#od_sl').is(':hidden')) {
             excludedFields.push('ot_source');
         }
-        console.log('Excluded Fields:', excludedFields);
-
     
         // if (hasSourceType) {
         //     // Only modify excludedFields if we're handling a response (source_type exists)
@@ -848,6 +839,13 @@ $(document).ready(function() {
                                 $('#view-othertransaction').DataTable().ajax.reload();
                                 $('#add_othertransaction')[0].reset();
                             }
+                        });
+                    }
+                    else if (response.msg) {
+                        Swal.fire({
+                            text: response.msg,
+                            icon: 'info',
+                            confirmButtonText: 'OK'
                         });
                     }
                 },

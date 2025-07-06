@@ -40,12 +40,12 @@ $(document).ready(function() {
                     $('#id_site').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
-            fetchOrgPatient(orgId, '#id_mr', function(data) {
-                $('#id_mr').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', false);
-                $.each(data, function(key, value) {
-                    $('#id_mr').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name +'</option>');
-                });
-            });
+            // fetchOrgPatient(orgId, '#id_mr', function(data) {
+            //     $('#id_mr').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', false);
+            //     $.each(data, function(key, value) {
+            //         $('#id_mr').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name +'</option>');
+            //     });
+            // });
             $('.id_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', false);
             fetchOrganizationItemGeneric(orgId, '.id_generic', function(data) {
                 $.each(data, function(key, value) {
@@ -64,13 +64,14 @@ $(document).ready(function() {
             
             $('#id_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',true);
             OrgChangeSites('#id_org', '#id_site', '#add_issuedispense');
-            
-            $('#id_mr').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', true);
-            SiteChangeMRCode('#id_site', '#id_mr', null);
+    
             
             $('.id_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
             OrgChangeInventoryGeneric('#id_org', '.id_generic', '#add_issuedispense');
         }
+                
+        $('#id_mr').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', true);
+        SiteChangeMRCode('#id_site', '#id_mr', null);
         SiteChangeMaterialManagementTransactionTypes('#id_site','#id_org', '#id_transactiontype', '#add_issuedispense','issue_dispense','n');
 
         $(document).off('change', '#id_mr').on('change', '#id_mr', function() {
@@ -242,26 +243,37 @@ $(document).ready(function() {
                     if (sourceType.includes('location')) {
                         $('#id_sl').show();
                         $('#id_sl label').text('Inventory Source Location');
+                        $('#source_applicable').val('1');
+
                     }
                     else if (sourceType.includes('patient')) {
                         $('#id_sl').show();
                         $('#id_sl label').text('Inventory Source Patient');
+                        $('#source_applicable').val('1');
+
                     }
                     else {
                         $('#id_sl').hide();
+                        $('#source_applicable').val('0');
                     }
         
                     let destType = (resp.Destination || '').toLowerCase();
                     if (destType.includes('location')) {
                         $('#id_dl').show();
                         $('#id_dl label').text('Inventory Destination Location');
+                        $('#destination_applicable').val('1');
+
                     }
                     else if (destType.includes('patient')) {
                         $('#id_dl').show();
                         $('#id_dl label').text('Inventory Destination Patient');
+                        $('#destination_applicable').val('1');
+
                     }
                     else {
                         $('#id_dl').hide();
+                        $('#destination_applicable').val('0');
+
                     }
                     
                    
@@ -584,9 +596,15 @@ $(document).ready(function() {
             // $('#id_dl,#id_sl,.serviceDetails').show();
             // $('#mrService,.mr-dependent').show();
             // if (data.source === 'material' && !data.mr_code) {
-            if (data.source === 'material') {
+            if (data.source === 'material' && !data.mr_code) {
                 $('#id_mr').closest('.col-md-6').hide();
                 $('#id_sl, #id_dl, .serviceDetails, #mrService, .mr-dependent').hide();
+                $('.req_only').show();
+            }
+            else if (data.source === 'material') {
+                $('.id_route,.id_frequency')
+                    .prop('disabled', true)
+                    .html('<option selected disabled value=""></option>');
                 $('.req_only').show();
             }
             else {
@@ -621,7 +639,7 @@ $(document).ready(function() {
             //         .html(`<option selected value="${data.mr_code}">${data.mr_code} – ${data.patient_name}</option>`)
             //         .prop('disabled', true).trigger('change');
             // }
-
+            console.log(data);
             if (data.mr_code) {
                 $('#id_mr')
                     .html(`<option selected value="${data.mr_code}">${data.mr_code} – ${data.patient_name}</option>`)
@@ -679,7 +697,6 @@ $(document).ready(function() {
                     }
                 });
             });
-
             
             // $('#id_transactiontype').html(`<option selected value="${data.transaction_type_id}">${data.transaction_type_name}</option>`).prop('disabled', true).trigger('change');
             $('#id_transactiontype')
@@ -797,13 +814,17 @@ $(document).ready(function() {
                         if (sourceType.includes('location')) {
                             $('#id_sl').show();
                             $('#id_sl label').text('Inventory Source Location');
+                            $('#source_applicable').val('1');
+
                         }
                         else if (sourceType.includes('patient')) {
                             $('#id_sl').show();
                             $('#id_sl label').text('Inventory Source Patient');
+                            $('#source_applicable').val('1');
                         }
                         else {
                             $('#id_sl').hide();
+                            $('#source_applicable').val('0');
                         }
             
                         let destType = (resp.Destination || '').toLowerCase();
@@ -814,13 +835,17 @@ $(document).ready(function() {
                             .empty()
                             .append(`<option selected value="${data.inv_location_id}">${data.location_name}</option>`)
                             .prop('disabled', true);
+                            $('#destination_applicable').val('1');
+
                         }
                         else if (destType.includes('patient')) {
                             $('#id_dl').show();
                             $('#id_dl label').text('Inventory Destination Patient');
+                            $('#destination_applicable').val('1');
                         }
                         else {
                             $('#id_dl').hide();
+                            $('#destination_applicable').val('0');
                         }
 
                         let mrSelected = $('#id_mr').val(); // Get selected MR number
@@ -1032,6 +1057,12 @@ $(document).ready(function() {
         $('.id_brand')
             .prop('disabled', true)
             .html('<option selected disabled value="">Select Item Brand</option>');
+        $('.id_route')
+            .prop('disabled', true)
+            .html('<option selected disabled value="">Select Item Brand</option>');
+        $('.id_frequency')
+            .prop('disabled', true)
+            .html('<option selected disabled value="">Select Item Brand</option>');
 
         $('.id_batch').val('').prop('disabled', false);
         $('.id_expiry').val('').prop('disabled', false);
@@ -1152,6 +1183,13 @@ $(document).ready(function() {
 
         // Validate non-array fields
         var excludedFields = ['id_reference_document', 'id_remarks'];
+
+        if ($('#id_dl').is(':hidden')) {
+            excludedFields.push('id_destination');
+        }
+        if ($('#id_sl').is(':hidden')) {
+            excludedFields.push('id_source');
+        }
         
         if (!serviceAvailable) {
             excludedFields = excludedFields.concat([
@@ -1286,6 +1324,13 @@ $(document).ready(function() {
                                 $('#view-issuedispense').DataTable().ajax.reload();
                                 $('#add_issuedispense')[0].reset();
                             }
+                        });
+                    }
+                    else if (response.msg) {
+                        Swal.fire({
+                            text: response.msg,
+                            icon: 'info',
+                            confirmButtonText: 'OK'
                         });
                     }
                 },

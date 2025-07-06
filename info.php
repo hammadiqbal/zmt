@@ -26,15 +26,13 @@ same noa ddition subtraction required for that thing -->
 
 <!-- Finalize Other Transaction Module 
 Show balances and check repond btn update validation logic if source or destination is hide then these fields should not required -->
-check thorughly these 3 modules 
-external transaction, issue and dispense and other transaction.
-in Issue and Dispense module for issue qty should not be minus for dispense it should ne minus
-show brand batch no and expiry where responded 
-
+Finalize Consumption
+Show data int table get data from inventory_management table where transaction activity is issue and dispense and
+transaction name like '%issue%'
+then work on consume button
 ...........................................................................
-create table requisition_other_transaction
-update module table 
-create column requisition_for_other_transaction in rights table
+add columns (dose,route_id,frequency_id,duration) in inventory_management table
+remove source_balance,destination_balance,site_balance,org_balance from inventory_management table
 ............................................................................
 when mutiple time ajax run error change the .change function with like this   
  $(siteSelector).off('change.siteLookup').on('change.siteLookup', function(){

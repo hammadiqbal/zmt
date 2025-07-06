@@ -41,7 +41,7 @@ border: 1px solid rgba(0,0,0,.15);
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">Home</li>
                 <li class="breadcrumb-item">Settings</li>
-                <li class="breadcrumb-item active">Issue & Dispense </li>
+                <li class="breadcrumb-item active">Consumption </li>
             </ol>
         </div>
     </div>
@@ -49,38 +49,31 @@ border: 1px solid rgba(0,0,0,.15);
         <div class="card-body">
             <div class="row">
                 <div class="col">
-                    <h4 class="card-title">All Issue and Dispense </h4>
+                    <h4 class="card-title">All Consumption Records </h4>
                 </div>
                 @php
-                $IssueAndDispense = explode(',', $rights->issue_and_dispense);
-                $add = $IssueAndDispense[0];
-                $view = $IssueAndDispense[1];
-                $respond = $IssueAndDispense[2];
+                $Consumption = explode(',', $rights->consumption);
+                $add = $Consumption[0];
+                $view = $Consumption[1];
                 // $updateStatus = $IssueAndDispense[3];
                 @endphp
-                @if ($RequisitionNonMandatory)
-                    @if ($add == 1)
-                    <div class="col-auto">
-                        <button type="button" class="btn btn-primary p-2 add-issuedispense">
-                            <i class="mdi mdi-clipboard-account"></i> New Issue or Dispense
-                        </button>
-                    </div>
-                    @endif
-                @endif
+              
             </div>
-            {{-- @if ($RequisitionNonMandatory) --}}
-                @if ($add == 1 || $respond == 1)
-                <div class="modal fade bs-example-modal-lg" id="add-issuedispense" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+                @if ($add == 1)
+                <div class="modal fade bs-example-modal-lg" id="add-consumption" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
                     <div class="modal-dialog modal-lg" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h4 class="modal-title" id="myLargeModalLabel">Add Issue and Dispense Details</h4>
+                                <h4 class="modal-title" id="myLargeModalLabel">Add Consumption Details</h4>
                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                             </div>
                             <div class="row" id="transaction-info-row" style="width:98%;display:none;font-size:13px;border:1px solid black;margin: 0 auto;"></div>
 
-                            <form id="add_issuedispense" method="post" enctype="multipart/form-data">
+                            <form id="add_consumption" method="post" enctype="multipart/form-data">
                                 @csrf
+                                <input type="hidden" name="source_type" id="source_type">
+                                <input type="hidden" id="source_applicable" name="source_applicable" value="1">
+                                <input type="hidden" id="destination_applicable" name="destination_applicable" value="1">
                                 <div class="modal-body">
                                     <!-- Row -->
                                     <div class="row">
@@ -90,7 +83,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                     <div class="row">
                                                         @if($user->org_id != 0)
                                                         <div class="userOrganization">
-                                                            <select class="form-contro selecter p-0" id="id_org" name="id_org">
+                                                            <select class="form-contro selecter p-0" id="consumption_org" name="consumption_org">
                                                                 <option selected value='{{ $user->org_id }}'>{{ $user->orgName }}</option>
                                                             </select>
                                                         </div>
@@ -100,10 +93,10 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Organization</label>
-                                                                        <select class="form-control selecter p-0" name="id_org" id="id_org" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0" name="consumption_org" id="consumption_org" style="color:#222d32">
                                                                         </select>
                                                                     </div>
-                                                                    <span class="text-danger" id="id_org_error"></span>
+                                                                    <span class="text-danger" id="consumption_org_error"></span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -114,10 +107,10 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Site</label>
-                                                                        <select class="form-control selecter p-0" name="id_site" id="id_site" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0" name="consumption_site" id="consumption_site" style="color:#222d32">
                                                                         </select>
                                                                     </div>
-                                                                    <span class="text-danger" id="id_site_error"></span>
+                                                                    <span class="text-danger" id="consumption_site_error"></span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -129,7 +122,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">MR # <small class="text-danger" id="mr-optional" style="font-size:11px;">(Optional)</small></label>
-                                                                        <select class="form-control selecter p-0" name="id_mr" id="id_mr" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0" name="consumption_mr" id="consumption_mr" style="color:#222d32">
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -141,39 +134,39 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Requested Transaction</label>
-                                                                        <select class="form-control selecter p-0" name="id_transactiontype" id="id_transactiontype" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0" name="consumption_transactiontype" id="consumption_transactiontype" style="color:#222d32">
                                                                         </select>
                                                                     </div>
-                                                                    <span class="text-danger" id="id_transactiontype_error"></span>
+                                                                    <span class="text-danger" id="consumption_transactiontype_error"></span>
                                                                 </div>
                                                             </div>
                                                         </div>
 
                                                         
 
-                                                        <div class="col-md-6" id="id_sl">
+                                                        <div class="col-md-6" id="consumption_sl">
                                                             <div class="form-group row">
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Inventory Source</label>
-                                                                        <select class="form-control selecter p-0" name="id_source" id="id_source" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0" name="consumption_source" id="consumption_source" style="color:#222d32">
                                                                         </select>
                                                                     </div>
-                                                                    <span class="text-danger" id="id_source_error"></span>
+                                                                    <span class="text-danger" id="consumption_source_error"></span>
 
                                                                 </div>
                                                             </div>
                                                         </div>
 
-                                                        <div class="col-md-6" id="id_dl">
+                                                        <div class="col-md-6" id="consumption_dl">
                                                             <div class="form-group row">
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Inventory Destination</label>
-                                                                        <select class="form-control selecter p-0" name="id_destination" id="id_destination" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0" name="consumption_destination" id="consumption_destination" style="color:#222d32">
                                                                         </select>
                                                                     </div>
-                                                                    <span class="text-danger" id="id_destination_error"></span>
+                                                                    <span class="text-danger" id="consumption_destination_error"></span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -183,7 +176,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Service </label>
-                                                                        <select class="form-control selecter p-0" name="id_service" id="id_service" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0" name="consumption_service" id="consumption_service" style="color:#222d32">
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -195,7 +188,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Service Mode</label>
-                                                                        <select class="form-control selecter p-0" name="id_servicemode" id="id_servicemode" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0" name="consumption_servicemode" id="consumption_servicemode" style="color:#222d32">
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -207,7 +200,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Service Type</label>
-                                                                        <input type="text" id="id_servicetype" name="id_servicetype" class="form-control input-sm">
+                                                                        <input type="text" id="consumption_servicetype" name="consumption_servicetype" class="form-control input-sm">
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -218,7 +211,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Service Group</label>
-                                                                        <input type="text"  id="id_servicegroup" name="id_servicegroup" class="form-control input-sm">
+                                                                        <input type="text"  id="consumption_servicegroup" name="consumption_servicegroup" class="form-control input-sm">
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -229,7 +222,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Physician </label>
-                                                                        <select class="form-control selecter p-0" name="id_physician" id="id_physician" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0" name="consumption_physician" id="consumption_physician" style="color:#222d32">
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -241,7 +234,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Billing Speciality </label>
-                                                                        <select class="form-control selecter p-0" name="id_billingcc" id="id_billingcc" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0" name="consumption_billingcc" id="consumption_billingcc" style="color:#222d32">
                                                                         </select>
                                                                     </div>
                                                                 </div>
@@ -255,22 +248,22 @@ border: 1px solid rgba(0,0,0,.15);
                                                                         <div class="col-md-12">
                                                                             <div class="form-group has-custom m-b-5">
                                                                                 <label class="control-label">Performing CC</label>
-                                                                                <select class="form-control selecter p-0" id="id_performing_cc" name="id_performing_cc" style="color:#222d32">
+                                                                                <select class="form-control selecter p-0" id="consumption_performing_cc" name="consumption_performing_cc" style="color:#222d32">
                                                                                     <option selected disabled value="">Select Performing CC</option>
                                                                                     @foreach($costcenters as $cc)
                                                                                         <option value="{{ $cc->id }}">{{ $cc->name }}</option>
                                                                                     @endforeach
                                                                                 </select>
-                                                                                <span class="text-danger" id="id_performing_cc_error"></span>
+                                                                                <span class="text-danger" id="consumption_performing_cc_error"></span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                                 @elseif($costcenters->count() == 1)
-                                                                <input type="text" class="form-control input-sm" readonly name="id_performing_cc" value="{{ $costcenters->first()->id }}">
+                                                                <input type="text" class="form-control input-sm" readonly name="consumption_performing_cc" value="{{ $costcenters->first()->id }}">
                                                                 @endif
                                                             @else
-                                                                <input type="hidden" name="id_performing_cc" value="0">
+                                                                <input type="hidden" name="consumption_performing_cc" value="0">
                                                         @endif
 
 
@@ -279,7 +272,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                         <label class="control-label">Enter Reference Document# <small class="text-danger" style="font-size:11px;">(Optional)</small> </label>
-                                                                        <input type="text" placeholder="Enter Reference Document#"  name="id_reference_document" class="form-control input-sm">
+                                                                        <input type="text" placeholder="Enter Reference Document#"  name="consumption_reference_document" class="form-control input-sm">
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -290,7 +283,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-10">
                                                                         <label class="control-label">Enter Remarks <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                                        <textarea class="form-control" placeholder="Enter Remarks" rows="2" name="id_remarks" spellcheck="false"></textarea>
+                                                                        <textarea class="form-control" placeholder="Enter Remarks" rows="2" name="consumption_remarks" spellcheck="false"></textarea>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -302,10 +295,10 @@ border: 1px solid rgba(0,0,0,.15);
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
                                                                             <label class="control-label">Select Item Generic</label>
-                                                                            <select class="form-control selecter p-0 id_generic" name="id_generic[]" style="color:#222d32">
+                                                                            <select class="form-control selecter p-0 consumption_generic" name="consumption_generic[]" style="color:#222d32">
                                                                             </select>
                                                                         </div>
-                                                                        <span class="text-danger id_generic_error"></span>
+                                                                        <span class="text-danger consumption_generic_error"></span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -315,22 +308,22 @@ border: 1px solid rgba(0,0,0,.15);
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
                                                                             <label class="control-label">Select Brand</label>
-                                                                            <select class="form-control selecter p-0 id_brand" name="id_brand[]" style="color:#222d32">
+                                                                            <select class="form-control selecter p-0 consumption_brand" name="consumption_brand[]" style="color:#222d32">
                                                                             </select>
                                                                         </div>
-                                                                        <span class="text-danger id_brand_error"></span>
+                                                                        <span class="text-danger consumption_brand_error"></span>
                                                                     </div>
                                                                 </div>
                                                             </div>
 
-                                                            <div class="col-md-6 req_only">
+                                                            <div class="col-md-6 mr-nt-dependent">
                                                                 <div class="form-group row">
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
                                                                             <label class="control-label">Demand Qty</label>
-                                                                            <input type="number" class="form-control input-sm id_demand_qty" placeholder="Demand Qty..." name="id_demand_qty[]">
+                                                                            <input type="number" class="form-control input-sm consumption_demand_qty" placeholder="Demand Qty..." name="consumption_demand_qty[]">
                                                                         </div>
-                                                                        <span class="text-danger id_demand_qty_error" ></span>
+                                                                        <span class="text-danger consumption_demand_qty_error" ></span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -341,9 +334,9 @@ border: 1px solid rgba(0,0,0,.15);
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
                                                                             <label class="control-label">Enter Dose</label>
-                                                                            <input type="text" class="form-control input-sm id_dose" placeholder="Dose.." name="id_dose[]">
+                                                                            <input type="text" class="form-control input-sm consumption_dose" placeholder="Dose.." name="consumption_dose[]">
                                                                         </div>
-                                                                        <span class="text-danger id_dose_error"></span>
+                                                                        <span class="text-danger consumption_dose_error"></span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -353,13 +346,13 @@ border: 1px solid rgba(0,0,0,.15);
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
                                                                             <label class="control-label">Select Route</label>
-                                                                            <select class="form-control selecter p-0 id_route" name="id_route[]" style="color:#222d32">
+                                                                            <select class="form-control selecter p-0 consumption_route" name="consumption_route[]" style="color:#222d32">
                                                                                 @foreach ($MedicationRoutes as $MedicationRoute)
                                                                                     <option value="{{ $MedicationRoute['id'] }}">{{ $MedicationRoute['name'] }}</option>
                                                                                 @endforeach
                                                                             </select>
                                                                         </div>
-                                                                        <span class="text-danger id_route_error"></span>
+                                                                        <span class="text-danger consumption_route_error"></span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -369,13 +362,13 @@ border: 1px solid rgba(0,0,0,.15);
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
                                                                             <label class="control-label">Select Frequency</label>
-                                                                            <select class="form-control selecter p-0 id_frequency" name="id_frequency[]" style="color:#222d32">
+                                                                            <select class="form-control selecter p-0 consumption_frequency" name="consumption_frequency[]" style="color:#222d32">
                                                                                 @foreach ($MedicationFrequencies as $MedicationFrequency)
                                                                                     <option value="{{ $MedicationFrequency['id'] }}">{{ $MedicationFrequency['name'] }}</option>
                                                                                 @endforeach
                                                                             </select>
                                                                         </div>
-                                                                        <span class="text-danger id_frequency_error"></span>
+                                                                        <span class="text-danger consumption_frequency_error"></span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -385,9 +378,9 @@ border: 1px solid rgba(0,0,0,.15);
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
                                                                             <label class="control-label">Enter Duration</label>
-                                                                            <input type="text" class="form-control input-sm" placeholder="Duration..." name="id_duration[]">
+                                                                            <input type="text" class="form-control input-sm consumption_duration" placeholder="Duration..." name="consumption_duration[]">
                                                                         </div>
-                                                                        <span class="text-danger id_duration_error"></span>
+                                                                        <span class="text-danger consumption_duration_error"></span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -398,26 +391,13 @@ border: 1px solid rgba(0,0,0,.15);
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
                                                                             <label class="control-label">Batch #</label>
-                                                                            <input type="text" class="form-control input-sm id_batch" placeholder="Batch #.." name="id_batch[]">
+                                                                            <input type="text" class="form-control input-sm consumption_batch" placeholder="Batch #.." name="consumption_batch[]">
                                                                         </div>
-                                                                        <span class="text-danger id_batch_error"></span>
+                                                                        <span class="text-danger consumption_batch_error"></span>
                                                                     </div>
                                                                 </div>
                                                             </div>
 
-                                                            {{-- <div class="col-md-6 brand_details">
-                                                                <div class="form-group row">
-                                                                    <div class="col-md-12">
-                                                                        <div class="form-group has-custom m-b-5">
-                                                                            <label class="control-label">Select Frequency</label>
-                                                                            <select class="form-control selecter p-0 id_frequency" name="id_frequency[]" style="color:#222d32">
-                                                                                
-                                                                            </select>
-                                                                        </div>
-                                                                        <span class="text-danger id_frequency_error"></span>
-                                                                    </div>
-                                                                </div>
-                                                            </div> --}}
         
                                                             <div class="col-md-6 brand_details">
                                                                 <div class="form-group row">
@@ -425,9 +405,20 @@ border: 1px solid rgba(0,0,0,.15);
                                                                         <div class="form-group has-custom m-b-5">
                                                                             <label class="control-label">Expiry Date</label>
         
-                                                                            <input type="text" name="id_expiry[]" class="form-control input06 qd id_expiry" placeholder="Select Expiry Date">
+                                                                            <input type="text" name="consumption_expiry[]" class="form-control input06 qd consumption_expiry" placeholder="Select Expiry Date">
                                                                         </div>
-                                                                        <span class="text-danger id_expiry_error"></span>
+                                                                        <span class="text-danger consumption_expiry_error"></span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                             <div class="col-md-6">
+                                                                <div class="form-group row">
+                                                                    <div class="col-md-12">
+                                                                        <div class="form-group has-custom m-b-5">
+                                                                            <label class="control-label">Issued Qty</label>
+                                                                            <input type="number" class="form-control input-sm issue_qty" placeholder="Transaction Qty..." name="issue_qty[]">
+                                                                        </div>
+                                                                        <span class="text-danger issue_qty_error" ></span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -437,10 +428,10 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="form-group row">
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
-                                                                            <label class="control-label">Enter Transaction Qty</label>
-                                                                            <input type="number" class="form-control input-sm id_qty" placeholder="Transaction Qty..." name="id_qty[]">
+                                                                            <label class="control-label">Enter Consumed Qty</label>
+                                                                            <input type="number" min="0" class="form-control input-sm consumption_qty" name="consumption_qty[]">
                                                                         </div>
-                                                                        <span class="text-danger id_qty_error" ></span>
+                                                                        <span class="text-danger consumption_qty_error" ></span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -469,11 +460,10 @@ border: 1px solid rgba(0,0,0,.15);
                     </div>
                 </div>
                 @endif
-            {{-- @endif --}}
 
             @if ($view == 1)
             <div class="table-responsive m-t-40">
-                <table id="view-issuedispense" class="table table-bordered table-striped">
+                <table id="view-consumption" class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th></th>
@@ -711,4 +701,4 @@ border: 1px solid rgba(0,0,0,.15);
         $('#u_et_expirydate').bootstrapMaterialDatePicker({ weekStart : 0, time: false });
         $('.selectpicker').selectpicker();
     </script>
-    <script src="{{ asset('assets/custom/issue_dispense.js') }}"></script>
+    <script src="{{ asset('assets/custom/consumption.js') }}"></script>

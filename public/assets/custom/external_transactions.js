@@ -164,16 +164,11 @@ $(document).ready(function() {
                         $('#et_dl').hide();
                     }
         
-                    // 3) Populate #et_source select
-                    $('#et_source')
-                        .empty()
-                        .append('<option selected disabled value="">Select Source</option>');
-        
                     if (resp.sourceData && resp.sourceData.length > 0) {
                         resp.sourceData.forEach(function(item) {
-                            // "Inventory Location" => item.name
-                            // "Vendor/Donor" => item.person_name
-                            // We'll display whichever is present:
+                            $('#et_source')
+                            .empty()
+                            .append('<option selected disabled value="">Select Source</option>');
                             let displayText = item.name || item.person_name || 'Unnamed';
                             $('#et_source').append(
                                 '<option value="' + item.id + '">' + displayText + '</option>'
@@ -181,15 +176,15 @@ $(document).ready(function() {
                         });
                         $('#et_source').prop('disabled', false);
                     } else {
-                        $('#et_source').prop('disabled', true);
+                        $('#et_source')
+                        .empty()
+                        .append('<option selected disabled value="">No Data Available</option>').prop('disabled', true);
                     }
         
-                    // 4) Populate #et_destination select
-                    $('#et_destination')
+                    if (resp.destinationData && resp.destinationData.length > 0) {
+                        $('#et_destination')
                         .empty()
                         .append('<option selected disabled value="">Select Destination</option>');
-        
-                    if (resp.destinationData && resp.destinationData.length > 0) {
                         resp.destinationData.forEach(function(item) {
                             let displayText = item.name || item.person_name || 'Unnamed';
                             $('#et_destination').append(
@@ -198,7 +193,9 @@ $(document).ready(function() {
                         });
                         $('#et_destination').prop('disabled', false);
                     } else {
-                        $('#et_destination').prop('disabled', true);
+                        $('#et_destination')
+                        .empty()
+                        .append('<option selected disabled value="">No Data Available</option>').prop('disabled', true);
                     }
                 },
                 error: function(xhr, status, error) {

@@ -1,3 +1,4 @@
+
 <!-- ============================================================== -->
 <!-- Start Header  -->
 <!-- ============================================================== -->
@@ -117,7 +118,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                         </div>
                                                     </div>
 
-                                                    @if($user->org_id != 0)
+                                                    @if($user->org_id != 0 || $user->is_employee != 1)
                                                         @if($costcenters->count() > 1)
                                                         <div class="col-md-6">
                                                             <div class="form-group row">
@@ -137,6 +138,8 @@ border: 1px solid rgba(0,0,0,.15);
                                                         </div>
                                                         @elseif($costcenters->count() == 1)
                                                         <input type="hidden" name="et_performing_cc" value="{{ $costcenters->first()->id }}">
+                                                        @else
+                                                            <input type="hidden" name="et_performing_cc" value="0">
                                                         @endif
                                                     @else
                                                         <input type="hidden" name="et_performing_cc" value="0">

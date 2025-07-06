@@ -149,10 +149,17 @@
                                                                 <label for="minimal-checkbox-{{ $moduleName }}-{{ $key+3 }}">Upload Report</label>
                                                             </li>
                                                         @else
+                                                            @if($moduleName != 'consumption')
                                                             <li>
                                                                 <input type="checkbox" name="{{ $moduleName }}[]" class="check add" id="minimal-checkbox-{{ $moduleName }}-{{ $key+1 }}" {{ $addChecked }}>
                                                                 <label for="minimal-checkbox-{{ $moduleName }}-{{ $key + 1 }}">Add</label>
                                                             </li>
+                                                            @else
+                                                            <li>
+                                                                <input type="checkbox" name="{{ $moduleName }}[]" class="check add" id="minimal-checkbox-{{ $moduleName }}-{{ $key+1 }}" {{ $addChecked }}>
+                                                                <label for="minimal-checkbox-{{ $moduleName }}-{{ $key + 1 }}">Respond</label>
+                                                            </li>
+                                                            @endif
                                                             <li>
                                                                 <input type="checkbox" name="{{ $moduleName }}[]" class="check view" id="minimal-checkbox-{{ $moduleName }}-{{ $key+2 }}" {{ $viewChecked }}>
                                                                 <label for="minimal-checkbox-{{ $moduleName }}-{{ $key+2 }}">View</label>
