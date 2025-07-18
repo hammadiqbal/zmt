@@ -21,23 +21,48 @@ class RequisitionForOtherTransactionRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        // return [
+        //     'rot_org' => 'required',
+        //     'rot_source_site' => 'required',
+        //     'rot_source_location' => 'required',
+        //     'rot_destination_site' => 'required',
+        //     'rot_destination_location' => 'required',
+        //     'rot_transactiontype' => 'required',
+        //     'rot_itemgeneric' => 'required',
+        //     'rot_qty' => 'required',
+        // ];
+
+        $rules = [
             'rot_org' => 'required',
-            'rot_site' => 'required',
+            'rot_source_site' => 'nullable',
+            'rot_source_location' => 'nullable',
+            'rot_destination_site' => 'nullable',
+            'rot_destination_location' => 'nullable',
             'rot_transactiontype' => 'required',
-            'rot_inv_location' => 'required',
             'rot_itemgeneric' => 'required',
             'rot_qty' => 'required',
         ];
+        if ($this->input('source_applicable') == '1') {
+            $rules['rot_source_site'] = 'required';
+            $rules['rot_source_location'] = 'required';
+        }
+        if ($this->input('destination_applicable') == '1') {
+            $rules['rot_destination_site'] = 'required';
+            $rules['rot_destination_location'] = 'required';
+        }
+
+        return $rules;
     }
 
     public function messages()
     {
         return [
             'rot_org.required' => 'Please select Organization',
-            'rot_site.required' => 'Please select Site',
+            'rot_source_site.required' => 'Please select source site',
+            'rot_source_location.required' => 'Please select source location',
+            'rot_destination_site.required' => 'Please select destination site',
+            'rot_destination_location.required' => 'Please select destination location',
             'rot_transactiontype.required' => 'Please select Transaction Type',
-            'rot_inv_location.required' => 'Please select Inventory Location',
             'rot_itemgeneric.required' => 'Please select Item Generic',
             'rot_qty.required' => 'Please Enter Demand Quantity',
         ];

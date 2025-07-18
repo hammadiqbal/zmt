@@ -3,6 +3,7 @@ $(document).ready(function() {
     $(document).on('click', '.add-reqothertransaction', function() {
         $('.duplicate:not(:first)').remove();
         $('.text-danger').show();
+        $('.s_data,.d_data').hide();
         var orgId = $('#rot_org').val();
         if(!orgId)
         {
@@ -13,32 +14,151 @@ $(document).ready(function() {
                     $('#rot_org').append('<option value="' + value.id + '">' + value.organization + '</option>');
                 });
             });
-            $('#rot_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',true);
-            OrgChangeSites('#rot_org', '#rot_site', '#add_reqothertransaction');
+            $('#rot_source_site').html("<option selected disabled value=''>Select Source Site</option>").prop('disabled',true);
+            OrgChangeSites('#rot_org', '#rot_source_site', '#add_reqothertransaction', 'rotSourceSite');
+
+            $('#rot_destination_site').html("<option selected disabled value=''>Select Destination Site</option>").prop('disabled',true);
+            OrgChangeSites('#rot_org', '#rot_destination_site', '#add_reqothertransaction', 'rotDestinationSite');
+
             $('.rot_itemgeneric').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
             OrgChangeInventoryGeneric('#rot_org', '.rot_itemgeneric', '#add_reqothertransaction');
 
+            $('#rot_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
+            SiteChangeMaterialManagementTransactionTypes('#rot_org','#rot_org', '#rot_transactiontype', '#add_reqothertransaction','other_transaction','y');
+
         }
         else{
-            fetchOrganizationSites(orgId, '#rot_site', function(data) {
-                $('#rot_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled', false);
+            fetchOrganizationSites(orgId, '#rot_source_site', function(data) {
+                $('#rot_source_site').html("<option selected disabled value=''>Select Source Site</option>").prop('disabled', false);
                 $.each(data, function(key, value) {
-                    $('#rot_site').append('<option value="' + value.id + '">' + value.name + '</option>');
+                    $('#rot_source_site').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
+
+            fetchOrganizationSites(orgId, '#rot_destination_site', function(data) {
+                $('#rot_destination_site').html("<option selected disabled value=''>Select Destination Site</option>").prop('disabled', false);
+                $.each(data, function(key, value) {
+                    $('#rot_destination_site').append('<option value="' + value.id + '">' + value.name + '</option>');
+                });
+            });
+
              $('.rot_itemgeneric').html("<option selected disabled value=''>Select Item Generic</option>");
             fetchOrganizationItemGeneric(orgId, '.rot_itemgeneric', function(data) {
                 $.each(data, function(key, value) {
                     $('.rot_itemgeneric').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
+
+            $('#rot_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',false);
+            fetchMaterialManagementTransactionTypes(orgId, '#rot_transactiontype','other_transaction','y', function(data) {
+                $.each(data, function(key, value) {
+                    $('#rot_transactiontype').append('<option value="' + value.id + '">' + value.name + '</option>');
+                });
+            });
         }
-        $('#rot_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
-        SiteChangeMaterialManagementTransactionTypes('#rot_site','#rot_org', '#rot_transactiontype', '#add_reqothertransaction','other_transaction','y');
 
-        $('#rot_inv_location').html("<option selected disabled value=''>Select Inventory Location</option>").prop('disabled', true);
-        SiteChangeActivatedServiceLocation('#rot_site','#rot_inv_location', '#add_reqothertransaction',true );
+        $(document).off('change', '#rot_transactiontype').on('change', '#rot_transactiontype', function() {
+            let transactionTypeID = $(this).val();
+            let siteId = null;
+        
+            $.ajax({
+                url: 'inventory/gettransactiontypeim',
+                type: 'GET',
+                data: {
+                    transactionTypeId: transactionTypeID,
+                    siteId: siteId
+                },
+                success: function(resp) {
+                    if (resp.success === false) {
+                        Swal.fire({
+                            text: resp.message,
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $('#add-reqothertransaction').modal('hide');
+                            }
+                        });
+                    }
+                    else if (!resp.Source && !resp.Destination) {
+                        Swal.fire({
+                            icon: 'error',
+                            text: 'No transaction type data found.'
+                        });
+                        return;
+                    }
+                    let sourceType = (resp.Source || '').toLowerCase();
+                    if (sourceType.includes('location')) {
+                        $('.s_data').show();
+                        $('#source_applicable').val('1');
+                        if (resp.sourceData && resp.sourceData.length > 0) {
+                            $('#rot_source_location')
+                            .empty()
+                            .append('<option selected disabled value="">Select Source</option>').prop('disabled', false);
+                            resp.sourceData.forEach(function(item) {
+                                let displayText = item.name;
+                                $('#rot_source_location').append(
+                                    '<option value="' + item.id + '">' + displayText + '</option>'
+                                );
+                            });
+                        } else {
+                            $('#rot_source_location')
+                            .empty()
+                            .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
+                        }
+                    }
+                    else {
+                        $('.s_data').hide();
+                        $('#source_applicable').val('0');
+                        $('#rot_source_location')
+                            .empty()
+                            .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
+                    }
+        
+                    let destType = (resp.Destination || '').toLowerCase();
+                    if (destType.includes('location')) {
+                        $('.d_data').show();
+                        $('#destination_applicable').val('1');
+                        if (resp.destinationData && resp.destinationData.length > 0) {
+                            $('#rot_destination_location')
+                                .empty()
+                                .append('<option selected disabled value="">Select Destination</option>').prop('disabled', false);
 
+                                resp.destinationData.forEach(function(item) {
+                                    let displayText = item.name;
+                                    $('#rot_destination_location').append(
+                                        '<option value="' + item.id + '">' + displayText + '</option>'
+                                    );
+                                });
+                        } else {
+                            $('#rot_destination_location')
+                            .empty()
+                            .append('<option selected disabled value="">Select Destination</option>').prop('disabled', true);
+                        }
+                    }
+                    else {
+                        $('.d_data').hide();
+                        $('#destination_applicable').val('0');
+                        $('#rot_destination_location')
+                            .empty()
+                            .append('<option selected disabled value="">Select Destination</option>').prop('disabled', true);
+                    }
+
+                },
+                error: function(xhr, status, error) {
+                    Swal.close();
+                    console.log(error);
+                }
+            });
+        });
+    
+        // $('#rot_source_location').html("<option selected disabled value=''>Select Source Location</option>").prop('disabled', true);
+        // SiteChangeActivatedServiceLocation('#rot_source_site','#rot_source_location', '#add_reqothertransaction',true );
+
+        // $('#rot_destination_location').html("<option selected disabled value=''>Select Destination Location</option>").prop('disabled', true);
+        // SiteChangeActivatedServiceLocation('#rot_destination_site','#rot_destination_location', '#add_reqothertransaction',true );
+
+        
         $('#add-reqothertransaction').modal('show');
     });
     //Open Add Requisition For Other Transactions
@@ -84,6 +204,15 @@ $(document).ready(function() {
         });
 
         var excludedFields = ['rot_remarks'];
+        if ($('.s_data').is(':hidden')) {
+            excludedFields.push('rot_source_site');
+            excludedFields.push('rot_source_location');
+        }
+        if ($('.d_data').is(':hidden')) {
+            excludedFields.push('rot_destination_site');
+            excludedFields.push('rot_destination_location');
+        }
+
         $(data).each(function(i, field){
             var originalFieldName = field.name;
             var sanitizedFieldName = originalFieldName.replace(/\[\]/g, '');
@@ -94,6 +223,7 @@ $(document).ready(function() {
             {
                 var FieldName = field.name;
                 var FieldName = FieldName.replace('[]', '');
+                console.log(FieldName);
 
                 var FieldID = '#'+FieldName + "_error";
               
@@ -112,6 +242,7 @@ $(document).ready(function() {
                 resp = false;
             }
         });
+        console.log(resp);
         if(resp != false)
         {
             $.ajax({
@@ -208,14 +339,10 @@ $(document).ready(function() {
         columnDefs: [
             {
                 targets: 1,
-                width: "300px"
+                width: "400px"
             },
               {
                 targets: 2,
-                width: "300px"
-            },
-              {
-                targets: 3,
                 width: "300px"
             },
             {
@@ -288,17 +415,58 @@ $(document).ready(function() {
                     });
                 });
 
-                $('#u_rot_site').html("<option selected value='"+response.siteId+"'>" + response.siteName + "</option>");
-                fetchSites(response.orgId, '#u_rot_site', function(data) {
+                $('#u_rot_source_site').html("<option selected value='"+response.sourcesiteId+"'>" + response.sourceSite + "</option>");
+                fetchSites(response.orgId, '#u_rot_source_site', function(data) {
                     if (data.length > 0) {
                         $.each(data, function(key, value) {
-                            $('#u_rot_site').append('<option value="' + value.id + '">' + value.name + '</option>');
+                            $('#u_rot_source_site').append('<option value="' + value.id + '">' + value.name + '</option>');
                         });
                     }
                 }, function(error) {
                     console.log(error);
-                },response.siteId);
-                OrgChangeSites('#u_rot_org', '#u_rot_site', '#update_reqothertransaction');
+                },response.sourcesiteId);
+                OrgChangeSites('#u_rot_org', '#u_rot_source_site', '#update_reqothertransaction', 'updateSourceSite');
+
+
+
+                $('#u_rot_destination_site').html("<option selected value='"+response.destinationsiteId+"'>" + response.destinationSite + "</option>");
+                fetchSites(response.orgId, '#u_rot_destination_site', function(data) {
+                    if (data.length > 0) {
+                        $.each(data, function(key, value) {
+                            $('#u_rot_destination_site').append('<option value="' + value.id + '">' + value.name + '</option>');
+                        });
+                    }
+                }, function(error) {
+                    console.log(error);
+                },response.destinationsiteId);
+                OrgChangeSites('#u_rot_org', '#u_rot_destination_site', '#update_reqothertransaction', 'updateDestinationSite');
+
+
+
+                $('#u_rot_source_location').html("<option selected value="+ response.SourceLocationId +">" + response.SourcelocationName + "</option>");
+                fetchActiveSL(response.sourcesiteId, '#u_rot_source_location', true, function(data) {
+                    $.each(data, function(key, value) {
+                        if(value.location_id != response.SourceLocationId)
+                        {
+                            $('#u_rot_source_location').append('<option value="' + value.location_id + '">' + value.name + '</option>');
+                        }
+                    });
+                });
+                SiteChangeActivatedServiceLocation('#u_rot_source_site','#u_rot_source_location', '#update_reqothertransaction',true );
+
+
+                $('#u_rot_destination_location').html("<option selected value="+ response.DestinationLocationId +">" + response.DestinationlocationName + "</option>");
+                fetchActiveSL(response.destinationsiteId, '#u_rot_destination_location', true, function(data) {
+                    $.each(data, function(key, value) {
+                        if(value.location_id != response.DestinationLocationId)
+                        {
+                            $('#u_rot_destination_location').append('<option value="' + value.location_id + '">' + value.name + '</option>');
+                        }
+                    });
+                });
+                SiteChangeActivatedServiceLocation('#u_rot_destination_site','#u_rot_destination_location', '#update_reqothertransaction',true );
+
+
 
                 $('#u_rot_transactiontype').html("<option selected value="+ response.transactionTypeId +">" + response.transactionType + "</option>");
                 fetchMaterialManagementTransactionTypes(response.orgId, '#u_rot_transactiontype','other_transaction','y', function(data) {
@@ -309,18 +477,6 @@ $(document).ready(function() {
                         }
                     });
                 });
-
-                $('#u_rot_inv_location').html("<option selected value="+ response.ServiceLocationId +">" + response.ServicelocationName + "</option>");
-                fetchActiveSL(response.siteId, '#u_rot_inv_location', function(data) {
-                    $.each(data, function(key, value) {
-                        if(value.location_id != response.ServiceLocationId)
-                        {
-                            $('#u_rot_inv_location').append('<option value="' + value.location_id + '">' + value.name + '</option>');
-                        }
-                    });
-                });
-                
-
                 $('#u_rot_remarks').val(response.remarks);
 
                 var genericIds = response.genericIds.split(',');

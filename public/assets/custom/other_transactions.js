@@ -1,7 +1,7 @@
 $(document).ready(function() {
     //Open Other Transaction Modal
     $(document).on('click', '.add-othertransaction', function() {
-        $('#od_dl,#od_sl,.brand_details').hide();
+        $('.od_d,.od_s,.brand_details').hide();
         $('input[name="ot_reference_document"]').val('').prop('disabled', false);
         $('.req_only').show();
         $('#transaction-info-row').empty();
@@ -22,19 +22,33 @@ $(document).ready(function() {
         }
    
         var orgId = $('#ot_org').val();
-        $('#ot_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
         if(orgId)
         {
-            $('#ot_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',false);
-            fetchOrganizationSites(orgId, '#ot_site', function(data) {
+            fetchOrganizationSites(orgId, '#ot_source_site', function(data) {
+                $('#ot_source_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',false);
                 $.each(data, function(key, value) {
-                    $('#ot_site').append('<option value="' + value.id + '">' + value.name + '</option>');
+                    $('#ot_source_site').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
+
+            fetchOrganizationSites(orgId, '#ot_destination_site', function(data) {
+                $('#ot_destination_site').html("<option selected disabled value=''>Select Destination Site</option>").prop('disabled', false);
+                $.each(data, function(key, value) {
+                    $('#ot_destination_site').append('<option value="' + value.id + '">' + value.name + '</option>');
+                });
+            });
+
             $('.ot_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', false);
             fetchOrganizationItemGeneric(orgId, '.ot_generic', function(data) {
                 $.each(data, function(key, value) {
                     $('.ot_generic').append('<option value="' + value.id + '">' + value.name + '</option>');
+                });
+            });
+
+            $('#ot_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',false);
+            fetchMaterialManagementTransactionTypes(orgId, '#ot_transactiontype','other_transaction','y', function(data) {
+                $.each(data, function(key, value) {
+                    $('#ot_transactiontype').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
         }
@@ -46,36 +60,43 @@ $(document).ready(function() {
                     $('#ot_org').append('<option value="' + value.id + '">' + value.organization + '</option>');
                 });
             });
+
+            $('#ot_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
+            SiteChangeMaterialManagementTransactionTypes('#ot_org','#ot_org', '#ot_transactiontype', '#add_othertransaction','other_transaction','n');
             
-            $('#ot_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',true);
-            OrgChangeSites('#ot_org', '#ot_site', '#add_othertransaction');
+            $('#ot_source_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',true);
+            OrgChangeSites('#ot_org', '#ot_source_site', '#add_othertransaction' ,'otSourceSite');
+
+            $('#ot_destination_site').html("<option selected disabled value=''>Select Destination Site</option>").prop('disabled',true);
+            OrgChangeSites('#ot_org', '#ot_destination_site', '#add_othertransaction', 'otDestinationSite');
         
             $('.ot_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
             OrgChangeInventoryGeneric('#ot_org', '.ot_generic', '#add_othertransaction');
         }
-        SiteChangeMaterialManagementTransactionTypes('#ot_site','#ot_org', '#ot_transactiontype', '#add_othertransaction','other_transaction','n');
        
         $(document).off('change', '#ot_transactiontype').on('change', '#ot_transactiontype', function() {
             let transactionTypeID = $(this).val();
-            let siteId = $('#ot_site').val();  // you must already have a selected site
+            // let siteId = $('#ot_source_site').val();  
+            let siteId = null;
+
             $('#mr-optional').show();
-            if (!siteId) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Site Required',
-                    text: 'Please select a site before choosing the transaction type.'
-                });
-                return;
-            }
+            // if (!siteId) {
+            //     Swal.fire({
+            //         icon: 'warning',
+            //         title: 'Site Required',
+            //         text: 'Please select a site before choosing the transaction type.'
+            //     });
+            //     return;
+            // }
         
-            Swal.fire({
-                title: "Processing",
-                allowOutsideClick: false,
-                willOpen: () => {
-                    Swal.showLoading();
-                },
-                showConfirmButton: false
-            });
+            // Swal.fire({
+            //     title: "Processing",
+            //     allowOutsideClick: false,
+            //     willOpen: () => {
+            //         Swal.showLoading();
+            //     },
+            //     showConfirmButton: false
+            // });
         
             $.ajax({
                 url: 'inventory/gettransactiontypeim',
@@ -132,60 +153,65 @@ $(document).ready(function() {
         
                     let sourceType = (resp.Source || '').toLowerCase();
                     if (sourceType.includes('location')) {
-                        $('#od_sl').show();
-                        $('#od_sl label').text('Inventory Source Location');
+                        $('.od_s').show();
+                        // $('.od_s label').text('Inventory Source Location');
                         $('#source_applicable').val('1');
+                        if (resp.sourceData && resp.sourceData.length > 0) {
+                            $('#ot_source_location')
+                            .empty()
+                            .append('<option selected disabled value="">Select Source</option>').prop('disabled', false);
+                            resp.sourceData.forEach(function(item) {
+                                let displayText = item.name || item.person_name || item.patient_name || 'Unnamed';
+                                $('#ot_source_location').append(
+                                    '<option value="' + item.id + '">' + displayText + '</option>'
+                                );
+                            });
+                        } else {
+                            $('#ot_source_location')
+                            .empty()
+                            .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
+                        }
                     }
                     else {
-                        $('#od_sl').hide();
+                        $('.od_s').hide();
                         $('#source_applicable').val('0');
+                        $('#ot_source_location')
+                            .empty()
+                            .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
                     }
+        
         
                     let destType = (resp.Destination || '').toLowerCase();
                     if (destType.includes('location')) {
-                        $('#od_dl').show();
-                        $('#od_dl label').text('Inventory Destination Location');
+                        $('.od_d').show();
+                        // $('.od_d label').text('Inventory Destination Location');
                         $('#destination_applicable').val('1');
+                        if (resp.destinationData && resp.destinationData.length > 0) {
+                            $('#ot_destination_location')
+                                .empty()
+                                .append('<option selected disabled value="">Select Destination</option>').prop('disabled', false);
+
+                                resp.destinationData.forEach(function(item) {
+                                    let displayText = item.name || item.person_name || item.patient_name ||'Unnamed';
+                                    $('#ot_destination_location').append(
+                                        '<option value="' + item.id + '">' + displayText + '</option>'
+                                    );
+                                });
+                        } else {
+                                $('#ot_destination_location')
+                                .empty()
+                                .append('<option selected disabled value="">Select Destination</option>').prop('disabled', true);
+                        }
                     }
                     else {
-                        $('#od_dl').hide();
+                        $('.od_d').hide();
                         $('#destination_applicable').val('0');
-                    }
-                 
-        
-                    if (resp.sourceData && resp.sourceData.length > 0) {
-                        $('#ot_source')
-                        .empty()
-                        .append('<option selected disabled value="">Select Source</option>').prop('disabled', false);
-                        resp.sourceData.forEach(function(item) {
-                            let displayText = item.name || item.person_name || item.patient_name || 'Unnamed';
-                            $('#ot_source').append(
-                                '<option value="' + item.id + '">' + displayText + '</option>'
-                            );
-                        });
-                    } else {
-                        $('#ot_source')
-                        .empty()
-                        .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
-                    }
-        
-        
-                    if (resp.destinationData && resp.destinationData.length > 0) {
-                     $('#ot_destination')
-                        .empty()
-                        .append('<option selected disabled value="">Select Destination</option>').prop('disabled', false);
-
-                        resp.destinationData.forEach(function(item) {
-                            let displayText = item.name || item.person_name || item.patient_name ||'Unnamed';
-                            $('#ot_destination').append(
-                                '<option value="' + item.id + '">' + displayText + '</option>'
-                            );
-                        });
-                    } else {
-                        $('#ot_destination')
+                        $('#ot_destination_location')
                         .empty()
                         .append('<option selected disabled value="">Select Destination</option>').prop('disabled', true);
                     }
+                 
+                   
                 },
                 error: function(xhr, status, error) {
                     Swal.close();
@@ -201,7 +227,7 @@ $(document).ready(function() {
             
             const currentRow = $(this).closest('.duplicate');
             const orgId = $('#ot_org').val();
-            const siteId = $('#ot_site').val();
+            const siteId = $('#ot_source_site').val();
             const genericId = currentRow.find('.ot_generic').val();
             const brandId = $(this).val();
             const $brand = $(this);
@@ -320,7 +346,7 @@ $(document).ready(function() {
                 if ($row.find('.ot_batch').val() === batchNo) {
                     const $qty = $row.find('.ot_qty');
                     const orgId = $('#ot_org').val();
-                    const siteId = $('#ot_site').val();
+                    const siteId = $('#ot_source_site').val();
                     const genericId = $row.find('.ot_generic').val();
                     const brandId = $row.find('.ot_brand').val();
                     
@@ -353,12 +379,15 @@ $(document).ready(function() {
             id:        txId,
             genericId: genId
         })
-        .fail(() => Swal.fire('Error','Could not load data','error'))
+        // .fail(() => Swal.fire('Error','Records Not Found','error'))
+        .fail(() => {
+            $('#ajax-loader').hide();
+            Swal.fire('Error', 'Records Not Found', 'error');
+        })
         .done(data => {
-            // $('#od_dl,#od_sl,.serviceDetails').show();
             // $('#mrService,.mr-dependent').show();
             // if (data.source === 'material' && !data.mr_code) {
-            $('#od_sl, #od_dl').hide();
+            $('.od_s, .od_d').hide();
             $('#add_othertransaction')[0].reset();
 
             // if ($('#source_type').length) {
@@ -378,8 +407,20 @@ $(document).ready(function() {
                 .html(`<option selected value="${data.org_id}">${data.org_name}</option>`)
                 .prop('disabled', true);
 
-            $('#ot_site')
-                .html(`<option selected value="${data.site_id}">${data.site_name}</option>`)
+            $('#ot_source_site')
+                .html(`<option selected value="${data.source_site}">${data.sourceSiteName}</option>`)
+                .prop('disabled', true);
+
+            $('#ot_source_location')
+                .html(`<option selected value="${data.source_location}">${data.sourceLocationName}</option>`)
+                .prop('disabled', true);
+
+            $('#ot_destination_site')
+                .html(`<option selected value="${data.source_site}">${data.sourceSiteName}</option>`)
+                .prop('disabled', true);
+
+            $('#ot_destination_location')
+                .html(`<option selected value="${data.destination_location}">${data.destinationLocationName}</option>`)
                 .prop('disabled', true);
 
             
@@ -393,9 +434,11 @@ $(document).ready(function() {
                 $('#ot_transactiontype').trigger('change');
             }, 50);
 
+            let approvedSiteId = '';
+
             $(document).off('change', '#ot_transactiontype').on('change', '#ot_transactiontype', function() {
                 let transactionTypeID = $(this).val();
-                let siteId = $('#ot_site').val();  // you must already have a selected site
+                let siteId = $('#ot_source_site').val();  // you must already have a selected site
 
                 $('#mr-optional').show();
                 if (!siteId) {
@@ -457,61 +500,67 @@ $(document).ready(function() {
                         .append(infoHtml)
                         .show();
 
-                        if (resp.sourceData && resp.sourceData.length > 0) {
-                            $('#ot_source')
-                            .empty()
-                            .append('<option selected disabled value="">Select Source</option>').prop('disabled', false);
-                            resp.sourceData.forEach(function(item) {
-                                let displayText = item.name || 'Unnamed';
-                                $('#ot_source').append(
-                                    '<option value="' + item.id + '">' + displayText + '</option>'
-                                );
-                            });
-                        } else {
-                            $('#ot_source').prop('disabled', true);
-                        }
+                        // if (resp.sourceData && resp.sourceData.length > 0) {
+                        //     $('#ot_source')
+                        //     .empty()
+                        //     .append('<option selected disabled value="">Select Source</option>').prop('disabled', false);
+                        //     resp.sourceData.forEach(function(item) {
+                        //         let displayText = item.name || 'Unnamed';
+                        //         $('#ot_source').append(
+                        //             '<option value="' + item.id + '">' + displayText + '</option>'
+                        //         );
+                        //     });
+                        // } else {
+                        //     $('#ot_source').prop('disabled', true);
+                        // }
             
-                        if (resp.destinationData && resp.destinationData.length > 0) {
-                            $('#ot_destination')
-                            .empty()
-                            .append('<option selected disabled value="">Select Destination</option>').prop('disabled', false);
-                            resp.destinationData.forEach(function(item) {
-                                let displayText = item.name ||'Unnamed';
-                                $('#ot_destination').append(
-                                    '<option value="' + item.id + '">' + displayText + '</option>'
-                                );
-                            });
-                        } else {
-                            $('#ot_destination').prop('disabled', true);
-                        }
+                        // if (resp.destinationData && resp.destinationData.length > 0) {
+                        //     $('#ot_destination')
+                        //     .empty()
+                        //     .append('<option selected disabled value="">Select Destination</option>').prop('disabled', false);
+                        //     resp.destinationData.forEach(function(item) {
+                        //         let displayText = item.name ||'Unnamed';
+                        //         $('#ot_destination').append(
+                        //             '<option value="' + item.id + '">' + displayText + '</option>'
+                        //         );
+                        //     });
+                        // } else {
+                        //     $('#ot_destination').prop('disabled', true);
+                        // }
+
 
                         let sourceType = (resp.Source || '').toLowerCase();
                         if (sourceType.includes('location')) {
-                            $('#od_sl').show();
+                            $('.od_s').show();
                             $('#source_applicable').val('1');
-                            $('#od_sl label').text('Inventory Source Location');
+                            if(resp.source_action == 's')
+                            {
+                                approvedSiteId = '#ot_source_site';
+                                console.log(approvedSiteId);
+                            }
+                            // $('.od_s label').text('Inventory Source Location');
                         }
                         else {
-                            $('#od_sl').hide();
+                            $('.od_s').hide();
                             $('#source_applicable').val('0');
+                            $('#ot_source_site,#ot_source_location').empty();
                         }
             
                         let destType = (resp.Destination || '').toLowerCase();
                         if (destType.includes('location')) {
-                            $('#od_dl').show();
+                            $('.od_d').show();
                             $('#destination_applicable').val('1');
-                            $('#od_dl label').text('Inventory Destination Location');
-                            $('#ot_destination')
-                            .empty()
-                            .append(`<option selected value="${data.inv_location_id}">${data.location_name}</option>`)
-                            .prop('disabled', true);
+                            if(resp.destination_action == 's')
+                            {
+                                approvedSiteId = '#ot_destination_site';
+                                console.log(approvedSiteId);
+                            }
                         }
                         else {
-                            $('#od_dl').hide();
+                            $('.od_d').hide();
                             $('#destination_applicable').val('0');
+                            $('#ot_destination_site,#ot_destination_location').empty();
                         }
-
-                      
                     },
                     error: function(xhr, status, error) {
                         Swal.close();
@@ -579,11 +628,11 @@ $(document).ready(function() {
                 $qtyInput.attr('max', demandQty);
                 $qtyInput.attr('placeholder', `Max: ${demandQty} (Demand Qty)`);
             }
-                 
+                // console.log(approvedSiteId);
 
             BrandChangeBatchAndExpiry(
                 '#ot_org',  
-                '#ot_site',  
+                '#ot_source_site',  
                 $row.find('.ot_generic'),
                 $row.find('.ot_brand'),
                 $row.find('.ot_batch'),
@@ -607,7 +656,7 @@ $(document).ready(function() {
         $('#addMoreBtn, #removeBtn').show();
         $('.duplicate').not(':first').remove();
 
-        $('#ot_site')
+        $('#ot_source_site')
             .prop('disabled', true)
             .html('<option selected disabled value="">Select Site</option>');
 
@@ -626,7 +675,7 @@ $(document).ready(function() {
         $('.ot_expiry').val('').prop('disabled', false);
         $('.ot_demand_qty').val('').prop('disabled', false);
 
-        $('#od_dl, #od_sl').hide();
+        $('.od_d, .od_s').hide();
         $('#transaction-info-row').empty();
     });
 
@@ -711,11 +760,13 @@ $(document).ready(function() {
 
         var excludedFields = ['ot_reference_document', 'ot_remarks'];
 
-        if ($('#od_dl').is(':hidden')) {
-            excludedFields.push('ot_destination');
+        if ($('.od_d').is(':hidden')) {
+            excludedFields.push('ot_destination_site');
+            excludedFields.push('ot_destination_location');
         }
-        if ($('#od_sl').is(':hidden')) {
-            excludedFields.push('ot_source');
+        if ($('.od_s').is(':hidden')) {
+            excludedFields.push('ot_source_location');
+            excludedFields.push('ot_source_site');
         }
     
         // if (hasSourceType) {

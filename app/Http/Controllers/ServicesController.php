@@ -2791,9 +2791,6 @@ class ServicesController extends Controller
         }
 
         $query = $query->get();
-
-        // dd($query);
-        
         return response()->json($query);
     }
     

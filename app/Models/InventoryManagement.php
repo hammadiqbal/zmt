@@ -14,6 +14,7 @@ class InventoryManagement extends Model
         'transaction_type_id',
         'org_id',
         'site_id',
+        'd_site_id',
         'ref_document_no',
         'third_paty_id',
         'mr_code',

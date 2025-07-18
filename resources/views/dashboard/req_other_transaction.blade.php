@@ -76,6 +76,8 @@
                         </div>
                         <form id="add_reqothertransaction" method="post" enctype="multipart/form-data">
                             @csrf
+                            <input type="hidden" id="source_applicable" name="source_applicable" value="1">
+                            <input type="hidden" id="destination_applicable" name="destination_applicable" value="1">
                             <div class="modal-body">
                                 <!-- Row -->
                                 <div class="row">
@@ -109,20 +111,6 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Site</label>
-                                                                    <select class="form-control selecter p-0" name="rot_site" id="rot_site" style="color:#222d32">
-                                                                    </select>
-                                                                    <span class="bar"></span>
-                                                                </div>
-                                                                <span class="text-danger" id="rot_site_error"></span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    <div class="col-md-6">
-                                                        <div class="form-group row">
-                                                            <div class="col-md-12">
-                                                                <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Transaction Type</label>
                                                                     <select class="form-control selecter p-0" name="rot_transactiontype" id="rot_transactiontype" style="color:#222d32">
                                                                     </select>
@@ -133,18 +121,60 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-6 s_data">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Select Inventory Locations </label>
-                                                                    <select class="form-control selecter p-0" name="rot_inv_location" id="rot_inv_location" style="color:#222d32">
+                                                                    <label class="control-label">Source Site</label>
+                                                                    <select class="form-control selecter p-0" name="rot_source_site" id="rot_source_site" style="color:#222d32">
                                                                     </select>
+                                                                    <span class="bar"></span>
                                                                 </div>
-                                                                <span class="text-danger" id="rot_inv_location_error"></span>
+                                                                <span class="text-danger" id="rot_source_site_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
+
+                                                    <div class="col-md-6 s_data">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Select Source Location </label>
+                                                                    <select class="form-control selecter p-0" name="rot_source_location" id="rot_source_location" style="color:#222d32">
+                                                                    </select>
+                                                                </div>
+                                                                <span class="text-danger" id="rot_source_location_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="col-md-6 d_data">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Destination Site</label>
+                                                                    <select class="form-control selecter p-0" name="rot_destination_site" id="rot_destination_site" style="color:#222d32">
+                                                                    </select>
+                                                                    <span class="bar"></span>
+                                                                </div>
+                                                                <span class="text-danger" id="rot_destination_site_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6 d_data">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Select Destination Location </label>
+                                                                    <select class="form-control selecter p-0" name="rot_destination_location" id="rot_destination_location" style="color:#222d32">
+                                                                    </select>
+                                                                </div>
+                                                                <span class="text-danger" id="rot_destination_location_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
 
                                                     <div class="col-md-6">
                                                         <div class="form-group row">
@@ -230,7 +260,7 @@
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="myLargeModalLabel">Update Patient Details</h4>
+                    <h4 class="modal-title" id="myLargeModalLabel">Update Requisition for Other Transactions</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="update_reqothertransaction" method="post" enctype="multipart/form-data">
@@ -261,8 +291,44 @@
                                                 <div class="form-group row m-b-5">
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
-                                                            <label class="control-label">Update Site</label>
-                                                            <select class="form-control selecter p-0" name="u_rot_site" required id="u_rot_site" style="color:#222d32">
+                                                            <label class="control-label">Update Source Site</label>
+                                                            <select class="form-control selecter p-0" name="u_rot_source_site" required id="u_rot_source_site" style="color:#222d32">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Source Location</label>
+                                                            <select class="form-control selecter p-0" name="u_rot_source_location" required id="u_rot_source_location" style="color:#222d32">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Destination Site</label>
+                                                            <select class="form-control selecter p-0" name="u_rot_destination_site" required id="u_rot_destination_site" style="color:#222d32">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Destination Location</label>
+                                                            <select class="form-control selecter p-0" name="u_rot_destination_location" required id="u_rot_destination_location" style="color:#222d32">
                                                             </select>
                                                         </div>
                                                     </div>
@@ -281,17 +347,7 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-6">
-                                                <div class="form-group row m-b-5">
-                                                    <div class="col-md-12">
-                                                        <div class="form-group m-b-5">
-                                                            <label class="control-label">Update Inventory Location</label>
-                                                            <select class="form-control selecter p-0" name="u_rot_inv_location" id="u_rot_inv_location" style="color:#222d32">
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                       
 
                                             <div class="col-md-6">
                                                 <div class="form-group row m-b-5">

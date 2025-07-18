@@ -2420,10 +2420,11 @@ class HRController extends Controller
     {
         $siteId = $request->input('siteId');
         $Employees = Employee::leftJoin('emp_qualification', 'employee.id', '=', 'emp_qualification.emp_id')
+                    ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
                      ->whereNull('emp_qualification.emp_id')
                      ->where('employee.status', 1)
                      ->where('employee.site_id', $siteId)
-                     ->get(['employee.*']);
+                     ->get(['employee.*','prefix.name as prefix']);
                      if($Employees->count() > 0) {
                         return response()->json($Employees);
                     }
@@ -3452,10 +3453,11 @@ class HRController extends Controller
     {
         $siteId = $request->input('siteId');
         $Employees = Employee::leftJoin('emp_salary', 'employee.id', '=', 'emp_salary.emp_id')
+                    ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
                     ->whereNull('emp_salary.emp_id')
                     ->where('employee.status', 1)
                     ->where('employee.site_id', $siteId)
-                    ->get(['employee.*']);
+                    ->get(['employee.*','prefix.name as prefix']);
                     if($Employees->count() > 0) {
                         return response()->json($Employees);
                     }
@@ -4348,10 +4350,11 @@ class HRController extends Controller
     {
         $siteId = $request->input('siteId');
         $Employees = Employee::leftJoin('emp_documents', 'employee.id', '=', 'emp_documents.emp_id')
+                    ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
                     ->whereNull('emp_documents.emp_id')
                     ->where('employee.status', 1)
                     ->where('employee.site_id', $siteId)
-                    ->get(['employee.*']);
+                    ->get(['employee.*','prefix.name as prefix']);
                     if($Employees->count() > 0) {
                         return response()->json($Employees);
                     }
@@ -4573,10 +4576,11 @@ class HRController extends Controller
     {
         $siteId = $request->input('siteId');
         $Employees = Employee::leftJoin('emp_medical_license', 'employee.id', '=', 'emp_medical_license.emp_id')
+                     ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
                      ->whereNull('emp_medical_license.emp_id')
                      ->where('employee.status', 1)
                      ->where('employee.site_id', $siteId)
-                     ->get(['employee.*']);
+                     ->get(['employee.*','prefix.name as prefix']);
                      if($Employees->count() > 0) {
                         return response()->json($Employees);
                     }
@@ -4819,10 +4823,11 @@ class HRController extends Controller
     {
         $siteId = $request->input('siteId');
         $Employees = Employee::leftJoin('emp_cc', 'employee.id', '=', 'emp_cc.emp_id')
+                      ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
                      ->whereNull('emp_cc.emp_id')
                      ->where('employee.status', 1)
                      ->where('employee.site_id', $siteId)
-                     ->get(['employee.*']);
+                     ->get(['employee.*','prefix.name as prefix']);
                      if($Employees->count() > 0) {
                         return response()->json($Employees);
                     }
@@ -4852,10 +4857,11 @@ class HRController extends Controller
     {
         $siteId = $request->input('siteId');
         $Employees = Employee::leftJoin('emp_service_allocation', 'employee.id', '=', 'emp_service_allocation.emp_id')
+                    ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
                     ->whereNull('emp_service_allocation.emp_id')
                     ->where('employee.status', 1)
                     ->where('employee.site_id', $siteId)
-                    ->get(['employee.id','employee.name']);
+                    ->get(['employee.id','employee.name','prefix.name as prefix']);
                     if($Employees->count() > 0) {
                         return response()->json($Employees);
                     }
@@ -4865,13 +4871,14 @@ class HRController extends Controller
     {
         $siteId = $request->input('siteId');
         $Employees = Employee::leftJoin('emp_inventory_location', 'employee.id', '=', 'emp_inventory_location.emp_id')
+                    ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
                     ->whereNull('emp_inventory_location.emp_id')
                     ->where('employee.status', 1)
                     ->where('employee.site_id', $siteId)
-                    ->get(['employee.id','employee.name']);
-                    if($Employees->count() > 0) {
-                        return response()->json($Employees);
-                    }
+                    ->get(['employee.id','employee.name','prefix.name as prefix']);
+        if($Employees->count() > 0) {
+            return response()->json($Employees);
+        }
     }
 
     public function AddEmployeeCostCenter(EmployeeCCRequest $request)

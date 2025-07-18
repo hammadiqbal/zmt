@@ -118,13 +118,13 @@
                                                             <label for="minimal-checkbox-{{ $moduleName }}-upload_report-{{ $key }}">Upload Report</label>
                                                         </li>
                                                     @else
-                                                        @if($moduleName != 'service_requisition_setup' && $moduleName != 'procedure_coding' && $moduleName != 'consumption')
+                                                        @if($moduleName != 'service_requisition_setup' && $moduleName != 'procedure_coding' && $moduleName != 'consumption' && $moduleName != 'inventory_return')
                                                         <li>
                                                             <input type="checkbox" name="{{ $moduleName }}[]" class="check add" id="minimal-checkbox-{{ $moduleName }}-add-{{ $key }}">
                                                             <label for="minimal-checkbox-{{ $moduleName }}-add-{{ $key }}">Add</label>
                                                         </li>
                                                         @endif
-                                                        @if($moduleName == 'consumption')
+                                                        @if($moduleName == 'consumption' OR $moduleName == 'inventory_return')
                                                         <li>
                                                             <input type="checkbox" name="{{ $moduleName }}[]" class="check add" id="minimal-checkbox-{{ $moduleName }}-add-{{ $key }}">
                                                             <label for="minimal-checkbox-{{ $moduleName }}-add-{{ $key }}">Respond</label>

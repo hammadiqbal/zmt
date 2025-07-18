@@ -573,6 +573,11 @@ Route::get('inventory/consumption', [App\Http\Controllers\InventoryController::c
 Route::get('inventory/respond-consumption', [App\Http\Controllers\InventoryController::class, 'RespondConsumption'])->name('RespondConsumption');
 Route::post('inventory/addconsumption', [InventoryController::class, 'AddConsumption'])->name('AddConsumption');
 
+Route::get('inventory-return', [App\Http\Controllers\InventoryController::class, 'ShowInventoryReturn'])->name('inventory-return');
+Route::get('inventory/return', [App\Http\Controllers\InventoryController::class, 'GetReturnData'])->name('GetReturnData');
+Route::get('inventory/respond-return', [App\Http\Controllers\InventoryController::class, 'RespondReturn'])->name('RespondReturn');
+Route::post('inventory/addreturn', [InventoryController::class, 'AddReturn'])->name('AddReturn');
+
 Route::get('inventory-generic', [App\Http\Controllers\InventoryController::class, 'InventoryGeneric'])->name('inventory-generic');
 Route::post('inventory/addinvgeneric', [InventoryController::class, 'AddInventoryGeneric'])->name('AddInventoryGeneric');
 Route::get('inventory/invgeneric', [App\Http\Controllers\InventoryController::class, 'GetInventoryGenericData'])->name('GetInventoryGenericData');

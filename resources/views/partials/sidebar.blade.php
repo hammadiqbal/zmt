@@ -886,7 +886,7 @@
                                     </ul>
                                     <ul aria-expanded="false" class="collapse">
                                         @if (!$hideInventoryReturn)
-                                            <li><a>Return</a></li>
+                                            <li> <a href="{{ route('inventory-return') }}">Return</a></li>
                                         @endif
                                     </ul>
                              

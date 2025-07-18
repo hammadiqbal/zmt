@@ -639,7 +639,6 @@ $(document).ready(function() {
             //         .html(`<option selected value="${data.mr_code}">${data.mr_code} – ${data.patient_name}</option>`)
             //         .prop('disabled', true).trigger('change');
             // }
-            console.log(data);
             if (data.mr_code) {
                 $('#id_mr')
                     .html(`<option selected value="${data.mr_code}">${data.mr_code} – ${data.patient_name}</option>`)

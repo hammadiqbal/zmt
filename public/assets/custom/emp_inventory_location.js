@@ -65,6 +65,8 @@ $(document).ready(function() {
                     });
                     $('.org_ela').html(options.join('')).trigger('change');
                 });
+
+                OrgChangeSites('.org_ela', '.site_ela', '#emp_locationallocation');
     
                 $('input[name="location_ela_value"]').prop('disabled', true);
                 OrganizationChangServiceLocation('.org_ela', '.location_ela_value', '#emp_locationallocation');

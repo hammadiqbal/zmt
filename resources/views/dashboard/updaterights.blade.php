@@ -149,7 +149,7 @@
                                                                 <label for="minimal-checkbox-{{ $moduleName }}-{{ $key+3 }}">Upload Report</label>
                                                             </li>
                                                         @else
-                                                            @if($moduleName != 'consumption')
+                                                            @if($moduleName != 'consumption' && $moduleName != 'inventory_return')
                                                             <li>
                                                                 <input type="checkbox" name="{{ $moduleName }}[]" class="check add" id="minimal-checkbox-{{ $moduleName }}-{{ $key+1 }}" {{ $addChecked }}>
                                                                 <label for="minimal-checkbox-{{ $moduleName }}-{{ $key + 1 }}">Add</label>

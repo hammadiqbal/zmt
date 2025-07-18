@@ -25,12 +25,14 @@ class OtherTransactionRequest extends FormRequest
     {
         $rules = [
             'ot_org' => 'required|exists:organization,id',
-            'ot_site' => 'required|exists:org_site,id',
+            // 'ot_site' => 'required|exists:org_site,id',
             'ot_transactiontype' => 'required|exists:inventory_transaction_type,id',
             // 'ot_source' => 'required',
             // 'ot_destination' => 'required',
-            'ot_source' => 'nullable',
-            'ot_destination' => 'nullable',
+            'ot_source_site' => 'nullable',
+            'ot_source_location' => 'nullable',
+            'ot_destination_site' => 'nullable',
+            'ot_destination_location' => 'nullable',
             'ot_generic' => 'required|array',
             'ot_generic.*' => 'required|exists:inventory_generic,id',
             'ot_brand' => 'required|array',
@@ -48,10 +50,12 @@ class OtherTransactionRequest extends FormRequest
 
         ];
         if ($this->input('source_applicable') == '1') {
-            $rules['ot_source'] = 'required';
+            $rules['ot_source_site'] = 'required';
+            $rules['ot_source_location'] = 'required';
         }
         if ($this->input('destination_applicable') == '1') {
-            $rules['ot_destination'] = 'required';
+            $rules['ot_destination_site'] = 'required';
+            $rules['ot_destination_location'] = 'required';
         }
 
         return $rules;
@@ -71,8 +75,10 @@ class OtherTransactionRequest extends FormRequest
             'ot_site.exists' => 'Selected site is invalid',
             'ot_transactiontype.required' => 'Transaction Type is required',
             'ot_transactiontype.exists' => 'Selected transaction type is invalid',
-            'ot_source.required' => 'Source is required',
-            'ot_destination.required' => 'Destination is required',
+            'ot_source_site.required' => 'Source site is required',
+            'ot_source_location.required' => 'Source location is required',
+            'ot_destination_site.required' => 'Destination site is required',
+            'ot_destination_location.required' => 'Destination location is required',
             'ot_generic.required' => 'At least one item generic is required',
             'ot_generic.*.required' => 'Item Generic is required',
             'ot_generic.*.exists' => 'Selected item generic is invalid',

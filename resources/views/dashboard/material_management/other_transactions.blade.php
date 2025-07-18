@@ -80,9 +80,9 @@ border: 1px solid rgba(0,0,0,.15);
                         <div class="row" id="transaction-info-row" style="width:98%;display:none;font-size:13px;border:1px solid black;margin: 0 auto;"></div>
 
                         <form id="add_othertransaction" method="post" enctype="multipart/form-data">
+                            @csrf
                             <input type="hidden" id="source_applicable" name="source_applicable" value="1">
                             <input type="hidden" id="destination_applicable" name="destination_applicable" value="1">
-                            @csrf
                             <div class="modal-body">
                                 <!-- Row -->
                                 <div class="row">
@@ -111,20 +111,6 @@ border: 1px solid rgba(0,0,0,.15);
                                                     </div>
                                                     @endif
 
-                                                    <div class="col-md-6">
-                                                        <div class="form-group row">
-                                                            <div class="col-md-12">
-                                                                <div class="form-group has-custom m-b-5">
-                                                                <label class="control-label">Site</label>
-                                                                    <select class="form-control selecter p-0" name="ot_site" id="ot_site" style="color:#222d32">
-                                                                    </select>
-                                                                </div>
-                                                                <span class="text-danger" id="ot_site_error"></span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    
-
                                                     <div class="col-md-6" >
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
@@ -138,35 +124,58 @@ border: 1px solid rgba(0,0,0,.15);
                                                         </div>
                                                     </div>
 
-                                                    
-
-                                                    <div class="col-md-6" id="od_sl">
+                                                    <div class="col-md-6 od_s">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                <label class="control-label">Inventory Source</label>
-                                                                    <select class="form-control selecter p-0" name="ot_source" id="ot_source" style="color:#222d32">
+                                                                <label class="control-label">Source Site</label>
+                                                                    <select class="form-control selecter p-0" name="ot_source_site" id="ot_source_site" style="color:#222d32">
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="ot_source_error"></span>
+                                                                <span class="text-danger" id="ot_source_site_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6 od_s">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                <label class="control-label">Source Location</label>
+                                                                    <select class="form-control selecter p-0" name="ot_source_location" id="ot_source_location" style="color:#222d32">
+                                                                    </select>
+                                                                </div>
+                                                                <span class="text-danger" id="ot_source_location_error"></span>
 
                                                             </div>
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-6" id="od_dl">
+                                                    <div class="col-md-6 od_d">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                <label class="control-label">Inventory Destination</label>
-                                                                    <select class="form-control selecter p-0" name="ot_destination" id="ot_destination" style="color:#222d32">
+                                                                <label class="control-label">Destination Site</label>
+                                                                    <select class="form-control selecter p-0" name="ot_destination_site" id="ot_destination_site" style="color:#222d32">
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="ot_destination_error"></span>
+                                                                <span class="text-danger" id="ot_destination_site_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
 
+                                                    <div class="col-md-6 od_d">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                <label class="control-label">Destination Location</label>
+                                                                    <select class="form-control selecter p-0" name="ot_destination_location" id="ot_destination_location" style="color:#222d32">
+                                                                    </select>
+                                                                </div>
+                                                                <span class="text-danger" id="ot_destination_location_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
 
                                                     @if($user->org_id != 0)
                                                         @if($costcenters->count() > 1)
