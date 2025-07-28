@@ -241,7 +241,7 @@
                                                                     <select class="form-control p-0 cursor-pointer selecter" name="ss_emp" id="ss_emp">
                                                                         <option selected disabled >Select Designated Physician</option>
                                                                         @foreach ($Employees as $Employee)
-                                                                            <option value="{{ $Employee['id'] }}"> {{ $Employee['name'] }}</option>
+                                                                            <option value="{{ $Employee['id'] }}">{{ $Employee['prefix'] }} {{ $Employee['name'] }}</option>
                                                                         @endforeach
                                                                     </select>
                                                                     <span class="bar"></span>

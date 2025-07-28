@@ -66,7 +66,7 @@ $(document).ready(function() {
                 fetchOrgPatient(orgId, '#sb_mr', function(data) {
                     $('#sb_mr').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', false);
                     $.each(data, function(key, value) {
-                        $('#sb_mr').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name + ' - ' + value.cell_no + '</option>');
+                        $('#sb_mr').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name + '</option>');
                     });
                 });
                             

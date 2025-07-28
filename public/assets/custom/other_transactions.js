@@ -385,10 +385,12 @@ $(document).ready(function() {
             Swal.fire('Error', 'Records Not Found', 'error');
         })
         .done(data => {
+            console.log(data);
             // $('#mrService,.mr-dependent').show();
             // if (data.source === 'material' && !data.mr_code) {
             $('.od_s, .od_d').hide();
             $('#add_othertransaction')[0].reset();
+            let approvedSiteId = '';
 
             // if ($('#source_type').length) {
             //     $('#source_type').val(data.source);
@@ -416,7 +418,7 @@ $(document).ready(function() {
                 .prop('disabled', true);
 
             $('#ot_destination_site')
-                .html(`<option selected value="${data.source_site}">${data.sourceSiteName}</option>`)
+                .html(`<option selected value="${data.destination_site}">${data.destinationSiteName}</option>`)
                 .prop('disabled', true);
 
             $('#ot_destination_location')
@@ -434,7 +436,6 @@ $(document).ready(function() {
                 $('#ot_transactiontype').trigger('change');
             }, 50);
 
-            let approvedSiteId = '';
 
             $(document).off('change', '#ot_transactiontype').on('change', '#ot_transactiontype', function() {
                 let transactionTypeID = $(this).val();
@@ -528,17 +529,11 @@ $(document).ready(function() {
                         //     $('#ot_destination').prop('disabled', true);
                         // }
 
-
+                       
                         let sourceType = (resp.Source || '').toLowerCase();
                         if (sourceType.includes('location')) {
                             $('.od_s').show();
                             $('#source_applicable').val('1');
-                            if(resp.source_action == 's')
-                            {
-                                approvedSiteId = '#ot_source_site';
-                                console.log(approvedSiteId);
-                            }
-                            // $('.od_s label').text('Inventory Source Location');
                         }
                         else {
                             $('.od_s').hide();
@@ -550,11 +545,6 @@ $(document).ready(function() {
                         if (destType.includes('location')) {
                             $('.od_d').show();
                             $('#destination_applicable').val('1');
-                            if(resp.destination_action == 's')
-                            {
-                                approvedSiteId = '#ot_destination_site';
-                                console.log(approvedSiteId);
-                            }
                         }
                         else {
                             $('.od_d').hide();
@@ -611,7 +601,7 @@ $(document).ready(function() {
                 $('.ot_brand').off('change.BrandChangeBatch');
                 batchCheckInProgress = false;
             });
-            
+             
             const maxQty = parseFloat(data.max_qty);
             const $qtyInput = $row.find('.ot_qty');
             var respond = 'respondROT'; 
@@ -628,11 +618,22 @@ $(document).ready(function() {
                 $qtyInput.attr('max', demandQty);
                 $qtyInput.attr('placeholder', `Max: ${demandQty} (Demand Qty)`);
             }
-                // console.log(approvedSiteId);
+            const sourceHasSR = ['s', 'r'].includes(data.source_action);
+            const destHasSR = ['s', 'r'].includes(data.destination_action);
+
+            if (sourceHasSR && destHasSR) {
+                approvedSiteId = '#ot_source_site';
+            } else if (sourceHasSR) {
+                approvedSiteId = '#ot_source_site';
+            } else if (destHasSR) {
+                approvedSiteId = '#ot_destination_site';
+            } else {
+                approvedSiteId = '#ot_source_site';
+            }
 
             BrandChangeBatchAndExpiry(
                 '#ot_org',  
-                '#ot_source_site',  
+                approvedSiteId,  
                 $row.find('.ot_generic'),
                 $row.find('.ot_brand'),
                 $row.find('.ot_batch'),

@@ -5005,8 +5005,6 @@ class HRController extends Controller
         )
         ->first();
 
-        dd($Employee);
-
         $org_id = $Employee->org_id;
         $headcount_site_id = $Employee->headcount_site_id;
         $siteName = $Employee->siteName;

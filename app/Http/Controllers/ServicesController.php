@@ -3129,7 +3129,15 @@ class ServicesController extends Controller
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
-        $Employees = Employee::where('status', 1)->get();
+        // $Employees = Employee::where('status', 1)->get();
+        $Employees = Employee::join('prefix', 'prefix.id', '=', 'employee.prefix_id')
+        ->where('employee.status', 1)
+        ->whereRaw('LOWER(prefix.name) LIKE ?', ['%dr.%'])
+        ->get([
+            'employee.id',
+            'employee.name',
+            'prefix.name as prefix'
+        ]);
         return view('dashboard.service-location-scheduling', compact('Employees','user','Organizations'));
     }
 
