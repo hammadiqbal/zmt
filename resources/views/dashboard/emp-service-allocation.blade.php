@@ -79,6 +79,7 @@
                             <h4 class="modal-title" id="myLargeModalLabel">Employee Service Allocation</h4>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         </div>
+                        <div class="row" id="emp-info-row" style="width:98%;display:none;font-size:13px;border:1px solid black;margin: 0 auto;"></div>
                         <form id="emp_serviceallocation" method="post">
                             @csrf
                         <div class="modal-body">

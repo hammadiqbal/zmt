@@ -45,11 +45,11 @@
                     <h4 class="card-title">All Employee Documentss</h4>
                 </div>
                 @php
-                $cadreSetup = explode(',', $rights->cadre_setup);
-                $add = $cadreSetup[0];
-                $view = $cadreSetup[1];
-                $edit = $cadreSetup[2];
-                $updateStatus = $cadreSetup[3];
+                $empDocuments = explode(',', $rights->employee_documents);
+                $add = $empDocuments[0];
+                $view = $empDocuments[1];
+                $edit = $empDocuments[2];
+                $updateStatus = $empDocuments[3];
                 @endphp
 
                 @if ($add == 1)
@@ -69,6 +69,7 @@
                             <h4 class="modal-title" id="myLargeModalLabel">Add Employee Documents</h4>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         </div>
+                        <div class="row" id="emp-info-row" style="width:98%;display:none;font-size:13px;border:1px solid black;margin: 0 auto;"></div>
                         <form id="add_empDocuments" method="post" enctype="multipart/form-data">
                             @csrf
                             <div class="modal-body">

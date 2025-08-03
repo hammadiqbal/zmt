@@ -2407,11 +2407,15 @@ class HRController extends Controller
         // $Employee = Employee::where('id', $empId)
         //              ->get();
 
-        $Employee = Employee::select('employee.*','costcenter.name as ccName')
+        $Employee = Employee::select('employee.*','costcenter.name as ccName',
+        'emp_position.name as positionName','organization.organization as orgName',
+        'org_site.name as siteName')
         ->join('costcenter', 'costcenter.id', '=', 'employee.cc_id')
+        ->join('emp_position', 'emp_position.id', '=', 'employee.position_id')
+        ->join('organization', 'organization.id', '=', 'employee.org_id')
+        ->join('org_site', 'org_site.id', '=', 'employee.site_id')
         ->where('employee.id', $empId)
         ->get();
-
 
         return response()->json($Employee);
     }
@@ -3016,6 +3020,11 @@ class HRController extends Controller
         $ImgPath = 'assets/emp/' . $Image;
         $Image = asset($ImgPath);
 
+        if($Email == '')
+        {
+            $Email = 'N/A';
+        }
+
         if($OldCode == '')
         {
             $OldCode = 'N/A';
@@ -3499,11 +3508,15 @@ class HRController extends Controller
         // Prepare arrays to store addition and deduction values
         $additions = [];
         $deductions = [];
+        $totalAdditions = 0;
+        $totalDeductions = 0;
     
         // Collect addition values from the request
         foreach ($payrollAdditions as $pa) {
             $columnName = strtolower(str_replace(' ', '_', $pa->name));
             if ($request->has($columnName)) {
+                $value = floatval($request->input($columnName));
+                $totalAdditions += $value;
                 $additions[] = encrypt($request->input($columnName));
             }
         }
@@ -3511,6 +3524,8 @@ class HRController extends Controller
         foreach ($payrollDeductions as $pd) {
             $columnName = strtolower(str_replace(' ', '_', $pd->name));
             if ($request->has($columnName)) {
+                $value = floatval($request->input($columnName));
+                $totalDeductions += $value;
                 $deductions[] = encrypt($request->input($columnName));
             }
         }
@@ -3538,6 +3553,8 @@ class HRController extends Controller
         $timestamp = $this->currentDatetime;
         $logId = null;
 
+        $totalSalary = $totalAdditions - $totalDeductions;
+
         $empSalaryExists = EmployeeSalary::where('emp_id', $empId)
         ->exists();
         if ($empSalaryExists) {
@@ -3564,7 +3581,7 @@ class HRController extends Controller
 
             $logs = Logs::create([
                 'module' => 'salary',
-                'content' => "Employee Salary Rs '{test}' has been added by '{$sessionName}'",
+                'content' => "Employee Salary Rs '{$totalSalary}' has been added by '{$sessionName}'",
                 'event' => 'add',
                 'timestamp' => $timestamp,
             ]);
@@ -3606,11 +3623,11 @@ class HRController extends Controller
                     $search = $request->search['value'];
                     $query->where(function ($q) use ($search) {
                         $q->where('employee.name', 'like', "%{$search}%")
-                            ->orWhere('emp_salary.id', 'like', "%{$search}%")
+                            // ->orWhere('emp_salary.id', 'like', "%{$search}%")
                             ->orWhere('organization.organization', 'like', "%{$search}%")
-                            ->orWhere('org_site.name', 'like', "%{$search}%")
-                            ->orWhere('emp_salary.additions', 'like', "%{$search}%")
-                            ->orWhere('emp_salary.deductions', 'like', "%{$search}%");
+                            ->orWhere('org_site.name', 'like', "%{$search}%");
+                            // ->orWhere('emp_salary.additions', 'like', "%{$search}%")
+                            // ->orWhere('emp_salary.deductions', 'like', "%{$search}%");
                     });
                 }
             })
@@ -3921,8 +3938,8 @@ class HRController extends Controller
         }
         $EmployeeSalary = EmployeeSalary::findOrFail($id);
         // Fetch additions and deductions names
-        $payrollAdditions = FinancialPayrollAddition::all();
-        $payrollDeductions = FinancialPayrollDeduction::all();
+        $payrollAdditions = FinancialPayrollAddition::where('status', 1)->get();
+        $payrollDeductions = FinancialPayrollDeduction::where('status', 1)->get();
         // Fetch existing encrypted additions and deductions
         $currentAdditions = $EmployeeSalary->additions;
         $currentDeductions = $EmployeeSalary->deductions;
@@ -3971,20 +3988,21 @@ class HRController extends Controller
         foreach ($payrollAdditions as $addition) {
             $inputName = 'u_' . strtolower(str_replace(' ', '_', $addition->name));
             $value = $request->input($inputName);
-            if ($value) {
+            // if ($value) {
                 $newAdditions[] = encrypt(trim($value));
                 $totalAdditions += (float) $value;
-            }
+            // }
         }
     
         foreach ($payrollDeductions as $deduction) {
             $inputName = 'u_' . strtolower(str_replace(' ', '_', $deduction->name));
             $value = $request->input($inputName);
-            if ($value) {
+            // if ($value) {
                 $newDeductions[] = encrypt(trim($value));
                 $totalDeductions += (float) $value;
-            }
+            // }
         }
+
     
         // Calculate old salary
         $EmployeeNewSalary = $totalAdditions - $totalDeductions;
@@ -4046,10 +4064,11 @@ class HRController extends Controller
         $user = auth()->user();
         $QualificationLevels = EmployeeQualificationLevel::where('status', 1)->get();
         // $Employees = Employee::where('status', 1)->get();
-        $Employees = Employee::where('status', 1)
+        $Employees = Employee::where('employee.status', 1)
         ->join('emp_qualification', 'employee.id', '=', 'emp_qualification.emp_id','')
+        ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
         ->distinct()
-        ->get(['employee.*']);
+        ->get(['employee.*','prefix.name as prefix']);
 
         $EmployeeQualificationCount = EmployeeQualification::count();
         return view('dashboard.emp-qualifications', compact('user','QualificationLevels','Employees','EmployeeQualificationCount'));
@@ -4140,17 +4159,27 @@ class HRController extends Controller
         }
         $Employee = DB::table('employee')
         ->join('emp_qualification', 'employee.id', '=', 'emp_qualification.emp_id')
+        ->join('organization', 'organization.id', '=', 'employee.org_id')
+        ->join('org_site', 'org_site.id', '=', 'employee.site_id')
+        ->join('emp_position', 'emp_position.id', '=', 'employee.position_id')
+        ->join('costcenter', 'costcenter.id', '=', 'employee.cc_id')
         ->leftJoin('emp_qualification_level', DB::raw("FIND_IN_SET(emp_qualification_level.id, emp_qualification.levelid)"), ">", DB::raw("'0'"))
         ->where('employee.id', $id)
         ->select(
             'employee.id',
             'employee.name',
+            'organization.organization as orgName',
+            'org_site.name as siteName',
+            'emp_position.name as positionName',
+            'costcenter.name as headCountCC',
             'emp_qualification.levelid as qualificationLevelid',
             'emp_qualification.qualification_date as qualificationDate',
             'emp_qualification.name as qualificationName',
             DB::raw('GROUP_CONCAT(emp_qualification_level.name ORDER BY FIND_IN_SET(emp_qualification_level.id, emp_qualification.levelid)) as qualificationLevelNames')
         )
-        ->groupBy('employee.id', 'employee.name', 'emp_qualification.levelid', 'emp_qualification.qualification_date', 'emp_qualification.name')
+        ->groupBy('employee.id', 'employee.name', 'organization.organization', 'org_site.name',
+            'costcenter.name','emp_position.name','emp_qualification.levelid', 'emp_qualification.qualification_date',
+            'emp_qualification.name')
         ->first();
 
         $qualificationDates = $Employee->qualificationDate;
@@ -4164,6 +4193,10 @@ class HRController extends Controller
         $data = [
             'id' => $Employee->id,
             'empName' => $Employee->name,
+            'orgName' => $Employee->orgName,
+            'siteName' => $Employee->siteName,
+            'positionName' => $Employee->positionName,
+            'headCountCC' => $Employee->headCountCC,
             'empqualificationLevel' => trim($Employee->qualificationLevelNames),
             'empqualificationLevelId' => trim($Employee->qualificationLevelid),
             'empqualificationDate' => $qualificationDates,
@@ -4596,8 +4629,9 @@ class HRController extends Controller
         // $Employees = Employee::where('status', 1)->get();
         $Employees = Employee::where('employee.status', 1)
         ->join('emp_medical_license', 'employee.id', '=', 'emp_medical_license.emp_id','')
+        ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
         ->distinct()
-        ->get(['employee.*']);
+        ->get(['employee.*', 'prefix.name as prefix']);
 
         $EmployeeMedicalLicenseCount = EmployeeMedicalLicense::count();
         return view('dashboard.emp-medical-license', compact('user','Employees','EmployeeMedicalLicenseCount'));
@@ -4690,20 +4724,33 @@ class HRController extends Controller
         {
             abort(403, 'Forbidden');
         }
+
         $Employee = DB::table('employee')
         ->join('emp_medical_license', 'employee.id', '=', 'emp_medical_license.emp_id')
+        ->join('organization', 'organization.id', '=', 'employee.org_id')
+        ->join('org_site', 'org_site.id', '=', 'employee.site_id')
+        ->join('emp_position', 'emp_position.id', '=', 'employee.position_id')
+        ->join('costcenter', 'costcenter.id', '=', 'employee.cc_id')
         ->where('employee.id', $id)
         ->select(
         'employee.id',
         'employee.name',
+        'organization.organization as orgName',
+        'org_site.name as siteName',
         'emp_medical_license.name as medicaLicenseName',
         'emp_medical_license.ref_no as medicaLicenseRefNo',
         'emp_medical_license.expire_date as medicaLicenseExpiry',
         'emp_medical_license.status as medicalLicenseStatus',
+        'emp_position.name as positionName',
+        'costcenter.name as headCountCC'
         )
         ->groupBy(
             'employee.id',
             'employee.name',
+            'organization.organization',
+            'org_site.name',
+            'emp_position.name',
+            'costcenter.name',
             'emp_medical_license.name',
             'emp_medical_license.ref_no',
             'emp_medical_license.expire_date',
@@ -4721,6 +4768,10 @@ class HRController extends Controller
         $data = [
             'id' => $Employee->id,
             'empName' => $Employee->name,
+            'orgName' => $Employee->orgName,
+            'siteName' => $Employee->siteName,
+            'positionName' => $Employee->positionName,
+            'headCountCC' => $Employee->headCountCC,
             'medicalLicense' => trim($Employee->medicaLicenseName),
             'refNo' => trim($Employee->medicaLicenseRefNo),
             'expiryDate' => $medicaLicenseExpiry,
@@ -4810,10 +4861,16 @@ class HRController extends Controller
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
-        $Employees = Employee::where('employee.status', 1)
-        ->join('emp_cc', 'employee.id', '=', 'emp_cc.emp_id','')
-        ->distinct()
-        ->get(['employee.*']);
+        // $Employees = Employee::where('employee.status', 1)
+        // ->join('emp_cc', 'employee.id', '=', 'emp_cc.emp_id','')
+        // ->distinct()
+        // ->get(['employee.*']);
+
+        $Employees = Employee::join('prefix', 'prefix.id', '=', 'employee.prefix_id')
+            ->join('emp_cc', 'employee.id', '=', 'emp_cc.emp_id','')
+            ->distinct()
+            ->where('employee.status', 1)
+            ->get(['employee.id','employee.name','prefix.name as prefix']);
 
         $EmployeeCCCount = EmployeeCC::count();
         return view('dashboard.emp-cc', compact('user','Employees','EmployeeCCCount','Organizations'));
@@ -4987,6 +5044,7 @@ class HRController extends Controller
         ->join('organization', 'organization.id', '=', 'emp_cc.org_id')
         ->join('org_site', 'org_site.id', '=', 'emp_cc.headcount_site_id')
         ->join('costcenter', 'costcenter.id', '=', 'employee.cc_id')
+        ->join('emp_position', 'emp_position.id', '=', 'employee.position_id')
         // ->join('org_site as headcount_site', 'headcount_site.id', '=', 'emp_cc.headcount_site_id')
         ->where('employee.id', $id)
         ->select(
@@ -4999,6 +5057,7 @@ class HRController extends Controller
             'emp_cc.site_id',
             'emp_cc.cc_id',
             'costcenter.name as headCountCC',
+            'emp_position.name as positionName',
             'emp_cc.percentage as CCPercentage',
             'emp_cc.effective_timestamp as edt',
             'emp_cc.status as status',
@@ -5055,6 +5114,7 @@ class HRController extends Controller
             'orgName' => $orgName,
             'heacCountSiteId' => $Employee->headcount_site_id,
             'HeadCountSite' => $siteName,
+            'positionName' => $Employee->positionName,
             'siteID' => $Employee->site_id,
             'siteName' => $Sites,
             'headCountCC' => $Employee->headCountCC,
@@ -5254,10 +5314,12 @@ class HRController extends Controller
             abort(403, 'Forbidden');
         }
         $EmployeeServiceAllocations = EmployeeServiceAllocation::select('emp_service_allocation.*',
-        'employee.name as empName','organization.organization as orgName','org_site.name as siteName')
+        'employee.name as empName','organization.organization as orgName','org_site.name as siteName',
+        'prefix.name as PrefixName',)
         ->join('employee', 'employee.id', '=', 'emp_service_allocation.emp_id')
         ->join('organization', 'organization.id', '=', 'emp_service_allocation.org_id')
         ->join('org_site', 'org_site.id', '=', 'emp_service_allocation.site_id')
+        ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
         ->orderBy('employee.id', 'desc');
 
         $session = auth()->user();
@@ -5314,8 +5376,9 @@ class HRController extends Controller
                     $orgName ='<hr class="mt-1 mb-1"><b>Organization:</b> '.ucwords($EmployeeServiceAllocation->orgName);
                 }
                 $siteName = $EmployeeServiceAllocation->siteName;
+                $PrefixName = $EmployeeServiceAllocation->PrefixName;
 
-                return $EmployeeName.$orgName
+                return $PrefixName.' '.$EmployeeName.$orgName
                     . '<hr class="mt-1 mb-2">'
                     .'<b>Site: </b>'.$siteName
                     . '<hr class="mt-1 mb-2">'
@@ -5331,14 +5394,16 @@ class HRController extends Controller
                     ->whereIn('services.id', $serviceIds)
                     ->select('services.name as serviceName', 'service_group.name as serviceGroupName', 'service_type.name as serviceTypeName')
                     ->get();
-            
-                $formattedData = '<table style="border-collapse: collapse; width: 100%;">';
-                $formattedData .= '<tr>';
+                
+                $tableId = 'services-table-' . $EmployeeServiceAllocation->id;
+
+                $formattedData = '<table id="'.$tableId.'" class="nested-services-table table table-bordered" style="width: 100%;">';
+                $formattedData .= '<thead><tr>';
                 $formattedData .= '<th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Service Name</th>';
                 $formattedData .= '<th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Service Group</th>';
                 $formattedData .= '<th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Service Type</th>';
-                $formattedData .= '</tr>';
-            
+                $formattedData .= '</tr></thead><tbody>';
+
                 foreach ($services as $service) {
                     $formattedData .= '<tr>';
                     $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . ucwords($service->serviceName) . '</td>';
@@ -5346,7 +5411,7 @@ class HRController extends Controller
                     $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . ucwords($service->serviceTypeName) . '</td>';
                     $formattedData .= '</tr>';
                 }
-                $formattedData .= '</table>';
+                $formattedData .= '</tbody></table>';
             
                 return $formattedData;
             })
@@ -5558,6 +5623,7 @@ class HRController extends Controller
         $Site = trim($request->input('site_ela'));
         $InventorySites = $request->input('invSite');
         $LocationArray = $request->input('location_ela');
+        
     
         $serviceLocations = [];
         if (is_array($InventorySites) && is_array($LocationArray)) {
@@ -5641,6 +5707,8 @@ class HRController extends Controller
             ->join('emp_inventory_location', 'employee.id', '=', 'emp_inventory_location.emp_id')
             ->join('organization', 'organization.id', '=', 'emp_inventory_location.org_id')
             ->join('org_site', 'org_site.id', '=', 'emp_inventory_location.site_id')
+            ->join('emp_position', 'emp_position.id', '=', 'employee.position_id')
+            ->join('costcenter', 'costcenter.id', '=', 'employee.cc_id')
             ->where('employee.id', $id)
             ->select(
                 'employee.id',
@@ -5652,7 +5720,9 @@ class HRController extends Controller
                 'emp_inventory_location.location_site',
                 'emp_inventory_location.service_location_id',
                 'emp_inventory_location.effective_timestamp as edt',
-                'emp_inventory_location.status as status'
+                'emp_inventory_location.status as status',
+                'emp_position.name as positionName',
+                'costcenter.name as headCountCC'
             )
             ->first();
     
@@ -5700,8 +5770,10 @@ class HRController extends Controller
             'orgName' => $orgName,
             'siteID' => $Employee->site_id,
             'siteName' => $siteName,
+            'positionName' => $Employee->positionName,
+            'headCountCC' => $Employee->headCountCC,
             'LocationSiteId' => $Employee->location_site,
-            'LocationSites' => $siteLocationMapping, // Pass the mapping of sites and their respective locations
+            'LocationSites' => $siteLocationMapping,
             'status' => $Employee->status,
             'effective_timestamp' => $effective_timestamp,
             'rights' => $rights->employee_inventory_location_allocation,
@@ -5724,6 +5796,26 @@ class HRController extends Controller
 
         $InventorySites = $request->input('uinvSite');
         $LocationArray = $request->input('ulocation_ela');
+
+        if (is_array($InventorySites) && is_array($LocationArray)) {
+            foreach ($InventorySites as $index => $siteId) {
+                $locations = $LocationArray[$index] ?? null;
+
+                // Site provided but no location
+                if (!empty($siteId) && (empty($locations) || $locations === ',')) {
+                    return response()->json([
+                        'error' => "Row " . ($index + 1) . ": Location is required."
+                    ]);
+                }
+
+                // Location provided but no site
+                if (empty($siteId) && !empty($locations)) {
+                    return response()->json([
+                        'error' => "Row " . ($index + 1) . ": Site is required."
+                    ]);
+                }
+            }
+        }
     
         $serviceLocations = [];
         if (is_array($InventorySites) && is_array($LocationArray)) {

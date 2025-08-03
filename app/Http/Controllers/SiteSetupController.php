@@ -331,6 +331,10 @@ class SiteSetupController extends Controller
         $website = $Site->website;
         $cell_no = $Site->cell_no;
         $landline_no = $Site->landline_no;
+        if($landline_no == '')
+        {
+            $landline_no = 'N/A';
+        }
         $logo = $Site->orglogo;
         $logo = $Site->org_id.'_'.$logo;
 

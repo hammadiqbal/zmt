@@ -1,31 +1,122 @@
 $(document).ready(function() {
         //Employee Inventory Location Allocation
         $('.site_ela,.invSite').html("<option selected disabled value=''>Select Site</option>").prop('disabled', true);
-        OrgChangeSites('.org_ela', '.site_ela', '#emp_locationallocation');
-        OrgChangeSites('.org_ela', '.invSite', '#emp_locationallocation');
-    
+        $('.emp_location').show(); 
         $(document).on('click', '.emp-locationAllocation', function() {
+            $('#emp-info-row').hide();
             $('.duplicate').not(':first').remove();
             var orgId = $('.org_ela').val();
             if(orgId)
             {
-                $('.emp_location').hide(); 
+                
                 fetchOrganizationSites(orgId, '.site_ela, .invSite', function(data) {
                     $('.site_ela, .invSite').html("<option selected disabled value=''>Select Site</option>").prop('disabled', false);
                     $.each(data, function(key, value) {
                         $('.site_ela, .invSite').append('<option value="' + value.id + '">' + value.name + '</option>');
                     });
                 });
+                fetchOrganizationSites(orgId, '.invSite', function(data) {
+                    $('.invSite').html("<option selected disabled value=''>Select Site</option>").prop('disabled', false);
+                    $.each(data, function(key, value) {
+                        $('.invSite').append('<option value="' + value.id + '">' + value.name + '</option>');
+                    });
+                });
+            }
+            else{
+               
+                fetchOrganizations(null,null,'.org_ela', function(data) {
+                    var options = ["<option selected disabled value=''>Select Organization</option>"];
+                    $.each(data, function(key, value) {
+                        options.push('<option value="' + value.id + '">' + value.organization + '</option>');
+                    });
+                    $('.org_ela').html(options.join('')).trigger('change');
+                });
+
+                OrgChangeSites('.org_ela', '.site_ela', '#emp_locationallocation', 'EmpLocationHeadcountSite');
+                OrgChangeSites('.org_ela', '.invSite', '#emp_locationallocation', 'EmpLocationSite');
+            }
+            $('.emp_ela').empty();
+            $('.service_sa').select2();
+            $('.emp_ela').html("<option selected disabled value=''>Select Employee</option>").prop('disabled',true);
     
-                fetchServiceLocations(orgId, '.location_ela_value', function(data) {
+            SiteChangeEmployees('.site_ela', '.emp_ela', '#emp_locationallocation');
+                
+            $('input[name="location_ela_value"]').prop('disabled', true);
+            // var currentRow = $(this).closest('.duplicate'); // Find the current row
+            // var currentRowSiteSelect = currentRow.find('.location_ela_value'); // Find the cost center dropdown in the current row
+            // SiteChangeActivatedLocation('.invSite','.location_ela_value', '#emp_locationallocation',false,false);
+
+            $('input[name="location_ela_value"]').val('');
+            $('input[name="location_ela[]"]').val('');
+            $('#empLocationAllocation').modal('show');
+
+            $('.emp_ela').change(function() {
+                var empId = $(this).val();
+                fetchEmployeeDetails(empId, '.emp_ela', function(data) {
+                    $.each(data, function(key, value) {
+                        let infoHtml = `
+                            <div class="col-12 mt-1 mb-1 emp-block">
+                                <div class="card shadow-sm border mb-0">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="row align-items-center text-center">
+                                            <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                                <small class="text-muted">Organization:</small><br>
+                                                <strong class="text-primary source">${value.orgName || '-'}</strong>
+                                            </div>
+                                            <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                                <small class="text-muted">Site:</small><br>
+                                                <strong class="text-primary destination">${value.siteName || '-'}</strong>
+                                            </div>
+                                            <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                                <small class="text-muted">HeadCount CC:</small><br>
+                                                <strong class="text-primary source">${value.ccName || '-'}</strong>
+                                            </div>
+                                            <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                                <small class="text-muted">Position:</small><br>
+                                                <strong class="text-primary destination">${value.positionName || '-'}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            `;
+
+                        $('#emp-info-row').find('.emp-block').remove();
+                        $('#emp-info-row')
+                        .append(infoHtml)
+                        .show();
+
+                        // $('#userDetails').show();
+                        // $('#nameLabel').hide();
+                        // $('input[name="username"]').val(value.name).attr('readonly', true);
+                        // $('#emailLabel').hide();
+                        // $('input[name="useremail"]').val(value.email).attr('readonly', true);
+                    });
+            
+                }, function(error) {
+                    console.log(error);
+                });
+            });
+        });
+
+        $(document).on('change', '.invSite', function() {
+            $('.emp_location').hide(); 
+            var siteId = $(this).val();
+            var currentRow = $(this).closest('.duplicate'); 
+            var currentRowLocationSelect = currentRow.find('.location_ela_value'); 
+            var inventoryStatus = false;
+            var empCheck = false;
+            if (siteId) {
+                fetchActiveSL(siteId, currentRowLocationSelect,inventoryStatus,empCheck, function(data) {
                     if (data && data.length > 0) {
-                        $('.location_ela_value').prop('disabled', false);
+                        currentRowLocationSelect.prop('disabled', false);
                         $('#multiServicelocation').empty();
-    
+
                         if ($.fn.DataTable.isDataTable('#emplocationallocationtable')) {
                             $('#emplocationallocationtable').DataTable().clear().destroy(); 
                         }
                         data.forEach(item => {
+                                                
                             var embedData = `
                                 <tr style="font-size:14px;cursor:pointer;">
                                     <td>
@@ -36,7 +127,7 @@ $(document).ready(function() {
                                     </td>
                                     <td>${item.name}</td>
                                 </tr>`;
-    
+
                             
                             $('#multiServicelocation').append(embedData);
                         });
@@ -53,32 +144,38 @@ $(document).ready(function() {
                             ]
                         });
                     } 
-                   
-                });
-            }
-            else{
-                $('.emp_location').show(); 
-                fetchOrganizations(null,null,'.org_ela', function(data) {
-                    var options = ["<option selected disabled value=''>Select Organization</option>"];
-                    $.each(data, function(key, value) {
-                        options.push('<option value="' + value.id + '">' + value.organization + '</option>');
-                    });
-                    $('.org_ela').html(options.join('')).trigger('change');
+                    else {
+                        Swal.fire({
+                            text: 'Locations are not activated for selected Site',
+                            icon: 'error',
+                            confirmButtonText: 'OK',
+                            allowOutsideClick: false
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                currentRowLocationSelect.prop('disabled', true);
+                                $('#empLocationAllocationModal').modal('hide');
+                            }
+                        });
+                    }
                 });
 
-                OrgChangeSites('.org_ela', '.site_ela', '#emp_locationallocation');
-    
-                $('input[name="location_ela_value"]').prop('disabled', true);
-                OrganizationChangServiceLocation('.org_ela', '.location_ela_value', '#emp_locationallocation');
+               
+            } else {
+                currentRowCCSelect.empty();
+                currentRowCCSelect.html("<option selected disabled value=''>Select Cost Center</option>").prop('disabled', true);
             }
-            $('.emp_ela').empty();
-            $('.service_sa').select2();
-            $('.emp_ela').html("<option selected disabled value=''>Select Employee</option>").prop('disabled',true);
-    
-            SiteChangeEmployees('.site_ela', '.emp_ela', '#emp_locationallocation');
-            $('input[name="location_ela_value"]').val('');
-            $('input[name="location_ela[]"]').val('');
-            $('#empLocationAllocation').modal('show');
+        });
+
+        $(document).on('change', '.uinvSite', function() {
+            var siteId = $(this).val();
+            if (siteId) {
+                $('.uemp_location').hide(); 
+                var currentRow = $(this).closest('.sl-item'); 
+                var currentRowLocationSelect = currentRow.find('.ulocation_ela_value'); 
+                currentRow.find('#umultiServicelocation').empty();
+                currentRow.find('input[name="ulocation_ela[]"]').val('');
+                currentRow.find('.ulocation_ela_value').val('').attr('placeholder', 'Select Service location');;
+            }
         });
     
         $('#emp_locationallocation').submit(function(e) {
@@ -162,8 +259,6 @@ $(document).ready(function() {
                     },
                     success: function(response) {
     
-                        console.log(response);
-    
                         for (var fieldName in response) {
                             var fieldErrors = response[fieldName];
                         }
@@ -185,11 +280,11 @@ $(document).ready(function() {
                             }).then((result) => {
                                 if (result.isConfirmed) {
                                     $('#empLocationAllocation').modal('hide');
-                                    $('#view-locationallocation').DataTable().ajax.reload();
                                     $('#emp_locationallocation').find('select').each(function(){
                                         $(this).val($(this).find('option:first').val()).trigger('change');
                                     });
                                     $('#emp_locationallocation')[0].reset();
+                                    location.reload();
                                     $('.text-danger').hide();
                                 }
                             });

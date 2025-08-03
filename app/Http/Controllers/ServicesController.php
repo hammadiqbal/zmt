@@ -1644,25 +1644,29 @@ class ServicesController extends Controller
                 'timestamp' => $timestamp,
             ]);
             $ActivateService->logid = $logs->id;
+            
+
+            $existsInRequisition = ServiceRequisitionSetup::where('org_id', $OrgId)
+            ->where('service_id', $serviceId)
+            ->exists();
+
+            if (!$existsInRequisition) {
+                $ServiceRequisition = new ServiceRequisitionSetup();
+                $ServiceRequisition->org_id = $OrgId;
+                $ServiceRequisition->service_id = $serviceId;
+                $ServiceRequisition->mandatory = 1;
+                $ServiceRequisition->status = 1;
+                $ServiceRequisition->user_id = $sessionId;
+                $ServiceRequisition->last_updated = $last_updated;
+                $ServiceRequisition->timestamp = $timestamp;
+                $ServiceRequisition->effective_timestamp = $Edt;
+                $ServiceRequisition->save();
+            }
+            
             $ActivateService->save();
         }
 
-        $existsInRequisition = ServiceRequisitionSetup::where('org_id', $OrgId)
-        ->where('service_id', $serviceId)
-        ->exists();
-
-        if (!$existsInRequisition) {
-            $ServiceRequisition = new ServiceRequisitionSetup();
-            $ServiceRequisition->org_id = $OrgId;
-            $ServiceRequisition->service_id = $serviceId;
-            $ServiceRequisition->mandatory = 1;
-            $ServiceRequisition->status = 1;
-            $ServiceRequisition->user_id = $sessionId;
-            $ServiceRequisition->last_updated = $last_updated;
-            $ServiceRequisition->timestamp = $timestamp;
-            $ServiceRequisition->effective_timestamp = $Edt;
-            $ServiceRequisition->save();
-        }
+        
 
         return response()->json(['success' => 'Services Activated successfully']);
     }
@@ -2756,6 +2760,7 @@ class ServicesController extends Controller
         
         $siteId = $request->input('siteId');
         $inventoryStatus = $request->input('inventoryStatus');
+        $empCheck = $request->input('empCheck', true);    
 
         $query = ServiceLocation::where('service_location.status', 1)
         ->join('activated_location', function ($join) use ($siteId) {
@@ -2768,26 +2773,27 @@ class ServicesController extends Controller
             $query->where('service_location.inventory_status', 1);
         }
 
-        if ($roleId != 1 && $isEmployee == 1) {
-            $empInv = DB::table('emp_inventory_location')
-                ->where('site_id', $siteId)
-                ->where('emp_id', $empId)
-                ->where('status', 1)
-                ->first();
+        if ($empCheck === 'true' || $empCheck === true) {
+            if ($roleId != 1 && $isEmployee == 1) {
+                $empInv = DB::table('emp_inventory_location')
+                    ->where('site_id', $siteId)
+                    ->where('emp_id', $empId)
+                    ->where('status', 1)
+                    ->first();
 
-            $empServiceLocationIDs = [];
-            if ($empInv && !empty($empInv->service_location_id)) {
-                $decoded = json_decode($empInv->service_location_id, true);
-                if (is_array($decoded)) {
-                    $flattened = [];
-                    array_walk_recursive($decoded, function($val) use (&$flattened) {
-                        $flattened[] = (string) $val;
-                    });
-                    $empServiceLocationIDs = $flattened;
+                $empServiceLocationIDs = [];
+                if ($empInv && !empty($empInv->service_location_id)) {
+                    $decoded = json_decode($empInv->service_location_id, true);
+                    if (is_array($decoded)) {
+                        $flattened = [];
+                        array_walk_recursive($decoded, function($val) use (&$flattened) {
+                            $flattened[] = (string) $val;
+                        });
+                        $empServiceLocationIDs = $flattened;
+                    }
                 }
+                $query->whereIn('service_location.id', $empServiceLocationIDs);
             }
-            
-            $query->whereIn('service_location.id', $empServiceLocationIDs);
         }
 
         $query = $query->get();
@@ -3348,14 +3354,15 @@ class ServicesController extends Controller
                         <b>RecordedAt:</b> " . $timestamp ." <br>
                         <b>LastUpdated:</b> " . $lastUpdated;
 
-                $sessionOrg = $session->org_id;
+                $isEmp = $session->is_employee;
                 $orgName = '';
-                if($sessionOrg == 0)
+                if($isEmp)
                 {
-                    $orgName = ucwords($LocationScheduling->orgName);
+                    $orgName = ' / '.ucwords($LocationScheduling->orgName);
                 }
+
                 $empName = isset($LocationScheduling->empName) ? $LocationScheduling->empName : 'N/A';
-                $siteOrg = ucwords($LocationScheduling->siteName).' / '.$orgName;
+                $siteOrg = ucwords($LocationScheduling->siteName).$orgName;
 
                 return ucwords($LocationSchedulingName)
                     . '<hr class="mt-1 mb-1">'

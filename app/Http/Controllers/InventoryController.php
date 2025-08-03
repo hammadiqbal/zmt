@@ -793,10 +793,9 @@ class InventoryController extends Controller
         }
         $user = auth()->user();
         $Categories = InventoryCategory::where('status', 1)->get();
-        $SubCategories = InventorySubCategory::where('status', 1)->get();
         $Organizations = Organization::where('status', 1)->get();
 
-        return view('dashboard.inventory-type', compact('user','Categories','SubCategories','Organizations'));
+        return view('dashboard.inventory-type', compact('user','Categories','Organizations'));
     }
 
     public function AddInventoryType(InventoryTypeRequest $request)
@@ -1124,11 +1123,11 @@ class InventoryController extends Controller
         }
         $user = auth()->user();
         $Categories = InventoryCategory::where('status', 1)->get();
-        $SubCategories = InventorySubCategory::where('status', 1)->get();
+        // $SubCategories = InventorySubCategory::where('status', 1)->get();
         $Organizations = Organization::where('status', 1)->get();
-        $InventoryTypes = InventoryType::where('status', 1)->get();
+        // $InventoryTypes = InventoryType::where('status', 1)->get();
 
-        return view('dashboard.inventory-generic', compact('user','Categories','SubCategories','Organizations','InventoryTypes'));
+        return view('dashboard.inventory-generic', compact('user','Categories','Organizations'));
     }
 
     public function AddInventoryGeneric(InventoryGenericRequest $request)
@@ -1474,13 +1473,27 @@ class InventoryController extends Controller
     {
         $catId = $request->input('catId');
         $subcatId = $request->input('subcatId');
+        // $orgId = $request->input('orgId');
+
+        // $InventoryTypes = InventoryType::select('id', 'name')
+        //     ->where('cat_id', $catId)
+        //     ->where('sub_catid', $subcatId)
+        //     ->where('org_id', $orgId)
+        //     ->get();
+
         $orgId = $request->input('orgId');
 
         $InventoryTypes = InventoryType::select('id', 'name')
             ->where('cat_id', $catId)
-            ->where('sub_catid', $subcatId)
-            ->where('org_id', $orgId)
-            ->get();
+            ->where('sub_catid', $subcatId);
+
+        // Add condition for org_id only if $orgId is not null
+        if ($orgId != null) {
+            $InventoryTypes->where('org_id', $orgId);
+        }
+
+        $InventoryTypes = $InventoryTypes->get();
+
 
         return response()->json($InventoryTypes);
     }
@@ -7983,6 +7996,8 @@ class InventoryController extends Controller
         }, 'combined')
         ->distinct()
         ->get();
+
+        // dd($costcenters);
 
 
         

@@ -222,10 +222,10 @@
                                             <div class="form-group has-custom m-b-5">
                                                 <label class="filterlabel">Item SubCategory</label>
                                                 <select class="form-control selecter p-0" id="fb_subcat" style="color:#222d32">
-                                                    <option selected disabled >Select SubCategory</option>
+                                                    {{-- <option selected disabled >Select SubCategory</option>
                                                     @foreach ($SubCategories as $SubCategory)
                                                     <option value="{{ $SubCategory['id'] }}"> {{ $SubCategory['name'] }}</option>
-                                                    @endforeach
+                                                    @endforeach --}}
                                                 </select>
                                             </div>
                                         </div>

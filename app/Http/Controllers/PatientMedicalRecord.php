@@ -514,8 +514,11 @@ class PatientMedicalRecord extends Controller
             'services.name as serviceName'
         )
         ->join('services', 'services.id', '=', 'patient_inout.service_id')
+        ->join('service_group', 'service_group.id', '=', 'services.group_id')
+        ->join('service_type', 'service_type.id', '=', 'service_group.type_id')
         ->where('patient_inout.mr_code', $mr)
         ->where('patient_inout.status', 1)
+        ->where('service_type.code', '!=' , 'i')
         ->groupBy('services.id', 'services.name')
         ->get();
         if ($services->count() > 1 && !$selectedService) {
@@ -568,6 +571,7 @@ class PatientMedicalRecord extends Controller
             }
         )
         ->where('patient.mr_code', $mr);
+        
         if ($selectedService) {
             $EncounterProcedurePatientDetails = $EncounterProcedurePatientDetails->where('patient_inout.service_id', $selectedService);
         }
@@ -4091,6 +4095,7 @@ class PatientMedicalRecord extends Controller
         ->join('service_type', 'service_type.id', '=', 'service_group.type_id')
         ->leftJoin('procedure_coding', 'procedure_coding.service_id', '=', 'services.id')
         // ->leftJoin('icd_code', 'icd_code.id', '=', 'procedure_coding.icd_id')
+        ->distinct('services.name')
         ->where('service_type.code', 'p')
         ->orderBy('activated_service.id', 'desc');
 

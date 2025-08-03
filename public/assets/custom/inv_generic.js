@@ -1,4 +1,8 @@
 $(document).ready(function() {
+    $('#fb_subcat').html("<option selected disabled value=''>Select Item Sub Category</option>").prop('disabled', true);
+    CategoryChangeSubCategory('#fb_cat', '#fb_subcat', 'null');
+    $('#fb_type').html("<option selected disabled value=''>Select Item Type</option>").prop('disabled', true);
+    SubCategoryChangeInventoryType('#fb_subcat', '#fb_type', 'null');
     //Open Add Inventory Generic Setup
     $(document).on('click', '.add-invgeneric', function() {
         var orgId = $('#ig_org').val();
@@ -226,8 +230,8 @@ $(document).ready(function() {
 
     $('.clearFilter').on('click', function () {
         $('#fb_cat').val($('#fb_cat option:first').val()).change();
-        $('#fb_subcat').val($('#fb_subcat option:first').val()).change();
-        $('#fb_type').val($('#fb_type option:first').val()).change();
+        $('#fb_subcat').val($('#fb_subcat option:first').val()).change().prop('disabled', true);
+        $('#fb_type').val($('#fb_type option:first').val()).change().prop('disabled', true);
         viewinventorygeneric.ajax.reload();   
     });
 

@@ -79,6 +79,7 @@
                             <h4 class="modal-title" id="myLargeModalLabel">Employee Inventory Location Allocation</h4>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         </div>
+                        <div class="row" id="emp-info-row" style="width:98%;display:none;font-size:13px;border:1px solid black;margin: 0 auto;"></div>
                         <form id="emp_locationallocation" method="post">
                             @csrf
                             <div class="modal-body">
@@ -169,7 +170,7 @@
                                                                 <div class="form-group row">
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
-                                                                            <label class="control-label">Inventory Locations <code class="emp_location">(Select an organization)</code></label>
+                                                                            <label class="control-label">Inventory Locations <code class="emp_location">(Select a Site)</code></label>
                                                                             <input type="text" class="form-control cursor-pointer location_ela_value"
                                                                             readonly placeholder="Select Inventory Location" name="location_ela_value">
                                                                             <span class="text-danger location_ela_value_error" ></span>

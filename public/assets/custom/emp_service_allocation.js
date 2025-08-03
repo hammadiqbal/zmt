@@ -4,6 +4,7 @@ $(document).ready(function() {
     OrgChangeSites('#org_sa', '#site_sa', '#emp_serviceallocation');
 
     $(document).on('click', '.emp-serviceallocation', function() {
+        $('#emp-info-row').hide();
         var orgId = $('#org_sa').val();
         $('#emp_services').show(); 
         
@@ -35,6 +36,53 @@ $(document).ready(function() {
         EmployeeChangeMultiSelectService('#emp_sa', '#site_sa', '#service_sa_value', '#emp_serviceallocation');
         
         $('#empserviceallocation').modal('show');
+        $('#emp_sa').change(function() {
+            var empId = $(this).val();
+            fetchEmployeeDetails(empId, '#emp_sa', function(data) {
+                $.each(data, function(key, value) {
+                    let infoHtml = `
+                        <div class="col-12 mt-1 mb-1 emp-block">
+                            <div class="card shadow-sm border mb-0">
+                                <div class="card-body py-2 px-3">
+                                    <div class="row align-items-center text-center">
+                                        <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                            <small class="text-muted">Organization:</small><br>
+                                            <strong class="text-primary source">${value.orgName || '-'}</strong>
+                                        </div>
+                                        <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                            <small class="text-muted">Site:</small><br>
+                                            <strong class="text-primary destination">${value.siteName || '-'}</strong>
+                                        </div>
+                                        <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                            <small class="text-muted">HeadCount CC:</small><br>
+                                            <strong class="text-primary source">${value.ccName || '-'}</strong>
+                                        </div>
+                                        <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                            <small class="text-muted">Position:</small><br>
+                                            <strong class="text-primary destination">${value.positionName || '-'}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        `;
+
+                    $('#emp-info-row').find('.emp-block').remove();
+                    $('#emp-info-row')
+                    .append(infoHtml)
+                    .show();
+
+                    // $('#userDetails').show();
+                    // $('#nameLabel').hide();
+                    // $('input[name="username"]').val(value.name).attr('readonly', true);
+                    // $('#emailLabel').hide();
+                    // $('input[name="useremail"]').val(value.email).attr('readonly', true);
+                });
+        
+            }, function(error) {
+                console.log(error);
+            });
+        });
     });
     //Open Add Allocate Service Setup
 
@@ -173,12 +221,19 @@ $(document).ready(function() {
         columns: [
             { data: 'id_raw', name: 'id_raw', visible: false },
             { data: 'id', name: 'id' },
-            { data: 'services', name: 'services' ,render: function(data, type, row) {
-                return data.charAt(0).toUpperCase() + data.slice(1);
-            }},
+            { data: 'services', name: 'services' },  // Removed render
             { data: 'status', name: 'status' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
+        // columns: [
+        //     { data: 'id_raw', name: 'id_raw', visible: false },
+        //     { data: 'id', name: 'id' },
+        //     { data: 'services', name: 'services' ,render: function(data, type, row) {
+        //         return data.charAt(0).toUpperCase() + data.slice(1);
+        //     }},
+        //     { data: 'status', name: 'status' },
+        //     { data: 'action', name: 'action', orderable: false, searchable: false }
+        // ],
         columnDefs: [
             {
                 targets: 1,
@@ -186,7 +241,11 @@ $(document).ready(function() {
             },
             {
                 targets: 2,
-                width: "500px"
+                width: "400px"
+            },
+            {
+                targets: 3,
+                width: "100px"
             },
             {
                 targets: 4,
@@ -195,11 +254,22 @@ $(document).ready(function() {
         ]
     });
 
-    AllocateService.on('draw.dt', function() {
-        $('[data-toggle="popover"]').popover({
-            html: true
+    AllocateService.on('draw.dt', function () {
+    $('[data-toggle="popover"]').popover({ html: true });
+
+    $('.nested-services-table').each(function () {
+        if (!$.fn.DataTable.isDataTable(this)) {
+                    $(this).DataTable({
+                    paging: true,  
+                    searching: false,  
+                    info: false,  
+                    ordering: false, 
+                    lengthChange: false 
+                });
+            }
         });
     });
+
     // Show the loader before an AJAX request is made
     AllocateService.on('preXhr.dt', function() {
         $('#ajax-loader').show();

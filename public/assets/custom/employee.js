@@ -104,7 +104,7 @@ $(document).ready(function() {
         formData.forEach(function(value, key) {
             var fieldName = key;
             var fieldValue = value;
-            if ((fieldValue == '' || fieldValue == 'null' || fieldValue === 'undefined') && ((fieldName != 'emp_oldcode') && (fieldName != 'emp_landline') &&  (fieldName != 'emp_additionalcell')))
+            if ((fieldValue == '' || fieldValue == 'null' || fieldValue === 'undefined') && ((fieldName != 'emp_oldcode') && (fieldName != 'emp_landline') &&  (fieldName != 'emp_additionalcell') &&  (fieldName != 'emp_email')))
             {
                 var FieldName = fieldName;
                 

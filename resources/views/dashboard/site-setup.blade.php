@@ -274,7 +274,7 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label for="input13">Enter Landline #</label>
+                                                                    <label for="input13">Enter Landline # <small class="text-danger" style="font-size:11px;">(Optional)</small> </label>
                                                                     <input type="text" class="form-control input-sm" placeholder="Landline #.." name="site_landline" id="input13"><span class="bar"></span>
                                                                 </div>
                                                                 <span class="text-danger" id="site_landline_error"></span>
@@ -503,8 +503,8 @@
                                                 <div class="form-group row m-b-5">
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
-                                                        <label class="control-label">Update Landline #</label>
-                                                            <input type="text" class="form-control input-sm u_site_landline" required name="u_site_landline" id="input13">
+                                                        <label class="control-label">Update Landline # <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                            <input type="text" class="form-control input-sm u_site_landline"  name="u_site_landline" id="input13">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -606,7 +606,8 @@
                                         <hr>
                                         <p><b>Remarks:</b> <span  id="siteremarks"></span></p>
                                         <hr>
-                                        <p><b>Contact #:</b> <span id="sitecontact"></span></p>
+                                        <p><b>Cell  #:</b> <span id="sitecontact"></span></p>
+                                        <p><b>Landline:</b> <span id="sitelandline"></span></p>
                                         <hr>
                                     </div>
                             </div>

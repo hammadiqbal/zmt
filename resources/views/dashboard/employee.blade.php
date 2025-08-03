@@ -555,7 +555,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                     <div class="form-group row">
                                                         <div class="col-md-12">
                                                             <div class="form-group has-custom m-b-5">
-                                                                <label for="input021">Enter Email</label>
+                                                                <label for="input021">Enter Email <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
                                                                 <input type="text" class="form-control input-sm" placeholder="Enter email" name="emp_email" id="input021">
                                                             </div>
                                                             <span class="text-danger" id="emp_email_error"></span>
@@ -1076,8 +1076,8 @@ border: 1px solid rgba(0,0,0,.15);
                                                 <div class="form-group row m-b-5">
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
-                                                        <label class="control-label">Update Email </label>
-                                                            <input type="email" required class="form-control input-sm u_emp_email" name="u_emp_email" id="input09">
+                                                        <label class="control-label">Update Email <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                            <input type="email" class="form-control input-sm u_emp_email" name="u_emp_email" id="input09">
                                                         </div>
                                                     </div>
                                                 </div>

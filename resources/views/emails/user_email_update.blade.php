@@ -16,7 +16,7 @@
         <p>Your email has been updated by an administrator.</p>
         <p>If you did not initiate this change, please disregard this email.</p>
         <p>You can now log in with your new email using the following URL:</p>
-        <p><a href="https://zmt.esystematic.com/">https://zmt.esystematic.com/</a></p>
+        <p><a href="https://pilot.esystematic.com/">https://pilot.esystematic.com/</a></p>
         <p>If you believe this email is not associated with your account, please ignore it.</p>
         <hr>
         <p><em>This is an automated email. Please do not reply to this message.</em></p>

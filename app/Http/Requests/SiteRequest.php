@@ -33,7 +33,7 @@ class SiteRequest extends FormRequest
             'site_person_email' => 'required|email',
             'site_website' => 'required|url',
             'site_cell' => ['required', 'regex:/^[+]?[\d-]+$/'],
-            'site_landline' => ['required', 'regex:/^[+]?[\d-]+$/'],
+            // 'site_landline' => ['required', 'regex:/^[+]?[\d-]+$/'],
             'site_edt' => 'required',
         ];
     }
@@ -61,8 +61,8 @@ class SiteRequest extends FormRequest
             'site_website.url' => 'Please enter a valid website URL.',
             'site_cell.required' => 'The cell number field is required.',
             'site_cell.regex' => 'The Site cell number must be in the format: +920000000000',
-            'site_landline.required' => 'The landline number field is required.',
-            'site_landline.regex' => 'The Site landline number must be in the format: +922100000000',
+            // 'site_landline.required' => 'The landline number field is required.',
+            // 'site_landline.regex' => 'The Site landline number must be in the format: +922100000000',
             'site_edt.required' => 'The effective date and time field is required.',
         ];
     }

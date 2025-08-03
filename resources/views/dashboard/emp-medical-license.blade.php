@@ -70,6 +70,7 @@
                             <h4 class="modal-title" id="myLargeModalLabel">Add New Employee Medical License</h4>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         </div>
+                        <div class="row" id="emp-info-row" style="width:98%;display:none;font-size:13px;border:1px solid black;margin: 0 auto;"></div>
                         <form id="add_medicalLicense" method="post">
                             @csrf
                             <div class="modal-body">
@@ -200,7 +201,7 @@
                             <select class="form-control selecter p-0" id="viewempMedicalLicense">
                                 <option selected disabled>Select Employee</option>
                                 @foreach ($Employees as $Employee)
-                                    <option value="{{ $Employee['id'] }}"> {{ $Employee['name'] }}</option>
+                                    <option value="{{ $Employee['id'] }}">{{ $Employee['prefix'] }} {{ $Employee['name'] }}</option>
                                 @endforeach
                             </select>
                             <small class="form-control-feedback text-danger"> Select an employee to view Medical License.</small>

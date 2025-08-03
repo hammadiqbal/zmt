@@ -58,7 +58,7 @@ $(document).ready(function() {
         formData.forEach(function(value, key) {
             var fieldName = key;
             var fieldValue = value;
-            if ((fieldValue == '' || fieldValue == null || fieldValue === 'undefined') && (fieldName != 'site_gps') && (fieldName != 'site_remarks') && (fieldName != 'old_siteCode'))
+            if ((fieldValue == '' || fieldValue == null || fieldValue === 'undefined') && (fieldName != 'site_gps') && (fieldName != 'site_remarks') && (fieldName != 'old_siteCode') && (fieldName != 'site_landline'))
             {
                 var FieldName = fieldName;
                 var FieldID = '#'+FieldName + "_error";
@@ -81,7 +81,6 @@ $(document).ready(function() {
                     $(this).next('.select2-container').find('.select2-selection').removeClass("requirefield");
                 });
                 resp = false;
-
             }
 
         });
@@ -223,7 +222,7 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 $('#ajax-loader').hide();
-                var contact = response.cell_no + '/' + response.landline_no;
+                var contact = response.cell_no;
                 var logoPath = response.logo;
 
                 $('#sitelogo').attr('src', logoPath);
@@ -232,6 +231,7 @@ $(document).ready(function() {
                 $('#oldSiteCode').text(response.oldCode);
                 $('#siteemail').text(response.email);
                 $('#sitecontact').html(contact);
+                $('#sitelandline').html(response.landline_no);
                 $('#siteprovince').text(response.province_name);
                 $('#sitedivision').text(response.division_name);
                 $('#sitedistrict').text(response.district_name);

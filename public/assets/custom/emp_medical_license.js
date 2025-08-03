@@ -1,6 +1,8 @@
 $(document).ready(function() {
         //Open Add Employee Medical License Setup
         $(document).on('click', '.addmedicalLicense', function() {
+            $('#emp-info-row').hide();
+
             var orgId = $('#em-org').val();
             if(orgId)
             {
@@ -30,6 +32,54 @@ $(document).ready(function() {
             $('#show_emp').html("<option selected disabled value=''>Select Employee</option>").prop('disabled',true);
             SiteChangeEmployees('#em-site', '#show_emp', '#add_medicalLicense');
             $('#add-medicalLicense').modal('show');
+
+            $('#show_emp').change(function() {
+                var empId = $(this).val();
+                fetchEmployeeDetails(empId, '#show_emp', function(data) {
+                    $.each(data, function(key, value) {
+                        let infoHtml = `
+                            <div class="col-12 mt-1 mb-1 emp-block">
+                                <div class="card shadow-sm border mb-0">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="row align-items-center text-center">
+                                            <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                                <small class="text-muted">Organization:</small><br>
+                                                <strong class="text-primary source">${value.orgName || '-'}</strong>
+                                            </div>
+                                            <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                                <small class="text-muted">Site:</small><br>
+                                                <strong class="text-primary destination">${value.siteName || '-'}</strong>
+                                            </div>
+                                            <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                                <small class="text-muted">HeadCount CC:</small><br>
+                                                <strong class="text-primary source">${value.ccName || '-'}</strong>
+                                            </div>
+                                            <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                                <small class="text-muted">Position:</small><br>
+                                                <strong class="text-primary destination">${value.positionName || '-'}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            `;
+
+                        $('#emp-info-row').find('.emp-block').remove();
+                        $('#emp-info-row')
+                        .append(infoHtml)
+                        .show();
+
+                        // $('#userDetails').show();
+                        // $('#nameLabel').hide();
+                        // $('input[name="username"]').val(value.name).attr('readonly', true);
+                        // $('#emailLabel').hide();
+                        // $('input[name="useremail"]').val(value.email).attr('readonly', true);
+                    });
+            
+                }, function(error) {
+                    console.log(error);
+                });
+            });
         });
         //Open Add Employee Medical License Setup
     

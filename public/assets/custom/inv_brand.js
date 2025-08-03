@@ -1,5 +1,12 @@
 
 $(document).ready(function() {
+    $('#fb_subcat').html("<option selected disabled value=''>Select Item Sub Category</option>").prop('disabled', true);
+    CategoryChangeSubCategory('#fb_cat', '#fb_subcat', 'null');
+    $('#fb_type').html("<option selected disabled value=''>Select Item Type</option>").prop('disabled', true);
+    SubCategoryChangeInventoryType('#fb_subcat', '#fb_type', 'null');
+    $('#fb_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
+    TypeChangeInventoryGeneric('#fb_type', '#fb_generic', 'null');
+
     //Open Add Inventory Brand Setup
     $(document).on('click', '.add-invbrand', function() {
         var orgId = $('#ib_org').val();

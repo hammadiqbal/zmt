@@ -119,6 +119,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                     </div>
 
                                                     @if($user->org_id != 0 || $user->is_employee != 1)
+                                                    
                                                         @if($costcenters->count() > 1)
                                                         <div class="col-md-6">
                                                             <div class="form-group row">

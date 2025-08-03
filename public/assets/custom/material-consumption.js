@@ -437,6 +437,7 @@ $(document).ready(function() {
                 // $('#u_mc_inv_location').val(response.ServiceLocationId).change();
                 $('#u_mc_inv_location').html("<option selected value="+ response.ServiceLocationId +">" + response.ServiceLocationName + "</option>");
                 fetchActiveSL(response.siteId, '#u_mc_inv_location', function(data) {
+                    
                     $.each(data, function(key, value) {
                         if(value.location_id != response.ServiceLocationId)
                         {
