@@ -26,7 +26,8 @@ class ServiceLocationSchedulingRequest extends FormRequest
             'ss_org' => 'required',
             'ss_site' => 'required',
             'ss_location' => 'required',
-            'schedule_datetime' => 'required',
+            'start_time' => 'required',
+            'end_time' => 'required',
             'ss_pattern' => 'required',
             'ss_edt' => 'required',
         ];
@@ -40,7 +41,8 @@ class ServiceLocationSchedulingRequest extends FormRequest
             'ss_org.required' => 'Please select Organization',
             'ss_site.required' => 'Please select Site',
             'ss_location.required' => 'Please select Service Location',
-            'schedule_datetime.required' => 'Please select Schedule Date&Time',
+            'start_time.required' => 'Please select Start Time',
+            'end_time.required' => 'Please select End Time',
             'ss_pattern.required' => 'Please select Schedule Pattern',
             'ss_edt.required' => 'Please select Effective Date&Time',
         ];

@@ -72,7 +72,7 @@ class PatientMedicalRecord extends Controller
     {
         $colName = 'medical_coding';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         return view('dashboard.icd_code', compact('user'));
@@ -90,7 +90,7 @@ class PatientMedicalRecord extends Controller
                 ->orWhere('icd_code.description', 'like', "%$search%");
             });
         }
-        $ICDCodes = $query->paginate(50); 
+        $ICDCodes = $query->paginate(50);
         return response()->json($ICDCodes);
     }
     // public function GetProcedureICDCodes(Request $request)
@@ -103,7 +103,7 @@ class PatientMedicalRecord extends Controller
 
     //     if ($request->has('search')) {
     //         $query->where(function ($q) use ($request) {
-    //             $q->where('icd_code.type', 's') 
+    //             $q->where('icd_code.type', 's')
     //                 ->where(function ($subQuery) use ($request) {
     //                     $subQuery->where('icd_code.code', 'like', '%' . $request->search . '%')
     //                         ->orWhere('icd_code.description', 'like', '%' . $request->search . '%');
@@ -138,14 +138,14 @@ class PatientMedicalRecord extends Controller
                 $icdTypeCondition = 's'; // Only Symptoms
             } elseif ($service->serviceTypeCode === 'p') {
                 $icdTypeCondition = 'p'; // Only Procedures
-    
+
                 $mappedICDIds = DB::table('procedure_coding')
                     ->where('service_id', $request->serviceId)
                     ->pluck('icd_id')
-                    ->first(); 
-    
+                    ->first();
+
                 if ($mappedICDIds) {
-                    $mappedICDIds = explode(',', $mappedICDIds); 
+                    $mappedICDIds = explode(',', $mappedICDIds);
                 } else {
                     $mappedICDIds = [];
                 }
@@ -277,7 +277,7 @@ class PatientMedicalRecord extends Controller
                               }
                           });
                     });
-                    
+
                 }
             })
             ->addColumn('id_raw', function ($ICDCode) {
@@ -288,7 +288,7 @@ class PatientMedicalRecord extends Controller
                 $timestamp = Carbon::createFromTimestamp($ICDCode->timestamp)->format('l d F Y - h:i A');
                 $lastUpdated = Carbon::createFromTimestamp($ICDCode->last_updated)->format('l d F Y - h:i A');
                 $createdByName = getUserNameById($ICDCode->user_id);
-                
+
                 $createdInfo = "
                     <b>Created By:</b> " . ucwords($createdByName) . "  <br>
                     <b>Effective Date&amp;Time:</b> " . $effectiveDate . " <br>
@@ -336,13 +336,13 @@ class PatientMedicalRecord extends Controller
             ->editColumn('status', function ($ICDCode) {
                 $rights = $this->rights;
                 $updateStatus = explode(',', $rights->medical_coding)[3];
-                return $updateStatus == 1 
-                    ? ($ICDCode->status 
-                        ? '<span class="label label-success icdcode_status cursor-pointer" data-id="'.$ICDCode->id.'" data-status="'.$ICDCode->status.'">Active</span>' 
+                return $updateStatus == 1
+                    ? ($ICDCode->status
+                        ? '<span class="label label-success icdcode_status cursor-pointer" data-id="'.$ICDCode->id.'" data-status="'.$ICDCode->status.'">Active</span>'
                         : '<span class="label label-danger icdcode_status cursor-pointer" data-id="'.$ICDCode->id.'" data-status="'.$ICDCode->status.'">Inactive</span>'
                     )
-                    : ($ICDCode->status 
-                        ? '<span class="label label-success">Active</span>' 
+                    : ($ICDCode->status
+                        ? '<span class="label label-success">Active</span>'
                         : '<span class="label label-danger">Inactive</span>'
                     );
             })
@@ -350,7 +350,7 @@ class PatientMedicalRecord extends Controller
             ->make(true);
     }
 
-    
+
     public function UpdateICDCodeStatus(Request $request)
     {
         $rights = $this->rights;
@@ -427,7 +427,7 @@ class PatientMedicalRecord extends Controller
 
         return response()->json($data);
     }
-    
+
     public function UpdateICDCode(Request $request, $id)
     {
         $rights = $this->rights;
@@ -485,7 +485,7 @@ class PatientMedicalRecord extends Controller
     {
         $colName = 'vital_signs';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $UserorgId = $user->org_id;
@@ -494,7 +494,7 @@ class PatientMedicalRecord extends Controller
 
         return view('dashboard.vital_sign', compact('user','orgCode','Patients'));
     }
-    
+
     public function PatientRecords($mr, Request $request)
     {
         $mr = trim($mr);
@@ -505,9 +505,8 @@ class PatientMedicalRecord extends Controller
         $orgCode = Organization::where('id', $UserorgId)->value('code');
         $mr = strpos($mr, '-') === false ? ($orgCode ? $orgCode : 'ZMTP') . '-' . $mr : $mr;
 
-        $selectedService = $request->input('serviceId'); 
+        $selectedService = $request->input('serviceId');
         // dd($selectedService);
-
 
         $services = PatientArrivalDeparture::select(
             'services.id as serviceId',
@@ -527,8 +526,8 @@ class PatientMedicalRecord extends Controller
         // if ($services->count() > 1 && !is_null($selectedService)) {
         //     return response()->json(['info' => 200, 'services' => $services]);
         // }
-        
-      
+
+
         // dd($services->count());
 
         $EncounterProcedurePatientDetails = PatientRegistration::select(
@@ -548,7 +547,8 @@ class PatientMedicalRecord extends Controller
             'service_mode.id as serviceModeId',
             'billingCC.id as billingCCId',
             'org_site.name as siteName',
-            'patient_inout.status as patientInOutStatus'
+            'patient_inout.status as patientInOutStatus',
+            'patient_inout.remarks as patientInOutRemarks',
         )
         ->leftJoin('patient_inout', 'patient_inout.mr_code', '=', 'patient.mr_code')
         ->join('gender', 'gender.id', '=', 'patient.gender_id')
@@ -563,21 +563,21 @@ class PatientMedicalRecord extends Controller
         ->where('patient.status', 1)
         ->when(
             PatientArrivalDeparture::where([
-                ['mr_code', '=', $mr], 
+                ['mr_code', '=', $mr],
                 ['status', '=', 1]
             ])->exists(),
             function ($query) {
-                $query->where('patient_inout.status', 1); 
+                $query->where('patient_inout.status', 1);
             }
         )
         ->where('patient.mr_code', $mr);
-        
+
         if ($selectedService) {
             $EncounterProcedurePatientDetails = $EncounterProcedurePatientDetails->where('patient_inout.service_id', $selectedService);
         }
         $EncounterProcedurePatientDetails = $EncounterProcedurePatientDetails->first();
         // ->first();
-        
+
         if ($EncounterProcedurePatientDetails) {
 
             $dob = Carbon::createFromTimestamp($EncounterProcedurePatientDetails->patientDOB);
@@ -617,7 +617,7 @@ class PatientMedicalRecord extends Controller
 
             return response()->json($EncounterProcedurePatientDetails);
             // return response()->json([
-            //     'selectService' => false, 
+            //     'selectService' => false,
             //     'patientDetails' => $EncounterProcedurePatientDetails
             // ]);
         } else {
@@ -644,7 +644,7 @@ class PatientMedicalRecord extends Controller
             $orgCode = 'ZMTP';
         }
         $MR = trim($request->input('vs_mr'));
-        
+
         // $MR = trim($orgCode.'-'.$request->input('vs_mr'));
         $PatientAge = trim($request->input('vs_age'));
         $SBP = trim($request->input('vs_sbp'));
@@ -665,10 +665,10 @@ class PatientMedicalRecord extends Controller
         $BMI = null;
         if ($HeightInMeters > 0) {
             $BMI = $Weight / ($HeightInMeters * $HeightInMeters);
-            $BMI = round($BMI, 2); 
+            $BMI = round($BMI, 2);
         }
 
-        $Weight = floatval($request->input('vs_weight')); 
+        $Weight = floatval($request->input('vs_weight'));
         $Height = floatval($request->input('vs_height'));
 
         $BSA = null;
@@ -756,7 +756,7 @@ class PatientMedicalRecord extends Controller
         //     else{
         //         $mr = 'ZMTP-'.$mr;
         //     }
-        // } 
+        // }
 
         $VitalSigns = VitalSign::select('vital_sign.*',
         'service_mode.name as serviceMode','service_group.name as serviceGroup')
@@ -772,22 +772,22 @@ class PatientMedicalRecord extends Controller
 
         // return DataTables::of($VitalSigns)
         return DataTables::eloquent($VitalSigns)
-            
+
             ->addColumn('id_raw', function ($VitalSign) {
-                return $VitalSign->id;  
+                return $VitalSign->id;
             })
             ->addColumn('dateTime', function ($VitalSign) {
-                $EffectiveTimeStamp = $VitalSign->effective_timestamp;  
+                $EffectiveTimeStamp = $VitalSign->effective_timestamp;
                 $EffectiveTimeStamp = Carbon::createFromTimestamp($EffectiveTimeStamp)->format('d-F-y h:i A');
                 return '<span class="label label-primary popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $EffectiveTimeStamp .'">'
                 . 'View'
                 . '</span>';
-                // return $EffectiveTimeStamp;  
+                // return $EffectiveTimeStamp;
             })
             ->addColumn('mode_group', function ($VitalSign) {
-                $Sevicemode = $VitalSign->serviceMode;  
-                $serviceGroup = $VitalSign->serviceGroup;  
-                return $Sevicemode.' & '.$serviceGroup;  
+                $Sevicemode = $VitalSign->serviceMode;
+                $serviceGroup = $VitalSign->serviceGroup;
+                return $Sevicemode.' & '.$serviceGroup;
             })
             ->editColumn('status', function ($VitalSign) {
                 $rights = $this->rights;
@@ -805,7 +805,7 @@ class PatientMedicalRecord extends Controller
                 }
                 else
                 {
-                  $actionButtons.= 'N/A';  
+                  $actionButtons.= 'N/A';
                 }
                 return $VitalSign->status ? $actionButtons : '<span class="font-weight-bold">N/A</span>';
             })
@@ -838,7 +838,7 @@ class PatientMedicalRecord extends Controller
                 $height = $VitalSign->height;
                 return $height.' cm';
             })
-            
+
             ->editColumn('o2_saturation', function ($VitalSign) {
                 $o2Saturation = $VitalSign->o2_saturation;
                 return $o2Saturation.' %';
@@ -849,12 +849,12 @@ class PatientMedicalRecord extends Controller
             })
             ->editColumn('bsa', function ($VitalSign) {
                 $BSA = $VitalSign->bsa;
-                return $BSA . ' m<sup>2</sup>'; 
+                return $BSA . ' m<sup>2</sup>';
             })
             ->editColumn('age', function ($VitalSign) {
 
                 $Age = ($VitalSign->patient_age);
-                
+
                 return '<span class="label label-primary popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $Age .'">'
                 . 'View'
                 . '</span>';
@@ -989,14 +989,14 @@ class PatientMedicalRecord extends Controller
         $VitalSigns->nursing_notes = $request->input('uvs_nursingnotes');
         $VitalSigns->o2_saturation = $request->input('uvs_o2saturation');
 
-        $Weight = floatval($request->input('uvs_weight')); 
+        $Weight = floatval($request->input('uvs_weight'));
         $Height = floatval($request->input('uvs_height'));
-        
+
         $HeightInMeters = $Height / 100;
         $BMI = null;
         if ($HeightInMeters > 0) {
             $BMI = $Weight / ($HeightInMeters * $HeightInMeters);
-            $BMI = round($BMI, 2); 
+            $BMI = round($BMI, 2);
         }
 
         $BSA = null;
@@ -1007,7 +1007,7 @@ class PatientMedicalRecord extends Controller
         $VitalSigns->bmi = $BMI;
         $VitalSigns->bsa = $BSA;
 
-       
+
         $effective_date = $request->input('uvs_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -1050,7 +1050,7 @@ class PatientMedicalRecord extends Controller
     {
         $colName = 'encounters_and_procedures';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $UserorgId = $user->org_id;
@@ -1083,7 +1083,7 @@ class PatientMedicalRecord extends Controller
             else{
                 $mr = 'ZMTP-'.$mr;
             }
-        } 
+        }
         $LatestVitalSigns = VitalSign::select('vital_sign.*')
         ->where('vital_sign.mr_code', $mr)
         ->orderBy('vital_sign.id', 'desc')
@@ -1091,7 +1091,7 @@ class PatientMedicalRecord extends Controller
         return response()->json($LatestVitalSigns);
 
     }
-    
+
     public function AddDiagnosisHistory(Request $request)
     {
         $rights = $this->rights;
@@ -1134,11 +1134,11 @@ class PatientMedicalRecord extends Controller
         {
             $TillData = Carbon::createFromFormat('Y-m-d', $TillData)->timestamp;
         }
-       
+
         // $Edt = $request->input('m_edt');
         // $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
         // $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
-        
+
 
         // $EffectDateTime->subMinute(1);
         // if ($EffectDateTime->isPast()) {
@@ -1220,7 +1220,7 @@ class PatientMedicalRecord extends Controller
             else{
                 $mr = 'ZMTP-'.$mr;
             }
-        } 
+        }
         $MedicalDiagnosis = MedicalDiagnosis::select('medical_diagnosis.*','icd_code.code as ICDCode',
         'icd_code.description as ICDDesc')
         ->leftJoin('icd_code', 'icd_code.id', '=', 'medical_diagnosis.icd_id')
@@ -1231,7 +1231,7 @@ class PatientMedicalRecord extends Controller
         // return DataTables::of($MedicalDiagnosis)
         return DataTables::eloquent($MedicalDiagnosis)
             ->addColumn('id_raw', function ($MedicalDiagnose) {
-                return $MedicalDiagnose->id;  
+                return $MedicalDiagnose->id;
             })
             ->addColumn('ICDCode', function ($MedicalDiagnose) {
                 $ICDCode = $MedicalDiagnose->ICDCode;
@@ -1239,7 +1239,7 @@ class PatientMedicalRecord extends Controller
                 {
                     $ICDCode = 'N/A';
                 }
-                return $ICDCode;  
+                return $ICDCode;
             })
             ->addColumn('ICDDesc', function ($MedicalDiagnose) {
                 $ICDDesc = $MedicalDiagnose->ICDDesc;
@@ -1247,33 +1247,33 @@ class PatientMedicalRecord extends Controller
                 {
                     $ICDDesc = 'N/A';
                 }
-                return $ICDDesc;  
+                return $ICDDesc;
             })
             ->addColumn('since_date', function ($MedicalDiagnose) {
-                $SinceDate = $MedicalDiagnose->since_date;  
+                $SinceDate = $MedicalDiagnose->since_date;
                 if(!empty($SinceDate))
                 {
                     $SinceDate = Carbon::createFromTimestamp($SinceDate)->format('d-F-y');
                 }
                 else
                 {
-                   $SinceDate = 'N/A'; 
+                   $SinceDate = 'N/A';
                 }
-                return $SinceDate;  
+                return $SinceDate;
             })
             ->addColumn('till_date', function ($MedicalDiagnose) {
-                $TillDate = $MedicalDiagnose->till_date;  
+                $TillDate = $MedicalDiagnose->till_date;
                 if(!empty($TillDate))
                 {
                     $TillDate = Carbon::createFromTimestamp($TillDate)->format('d-F-y');
                 }
                 else
                 {
-                   $TillDate = 'N/A'; 
+                   $TillDate = 'N/A';
                 }
-                return $TillDate; 
+                return $TillDate;
             })
-          
+
             ->rawColumns(['id_raw','ICDCode','since_date','till_date'])
             ->make(true);
     }
@@ -1314,11 +1314,11 @@ class PatientMedicalRecord extends Controller
         {
             $SinceData = Carbon::createFromFormat('Y-m-d', $SinceData)->timestamp;
         }
-       
+
         // $Edt = $request->input('al_edt');
         // $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
         // $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
-        
+
 
         // $EffectDateTime->subMinute(1);
         // if ($EffectDateTime->isPast()) {
@@ -1400,7 +1400,7 @@ class PatientMedicalRecord extends Controller
         //     else{
         //         $mr = 'ZMTP-'.$mr;
         //     }
-        // } 
+        // }
         $AllergiesHistories = AllergiesHistory::select('allergies_history.*')
         ->where('allergies_history.mr_code', $mr)
         ->orderBy('allergies_history.id', 'desc');
@@ -1409,7 +1409,7 @@ class PatientMedicalRecord extends Controller
         // return DataTables::of($AllergiesHistories)
         return DataTables::eloquent($AllergiesHistories)
             ->addColumn('id_raw', function ($AllergyHistory) {
-                return $AllergyHistory->id;  
+                return $AllergyHistory->id;
             })
             ->addColumn('AllergyHistory', function ($AllergyHistory) {
                 $AllergyHistory = $AllergyHistory->history;
@@ -1417,19 +1417,19 @@ class PatientMedicalRecord extends Controller
                 {
                     $AllergyHistory = 'N/A';
                 }
-                return $AllergyHistory;  
+                return $AllergyHistory;
             })
             ->addColumn('since_date', function ($AllergyHistory) {
-                $SinceDate = $AllergyHistory->since_date;  
+                $SinceDate = $AllergyHistory->since_date;
                 if(!empty($SinceDate))
                 {
                     $SinceDate = Carbon::createFromTimestamp($SinceDate)->format('d-F-y');
                 }
                 else
                 {
-                   $SinceDate = 'N/A'; 
+                   $SinceDate = 'N/A';
                 }
-                return $SinceDate;  
+                return $SinceDate;
             })
             ->rawColumns(['id_raw','AllergyHistory','since_date'])
             ->make(true);
@@ -1471,11 +1471,11 @@ class PatientMedicalRecord extends Controller
         {
             $Date = Carbon::createFromFormat('Y-m-d', $Date)->timestamp;
         }
-       
+
         // $Edt = $request->input('ih_edt');
         // $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
         // $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
-        
+
 
         // $EffectDateTime->subMinute(1);
         // if ($EffectDateTime->isPast()) {
@@ -1556,7 +1556,7 @@ class PatientMedicalRecord extends Controller
         //     else{
         //         $mr = 'ZMTP-'.$mr;
         //     }
-        // } 
+        // }
         $ImmunizationHistories = ImmunizationHistory::select('immunization_history.*')
         ->where('immunization_history.mr_code', $mr)
         ->orderBy('immunization_history.id', 'desc');
@@ -1565,7 +1565,7 @@ class PatientMedicalRecord extends Controller
         // return DataTables::of($ImmunizationHistories)
         return DataTables::eloquent($ImmunizationHistories)
             ->addColumn('id_raw', function ($ImmunizationHistory) {
-                return $ImmunizationHistory->id;  
+                return $ImmunizationHistory->id;
             })
             ->addColumn('ImmunizationHistory', function ($ImmunizationHistory) {
                 $ImmunizationHistory = $ImmunizationHistory->history;
@@ -1573,19 +1573,19 @@ class PatientMedicalRecord extends Controller
                 {
                     $ImmunizationHistory = 'N/A';
                 }
-                return $ImmunizationHistory;  
+                return $ImmunizationHistory;
             })
             ->addColumn('date', function ($ImmunizationHistory) {
-                $Date = $ImmunizationHistory->date;  
+                $Date = $ImmunizationHistory->date;
                 if(!empty($Date))
                 {
                     $Date = Carbon::createFromTimestamp($Date)->format('d-F-y');
                 }
                 else
                 {
-                   $Date = 'N/A'; 
+                   $Date = 'N/A';
                 }
-                return $Date;  
+                return $Date;
             })
             ->rawColumns(['id_raw','ImmunizationHistory','date'])
             ->make(true);
@@ -1628,11 +1628,11 @@ class PatientMedicalRecord extends Controller
             $Dose = null;
         }
 
-       
+
         // $Edt = $request->input('dh_edt');
         // $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
         // $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
-        
+
 
         // $EffectDateTime->subMinute(1);
         // if ($EffectDateTime->isPast()) {
@@ -1713,7 +1713,7 @@ class PatientMedicalRecord extends Controller
         //     else{
         //         $mr = 'ZMTP-'.$mr;
         //     }
-        // } 
+        // }
         $DrugHistories = DrugHistory::select('drug_history.*')
         ->where('drug_history.mr_code', $mr)
         ->orderBy('drug_history.id', 'desc');
@@ -1722,7 +1722,7 @@ class PatientMedicalRecord extends Controller
         // return DataTables::of($DrugHistories)
         return DataTables::eloquent($DrugHistories)
             ->addColumn('id_raw', function ($DrugHistory) {
-                return $DrugHistory->id;  
+                return $DrugHistory->id;
             })
             ->addColumn('drugHistory', function ($DrugHistory) {
                 $DrugHistory = $DrugHistory->history;
@@ -1730,7 +1730,7 @@ class PatientMedicalRecord extends Controller
                 {
                     $DrugHistory = 'N/A';
                 }
-                return $DrugHistory;  
+                return $DrugHistory;
             })
             ->addColumn('dose', function ($DrugHistory) {
                 $Dose = $DrugHistory->dose;
@@ -1738,7 +1738,7 @@ class PatientMedicalRecord extends Controller
                 {
                     $Dose = 'N/A';
                 }
-                return $Dose;  
+                return $Dose;
             })
             ->rawColumns(['id_raw','drugHistory','dose'])
             ->make(true);
@@ -1780,11 +1780,11 @@ class PatientMedicalRecord extends Controller
         {
             $Date = Carbon::createFromFormat('Y-m-d', $Date)->timestamp;
         }
-       
+
         // $Edt = $request->input('ph_edt');
         // $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
         // $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
-        
+
 
         // $EffectDateTime->subMinute(1);
         // if ($EffectDateTime->isPast()) {
@@ -1867,7 +1867,7 @@ class PatientMedicalRecord extends Controller
         //     else{
         //         $mr = 'ZMTP-'.$mr;
         //     }
-        // } 
+        // }
         $PastHistories = PastHistory::select('past_history.*')
         ->where('past_history.mr_code', $mr)
         ->orderBy('past_history.id', 'desc');
@@ -1876,7 +1876,7 @@ class PatientMedicalRecord extends Controller
         // return DataTables::of($PastHistories)
         return DataTables::eloquent($PastHistories)
             ->addColumn('id_raw', function ($PastHistory) {
-                return $PastHistory->id;  
+                return $PastHistory->id;
             })
             ->addColumn('pastHistory', function ($PastHistory) {
                 $PastHistory = $PastHistory->history;
@@ -1884,19 +1884,19 @@ class PatientMedicalRecord extends Controller
                 {
                     $PastHistory = 'N/A';
                 }
-                return $PastHistory;  
+                return $PastHistory;
             })
             ->addColumn('date', function ($PastHistory) {
-                $Date = $PastHistory->date;  
+                $Date = $PastHistory->date;
                 if(!empty($Date))
                 {
                     $Date = Carbon::createFromTimestamp($Date)->format('d-F-y');
                 }
                 else
                 {
-                   $Date = 'N/A'; 
+                   $Date = 'N/A';
                 }
-                return $Date;  
+                return $Date;
             })
             ->rawColumns(['id_raw','drugHistory','date'])
             ->make(true);
@@ -1938,11 +1938,11 @@ class PatientMedicalRecord extends Controller
         {
             $Date = Carbon::createFromFormat('Y-m-d', $Date)->timestamp;
         }
-       
+
         // $Edt = $request->input('oh_edt');
         // $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
         // $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
-        
+
 
         // $EffectDateTime->subMinute(1);
         // if ($EffectDateTime->isPast()) {
@@ -2024,7 +2024,7 @@ class PatientMedicalRecord extends Controller
         //     else{
         //         $mr = 'ZMTP-'.$mr;
         //     }
-        // } 
+        // }
         $ObstericHistories = ObstericHistory::select('obsteric_history.*')
         ->where('obsteric_history.mr_code', $mr)
         ->orderBy('obsteric_history.id', 'desc');
@@ -2033,7 +2033,7 @@ class PatientMedicalRecord extends Controller
         // return DataTables::of($ObstericHistories)
         return DataTables::eloquent($ObstericHistories)
             ->addColumn('id_raw', function ($ObstericHistory) {
-                return $ObstericHistory->id;  
+                return $ObstericHistory->id;
             })
             ->addColumn('obstericHistory', function ($ObstericHistory) {
                 $ObstericHistory = $ObstericHistory->history;
@@ -2041,19 +2041,19 @@ class PatientMedicalRecord extends Controller
                 {
                     $ObstericHistory = 'N/A';
                 }
-                return $ObstericHistory;  
+                return $ObstericHistory;
             })
             ->addColumn('date', function ($ObstericHistory) {
-                $Date = $ObstericHistory->date;  
+                $Date = $ObstericHistory->date;
                 if(!empty($Date))
                 {
                     $Date = Carbon::createFromTimestamp($Date)->format('d-F-y');
                 }
                 else
                 {
-                   $Date = 'N/A'; 
+                   $Date = 'N/A';
                 }
-                return $Date;  
+                return $Date;
             })
             ->rawColumns(['id_raw','obstericHistory','date'])
             ->make(true);
@@ -2095,11 +2095,11 @@ class PatientMedicalRecord extends Controller
         {
             $Date = Carbon::createFromFormat('Y-m-d', $Date)->timestamp;
         }
-       
+
         // $Edt = $request->input('sh_edt');
         // $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
         // $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
-        
+
 
         // $EffectDateTime->subMinute(1);
         // if ($EffectDateTime->isPast()) {
@@ -2179,7 +2179,7 @@ class PatientMedicalRecord extends Controller
         //     else{
         //         $mr = 'ZMTP-'.$mr;
         //     }
-        // } 
+        // }
         $SocialHistories = SocialHistory::select('social_history.*')
         ->where('social_history.mr_code', $mr)
         ->orderBy('social_history.id', 'desc');
@@ -2188,7 +2188,7 @@ class PatientMedicalRecord extends Controller
         // return DataTables::of($SocialHistories)
         return DataTables::eloquent($SocialHistories)
             ->addColumn('id_raw', function ($SocialHistory) {
-                return $SocialHistory->id;  
+                return $SocialHistory->id;
             })
             ->addColumn('socialHistory', function ($SocialHistory) {
                 $SocialHistory = $SocialHistory->history;
@@ -2196,19 +2196,19 @@ class PatientMedicalRecord extends Controller
                 {
                     $SocialHistory = 'N/A';
                 }
-                return $SocialHistory;  
+                return $SocialHistory;
             })
             ->addColumn('date', function ($SocialHistory) {
-                $Date = $SocialHistory->date;  
+                $Date = $SocialHistory->date;
                 if(!empty($Date))
                 {
                     $Date = Carbon::createFromTimestamp($Date)->format('d-F-y');
                 }
                 else
                 {
-                   $Date = 'N/A'; 
+                   $Date = 'N/A';
                 }
-                return $Date;  
+                return $Date;
             })
             ->rawColumns(['id_raw','socialHistory','date'])
             ->make(true);
@@ -2245,7 +2245,7 @@ class PatientMedicalRecord extends Controller
 
         $ClinicalNotes = trim($request->input('clnical_notes'));
         $Summary = trim($request->input('summary'));
-     
+
 
         $last_updated = $this->currentDatetime;
         $timestamp = $this->currentDatetime;
@@ -2264,7 +2264,7 @@ class PatientMedicalRecord extends Controller
         $VisitBasedDetail->user_id = $sessionId;
         $VisitBasedDetail->last_updated = $last_updated;
         $VisitBasedDetail->timestamp = $timestamp;
-        
+
         $PatientArrivalDeparture = PatientArrivalDeparture::where('mr_code', $MR)
         ->where('billing_cc', $billingCC)
         ->where('service_mode_id', $ServiceModeID)
@@ -2272,7 +2272,7 @@ class PatientMedicalRecord extends Controller
         ->where('emp_id', $empid)
         ->where('status', 1)
         ->whereNull('service_end_time')
-        ->first(); 
+        ->first();
 
         if (!$PatientArrivalDeparture) {
             return response()->json(['error' => "Failed to add visit-based details due to an issue with the patient's arrival end time."]);
@@ -2283,7 +2283,7 @@ class PatientMedicalRecord extends Controller
         if (empty($VisitBasedDetail->id)) {
             return response()->json(['error' => 'Failed to add Visit Based Details.']);
         }
-       
+
         $PatientArrivalDeparture->service_end_time = $timestamp;
         $PatientArrivalDeparture->status = 0;
         if($PatientArrivalDeparture->save())
@@ -2356,7 +2356,7 @@ class PatientMedicalRecord extends Controller
         //     else{
         //         $mr = 'ZMTP-'.$mr;
         //     }
-        // } 
+        // }
         $VisitBasedDetails = VisitBasedDetails::select('visit_based_details.*',
         'costcenter.name as Speciality','employee.name as Physician',
         'service_mode.name as serviceMode','service_group.name as serviceGroup')
@@ -2372,12 +2372,12 @@ class PatientMedicalRecord extends Controller
         // return DataTables::of($VisitBasedDetails)
         return DataTables::eloquent($VisitBasedDetails)
             ->addColumn('id_raw', function ($VisitBasedDetail) {
-                return $VisitBasedDetail->id;  
+                return $VisitBasedDetail->id;
             })
             ->addColumn('date', function ($SocialHistory) {
-                $Date = $SocialHistory->timestamp;  
+                $Date = $SocialHistory->timestamp;
                 $Date = Carbon::createFromTimestamp($Date)->format('d-F-y');
-                return $Date;  
+                return $Date;
             })
             ->addColumn('ServiceModeGroup', function ($VisitBasedDetail) {
                 $serviceMode = $VisitBasedDetail->serviceMode;
@@ -2387,23 +2387,23 @@ class PatientMedicalRecord extends Controller
             })
             // ->addColumn('clinical_notes', function ($VisitBasedDetail) {
             //     $clinicalNotes = $VisitBasedDetail->clinical_notes;
-            //     return $clinicalNotes;  
+            //     return $clinicalNotes;
             // })
             ->addColumn('summary', function ($VisitBasedDetail) {
                 $summary = $VisitBasedDetail->summary;
-                return $summary;  
+                return $summary;
             })
             ->addColumn('speciality', function ($VisitBasedDetail) {
                 $Speciality = $VisitBasedDetail->Speciality;
-                return $Speciality;  
+                return $Speciality;
             })
             ->addColumn('physician', function ($VisitBasedDetail) {
                 $Physician = $VisitBasedDetail->Physician;
-                return $Physician;  
+                return $Physician;
             })
             ->editColumn('action', function ($VisitBasedDetail) {
                 $id = $VisitBasedDetail->id;
-                
+
                 $actionButtons = '<button type="button" data-id="'.$id.'" class="btn waves-effect waves-light btn-sm btn-primary viewVisitDetails">'
                 . '<i class="fa fa-eye"></i> View Details'
                 . '</button>';
@@ -2491,7 +2491,7 @@ class PatientMedicalRecord extends Controller
         ];
 
         $existsInArrival = PatientArrivalDeparture::where($common)
-        ->where('status', 1)    
+        ->where('status', 1)
         ->exists();
 
         $existsInBooking = ServiceBooking::where($common)
@@ -2547,14 +2547,14 @@ class PatientMedicalRecord extends Controller
             $RquEPI->last_updated = $last_updated;
             $RquEPI->timestamp = $timestamp;
             $RquEPI->effective_timestamp = $Edt;
-          
-    
+
+
             $RquEPI->save();
-    
+
             if (empty($RquEPI->id)) {
                 return response()->json(['error' => "Failed to add Requisition for $act."]);
             }
-    
+
             $logs = Logs::create([
                 'module' => 'patient_medical_record',
                 'content' => "Requisition For $act has been added by '{$sessionName}'",
@@ -2571,7 +2571,7 @@ class PatientMedicalRecord extends Controller
     }
 
     public function GetRequisitionEPI(Request $request)
-    { 
+    {
         $rights = $this->rights;
         $view = explode(',', $rights->encounters_and_procedures)[1];
         if($view == 0)
@@ -2581,9 +2581,9 @@ class PatientMedicalRecord extends Controller
         // $referrer = $request->headers->get('referer');
         // $act = last(explode('/', $referrer));
 
-        $act = $request->query('act', 'default_act_value'); 
-        $mr = $request->query('mr'); 
-        
+        $act = $request->query('act', 'default_act_value');
+        $mr = $request->query('mr');
+
         $RequisitionForEPIDetails = RequisitionForEPI::select('req_epi.*',
         'services.name as serviceName','service_mode.name as serviceModeName',
         'costcenter.name as billingCC','employee.name as empName')
@@ -2596,16 +2596,15 @@ class PatientMedicalRecord extends Controller
         ->orderBy('req_epi.id', 'desc');
         // ->get();
 
-
         // return DataTables::of($RequisitionForEPIDetails)
         return DataTables::eloquent($RequisitionForEPIDetails)
             ->addColumn('id_raw', function ($RequisitionForEPIDetail) {
-                return $RequisitionForEPIDetail->id;  
+                return $RequisitionForEPIDetail->id;
             })
             ->addColumn('mr', function ($RequisitionForEPIDetail) {
-                $mrCode = $RequisitionForEPIDetail->mr_code;  
-                $Age = $RequisitionForEPIDetail->patient_age;  
-                $empName = $RequisitionForEPIDetail->empName;  
+                $mrCode = $RequisitionForEPIDetail->mr_code;
+                $Age = $RequisitionForEPIDetail->patient_age;
+                $empName = $RequisitionForEPIDetail->empName;
                 $empName = !empty($RequisitionForEPIDetail->empName) ? $RequisitionForEPIDetail->empName : 'N/A';
                 $effectiveDate = Carbon::createFromTimestamp($RequisitionForEPIDetail->effective_timestamp)->format('l d F Y - h:i A');
                 return $mrCode.'<hr class="mt-1 mb-2">'
@@ -2614,23 +2613,23 @@ class PatientMedicalRecord extends Controller
                 .'<hr class="mt-1 mb-2"><b>Request Date&Time:</b> '.ucwords($effectiveDate);
             })
             ->addColumn('service', function ($RequisitionForEPIDetail) {
-                $serviceName = $RequisitionForEPIDetail->serviceName;  
-                $serviceModeName = $RequisitionForEPIDetail->serviceModeName;  
-                // return ucwords($serviceName);  
+                $serviceName = $RequisitionForEPIDetail->serviceName;
+                $serviceModeName = $RequisitionForEPIDetail->serviceModeName;
+                // return ucwords($serviceName);
                 return '<b>Service:</b> '.ucwords($serviceName)
                 .'<hr class="mt-1 mb-2"><b>Service Mode:</b> '.ucwords($serviceModeName);
             })
             // ->addColumn('serviceModeName', function ($RequisitionForEPIDetail) {
-            //     $serviceModeName = $RequisitionForEPIDetail->serviceModeName;  
-            //     return ucwords($serviceModeName);  
+            //     $serviceModeName = $RequisitionForEPIDetail->serviceModeName;
+            //     return ucwords($serviceModeName);
             // })
             ->addColumn('billingCC', function ($RequisitionForEPIDetail) {
-                $billingCC = $RequisitionForEPIDetail->billingCC;  
-                return ucwords($billingCC);  
+                $billingCC = $RequisitionForEPIDetail->billingCC;
+                return ucwords($billingCC);
             })
             ->addColumn('remarks', function ($RequisitionForEPIDetail) {
                 $Remarks = !empty($RequisitionForEPIDetail->remarks) ? $RequisitionForEPIDetail->remarks : 'N/A';
-                return ucwords($Remarks);  
+                return ucwords($Remarks);
             })
             ->addColumn('action', function ($RequisitionForEPIDetail) {
                 $RequisitionForEPIId = $RequisitionForEPIDetail->id;
@@ -2646,7 +2645,7 @@ class PatientMedicalRecord extends Controller
                 $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
                 . '<i class="fa fa-eye"></i> View Logs'
                 . '</button>';
-                
+
                 return $RequisitionForEPIDetail->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
             })
             ->editColumn('status', function ($RequisitionForEPIDetail) {
@@ -2740,23 +2739,24 @@ class PatientMedicalRecord extends Controller
         {
             abort(403, 'Forbidden');
         }
+        // dd($request->all());
         $RequisitionForEPI = RequisitionForEPI::findOrFail($id);
 
         $RequisitionForEPI->remarks = $request->input('u_repi_remarks');
-        $effective_date = $request->input('u_repi_edt');
-        $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
-        $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
-        $EffectDateTime->subMinute(1);
+        // $effective_date = $request->input('u_repi_edt');
+        // $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
+        // $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
+        // $EffectDateTime->subMinute(1);
 
-        if ($EffectDateTime->isPast()) {
-            $status = 1;
-        } else {
-             $status = 0;
-        }
+        // if ($EffectDateTime->isPast()) {
+        //     $status = 1;
+        // } else {
+        //      $status = 0;
+        // }
 
-        $RequisitionForEPI->effective_timestamp = $effective_date;
+        // $RequisitionForEPI->effective_timestamp = $effective_date;
         $RequisitionForEPI->last_updated = $this->currentDatetime;
-        $RequisitionForEPI->status = $status;
+        // $RequisitionForEPI->status = $status;
 
         $session = auth()->user();
         $sessionName = $session->name;
@@ -2791,7 +2791,7 @@ class PatientMedicalRecord extends Controller
         }
 
         $id = trim($id);
-        
+
         $VisitBasedDetails = VisitBasedDetails::select('visit_based_details.clinical_notes')
         ->selectRaw("GROUP_CONCAT(icd_code.code) as ICDCodes, GROUP_CONCAT(icd_code.description) as ICDDescriptions")
         ->join('icd_code', function($join) {
@@ -2808,7 +2808,7 @@ class PatientMedicalRecord extends Controller
     {
         $colName = 'encounters_and_procedures';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $UserorgId = $user->org_id;
@@ -2841,11 +2841,11 @@ class PatientMedicalRecord extends Controller
         ->where('patient.status', 1)
         ->when(
             PatientArrivalDeparture::where([
-                ['mr_code', '=', $mr], 
+                ['mr_code', '=', $mr],
                 ['status', '=', 1]
             ])->exists(),
             function ($query) {
-                $query->where('patient_inout.status', 1); 
+                $query->where('patient_inout.status', 1);
             }
         )
         // ->orWhere(function($query) use ($mr) {
@@ -2861,11 +2861,11 @@ class PatientMedicalRecord extends Controller
         $dob = Carbon::createFromTimestamp($PatientDetails->patientDOB);
         $now = Carbon::now();
         $diff = $dob->diff($now);
-    
+
         $years = $diff->y;
         $months = $diff->m;
         $days = $diff->d;
-    
+
         $ageString = "";
         if ($years > 0) {
             $ageString .= $years . " " . ($years == 1 ? "year" : "years");
@@ -2876,10 +2876,10 @@ class PatientMedicalRecord extends Controller
         if ($days > 0) {
             $ageString .= " " . $days . " " . ($days == 1 ? "day" : "days");
         }
-    
+
         return view('dashboard.req-medication-consumption', compact('user','MedicationRoutes','MedicationFrequencies','Generics','PatientDetails','ageString','ServiceLocations','canAddRequisition'));
     }
-    
+
     public function AddRequisitionMedicationConsumption(RequisitionMedicationConsumptionRequest $request)
     {
         if (explode(',', $this->rights->encounters_and_procedures)[0] == 0) {
@@ -2917,11 +2917,11 @@ class PatientMedicalRecord extends Controller
             $dob = Carbon::createFromTimestamp($PatientDetails->patientDOB);
             $now = Carbon::now();
             $diff = $dob->diff($now);
-        
+
             $years = $diff->y;
             $months = $diff->m;
             $days = $diff->d;
-        
+
             $ageString = "";
             if ($years > 0) {
                 $ageString .= $years . " " . ($years == 1 ? "year" : "years");
@@ -2944,7 +2944,7 @@ class PatientMedicalRecord extends Controller
             $BillingCC = $PatientDetails->billingCCId;
         }
 
-      
+
         $InvTransactionType = trim($request->input('rmc_transaction_type'));
         $InvLocation = trim($request->input('rmc_inv_location'));
 
@@ -2956,7 +2956,7 @@ class PatientMedicalRecord extends Controller
 
         $Remarks = trim($request->input('rmc_remarks'));
 
-        
+
         $Edt = $this->currentDatetime;
         $status = 1;
 
@@ -2966,18 +2966,18 @@ class PatientMedicalRecord extends Controller
             'transaction_type_id' => $InvTransactionType, 'inv_location_id' => $InvLocation, 'mr_code' => $MR,
             'gender_id' => $Gender, 'age' => $Age, 'service_id' => $Service, 'org_id' => $Org, 'site_id' => $Site,
             'service_mode_id' => $ServiceModeId, 'service_type_id' => $ServiceTypeId, 'service_group_id' => $ServiceGroupId,
-            'responsible_physician' => $ResponsiblePhysician, 'billing_cc' => $BillingCC, 
-            'inv_generic_ids' => $InvGeneric, 'dose' => $Dose,'route_ids' => $Route, 'frequency_ids' => $Frequency, 
+            'responsible_physician' => $ResponsiblePhysician, 'billing_cc' => $BillingCC,
+            'inv_generic_ids' => $InvGeneric, 'dose' => $Dose,'route_ids' => $Route, 'frequency_ids' => $Frequency,
             'days' => $Days, 'remarks' => $Remarks, 'user_id' => $sessionId,
             'status' => $status, 'last_updated' => $timestamp, 'timestamp' => $timestamp, 'effective_timestamp' => $Edt
         ]);
-       
+
         if (!$ReqMedicationConsumption->id) {
             return response()->json(['error' => "Failed to add Requisition for Medication Consumption."]);
         }
 
         $SiteName = Site::find($Site); // $Site is the site_id
-        $SiteName = $SiteName ? $SiteName->name : '';  
+        $SiteName = $SiteName ? $SiteName->name : '';
         $idStr = str_pad($ReqMedicationConsumption->id, 5, "0", STR_PAD_LEFT);
         $firstSiteNameLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $SiteName))));
         $RequisitionCode = $firstSiteNameLetters.'-MDC-'.$idStr;
@@ -2994,7 +2994,7 @@ class PatientMedicalRecord extends Controller
     }
 
     public function GetRequisitionMedicationConsumption(Request $request, $mr)
-    { 
+    {
         $rights = $this->rights;
         $view = explode(',', $rights->encounters_and_procedures)[1];
         if($view == 0)
@@ -3057,15 +3057,15 @@ class PatientMedicalRecord extends Controller
             //                 ->orWhere('req_medication_consumption.mr_code', 'like', "%{$search}%")
             //                 ->orWhereRaw("REPLACE(REPLACE(REPLACE(
             //                 CONCAT(
-            //                     UPPER(LEFT(org_site.name, 1)), '-', 
-            //                     UPPER(LEFT(service_type.name, 1)), '-', 
+            //                     UPPER(LEFT(org_site.name, 1)), '-',
+            //                     UPPER(LEFT(service_type.name, 1)), '-',
             //                     LPAD(req_medication_consumption.id, 4, '0')
             //                 ), '-', ''), '_', ''), ' ', '') LIKE ?", ["%{$sanitizedSearch}%"]);
             //                 });
             //     }
             // })
             ->addColumn('id_raw', function ($RMCDetail) {
-                return $RMCDetail->id;  
+                return $RMCDetail->id;
             })
             ->editColumn('id', function ($RMCDetail) {
                 $session = auth()->user();
@@ -3075,7 +3075,7 @@ class PatientMedicalRecord extends Controller
                 $SiteName = $RMCDetail->SiteName;
                 $serviceType = $RMCDetail->serviceType;
                 $Remarks = !empty($RMCDetail->remarks) ? $RMCDetail->remarks : 'N/A';
-                
+
                 $effectiveDate = Carbon::createFromTimestamp($RMCDetail->effective_timestamp)->format('l d F Y - h:i A');
                 $timestamp = Carbon::createFromTimestamp($RMCDetail->timestamp)->format('l d F Y - h:i A');
 
@@ -3101,7 +3101,7 @@ class PatientMedicalRecord extends Controller
                 $billingCC = ucwords($RMCDetail->billingCC);
                 return $MR.'<br>'
                     .$patientName
-                    . '<hr class="mt-1 mb-2">'  
+                    . '<hr class="mt-1 mb-2">'
                     .$serviceMode.'<br>'
                     .$serviceGroup.'<br>'
                     .$serviceName.'<br>'
@@ -3116,15 +3116,15 @@ class PatientMedicalRecord extends Controller
                 $frequencyIds = explode(',', $RMCDetail->frequency_ids);
                 $dose = explode(',', $RMCDetail->dose);
                 $days = explode(',', $RMCDetail->days);
-            
+
                 // Fetch the corresponding names for the IDs (including duplicates)
                 $genericNames = InventoryGeneric::whereIn('id', $genericIds)->pluck('name', 'id')->toArray();
                 $routeNames = MedicationRoutes::whereIn('id', $routeIds)->pluck('name', 'id')->toArray();
                 $frequencyNames = MedicationFrequency::whereIn('id', $frequencyIds)->pluck('name', 'id')->toArray();
-            
+
                 $tableRows = '';
                 $maxRows = max(count($genericIds), count($routeIds), count($frequencyIds), count($dose), count($days));
-            
+
                 // Loop through the ids to handle each corresponding name and value
                 for ($i = 0; $i < $maxRows; $i++) {
                     // Ensure no index out of range error and default to 'N/A' if not available
@@ -3133,7 +3133,7 @@ class PatientMedicalRecord extends Controller
                     $frequencyName = isset($frequencyIds[$i]) && isset($frequencyNames[$frequencyIds[$i]]) ? $frequencyNames[$frequencyIds[$i]] : 'N/A';
                     $doseName = isset($dose[$i]) ? $dose[$i] : 'N/A';  // Get dose from the exploded array
                     $daysValue = isset($days[$i]) ? $days[$i] : 'N/A';  // Get days from the exploded array
-            
+
                     // Add row for each item
                     $tableRows .= '
                         <tr>
@@ -3144,7 +3144,7 @@ class PatientMedicalRecord extends Controller
                             <td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . $daysValue . '</td>
                         </tr>';
                 }
-            
+
                 // Return the table structure with dynamic rows
                 return '
                     <table class="table" style="width:100%;">
@@ -3171,11 +3171,11 @@ class PatientMedicalRecord extends Controller
                     . '<i class="fa fa-edit"></i> Edit'
                     . '</button>';
                 }
-               
+
                 $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
                 . '<i class="fa fa-eye"></i> View Logs'
                 . '</button>';
-                
+
                 return $RMCDetail->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
             })
             ->editColumn('status', function ($RMCDetail) {
@@ -3242,7 +3242,7 @@ class PatientMedicalRecord extends Controller
         {
             abort(403, 'Forbidden');
         }
-        $ReqMC = RequisitionForMedicationConsumption::select('req_medication_consumption.*',            
+        $ReqMC = RequisitionForMedicationConsumption::select('req_medication_consumption.*',
         'inventory_transaction_type.name as TransactionTypeName','service_location.name as ServiceLocationName'
         // 'inventory_generic.name as Generic',
         // 'medication_routes.name as RouteName','medication_frequency.name as FrequencyName',
@@ -3362,7 +3362,7 @@ class PatientMedicalRecord extends Controller
     {
         $colName = 'investigation_tracking';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $UserorgId = $user->org_id;
@@ -3386,11 +3386,11 @@ class PatientMedicalRecord extends Controller
         // ->where('patient.status', 1)
         // ->when(
         //     PatientArrivalDeparture::where([
-        //         ['mr_code', '=', $mr], 
+        //         ['mr_code', '=', $mr],
         //         ['status', '=', 1]
         //     ])->exists(),
         //     function ($query) {
-        //         $query->where('patient_inout.status', 1); 
+        //         $query->where('patient_inout.status', 1);
         //     }
         // )
         // ->where('patient.mr_code', $mr)
@@ -3400,11 +3400,11 @@ class PatientMedicalRecord extends Controller
         // $dob = Carbon::createFromTimestamp($PatientDetails->patientDOB);
         // $now = Carbon::now();
         // $diff = $dob->diff($now);
-    
+
         // $years = $diff->y;
         // $months = $diff->m;
         // $days = $diff->d;
-    
+
         // $ageString = "";
         // if ($years > 0) {
         //     $ageString .= $years . " " . ($years == 1 ? "year" : "years");
@@ -3415,11 +3415,11 @@ class PatientMedicalRecord extends Controller
         // if ($days > 0) {
         //     $ageString .= " " . $days . " " . ($days == 1 ? "day" : "days");
         // }
-    
+
         // return view('dashboard.investigation-tracking', compact('user','PatientDetails','ageString','ServiceLocations','canAdd'));
         return view('dashboard.investigation-tracking', compact('user','ServiceLocations'));
     }
-    
+
     public function ConfirmSampleReport(SampleTrackingRequest $request)
     {
         if (explode(',', $this->rights->investigation_tracking)[1] == 0) {
@@ -3456,7 +3456,7 @@ class PatientMedicalRecord extends Controller
         $confirmationDateTime = Carbon::createFromTimestamp($confirmDateTime)->setTimezone('Asia/Karachi');
         $confirmationDateTime->subMinute(1);
         if ($confirmationDateTime->isPast()) {
-            $status = 0; 
+            $status = 0;
         } else {
             $status = 1;
         }
@@ -3492,20 +3492,20 @@ class PatientMedicalRecord extends Controller
                 }
             }
         }
-        
+
         $SampleConfirmatation = InvestigationTracking::create([
-            'investigation_id' => $investigationId,  'age' => $Age,  'investigation_confirmation_datetime' => $confirmDateTime,'confirmation_remarks' => $Remarks, 
+            'investigation_id' => $investigationId,  'age' => $Age,  'investigation_confirmation_datetime' => $confirmDateTime,'confirmation_remarks' => $Remarks,
             'user_id' => $sessionId,'last_updated' => $timestamp, 'timestamp' => $timestamp
         ]);
 
         // $InvestigationTracking = InvestigationTracking::create([
-        //     'mr_code' => $MR,'gender_id' => $Gender, 'age' => $Age, 'org_id' => $Org, 'site_id' => $Site, 'service_id' => $Service, 
+        //     'mr_code' => $MR,'gender_id' => $Gender, 'age' => $Age, 'org_id' => $Org, 'site_id' => $Site, 'service_id' => $Service,
         //     'service_mode_id' => $ServiceModeId, 'service_type_id' => $ServiceTypeId, 'service_group_id' => $ServiceGroupId,
-        //     'responsible_physician' => $ResponsiblePhysician, 'billing_cc' => $BillingCC, 
-        //     'performing_cc' => $performingCC,'report' => null, 'investigation_confirmation_datetime' => $confirmationDateTime,'reporting_datetime' => $timestamp, 
+        //     'responsible_physician' => $ResponsiblePhysician, 'billing_cc' => $BillingCC,
+        //     'performing_cc' => $performingCC,'report' => null, 'investigation_confirmation_datetime' => $confirmationDateTime,'reporting_datetime' => $timestamp,
         //     'remarks' => $Remarks, 'user_id' => $sessionId,'last_updated' => $timestamp, 'timestamp' => $timestamp, 'effective_timestamp' => $Edt
         // ]);
-       
+
         if (!$SampleConfirmatation->id) {
             return response()->json(['error' => "Failed to add Investigation Confirmation Details."]);
         }
@@ -3520,10 +3520,10 @@ class PatientMedicalRecord extends Controller
         // $filePaths = [];
         // if ($request->hasFile('it_report')) {
         //     $uploadedFiles = $request->file('it_report');
-        //     $lastId = $SampleConfirmatation->id; 
+        //     $lastId = $SampleConfirmatation->id;
 
         //     foreach ($uploadedFiles as $file) {
-        //         $insertFileName = time() . '_' . $file->getClientOriginalName(); 
+        //         $insertFileName = time() . '_' . $file->getClientOriginalName();
         //         $uniqueFileName = $lastId . '_' .time() . '_' . $file->getClientOriginalName();
         //         $file->move(public_path('assets/investigationtracking'), $uniqueFileName);
         //         $filePaths[] = $insertFileName;
@@ -3542,22 +3542,22 @@ class PatientMedicalRecord extends Controller
         if (explode(',', $this->rights->investigation_tracking)[2] == 0) {
             abort(403, 'Forbidden');
         }
-    
+
         $session = auth()->user();
         $sessionId = $session->id;
         $sessionName = $session->name;
-    
+
         $investigationId = decrypt($request->input('investigation_id'));
         $remarks = trim($request->input('report_remarks'));
         $timestamp = $this->currentDatetime;
-    
+
         // Check if investigation exists
         $investigation = InvestigationTracking::where('investigation_id', $investigationId)->first();
-    
+
         if (!$investigation) {
             return response()->json(['error' => "Investigation record not found."]);
         }
-    
+
         // Create a log entry
         $log = Logs::create([
             'module' => 'patient_medical_record',
@@ -3565,21 +3565,21 @@ class PatientMedicalRecord extends Controller
             'event' => 'add',
             'timestamp' => $timestamp,
         ]);
-    
+
         // Handle file uploads
         $filePaths = [];
         if ($request->hasFile('it_report')) {
             $uploadedFiles = $request->file('it_report');
-    
+
             foreach ($uploadedFiles as $file) {
                 $uniqueFileName = $investigation->id . '_' . time() . '_' . $file->getClientOriginalName();
                 $file->move(public_path('assets/investigationtracking'), $uniqueFileName);
                 $filePaths[] = $uniqueFileName;
             }
         }
-    
+
         $fileAttachments = implode(',', $filePaths);
-    
+
         // Update the existing investigation record
         $existingLogIds = $investigation->logid;
 
@@ -3589,7 +3589,7 @@ class PatientMedicalRecord extends Controller
         } else {
             $logidUpdated = $newLogId;
         }
-        
+
         // Update the existing investigation record
         $investigation->update([
             'report_remarks' => $remarks,
@@ -3598,13 +3598,13 @@ class PatientMedicalRecord extends Controller
             'logid' => $logidUpdated,
             'last_updated' => $timestamp,
         ]);
-    
+
         return response()->json(['success' => "Report details updated successfully"]);
     }
-    
+
 
     public function GetInvestigationTrackingData(Request $request, $mr)
-    { 
+    {
         $rights = $this->rights;
         $view = explode(',', $rights->investigation_tracking)[0];
         if($view == 0)
@@ -3635,14 +3635,14 @@ class PatientMedicalRecord extends Controller
         // return DataTables::of($RequisitionForEPIDetails)
         return DataTables::eloquent($RequisitionForEPIDetails)
             ->addColumn('id_raw', function ($RequisitionForEPIDetail) {
-                return $RequisitionForEPIDetail->id;  
+                return $RequisitionForEPIDetail->id;
             })
             ->addColumn('id', function ($RequisitionForEPIDetail) {
-                $mrCode = $RequisitionForEPIDetail->mr_code;  
-                $Age = $RequisitionForEPIDetail->patient_age;  
-                $empName = $RequisitionForEPIDetail->empName;  
+                $mrCode = $RequisitionForEPIDetail->mr_code;
+                $Age = $RequisitionForEPIDetail->patient_age;
+                $empName = $RequisitionForEPIDetail->empName;
                 $empName = !empty($RequisitionForEPIDetail->empName) ? $RequisitionForEPIDetail->empName : 'N/A';
-                $billingCC = $RequisitionForEPIDetail->billingCC;  
+                $billingCC = $RequisitionForEPIDetail->billingCC;
                 $Remarks = !empty($RequisitionForEPIDetail->remarks) ? $RequisitionForEPIDetail->remarks : 'N/A';
                 $siteName = !empty($RequisitionForEPIDetail->siteName) ? $RequisitionForEPIDetail->siteName : 'N/A';
                 return $mrCode.'<hr class="mt-1 mb-2">'
@@ -3653,10 +3653,10 @@ class PatientMedicalRecord extends Controller
                 .'<hr class="mt-1 mb-2"><b>Remarks :</b> '.ucwords($Remarks);
             })
             ->addColumn('serviceDetails', function ($RequisitionForEPIDetail) {
-                
-                $serviceName = $RequisitionForEPIDetail->serviceName;  
-                $serviceModeName = $RequisitionForEPIDetail->serviceModeName;  
-                // return ucwords($serviceName);  
+
+                $serviceName = $RequisitionForEPIDetail->serviceName;
+                $serviceModeName = $RequisitionForEPIDetail->serviceModeName;
+                // return ucwords($serviceName);
                 return '<b>Service:</b> '.ucwords($serviceName)
                 .'<hr class="mt-1 mb-2"><b>Service Mode:</b> '.ucwords($serviceModeName);
             })
@@ -3680,16 +3680,16 @@ class PatientMedicalRecord extends Controller
                 $uploadReport = explode(',', $Rights->investigation_tracking)[2];
 
                 if ($investigationRecord) {
-                  
+
                     $confirmationDateTime = Carbon::createFromTimestamp($investigationRecord->investigation_confirmation_datetime)->format('l d F Y - h:i A');
-                    
+
                     $sampleRemarks = !empty($investigationRecord->confirmation_remarks)
                         ? ucfirst($investigationRecord->confirmation_remarks)
                         : 'N/A';
-                
+
                     $actionButtons .= '<b>Investigation Confirmed at: ' . $confirmationDateTime . '</b><br><br>
                         Sample Remarks: <b>' . $sampleRemarks . '</b><br><hr class="mt-1 mb-2">';
-                               
+
                     if (!empty($investigationRecord->report)) {
                         $reportPath = asset('assets/investigationtracking/' . $investigationRecord->report);
 
@@ -3709,7 +3709,7 @@ class PatientMedicalRecord extends Controller
                     else{
                         if($uploadReport == 1)
                         {
-                            $actionButtons .= '<button type="button" class="btn btn-success p-2 upload-report"  
+                            $actionButtons .= '<button type="button" class="btn btn-success p-2 upload-report"
                             data-id="' . encrypt($RequisitionForEPIDetail->id) . '">
                             <i class="mdi mdi-upload"></i> Upload Report
                             </button><br><br>';
@@ -3719,8 +3719,8 @@ class PatientMedicalRecord extends Controller
                             $actionButtons .= '<i class="mdi mdi-security" style="font-size:18px"></i><span class="text-danger" style="font-weight:900;">Access Restricted</span>';
                         }
                     }
-                
-                } 
+
+                }
                 else {
                     if($confirmSample == 1)
                     {
@@ -3734,9 +3734,9 @@ class PatientMedicalRecord extends Controller
                     {
                         $actionButtons .= '<i class="mdi mdi-security" style="font-size:18px"></i><span class="text-danger" style="font-weight:900;">Access Restricted</span>';
                     }
-                    
+
                 }
-                
+
                 return $actionButtons;
                 // return $RequisitionForEPIDetail->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
             })
@@ -3745,7 +3745,7 @@ class PatientMedicalRecord extends Controller
                 $actionButtons = '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
                 . '<i class="fa fa-eye"></i> View Logs'
                 . '</button>';
-                
+
                 return $actionButtons;
                 // return $RequisitionForEPIDetail->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
             })
@@ -3806,7 +3806,7 @@ class PatientMedicalRecord extends Controller
         //         }
         //     })
         //     ->addColumn('id_raw', function ($InvestigationTrackingDetail) {
-        //         return $InvestigationTrackingDetail->id;  
+        //         return $InvestigationTrackingDetail->id;
         //     })
         //     ->editColumn('id', function ($InvestigationTrackingDetail) {
         //         $session = auth()->user();
@@ -3844,7 +3844,7 @@ class PatientMedicalRecord extends Controller
         //         $Physician = ucwords($InvestigationTrackingDetail->Physician);
 
         //         return '<b>Service</b>: '.$serviceName.'<br>'
-        //             . '<hr class="mt-1 mb-2">'  
+        //             . '<hr class="mt-1 mb-2">'
         //             .'<b>Service Mode</b>: '.$serviceMode.'<br>'
         //             .'<b>Service Group</b>: '.$serviceGroup.'<br>'
         //             .'<b>Service Type</b>: '.$serviceType.'<br>'
@@ -3856,13 +3856,13 @@ class PatientMedicalRecord extends Controller
         //     ->editColumn('report', function ($InvestigationTrackingDetail) {
         //         // return;
         //         $id = $InvestigationTrackingDetail->id;
-        //         $attachmentPath = $InvestigationTrackingDetail->report; 
-            
+        //         $attachmentPath = $InvestigationTrackingDetail->report;
+
         //         $actionButtons = '<button type="button" data-id="' . $id . '" data-path="' . $attachmentPath . '" class="btn waves-effect waves-light btn-sm btn-primary downloaditReport">'
         //             . '<i class="fa fa-download"></i> Download Reports'
         //             . '</button>';
         //         return $actionButtons;
-               
+
         //     })
         //     ->addColumn('action', function ($InvestigationTrackingDetail) {
         //         $InvestigationTrackingId = $InvestigationTrackingDetail->id;
@@ -3875,11 +3875,11 @@ class PatientMedicalRecord extends Controller
         //         //     . '<i class="fa fa-edit"></i> Edit'
         //         //     . '</button>';
         //         // }
-               
+
         //         $actionButtons = '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
         //         . '<i class="fa fa-eye"></i> View Logs'
         //         . '</button>';
-                
+
         //         return $actionButtons;
         //     })
         //     ->rawColumns(['id_raw','id','serviceDetails','report','action'])
@@ -3941,7 +3941,7 @@ class PatientMedicalRecord extends Controller
     //     {
     //         abort(403, 'Forbidden');
     //     }
-    //     $ReqMC = RequisitionForMedicationConsumption::select('req_medication_consumption.*',            
+    //     $ReqMC = RequisitionForMedicationConsumption::select('req_medication_consumption.*',
     //     'inventory_transaction_type.name as TransactionTypeName','service_location.name as ServiceLocationName'
     //     // 'inventory_generic.name as Generic',
     //     // 'medication_routes.name as RouteName','medication_frequency.name as FrequencyName',
@@ -4061,7 +4061,7 @@ class PatientMedicalRecord extends Controller
     {
         $colName = 'procedure_coding';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->select('id', 'organization')->get();
@@ -4087,7 +4087,7 @@ class PatientMedicalRecord extends Controller
             abort(403, 'Forbidden');
         }
         $ProceduresData = ServiceActivation::select('procedure_coding.logid as logID',
-        'organization.organization as orgName', 'organization.id as orgID', 
+        'organization.organization as orgName', 'organization.id as orgID',
         'services.name as serviceName', 'services.id as serviceId','procedure_coding.icd_id as icd_id')
         ->join('organization', 'organization.id', '=', 'activated_service.org_id')
         ->join('services', 'services.id', '=', 'activated_service.service_id')
@@ -4124,7 +4124,7 @@ class PatientMedicalRecord extends Controller
                 }
             })
             ->addColumn('id_raw', function ($ProcedureData) {
-                return $ProcedureData->id; 
+                return $ProcedureData->id;
             })
             ->editColumn('id', function ($ProcedureData) {
                 $session = auth()->user();
@@ -4144,7 +4144,7 @@ class PatientMedicalRecord extends Controller
                 if ($icdIds) {
                     $icdIdsArray = explode(',', $icdIds);
                     $ProceduresMedicalCoding = ICDCoding::select('icd_code.code','icd_code.description')
-                        ->whereIn('icd_code.id', $icdIdsArray) 
+                        ->whereIn('icd_code.id', $icdIdsArray)
                         ->get();
                     if ($ProceduresMedicalCoding->count() > 0) {
                         $table = '<table class="table-condensed"><tbody>';
@@ -4152,11 +4152,11 @@ class PatientMedicalRecord extends Controller
                             $table .= '<tr ><td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . $coding->code . ' (' . $coding->description . ')</td></tr>';
                         }
                         $table .= '</tbody></table>';
-                    } 
+                    }
                 } else {
                     $table = 'N/A';
                 }
-                return $table; 
+                return $table;
             })
             ->addColumn('action', function ($ProcedureData) {
                 $serviceID = $ProcedureData->serviceId;
@@ -4166,7 +4166,7 @@ class PatientMedicalRecord extends Controller
                 $edit = explode(',', $Rights->procedure_coding)[1];
                 $actionButtons = '';
                 $icdIds = $ProcedureData->icd_id;
-                if ($icdIds) { 
+                if ($icdIds) {
                     $actionButtons .= '<button type="button" class="mb-1 btn btn-success mr-2 assign-medicalcodes" data-org-id="' . $orgID . '" data-service-id="' . $serviceID . '">'
                     . '<i class="fa fa-edit"></i> Update Medical Codes'
                     . '</button>';
@@ -4175,11 +4175,11 @@ class PatientMedicalRecord extends Controller
                     . '<i class="fa fa-edit"></i> Assign Medical Codes'
                     . '</button>';
                 }
-    
+
                 $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="' . $logId . '">'
                     . '<i class="fa fa-eye"></i> View Logs'
                     . '</button>';
-    
+
                 return $actionButtons;
             })
             // ->addColumn('action', function ($ProcedureData) {
@@ -4197,7 +4197,7 @@ class PatientMedicalRecord extends Controller
             //         $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
             //         . '<i class="fa fa-eye"></i> View Logs'
             //         . '</button>';
-                   
+
             //         return $actionButtons;
             // })
             ->rawColumns(['id','action','medical_codes'])
@@ -4208,7 +4208,7 @@ class PatientMedicalRecord extends Controller
     {
         $colName = 'procedure_coding';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
 
         $serviceId = $request->input('service_id');
@@ -4222,7 +4222,7 @@ class PatientMedicalRecord extends Controller
 
         $mappedICDs = ProcedureCoding::where('service_id', $serviceId)
             ->where('org_id', $orgId)
-            ->pluck('icd_id') 
+            ->pluck('icd_id')
             ->first();
 
         $mappedICDArray = [];
@@ -4232,7 +4232,7 @@ class PatientMedicalRecord extends Controller
 
         return response()->json([
             'ProceduresMedicalCoding' => $ProceduresMedicalCoding,
-            'mappedICDArray' => $mappedICDArray 
+            'mappedICDArray' => $mappedICDArray
         ]);
     }
 
@@ -4267,7 +4267,7 @@ class PatientMedicalRecord extends Controller
             $existingRecord->user_id = $sessionId;
             $existingRecord->last_updated = $last_updated;
             $existingRecord->save();
-            
+
             $logMessage = "Medical Coding updated by '{$sessionName}'";
         } else {
             $ProcedureCodings = new ProcedureCoding();
@@ -4343,7 +4343,7 @@ class PatientMedicalRecord extends Controller
         $PatientAttachments->emp_id = $Physician;
         $PatientAttachments->description = $Description;
         $PatientAttachments->date = $attachmentDate;
-        $PatientAttachments->attachments = null; 
+        $PatientAttachments->attachments = null;
         $PatientAttachments->user_id = $sessionId;
         $PatientAttachments->last_updated = $last_updated;
         $PatientAttachments->timestamp = $timestamp;
@@ -4360,7 +4360,7 @@ class PatientMedicalRecord extends Controller
             $lastId = $PatientAttachments->id; // Get the last inserted ID
 
             foreach ($uploadedFiles as $file) {
-                $insertFileName = time() . '_' . $file->getClientOriginalName(); 
+                $insertFileName = time() . '_' . $file->getClientOriginalName();
                 $uniqueFileName = $lastId . '_' .time() . '_' . $file->getClientOriginalName();
                 $file->move(public_path('assets/patientattachment'), $uniqueFileName);
                 $filePaths[] = $insertFileName;
@@ -4397,7 +4397,7 @@ class PatientMedicalRecord extends Controller
         $mr = trim($mr);
 
         $user = auth()->user();
-      
+
         $PatientAttachments = PatientAttachments::select('patient_attachments.*',
         'costcenter.name as Speciality','employee.name as Physician',
         'service_mode.name as serviceMode','service_group.name as serviceGroup')
@@ -4413,35 +4413,35 @@ class PatientMedicalRecord extends Controller
         // return DataTables::of($VisitBasedDetails)
         return DataTables::eloquent($PatientAttachments)
             ->addColumn('id_raw', function ($PatientAttachment) {
-                return $PatientAttachment->id;  
+                return $PatientAttachment->id;
             })
             ->addColumn('mr', function ($PatientAttachment) {
-                $MR = $PatientAttachment->mr_code;  
-                return $MR;  
+                $MR = $PatientAttachment->mr_code;
+                return $MR;
             })
             ->addColumn('description', function ($PatientAttachment) {
-                $Desc = ucwords($PatientAttachment->description);  
-                return $Desc;  
+                $Desc = ucwords($PatientAttachment->description);
+                return $Desc;
             })
             ->addColumn('date', function ($PatientAttachment) {
-                $Date = $PatientAttachment->date;  
+                $Date = $PatientAttachment->date;
                 $Date = Carbon::createFromTimestamp($Date)->format('d-F-y');
-                return $Date;  
+                return $Date;
             })
             ->addColumn('physician', function ($PatientAttachment) {
                 $Physician = $PatientAttachment->Physician;
-                return $Physician;  
+                return $Physician;
             })
             ->editColumn('attachments', function ($PatientAttachment) {
                 $id = $PatientAttachment->id;
-                $attachmentPath = $PatientAttachment->attachments; 
-            
+                $attachmentPath = $PatientAttachment->attachments;
+
                 $actionButtons = '<button type="button" data-id="' . $id . '" data-path="' . $attachmentPath . '" class="btn waves-effect waves-light btn-sm btn-primary downloadattachements">'
                     . '<i class="fa fa-download"></i> Download Attachments'
                     . '</button>';
                 return $actionButtons;
             })
-           
+
             ->rawColumns(['id_raw','mr','description','physician','date','attachments'])
             ->make(true);
     }

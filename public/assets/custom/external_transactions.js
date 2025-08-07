@@ -165,10 +165,10 @@ $(document).ready(function() {
                     }
         
                     if (resp.sourceData && resp.sourceData.length > 0) {
-                        resp.sourceData.forEach(function(item) {
-                            $('#et_source')
+                         $('#et_source')
                             .empty()
                             .append('<option selected disabled value="">Select Source</option>');
+                        resp.sourceData.forEach(function(item) {
                             let displayText = item.name || item.person_name || 'Unnamed';
                             $('#et_source').append(
                                 '<option value="' + item.id + '">' + displayText + '</option>'

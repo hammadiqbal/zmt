@@ -144,7 +144,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-6">
+                                                    {{-- <div class="col-md-6">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
@@ -154,14 +154,44 @@
                                                                 <span class="text-danger" id="schedule_datetime_error"></span>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </div> --}}
 
                                                     <div class="col-md-6">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Select Calendar Time (Start - End)</label>
+                                                                    <div class="row">
+                                                                        <div class="col-md-6">
+                                                                            <input type="text" id="start_time" class="form-control" name="start_time" placeholder="Start Time" />
+                                                                            <span class="text-danger" id="start_time_error"></span>
+                                                                        </div>
+                                                                        <div class="col-md-6">
+                                                                            <input type="text" id="end_time" class="form-control" name="end_time" placeholder="End Time" />
+                                                                            <span class="text-danger" id="end_time_error"></span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                {{-- <span class="text-danger" id="ss_location_error"></span> --}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {{-- <div class="row">
+                                                        <div class="col-md-6">
+                                                            <input type="text" id="start_time" class="form-control" name="start_time" placeholder="Start Time" />
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <input type="text" id="end_time" class="form-control" name="end_time" placeholder="End Time" />
+                                                        </div>
+                                                    </div> --}}
+
+                                                    {{-- <div class="col-md-6">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
                                                                     <h6 class="box-title font-weight-bold">Select Schedule Pattern</h6>
-                                                                    <select class="form-control p-0 cursor-pointer" id="ss_pattern" name="ss_pattern" style="color:#222d32">
+                                                                    <select class="form-control p-0 cursor-pointer selecter" id="ss_pattern" name="ss_pattern" style="color:#222d32">
                                                                         <option value="none">None</option>
                                                                         <option value="daily">Daily</option>
                                                                         <option value="weekly">Weekly</option>
@@ -171,7 +201,33 @@
                                                                 <span class="text-danger" id="ss_pattern_error"></span>
                                                             </div>
                                                         </div>
+                                                    </div> --}}
+
+                                                    <div class="col-md-6">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label>Select Schedule Pattern</label>
+                                                                    <input type="text" id="ss_pattern" name="ss_pattern" class="form-control cursor-pointer open_schedule" placeholder="Select Days" readonly >
+                                                                </div>
+                                                                <span class="text-danger" id="ss_pattern_error"></span>
+                                                            </div>
+                                                        </div>
                                                     </div>
+
+                                                    
+                                                    <div class="col-md-6">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label for="input0117">Enter Total Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="total_patient" max="100" min="0" id="input0117">
+                                                                </div>
+                                                                <span class="text-danger cc_percent_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
 
                                                     <div class="col-md-6">
                                                         <div class="form-group row">
@@ -278,6 +334,38 @@
                     </div>
                 </div>
             </div>
+
+            <div class="modal fade" id="daySelectorModal" tabindex="-1" role="dialog" aria-labelledby="daySelectorModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-md" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Select Days</h5>
+                        
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check"><input type="checkbox" class="form-check-input day-check" value="Monday" id="monday"><label class="form-check-label" for="monday">Monday</label></div>
+                                    <div class="form-check"><input type="checkbox" class="form-check-input day-check" value="Tuesday" id="tuesday"><label class="form-check-label" for="tuesday">Tuesday</label></div>
+                                    <div class="form-check"><input type="checkbox" class="form-check-input day-check" value="Wednesday" id="wednesday"><label class="form-check-label" for="wednesday">Wednesday</label></div>
+                                    <div class="form-check"><input type="checkbox" class="form-check-input day-check" value="Thursday" id="thursday"><label class="form-check-label" for="thursday">Thursday</label></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check"><input type="checkbox" class="form-check-input day-check" value="Friday" id="friday"><label class="form-check-label" for="friday">Friday</label></div>
+                                    <div class="form-check"><input type="checkbox" class="form-check-input day-check" value="Saturday" id="saturday"><label class="form-check-label" for="saturday">Saturday</label></div>
+                                    <div class="form-check"><input type="checkbox" class="form-check-input day-check" value="Sunday" id="sunday"><label class="form-check-label" for="sunday">Sunday</label></div>
+                                </div>
+                            </div>
+                            <span class="text-danger d-none" id="dayError">Please select at least one day.</span>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" id="saveDays">Done</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
             @endif
 
 
@@ -354,18 +442,37 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-6">
+                                            {{-- <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Update Day & Time</label>
                                                     <input type="text" class="form-control input-daterange-timepicker" required id="day_time" name="u_schedule_datetime"/>
+                                                </div>
+                                            </div> --}}
+
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label class="control-label">Start Time</label>
+                                                    <input type="text" class="form-control input-daterange-timepicker" required id="u_start_time" name="u_start_time"  placeholder="Start Time">
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label class="control-label">End Time</label>
+                                                    <input type="text" class="form-control input-daterange-timepicker" required id="u_end_time" name="u_end_time"  placeholder="End Time">
                                                 </div>
                                             </div>
 
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Update Schedule Pattern</label>
-                                                    <select class="form-control selecter p-0" id="u_sspattern" required name="u_sspattern" style="color:#222d32">
-                                                    </select>
+                                                    {{-- <input type="text" id="u_sspattern" 
+                                                        name="u_sspattern" required
+                                                        class="form-control cursor-pointer open_schedule" 
+                                                        placeholder="Select Days" readonly> --}}
+                                                    <input type="text" id="u_sspattern" class="form-control open_schedule cursor-pointer" required name="u_sspattern" placeholder="Select Days" readonly>
+                                                    {{-- <select class="form-control selecter p-0" id="u_sspattern" required name="u_sspattern" style="color:#222d32">
+                                                    </select> --}}
                                                 </div>
                                             </div>
 
@@ -457,19 +564,51 @@
             format: 'dddd DD MMMM YYYY - hh:mm A',
             minDate: new Date() 
         });
-        $('.input-daterange-timepicker').daterangepicker({
-            timePicker: true,
-            locale: {
-                format: 'MM/DD/YYYY h:mm A'
-            },
-            timePickerIncrement: 1,
-            timePicker12Hour: true,
-            timePickerSeconds: false,
-            startDate: moment().startOf('hour').add(1, 'hour'),
-            endDate: moment().startOf('hour').add(2, 'hour'),
-            buttonClasses: ['btn', 'btn-sm'],
-            applyClass: 'btn-danger',
-            cancelClass: 'btn-inverse'
+
+        $('#start_time,#u_start_time').bootstrapMaterialDatePicker({
+            date: false,
+            format: 'hh:mm A',
+            shortTime: false,   // 12-hour AM/PM
+            clearButton: true
         });
+
+        $('#end_time,#u_end_time').bootstrapMaterialDatePicker({
+            date: false,
+            shortTime: false,
+            format: 'hh:mm A',
+            clearButton: true
+        });
+
+        // $('.input-daterange-timepicker').daterangepicker({
+        //     timePicker: true,
+        //     locale: {
+        //         format: 'MM/DD/YYYY h:mm A'
+        //     },
+        //     timePickerIncrement: 1,
+        //     timePicker12Hour: true,
+        //     timePickerSeconds: false,
+        //     startDate: moment().startOf('hour').add(1, 'hour'),
+        //     endDate: moment().startOf('hour').add(2, 'hour'),
+        //     buttonClasses: ['btn', 'btn-sm'],
+        //     applyClass: 'btn-danger',
+        //     cancelClass: 'btn-inverse'
+        // });
+
+        // $('.input-daterange-timepicker').daterangepicker({
+        //     timePicker: true,
+        //     timePicker24Hour: false,       // 12-hour format with AM/PM
+        //     timePickerIncrement: 1,
+        //     timePickerSeconds: false,
+        //     locale: {
+        //         format: 'h:mm A'          // Only time format
+        //     },
+        //     startDate: moment().startOf('hour').add(1, 'hour'),
+        //     endDate: moment().startOf('hour').add(2, 'hour'),
+        //     buttonClasses: ['btn', 'btn-sm'],
+        //     applyClass: 'btn-danger',
+        //     cancelClass: 'btn-inverse'
+        // }, function(start, end) {
+        //     $('.input-daterange-timepicker').val(start.format('h:mm A') + ' - ' + end.format('h:mm A'));
+        // });
     </script>
     <script src="{{ asset('assets/custom/service_location_scheduling.js') }}"></script>

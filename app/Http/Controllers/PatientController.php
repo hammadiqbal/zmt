@@ -56,7 +56,7 @@ class PatientController extends Controller
     {
         $colName = 'patient_registration';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Genders = EmployeeGender::where('status', 1)->get();
@@ -131,7 +131,7 @@ class PatientController extends Controller
         ->first();
 
         $DOB = Carbon::createFromTimestamp($PatientDetails->dob);
-        $currentDate = Carbon::now(); 
+        $currentDate = Carbon::now();
 
         $years = $currentDate->diffInYears($DOB);
         $months = $currentDate->diffInMonths($DOB->copy()->addYears($years));
@@ -142,23 +142,23 @@ class PatientController extends Controller
         if ($years > 0) {
             $ageParts[] = $years === 1 ? "{$years} year" : "{$years} years";
         }
-        
+
         if ($months > 0) {
             $ageParts[] = $months === 1 ? "{$months} month" : "{$months} months";
         }
-        
+
         if ($days > 0) {
             $ageParts[] = $days === 1 ? "{$days} day" : "{$days} days";
         }
-        
+
         if ($years <= 1 &&$hours > 0) {
             $ageParts[] = $hours === 1 ? "{$hours} hour" : "{$hours} hours";
         }
-        
-        
+
+
         $age = implode(', ', $ageParts);
         $PatientDetails->Age =  $age;
-        
+
         // $PatientDetails = $patientQuery->get();
         return response()->json($PatientDetails);
     }
@@ -177,7 +177,7 @@ class PatientController extends Controller
         $NextOfKin = trim($request->input('next_of_kin'));
         $Relation = ($request->input('relation'));
         $Relation = (!empty($Relation) && strtolower($Relation) !== 'null') ? strtolower($Relation) : '';
-        if (((!empty($NextOfKin) && $NextOfKin !== 'null') && (empty($Relation) || $Relation === 'null')) || ((empty($NextOfKin) || $NextOfKin === 'null') && (!empty($Relation) && $Relation !== 'null'))) 
+        if (((!empty($NextOfKin) && $NextOfKin !== 'null') && (empty($Relation) || $Relation === 'null')) || ((empty($NextOfKin) || $NextOfKin === 'null') && (!empty($Relation) && $Relation !== 'null')))
         {
             return response()->json(['error' => 'Both Next of Kin and Relation must be filled, or both must be blank.']);
         }
@@ -380,7 +380,7 @@ class PatientController extends Controller
                 $lastUpdated = Carbon::createFromTimestamp($Patient->last_updated)->format('l d F Y - h:i A');
 
                 $DOB = Carbon::createFromTimestamp($Patient->dob);
-                $currentDate = Carbon::now(); 
+                $currentDate = Carbon::now();
 
                 $years = $currentDate->diffInYears($DOB);
                 $months = $currentDate->diffInMonths($DOB->copy()->addYears($years));
@@ -391,20 +391,20 @@ class PatientController extends Controller
                 if ($years > 0) {
                     $ageParts[] = $years === 1 ? "{$years} year" : "{$years} years";
                 }
-                
+
                 if ($months > 0) {
                     $ageParts[] = $months === 1 ? "{$months} month" : "{$months} months";
                 }
-                
+
                 if ($days > 0) {
                     $ageParts[] = $days === 1 ? "{$days} day" : "{$days} days";
                 }
-                
+
                 if ($years <= 1 &&$hours > 0) {
                     $ageParts[] = $hours === 1 ? "{$hours} hour" : "{$hours} hours";
                 }
-                
-                
+
+
                 $age = implode(', ', $ageParts);
 
                 $createdInfo = "
@@ -433,7 +433,7 @@ class PatientController extends Controller
             ->addColumn('identity', function ($Patient) {
                 $cnic = empty($Patient->cnic) ? 'N/A' : ($Patient->cnic);
                 $familyNumber = empty($Patient->family_no) ? 'N/A' : ($Patient->family_no);
-                
+
                 return '<b>CNIC: </b>' . $cnic
                         . '<hr class="mt-1 mb-2">'
                         . '<b>Family No: </b>' . $familyNumber;
@@ -448,7 +448,7 @@ class PatientController extends Controller
                         .'<br><b>District: </b>'.ucwords($Patient->districtName)
                         .'<br><b>Division: </b> '.ucwords($Patient->divisionName)
                         .'<br><b>Province: </b> '.ucwords($Patient->provinceName);
-               
+
             })
             // ->addColumn('service_booking', function ($Patient) {
             //     if ($Patient->service_starttime && $Patient->servicebookingStatus == 1) {
@@ -513,7 +513,7 @@ class PatientController extends Controller
                         <i class="fa fa-print"></i> Print Card
                     </a>';
                     return $Patient->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
-           
+
             })
             ->editColumn('status', function ($Patient) {
                 $rights = $this->rights;
@@ -820,7 +820,7 @@ class PatientController extends Controller
         }
         $NextOfKin = $request->input('up_nextofkin');
         $Relation = $request->input('up_nextofkinRelation');
-        if (((!empty($NextOfKin) && $NextOfKin !== 'null') && (empty($Relation) || $Relation === 'null')) || ((empty($NextOfKin) || $NextOfKin === 'null') && (!empty($Relation) && $Relation !== 'null'))) 
+        if (((!empty($NextOfKin) && $NextOfKin !== 'null') && (empty($Relation) || $Relation === 'null')) || ((empty($NextOfKin) || $NextOfKin === 'null') && (!empty($Relation) && $Relation !== 'null')))
         {
             return response()->json(['error' => 'Both Next of Kin and Relation must be filled, or both must be blank.']);
         }
@@ -838,7 +838,7 @@ class PatientController extends Controller
         $orgID = $request->input('up_org');
         if (isset($orgID)) {
             $Patient->org_id = $orgID;
-        } 
+        }
         $Patient->site_id = $request->input('up_site');
         $Patient->province_id = $request->input('up_province');
         $Patient->division_id = $request->input('up_division');
@@ -910,7 +910,7 @@ class PatientController extends Controller
     {
         $colName = 'patient_arrival_and_departure';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         // $Provinces = Province::where('status', 1)->get();
@@ -983,7 +983,7 @@ class PatientController extends Controller
         // ->exists();
 
         // $existsInArrival = PatientArrivalDeparture::where($common)
-        // ->where('status', 1)    
+        // ->where('status', 1)
         // ->exists();
 
         // $existsInRequisition = RequisitionForEPI::where($common)
@@ -1047,22 +1047,22 @@ class PatientController extends Controller
             $PatientArrivalDeparture->timestamp = $CurrentTimestamp;
             $PatientArrivalDeparture->service_start_time = $ServiceStartTime;
             $PatientArrivalDeparture->save();
-    
+
             if (empty($PatientArrivalDeparture->id)) {
                 return response()->json(['error' => 'Unable to Add Details! Please Try Again.']);
             }
-    
+
             $ServiceRates = ActivatedServiceRate::select('activated_service_rate.sell_price')
             ->where('activated_service_rate.service_mode_id', $ServiceMode)
             ->first();
-    
+
             $Services = Service::select('services.name')
             ->where('services.id', $Service)
             ->first();
-    
+
             $Remarks = $MRno.'-'.$Services->name;
             $billedAmount = $ServiceRates->sell_price ?? 0;
-    
+
             $Transaction = new FinancialTransactions();
             $Transaction->org_id = $Org;
             $Transaction->site_id = $Site;
@@ -1079,8 +1079,8 @@ class PatientController extends Controller
             $Transaction->timestamp = $CurrentTimestamp;
             $Transaction->last_updated = $last_updated;
             $Transaction->save();
-    
-    
+
+
             $logs = Logs::create([
                 'module' => 'patient',
                 'content' => "Patient Arrival Details added by '{$sessionName}'",
@@ -1113,7 +1113,7 @@ class PatientController extends Controller
             SELECT mr_code, emp_id, billing_cc, service_id, service_mode_id
             FROM req_epi
         ) as combined_data"));
-        
+
         $PatientInOutDetails = DB::table($combinedData, 'combined_data')
             ->select(
                 'combined_data.mr_code',
@@ -1129,7 +1129,12 @@ class PatientController extends Controller
                 DB::raw('MAX(service_booking.service_starttime) as service_starttime'),
                 DB::raw('MAX(service_booking.service_endtime) as service_endtime'),
                 DB::raw('MAX(patient_inout.service_start_time) as effective_timestamp'),
-                DB::raw('MAX(patient_inout.remarks) as Remarks'),
+                // DB::raw('MAX(patient_inout.remarks) as Remarks'),
+                DB::raw("MAX(COALESCE(
+                    CONVERT(patient_inout.remarks USING utf8mb4),
+                    CONVERT(service_booking.remarks USING utf8mb4),
+                    CONVERT(req_epi.remarks USING utf8mb4)
+                )) as Remarks"),                
                 DB::raw('MAX(patient_inout.timestamp) as timestamp'),
                 DB::raw('MAX(patient_inout.last_updated) as last_updated'),
                 DB::raw('MAX(patient_inout.logid) as logid'),
@@ -1148,20 +1153,20 @@ class PatientController extends Controller
                 DB::raw('MAX(service_location.id) as locationId'),
                 DB::raw('MAX(service_location_scheduling.name) as LocationSchedule'),
                 DB::raw('MAX(service_location_scheduling.id) as LocationScheduleId'),
-                DB::raw('MAX(service_location_scheduling.start_timestamp) as start_timestamp'), 
+                DB::raw('MAX(service_location_scheduling.start_timestamp) as start_timestamp'),
                 DB::raw('MAX(service_location_scheduling.end_timestamp) as end_timestamp'),
-                DB::raw('MAX(service_location_scheduling.schedule_pattern) as schedule_pattern'), 
+                DB::raw('MAX(service_location_scheduling.schedule_pattern) as schedule_pattern'),
                 DB::raw('MAX(employee.name) as empName'),
                 DB::raw('MAX(employee.id) as empId'),
-                DB::raw('MAX(patient.name) as patientName'), 
+                DB::raw('MAX(patient.name) as patientName'),
                 DB::raw('MAX(gender.name) as genderName'),
-                DB::raw('MAX(patient.dob) as patientDOB'), 
-                DB::raw('MAX(patient.cnic) as patientCNIC'), 
+                DB::raw('MAX(patient.dob) as patientDOB'),
+                DB::raw('MAX(patient.cnic) as patientCNIC'),
                 DB::raw('MAX(patient.cell_no) as patientCellNo'),
-                DB::raw('MAX(patient.email) as patientEmail'), 
-                DB::raw('MAX(patient.address) as patientAddress'), 
+                DB::raw('MAX(patient.email) as patientEmail'),
+                DB::raw('MAX(patient.address) as patientAddress'),
                 DB::raw('MAX(province.name) as provinceName'),
-                DB::raw('MAX(division.name) as divisionName'), 
+                DB::raw('MAX(division.name) as divisionName'),
                 DB::raw('MAX(district.name) as districtName'),
                 DB::raw('MAX(patient_inout.service_start_time) as patientArrivalTime'),
                 DB::raw('MAX(patient_inout.service_end_time) as patientEndTime'),
@@ -1171,27 +1176,30 @@ class PatientController extends Controller
             )
             ->leftJoin('service_booking', function($join) {
                 $join->on('combined_data.mr_code', '=', 'service_booking.mr_code')
-                     ->on('combined_data.emp_id', '=', 'service_booking.emp_id')
+                    //  ->on('combined_data.emp_id', '=', 'service_booking.emp_id')
+                     ->whereRaw('(combined_data.emp_id = service_booking.emp_id OR (combined_data.emp_id IS NULL AND service_booking.emp_id IS NULL))')
                      ->on('combined_data.billing_cc', '=', 'service_booking.billing_cc')
                      ->on('combined_data.service_id', '=', 'service_booking.service_id')
                      ->on('combined_data.service_mode_id', '=', 'service_booking.service_mode_id');
             })
             ->leftJoin('patient_inout', function($join) {
                 $join->on('combined_data.mr_code', '=', 'patient_inout.mr_code')
-                     ->on('combined_data.emp_id', '=', 'patient_inout.emp_id')
+                    //  ->on('combined_data.emp_id', '=', 'patient_inout.emp_id')
+                      ->whereRaw('(combined_data.emp_id = patient_inout.emp_id OR (combined_data.emp_id IS NULL AND patient_inout.emp_id IS NULL))')
                      ->on('combined_data.billing_cc', '=', 'patient_inout.billing_cc')
                      ->on('combined_data.service_id', '=', 'patient_inout.service_id')
                      ->on('combined_data.service_mode_id', '=', 'patient_inout.service_mode_id');
             })
             ->leftJoin('req_epi', function($join) {
                 $join->on('combined_data.mr_code', '=', 'req_epi.mr_code')
-                     ->on('combined_data.emp_id', '=', 'req_epi.emp_id')
+                    //  ->on('combined_data.emp_id', '=', 'req_epi.emp_id')
+                      ->whereRaw('(combined_data.emp_id = req_epi.emp_id OR (combined_data.emp_id IS NULL AND req_epi.emp_id IS NULL))')
                      ->on('combined_data.billing_cc', '=', 'req_epi.billing_cc')
                      ->on('combined_data.service_id', '=', 'req_epi.service_id')
                      ->on('combined_data.service_mode_id', '=', 'req_epi.service_mode_id');
             })
             ->join('patient', 'patient.mr_code', '=', 'combined_data.mr_code')
-            ->join('employee', 'employee.id', '=', 'combined_data.emp_id')
+            ->leftJoin('employee', 'employee.id', '=', 'combined_data.emp_id')
             ->join('gender', 'gender.id', '=', 'patient.gender_id')
             ->leftJoin('organization', function ($join) {
                 $join->on('organization.id', '=', 'service_booking.org_id')
@@ -1247,29 +1255,29 @@ class PatientController extends Controller
                 $effectiveDate = $PatientInOutDetail->effective_timestamp
                     ? Carbon::createFromTimestamp($PatientInOutDetail->effective_timestamp)->format('l d F Y - h:i A')
                     : 'N/A';
-            
+
                 $timestamp = $PatientInOutDetail->timestamp
                     ? Carbon::createFromTimestamp($PatientInOutDetail->timestamp)->format('l d F Y - h:i A')
                     : 'N/A';
-            
+
                 $lastUpdated = $PatientInOutDetail->last_updated
                     ? Carbon::createFromTimestamp($PatientInOutDetail->last_updated)->format('l d F Y - h:i A')
                     : 'N/A';
-            
+
                 $createdByName = getUserNameById($PatientInOutDetail->user_id ?? null);
                 $createdInfo = "
                     <b>Created By:</b> " . ucwords((string)$createdByName) . "<br>
                     <b>Effective Date&amp;Time:</b> " . $effectiveDate . "<br>
                     <b>RecordedAt:</b> " . $timestamp . "<br>
                     <b>LastUpdated:</b> " . $lastUpdated;
-            
+
                 $mrCode = $PatientInOutDetail->mr_code ?? 'N/A';
                 $PatientName = ucwords((string)($PatientInOutDetail->patientName ?? ''));
                 $Gender = ucwords((string)($PatientInOutDetail->genderName ?? ''));
                 $DOB = $PatientInOutDetail->patientDOB
                     ? Carbon::createFromTimestamp($PatientInOutDetail->patientDOB)->format('d F Y')
                     : 'N/A';
-            
+
                 $cnic = !empty($PatientInOutDetail->cnic) ? $PatientInOutDetail->cnic : 'N/A';
                 $Email = !empty($PatientInOutDetail->patientEmail) ? $PatientInOutDetail->patientEmail : 'N/A';
                 $CellNo = $PatientInOutDetail->patientCellNo ?? 'N/A';
@@ -1277,7 +1285,7 @@ class PatientController extends Controller
                 $Province = ucwords((string)($PatientInOutDetail->provinceName ?? ''));
                 $District = ucwords((string)($PatientInOutDetail->districtName ?? ''));
                 $Division = ucwords((string)($PatientInOutDetail->divisionName ?? ''));
-            
+
                 return $mrCode
                     . '<hr class="mt-1 mb-2">'
                     . $PatientName
@@ -1299,34 +1307,34 @@ class PatientController extends Controller
             ->editColumn('serviceBooking', function ($PatientInOutDetail) {
                 $session = auth()->user();
                 $BookingId = $PatientInOutDetail->serviceBookingId ?? null;
-            
+
                 if ($BookingId) {
                     $StartTime = $PatientInOutDetail->service_starttime
                         ? Carbon::createFromTimestamp($PatientInOutDetail->service_starttime)->format('l d F Y - h:i A')
                         : 'N/A';
-            
+
                     $EndTime = $PatientInOutDetail->service_endtime
                         ? Carbon::createFromTimestamp($PatientInOutDetail->service_endtime)->format('l d F Y - h:i A')
                         : 'N/A';
-            
+
                     $DayTime = '<b>Start Time: </b> ' . $StartTime . ' <br> <b>End Time: </b> ' . $EndTime;
-            
+
                     $empName = ucwords((string)($PatientInOutDetail->empName ?? ''));
                     $Remarks = !empty($PatientInOutDetail->Remarks) ? ucwords((string)$PatientInOutDetail->Remarks) : 'N/A';
-            
+
                     $Location = ucwords((string)($PatientInOutDetail->locationName ?? ''));
                     $Pattern = ucwords((string)($PatientInOutDetail->schedule_pattern ?? ''));
                     $PatientStatus = ucwords((string)($PatientInOutDetail->BookingPatientStatus ?? ''));
                     $PatientPriority = ucwords((string)($PatientInOutDetail->BookingPatientPriority ?? ''));
                     $ServiceName = ucwords((string)($PatientInOutDetail->ServiceName ?? ''));
-            
+
                     $orgName = '';
                     if (($session->org_id ?? '0') == '0') {
                         $orgName = ' / ' . ucwords((string)($PatientInOutDetail->orgName ?? ''));
                     }
-            
+
                     $siteOrg = ucwords((string)($PatientInOutDetail->siteName ?? '')) . $orgName;
-            
+
                     return $ServiceName
                         . '<hr class="mt-1 mb-2">'
                         . $empName
@@ -1345,43 +1353,43 @@ class PatientController extends Controller
             ->editColumn('serviceDetails', function ($PatientInOutDetail) {
                 $ArrivalId = $PatientInOutDetail->id ?? null;
                 $sellPrice = number_format((float)($PatientInOutDetail->sellPrice ?? 0), 2);
-            
+
                 $orgId = $PatientInOutDetail->orgId ?? '';
                 $orgName = ucwords((string)($PatientInOutDetail->orgName ?? ''));
-            
+                // return $orgName;
+                
                 $siteId = $PatientInOutDetail->siteId ?? '';
                 $siteName = ucwords((string)($PatientInOutDetail->siteName ?? ''));
-            
+
                 $ServiceMode = ucwords((string)($PatientInOutDetail->serviceModeName ?? ''));
                 $ServiceModeId = $PatientInOutDetail->serviceModeId ?? '';
                 // return $ServiceModeId;
-            
+
                 $locationName = ucwords((string)($PatientInOutDetail->locationName ?? ''));
                 $locationId = $PatientInOutDetail->locationId ?? '';
-            
+
                 $LocationSchedule = ucwords((string)($PatientInOutDetail->LocationSchedule ?? ''));
                 $LocationScheduleId = $PatientInOutDetail->LocationScheduleId ?? '';
-            
-                $empName = ucwords((string)($PatientInOutDetail->empName ?? ''));
+
+                $empName = ucwords((string)($PatientInOutDetail->empName ?? 'N/A'));
                 $empId = $PatientInOutDetail->empId ?? '';
-            
+
                 $Service = ucwords((string)($PatientInOutDetail->ServiceName ?? ''));
                 $ServiceId = $PatientInOutDetail->ServiceId ?? '';
-            
+
                 $BillingCC = ucwords((string)($PatientInOutDetail->billingCC ?? ''));
                 $BillingCCId = $PatientInOutDetail->billingCCId ?? '';
-            
+
                 $ShowServiceDetails = $ServiceMode . '<br>' . $Service . '<br> <b>Specialty: </b>' . $BillingCC . '<br><b>Responsible Person:</b> ' . $empName;
-            
+
                 if ($ArrivalId) {
-                    // return $ArrivalId;
                     $patientArrivalTime = $PatientInOutDetail->patientArrivalTime
                         ? Carbon::createFromTimestamp($PatientInOutDetail->patientArrivalTime)->format('l d F Y - h:i A')
                         : 'N/A';
-            
+
                     $patientEndTimeRaw = $PatientInOutDetail->patientEndTime ?? null;
                     $Status = $PatientInOutDetail->status ?? null;
-            
+
                     if ($Status == 0) {
                         $serviceEndTime = $patientEndTimeRaw
                             ? Carbon::createFromTimestamp($patientEndTimeRaw)->format('l d F Y - h:i A')
@@ -1394,30 +1402,31 @@ class PatientController extends Controller
                         $patientEndTime = '<hr class="mt-2 mb-2"><h6><b>Service not yet completed</b></h6>';
                         $rights = $this->rights;
                         $endService = explode(',', $rights->patient_arrival_and_departure)[4] ?? 0;
-            
+
                         if ($endService == 1) {
                             $patientEndTime .= $patientEndTimeRaw
                                 ? Carbon::createFromTimestamp($patientEndTimeRaw)->format('d F Y - h:i A')
-                                : '<span id="endService" class="text-underline" data-id="' . $ArrivalId . '"  
-                                data-servicemode-id="' . $ServiceModeId . '"  
-                                data-billingcc-id="' . $BillingCCId . '"  data-service-id="' . $ServiceId . '"  
-                                data-emp-id="' . $empId . '"  data-mr="' . $PatientInOutDetail->mr_code . '" 
+                                : '<span id="endService" class="text-underline" data-id="' . $ArrivalId . '"
+                                data-servicemode-id="' . $ServiceModeId . '"
+                                data-billingcc-id="' . $BillingCCId . '"  data-service-id="' . $ServiceId . '"
+                                data-emp-id="' . $empId . '"  data-mr="' . $PatientInOutDetail->mr_code . '"
                                 style="cursor:pointer; color: #fb3a3a;font-weight: 500;">Click here to end service</span>';
                         }
                     }
-            
+
                     return $ShowServiceDetails
                         . '<hr class="mt-1 mb-1">'
                         . '<b>Patient Arrived At: </b>' . $patientArrivalTime
                         . $patientEndTime;
-                } 
+                }
                 else {
                     $mrCode = $PatientInOutDetail->mr_code ?? '';
+                    $Remarks = $PatientInOutDetail->Remarks ?? '';
                     $otherArrivals = PatientArrivalDeparture::where('mr_code', $mrCode)
                         ->where('service_mode_id', '!=', $ServiceModeId)
                         ->where('status', 1)
                         ->get();
-                        
+
                     // return $mrCode.$otherArrivals->pluck('service_mode_id');
 
                     if ($otherArrivals->isNotEmpty()) {
@@ -1443,8 +1452,8 @@ class PatientController extends Controller
 
                         return $ShowServiceDetails
                         . '<hr class="mt-1 mb-2">'
-                        . '<h6>Patient already arrived in "<b>' 
-                        . e($modeList) 
+                        . '<h6>Patient already arrived in "<b>'
+                        . e($modeList)
                         . '</b>'.$message;
                         // $ServiceModes = ServiceMode::select('name')->where('id', $otherServiceModeid)->first();
                         // $modeName = $ServiceModes->name ?? 'Unknown';
@@ -1478,7 +1487,8 @@ class PatientController extends Controller
                                 'locationname' => encrypt($locationName),
                                 'locationid' => encrypt($locationId),
                                 'schedulename' => encrypt($LocationSchedule),
-                                'scheduleid' => encrypt($LocationScheduleId)
+                                'scheduleid' => encrypt($LocationScheduleId),
+                                'remarks' => encrypt($Remarks)
                             ]) . '">
                             <span class="text-underline" style="cursor:pointer; color: #fb3a3a;font-weight: 500;">
                                 Confirm Patient Arrival
@@ -1490,25 +1500,25 @@ class PatientController extends Controller
                 $PatientInOutDetailId = $PatientInOutDetail->id ?? null;
                 $logId = $PatientInOutDetail->logid ?? null;
                 $status = $PatientInOutDetail->status ?? null;
-            
+
                 $Rights = $this->rights;
                 $permissionArray = explode(',', $Rights->patient_arrival_and_departure ?? '');
                 $edit = $permissionArray[2] ?? 0;
-            
+
                 $actionButtons = '';
-            
+
                 if ((int)$edit === 1 && $PatientInOutDetailId) {
                     $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 edit-patientinout" data-patientinout-id="' . $PatientInOutDetailId . '">'
                         . '<i class="fa fa-edit"></i> Edit'
                         . '</button>';
                 }
-            
+
                 if ($logId) {
                     $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="' . $logId . '">'
                         . '<i class="fa fa-eye"></i> View Logs'
                         . '</button>';
                 }
-            
+
                 return ($status === 1 || $status === '1')
                     ? $actionButtons
                     : '<span class="font-weight-bold">Status must be Active or Patient must have arrived to perform any action.</span>';
@@ -1517,18 +1527,18 @@ class PatientController extends Controller
                 $rights = $this->rights;
                 $updateStatus = explode(',', $rights->patient_arrival_and_departure)[3];
                 // return $updateStatus == 1 ? ($PatientInOutDetail->status ? '<span class="label label-success pio_status cursor-pointer" data-id="'.$PatientInOutDetail->id.'" data-status="'.$PatientInOutDetail->status.'">Active</span>' : '<span class="label label-danger pio_status cursor-pointer" data-id="'.$PatientInOutDetail->id.'" data-status="'.$PatientInOutDetail->status.'">Inactive</span>') : ($PatientInOutDetail->status ? '<span class="label label-success">Active</span>' : '<span class="label label-danger">Inactive</span>');
-                return $updateStatus == 1 
-                ? ($PatientInOutDetail->status == '1' 
-                    ? '<span class="label label-success pio_status cursor-pointer" data-id="'.$PatientInOutDetail->id.'" data-status="'.$PatientInOutDetail->status.'">Active</span>' 
-                    : ($PatientInOutDetail->status == '0' 
-                        ? '<span class="label label-danger pio_status cursor-pointer" data-id="'.$PatientInOutDetail->id.'" data-status="'.$PatientInOutDetail->status.'">Inactive</span>' 
+                return $updateStatus == 1
+                ? ($PatientInOutDetail->status == '1'
+                    ? '<span class="label label-success pio_status cursor-pointer" data-id="'.$PatientInOutDetail->id.'" data-status="'.$PatientInOutDetail->status.'">Active</span>'
+                    : ($PatientInOutDetail->status == '0'
+                        ? '<span class="label label-danger pio_status cursor-pointer" data-id="'.$PatientInOutDetail->id.'" data-status="'.$PatientInOutDetail->status.'">Inactive</span>'
                         : '<span class="label label-primary">N/A</span>'
                       )
-                  ) 
-                : ($PatientInOutDetail->status == '1' 
-                    ? '<span class="label label-success">Active</span>' 
-                    : ($PatientInOutDetail->status == '0' 
-                        ? '<span class="label label-danger">Inactive</span>' 
+                  )
+                : ($PatientInOutDetail->status == '1'
+                    ? '<span class="label label-success">Active</span>'
+                    : ($PatientInOutDetail->status == '0'
+                        ? '<span class="label label-danger">Inactive</span>'
                         : '<span class="label label-primary">N/A</span>'
                       )
                   );
@@ -1604,7 +1614,7 @@ class PatientController extends Controller
             // 'pio_service_id' => 'required',
         ]);
 
-        
+
         if ($validator->fails()) {
             return response()->json(['error' => 'This Field is Required.']);
         }
@@ -1639,7 +1649,7 @@ class PatientController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        
+
         $sameArrivals = PatientArrivalDeparture::where('service_mode_id', $PatientArrivalDeparture->service_mode_id)
         ->where('mr_code', $PatientArrivalDeparture->mr_code)
         ->where('status', 1)
@@ -1685,7 +1695,7 @@ class PatientController extends Controller
                     'event' => 'update',
                     'timestamp' => $CurrentTimestamp,
                 ]);
-    
+
                 $logIds = $arrival->logid ? explode(',', $arrival->logid) : [];
                 $logIds[] = $logs->id;
                 $arrival->logid = implode(',', $logIds);
@@ -1698,14 +1708,14 @@ class PatientController extends Controller
             $PatientArrivalDeparture->status = $status;
             $PatientArrivalDeparture->last_updated = $CurrentTimestamp;
             $PatientArrivalDeparture->save();
-    
+
             $logs = Logs::create([
                 'module' => 'patient',
                 'content' => "End Date&Time ('{$ServiceEnd}') added by '{$sessionName}'",
                 'event' => 'update',
                 'timestamp' => $CurrentTimestamp,
             ]);
-    
+
             $logIds = $PatientArrivalDeparture->logid ? explode(',', $PatientArrivalDeparture->logid) : [];
             $logIds[] = $logs->id;
             $PatientArrivalDeparture->logid = implode(',', $logIds);
@@ -1916,7 +1926,7 @@ class PatientController extends Controller
     {
         $colName = 'outsourced_services';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         // $Provinces = Province::where('status', 1)->get();

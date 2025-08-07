@@ -147,7 +147,7 @@
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    
+
                                                     <div class="col-md-6 d_data">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
@@ -272,7 +272,7 @@
                                 <div class="card-body">
                                     <div class="form-body">
                                         <div class="row">
-                                            
+
                                             @if($user->org_id == 0)
                                             <div class="col-md-6">
                                                 <div class="form-group row m-b-5">
@@ -347,7 +347,7 @@
                                                 </div>
                                             </div>
 
-                                       
+
 
                                             <div class="col-md-6">
                                                 <div class="form-group row m-b-5">
@@ -359,7 +359,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                          
+
                                         </div>
 
                                         <div class="uduplicate">
@@ -369,7 +369,7 @@
                                             <button type="button" id="urot_addmore" class="btn btn-success mr-2">
                                             <i class="mdi mdi-plus"></i> Add More</button>
 
-                                            <button type="button" id="urot_remove" class="btn btn-danger mr-2"> 
+                                            <button type="button" id="urot_remove" class="btn btn-danger mr-2">
                                             <i class="mdi mdi-minus"></i> Remove</button>
                                         </div>
                                     </div>
@@ -402,7 +402,7 @@
         });
         $('#date-format1').bootstrapMaterialDatePicker({
             format: 'dddd DD MMMM YYYY - hh:mm:ss A',
-            minDate: new Date() 
+            minDate: new Date()
         });
     </script>
     <script src="{{ asset('assets/custom/req_other_transaction.js') }}"></script>
