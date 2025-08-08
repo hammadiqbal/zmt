@@ -12,10 +12,19 @@ $(document).ready(function() {
 
         fetchOrgPatient(filterOrgId, '#fb_mrno', function(data) {
             $('#fb_mrno').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', false);
+            // $.each(data, function(key, value) {
+            //     $('#fb_mrno').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name + ' - ' + value.cell_no + '</option>');
+            // });
             $.each(data, function(key, value) {
-                $('#fb_mrno').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name + ' - ' + value.cell_no + '</option>');
+                $('#fb_mrno').append(
+                    '<option value="' + value.mr_code + '">' +
+                        value.mr_code + ' - ' + value.name +
+                        (value.cell_no ? ' - ' + value.cell_no : '') +
+                    '</option>'
+                );
             });
         });
+        
     }
     else{
         $('#fb_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',true);
@@ -66,7 +75,12 @@ $(document).ready(function() {
                 fetchOrgPatient(orgId, '#sb_mr', function(data) {
                     $('#sb_mr').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', false);
                     $.each(data, function(key, value) {
-                        $('#sb_mr').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name + '</option>');
+                        $('#sb_mr').append(
+                            '<option value="' + value.mr_code + '">' +
+                                value.mr_code + ' - ' + value.name +
+                                (value.cell_no ? ' - ' + value.cell_no : '') +
+                            '</option>'
+                        );
                     });
                 });
                             

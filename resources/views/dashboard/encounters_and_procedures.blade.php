@@ -66,7 +66,7 @@
         </div>
 
         <div class="main_row">
-            <div class="col-lg-12">
+            <div class="col-lg-12 pl-2">
                 <div class="form-body">
                     <div class="main_row">
                         {{-- <form id="add_ep" method="post">
@@ -86,13 +86,13 @@
                                             <select class="form-control selecter p-0" name="ep_mr" id="ep_mr" style="color:#222d32">
                                                 <option selected disabled >Select MR #</option>
                                                 @foreach ($Patients as $Patient)
-                                                    <option value="{{ $Patient['mr_code'] }}"> {{ $Patient['mr_code'] }} - {{ ucwords($Patient['name']) }}</option>
+                                                    <option value="{{ $Patient['mr_code'] }}"> {{ $Patient['mr_code'] }} - {{ ucwords($Patient['name']) }}@if (!empty($Patient['cell_no'])) - {{ $Patient['cell_no'] }} @endif</option>
                                                 @endforeach
                                             </select>
                                         </div>
                                     </div>
 
-                                    <div class="col-md-3">  
+                                    <div class="col-md-3">
                                         <div class="main_custom">
                                             <label class="main_label">Name</label>
                                             <input type="text" class="form-control input-sm color_red" id="ep_pname" readonly placeholder="Name" >
@@ -166,10 +166,13 @@
                                         <input type="hidden" name="sevice_id" class="sevice_id">
                                         <span class="main_label col-auto" id="ep_service"></span>
                                     </div>
+                                    <div class="col-md-12 text-right p-0 mt-auto">
+                                        <span class="main_label col-auto" id="ep_remarks"></span>
+                                    </div>
                                 </div>
                             </div>
                             @endif
-                            
+
                             @if ($add == 1)
                             <form id="add_visitdetails" method="post">
                                 <div class="row mt-3" id="ep_history" style="position: relative;">
@@ -211,21 +214,21 @@
                                             </div>
                                         </div>
 
-                                        <div class="row mt-2 pr-2">
-                                            <div class="col-md-4">
+                                        <div class="row mt-1 pr-1 pl-1">
+                                            <div class="col-md-4 p-1">
                                                 <button type="button" data-act="e" class="waves-effect waves-light btn-blue btn-custom encounterModal">Encounter Request</button>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-4 p-1">
                                                 <button type="button" data-act="p" class="waves-effect waves-light btn-blue btn-custom procedureModal">Procedure Planning</button>
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-4 p-1">
                                                 <button type="button" data-act="i" class="waves-effect waves-light btn-blue btn-custom investigationModal">Investigation Order</button>
                                             </div>
                                         </div>
 
-                                        <div class="row mt-2 pr-2">
+                                        <div class="row mt-1 pr-1 pl-1">
                                             @php
-                                                $columnClass = ($viewinvestigationTracking == 1) ? 'col-md-4' : 'col-md-6';
+                                                $columnClass = ($viewinvestigationTracking == 1) ? 'col-md-4  p-1' : 'col-md-6  p-1';
                                             @endphp
                                             <div class="{{ $columnClass }}">
                                                 <a href="#" id="order-medication-link" target="_blank">
@@ -255,7 +258,7 @@
                                                 <button type="button" class="waves-effect waves-light btn-warning btn-custom">View log</button>
                                             </div> --}}
 
-                                            <div class="col-md-12">
+                                            <div class="col-md-12 pr-1 pl-1">
                                                 <button type="submit" class="addep waves-effect waves-light btn-danger btn-custom">Save</button>
                                             </div>
 
@@ -277,7 +280,7 @@
                                             <div class="col-md-4">
                                                 <button type="button" class="waves-effect waves-light btn-blue btn-custom">Consumables</button>
                                             </div>
-                                            
+
                                             <div class="col-md-4">
                                                 <button type="button" class="waves-effect waves-light btn-warning btn-custom">View log</button>
                                             </div>
@@ -286,8 +289,8 @@
                                                 <button type="submit" class="waves-effect waves-light btn-danger btn-custom">Save</button>
                                             </div>
                                         </div> --}}
-                                        
-           
+
+
                                     </div>
 
                                     <div class="col-md-8">
@@ -300,12 +303,12 @@
                                                     <span class="main_label">SBP</span>
                                                     <input type="text" class="form-control input-sm color_red" readonly id="ep_sbp" placeholder="SBP">
                                                 </div>
-        
+
                                                 <div class="col-md-2 mb-1">
                                                     <span class="main_label">DBP</span>
                                                     <input type="text" class="form-control input-sm color_red" readonly id="ep_dbp"  placeholder="DBP">
                                                 </div>
-        
+
                                                 <div class="col-md-2 mb-1">
                                                     <span class="main_label">Pulse</span>
                                                     <input type="text" class="form-control input-sm color_red" readonly id="ep_pulse" placeholder="Pulse">
@@ -315,12 +318,12 @@
                                                     <span class="main_label">Plain Scr</span>
                                                     <input type="text" class="form-control input-sm color_red" readonly id="ep_score"  placeholder="Plain Scr">
                                                 </div>
-        
+
                                                 <div class="col-md-2 mb-1">
                                                     <span class="main_label">Temp</span>
                                                     <input type="text" class="form-control input-sm color_red" readonly id="ep_temp"  placeholder="Temp">
                                                 </div>
-        
+
                                                 <div class="col-md-2 mb-1">
                                                     <span class="main_label">R.Rate</span>
                                                     <input type="text" class="form-control input-sm color_red" readonly id="ep_rrate"  placeholder="R.Rate">
@@ -356,7 +359,7 @@
                                                     <textarea class="form-control" style="height:80px" id="ep_nursingnotes" readonly rows="3"></textarea>
 
                                                 </div>
-                                               
+
                                             </div>
 
                                             <div class="row mt-2 mb-2">
@@ -369,13 +372,13 @@
                                                         <thead>
                                                             <tr>
                                                                 <th></th>
-                                                                <th>Code</th>  
-                                                                <th>Description</th>  
+                                                                <th>Code</th>
+                                                                <th>Description</th>
                                                                 <th>Since Date</th>
                                                                 <th>Till Date</th>
                                                             </tr>
                                                         </thead>
-                                                        
+
                                                     </table>
                                                 </div>
 
@@ -410,7 +413,7 @@
                                                         </thead>
                                                     </table>
                                                 </div>
-        
+
                                                 <div class="col-md-6 mb-1">
                                                     <div class="d-flex justify-content-between align-items-center">
                                                         <h6 class="main_heading">Immunization History</h6>
@@ -442,7 +445,7 @@
                                                         </thead>
                                                     </table>
                                                 </div>
-        
+
                                                 <div class="col-md-6 mb-1">
                                                     <div class="d-flex justify-content-between align-items-center">
                                                         <h6 class="main_heading">Drug History</h6>
@@ -474,9 +477,9 @@
                                                         </thead>
                                                     </table>
                                                 </div>
-        
+
                                             </div>
-                                        
+
                                         </div>
                                     </div>
                                 </div>
@@ -553,7 +556,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label">Medical Diagnosis</label>
                                                         <select class="form-control selecter p-0" required placeholder="Medical Diagnosis..." id="m_icddiagnose" name="m_icddiagnose">
-                                                        </select>    
+                                                        </select>
                                                     </select>
                                                 </div>
                                             </div>
@@ -578,7 +581,7 @@
                                                     <input type="text" name="m_edt" required class="form-control input06 dt" required style="height:40px" placeholder="Select Effective Date & Time">
                                                 </div>
                                             </div> --}}
-                                        
+
                                         </div>
                                     </div>
                                 </div>
@@ -621,7 +624,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label">Allergies History</label>
                                                     <textarea class="form-control" required placeholder="Allergies History..." maxlength="1000" style="height: 100%;" name="allergy_history" rows="3"></textarea>
-                                                    
+
                                                 </div>
                                             </div>
 
@@ -681,7 +684,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label">Immunization History</label>
                                                     <textarea class="form-control" required placeholder="Immunization History..." maxlength="1000" style="height: 100%;" name="immunizationhistory_history" rows="3"></textarea>
-                                                    
+
                                                 </div>
                                             </div>
 
@@ -741,7 +744,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label">Drug History</label>
                                                     <textarea class="form-control" required placeholder="Drug History..." maxlength="1000" style="height: 100%;" name="drug_history" rows="3"></textarea>
-                                                    
+
                                                 </div>
                                             </div>
 
@@ -802,7 +805,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label">Past History</label>
                                                     <textarea class="form-control" required placeholder="Past History..." maxlength="1000" style="height: 100%;" name="past_history" rows="3"></textarea>
-                                                    
+
                                                 </div>
                                             </div>
 
@@ -863,7 +866,7 @@
                                                 <div class="form-group">
                                                     <label class="control-label">Obstetric History</label>
                                                     <textarea class="form-control" required placeholder="Obstetric History..." maxlength="1000" style="height: 100%;" name="obsteric_history" rows="3"></textarea>
-                                                    
+
                                                 </div>
                                             </div>
 
@@ -896,7 +899,7 @@
             </div>
         </div>
     </div>
-   
+
     <div class="modal fade bs-example-modal-lg" id="add-socialhistory" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
@@ -1024,7 +1027,7 @@
                                                     <div class="form-group has-custom m-b-5">
                                                         <!-- <h6 class="box-title font-weight-bold" id="scheduleOrg">Organization:</h6> -->
                                                         <h6 class="box-title font-weight-bold">Organization</h6>
-                                                      
+
                                                         <select class="form-control selecter p-0" id="reqe_org" name="repi_org"  style="color:#222d32">
                                                             <option selected disabled >Select Organization</option>
                                                             @foreach ($Organizations as $Organization)
@@ -1045,7 +1048,7 @@
                                                         <h6 class="box-title font-weight-bold">Site</h6>
                                                         <select class="form-control selecter p-0" id="reqe_site" name="repi_site" style="color:#222d32">
                                                         </select>
-                                                        
+
                                                     </div>
                                                     <span class="text-danger repi_site_error"></span>
                                                 </div>
@@ -1059,7 +1062,7 @@
                                                         <h6 class="box-title font-weight-bold">Services</h6>
                                                         <select class="form-control selecter p-0" id="reqe_sevice" name="sevice_id" style="color:#222d32">
                                                         </select>
-                                                        
+
                                                     </div>
                                                     <span class="text-danger sevice_id_error"></span>
                                                 </div>
@@ -1073,7 +1076,7 @@
                                                         <h6 class="box-title font-weight-bold">Service Modes</h6>
                                                         <select class="form-control selecter p-0" id="reqe_servicemode" name="servicemode_id" style="color:#222d32">
                                                         </select>
-                                                        
+
                                                     </div>
                                                     <span class="text-danger servicemode_id_error"></span>
                                                 </div>
@@ -1093,7 +1096,7 @@
                                             </div>
                                         </div>
 
-                                        
+
                                         <div class="col-md-6">
                                             <div class="form-group row">
                                                 <div class="col-md-12">
@@ -1197,7 +1200,7 @@
                                                     <div class="form-group has-custom m-b-5">
                                                         <!-- <h6 class="box-title font-weight-bold" id="scheduleOrg">Organization:</h6> -->
                                                         <h6 class="box-title font-weight-bold">Organization</h6>
-                                                      
+
                                                         <select class="form-control selecter p-0" id="reqp_org" name="repi_org"  style="color:#222d32">
                                                             <option selected disabled >Select Organization</option>
                                                             @foreach ($Organizations as $Organization)
@@ -1218,7 +1221,7 @@
                                                         <h6 class="box-title font-weight-bold">Site</h6>
                                                         <select class="form-control selecter p-0" id="reqp_site" name="repi_site" style="color:#222d32">
                                                         </select>
-                                                        
+
                                                     </div>
                                                     <span class="text-danger repi_site_error"></span>
                                                 </div>
@@ -1232,7 +1235,7 @@
                                                         <h6 class="box-title font-weight-bold">Services</h6>
                                                         <select class="form-control selecter p-0" id="reqp_sevice" name="sevice_id" style="color:#222d32">
                                                         </select>
-                                                        
+
                                                     </div>
                                                     <span class="text-danger sevice_id_error"></span>
                                                 </div>
@@ -1246,14 +1249,14 @@
                                                         <h6 class="box-title font-weight-bold">Service Modes</h6>
                                                         <select class="form-control selecter p-0" id="reqp_servicemode" name="servicemode_id" style="color:#222d32">
                                                         </select>
-                                                        
+
                                                     </div>
                                                     <span class="text-danger servicemode_id_error"></span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                                                                
+
                                         <div class="col-md-6">
                                             <div class="form-group row">
                                                 <div class="col-md-12">
@@ -1274,7 +1277,7 @@
                                                         <h6 class="box-title font-weight-bold">Designated Physician</h6>
                                                         <select class="form-control selecter p-0" id="reqp_physician" name="physician"  style="color:#222d32">
                                                         </select>
-                                                        
+
                                                     </div>
                                                     <span class="text-danger physician_error" ></span>
                                                 </div>
@@ -1365,7 +1368,7 @@
                                                     <div class="form-group has-custom m-b-5">
                                                         <!-- <h6 class="box-title font-weight-bold" id="scheduleOrg">Organization:</h6> -->
                                                         <h6 class="box-title font-weight-bold">Organization</h6>
-                                                      
+
                                                         <select class="form-control selecter p-0" id="reqi_org" name="repi_org"  style="color:#222d32">
                                                             <option selected disabled >Select Organization</option>
                                                             @foreach ($Organizations as $Organization)
@@ -1386,7 +1389,7 @@
                                                         <h6 class="box-title font-weight-bold">Site</h6>
                                                         <select class="form-control selecter p-0" id="reqi_site" name="repi_site" style="color:#222d32">
                                                         </select>
-                                                        
+
                                                     </div>
                                                     <span class="text-danger repi_site_error"></span>
                                                 </div>
@@ -1400,7 +1403,7 @@
                                                         <h6 class="box-title font-weight-bold">Services</h6>
                                                         <select class="form-control selecter p-0" id="reqi_sevice" name="sevice_id" style="color:#222d32">
                                                         </select>
-                                                        
+
                                                     </div>
                                                     <span class="text-danger sevice_id_error"></span>
                                                 </div>
@@ -1414,7 +1417,7 @@
                                                         <h6 class="box-title font-weight-bold">Service Modes</h6>
                                                         <select class="form-control selecter p-0" id="reqi_servicemode" name="servicemode_id" style="color:#222d32">
                                                         </select>
-                                                        
+
                                                     </div>
                                                     <span class="text-danger servicemode_id_error"></span>
                                                 </div>
@@ -1433,7 +1436,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        
+
                                         <div class="col-md-6">
                                             <div class="form-group row">
                                                 <div class="col-md-12">
@@ -1441,7 +1444,7 @@
                                                         <h6 class="box-title font-weight-bold">Designated Physician</h6>
                                                         <select class="form-control selecter p-0" id="reqi_physician" name="physician"  style="color:#222d32">
                                                         </select>
-                                                        
+
                                                     </div>
                                                     <span class="text-danger physician_error"></span>
                                                 </div>
@@ -1542,7 +1545,7 @@
                                         <div class="col-md-6">
                                             <div class="form-group">
                                                 <label class="control-label">Attachments</label>
-                                                <input type="file" id="attachments" name="patient_attachments[]" class="form-control dropify" 
+                                                <input type="file" id="attachments" name="patient_attachments[]" class="form-control dropify"
                                                        data-height="100" multiple style="height:80px" />
                                             </div>
                                             <div id="file-names" style="margin-top: 10px; font-size:14px; color:#555;"></div>
@@ -1596,7 +1599,7 @@
                     <h5>Symptoms</h5>
                     <ul id="complaints-list">
                     </ul>
-                    
+
                     <h5>Clinical Notes</h5>
                     <p id="visit_clinical_notes">
                     </p>
@@ -1604,7 +1607,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="modal fade bs-example-modal-lg" id="edit-reqi" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
@@ -1681,11 +1684,11 @@
             const fileNamesContainer = $('#file-names');
             const dropifyInstance = $('.dropify').dropify();
             $('#attachments').on('change', function () {
-                fileNamesContainer.empty(); 
+                fileNamesContainer.empty();
                 const files = this.files;
                 if (files.length > 0) {
                     Array.from(files).forEach(file => {
-                        fileNamesContainer.append(`<p>${file.name}</p>`); 
+                        fileNamesContainer.append(`<p>${file.name}</p>`);
                     });
                 }
             });
@@ -1699,7 +1702,7 @@
             currentDate: new Date(),
             maxDate: new Date()
         });
-        
+
         $('.do').bootstrapMaterialDatePicker({ weekStart : 0,  currentDate: new Date(), maxDate: new Date(), time: false });
     </script>
     <script src="{{ asset('assets/custom/encounter_procedures.js') }}"></script>

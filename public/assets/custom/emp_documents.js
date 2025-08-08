@@ -2,8 +2,15 @@ $(document).ready(function() {
     //Open Add Employee Documents Modal
     $(document).on('click', '.add-empDocuments', function() {
         $('#emp-info-row').hide();
-        $('.dropify').dropify();
-        $('#file-names').empty();
+        // $('.dropify').dropify();
+        $('.dropify').each(function () {
+            const drEvent = $(this).data('dropify');
+            if (drEvent) {
+                drEvent.resetPreview();
+                drEvent.clearElement();
+            }
+        });
+        $('.file-names').empty();
         var orgId = $('#ed_org').val();
         $('#ed-site').empty();
         $('#ed-site').select2();
@@ -116,7 +123,6 @@ $(document).ready(function() {
         e.preventDefault(); 
         var data = new FormData(this);
         var orgId = $('#ed_org').val();
-        console.log(orgId);
 
         data.append('ed_org', orgId);
 
@@ -165,9 +171,14 @@ $(document).ready(function() {
                         if (result.isConfirmed) {
                             $('#add-empDocuments').modal('hide');
                             $('#view-empDocuments').DataTable().ajax.reload();
-                            $('#add_empDocuments').find('select').val($('#add_empDocuments').find('select option:first').val()).trigger('change');
                             $('#add_empDocuments')[0].reset();
-                            $('.dropify').dropify(); 
+                            $('.dropify').each(function () {
+                                const drEvent = $(this).data('dropify');
+                                if (drEvent) {
+                                    drEvent.resetPreview();
+                                    drEvent.clearElement();
+                                }
+                            });
                             $('.text-danger').hide();
                         }
                     });

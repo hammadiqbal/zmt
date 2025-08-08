@@ -25,7 +25,7 @@ $(document).ready(function() {
                     $('#sm_generic').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
-            
+
         }
         else{
             $('#sm_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled', true);
@@ -35,11 +35,11 @@ $(document).ready(function() {
             OrgChangeInventoryGeneric('#sm_org', '#sm_generic', '#add_stockmonitoring');
         }
         $('#sm_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', true);
-        SiteChangeActivatedServiceLocation('#sm_site','#sm_location', '#add_stockmonitoring',false);
-        
+        SiteChangeActivatedServiceLocation('#sm_site','#sm_location', '#add_stockmonitoring',false, true);
+
         $('#sm_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
         GenericChangeBrand('#sm_generic', '#sm_brand', '#add_stockmonitoring');
-        
+
         $('#add-stockmonitoring').modal('show');
     });
     //Open Stock Monitoring Setup
@@ -160,16 +160,16 @@ $(document).ready(function() {
     });
     //Add Stock Monitoring Method
 
-    // View Stock Monitoring 
+    // View Stock Monitoring
     var viewStockMonitoring =  $('#view-stockmonitoring').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
             url: '/inventory/viewstockmonitoring',
             data: function (d) {
-                d.site = $('#fb_site').val();  
-                d.generic = $('#fb_generic').val();  
-                d.brand = $('#fb_brand').val();  
+                d.site = $('#fb_site').val();
+                d.generic = $('#fb_generic').val();
+                d.brand = $('#fb_brand').val();
             }
         },
         order: [[0, 'desc']],
@@ -201,14 +201,14 @@ $(document).ready(function() {
         ]
     });
     $('#fb_site,#fb_generic,#fb_brand').on('change', function () {
-        viewStockMonitoring.ajax.reload();  
+        viewStockMonitoring.ajax.reload();
     });
 
     $('.clearFilter').on('click', function () {
         $('#fb_site,#fb_generic,#fb_brand').each(function() {
             $(this).val($(this).find('option:first').val()).change();
         });
-        viewStockMonitoring.ajax.reload();   
+        viewStockMonitoring.ajax.reload();
     });
     viewStockMonitoring.on('draw.dt', function() {
         $('[data-toggle="popover"]').popover({
@@ -221,7 +221,7 @@ $(document).ready(function() {
     viewStockMonitoring .on('xhr.dt', function() {
         $('#ajax-loader').hide();
     });
-    // View Stock Monitoring 
+    // View Stock Monitoring
 
     // Update Stock Monitoring  Status
     $(document).on('click', '.sm_status ', function() {
@@ -310,7 +310,7 @@ $(document).ready(function() {
                 GenericChangeBrand('#u_sm_generic', '#u_sm_brand', '#u_stockmonitoring');
 
                 $('#u_sm_servicelocation').html("<option selected value="+ response.serviceLocationId +">" + response.serviceLocation + "</option>");
-                fetchActiveSL(response.siteId, '#u_sm_servicelocation', function(data) {
+                fetchActiveSL(response.siteId, '#u_sm_servicelocation',false, true, function(data) {
                     $.each(data, function(key, value) {
                         if(value.location_id != response.serviceLocationId)
                         {
@@ -319,8 +319,8 @@ $(document).ready(function() {
                         }
                     });
                 });
-                
-                SiteChangeActivatedServiceLocation('#u_sm_site','#u_sm_servicelocation', '#u_stockmonitoring',false);
+
+                SiteChangeActivatedServiceLocation('#u_sm_site','#u_sm_servicelocation', '#u_stockmonitoring',false, true);
 
 
                 $('#u_sm_min_stock').val(response.minStock);

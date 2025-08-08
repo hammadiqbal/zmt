@@ -60,7 +60,7 @@ $(document).ready(function() {
         $(document).off('change', '#rot_transactiontype').on('change', '#rot_transactiontype', function() {
             let transactionTypeID = $(this).val();
             let siteId = null;
-        
+
             $.ajax({
                 url: 'inventory/gettransactiontypeim',
                 type: 'GET',
@@ -87,6 +87,7 @@ $(document).ready(function() {
                         });
                         return;
                     }
+
                     let sourceType = (resp.Source || '').toLowerCase();
                     if (sourceType.includes('location')) {
                         $('.s_data').show();
@@ -114,7 +115,7 @@ $(document).ready(function() {
                             .empty()
                             .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
                     }
-        
+
                     let destType = (resp.Destination || '').toLowerCase();
                     if (destType.includes('location')) {
                         $('.d_data').show();
@@ -151,14 +152,14 @@ $(document).ready(function() {
                 }
             });
         });
-    
+
         // $('#rot_source_location').html("<option selected disabled value=''>Select Source Location</option>").prop('disabled', true);
         // SiteChangeActivatedServiceLocation('#rot_source_site','#rot_source_location', '#add_reqothertransaction',true );
 
         // $('#rot_destination_location').html("<option selected disabled value=''>Select Destination Location</option>").prop('disabled', true);
         // SiteChangeActivatedServiceLocation('#rot_destination_site','#rot_destination_location', '#add_reqothertransaction',true );
 
-        
+
         $('#add-reqothertransaction').modal('show');
     });
     //Open Add Requisition For Other Transactions
@@ -217,7 +218,7 @@ $(document).ready(function() {
             var originalFieldName = field.name;
             var sanitizedFieldName = originalFieldName.replace(/\[\]/g, '');
             if (excludedFields.indexOf(sanitizedFieldName) !== -1) {
-                return true; 
+                return true;
             }
             if ((field.value == '') || (field.value == null))
             {
@@ -226,7 +227,7 @@ $(document).ready(function() {
                 console.log(FieldName);
 
                 var FieldID = '#'+FieldName + "_error";
-              
+
                 $(FieldID).text("This field is required");
                 $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
                 $( 'input[name= "' +FieldName +'"' ).focus(function() {
@@ -444,7 +445,7 @@ $(document).ready(function() {
 
 
                 $('#u_rot_source_location').html("<option selected value="+ response.SourceLocationId +">" + response.SourcelocationName + "</option>");
-                fetchActiveSL(response.sourcesiteId, '#u_rot_source_location', true, function(data) {
+                fetchActiveSL(response.sourcesiteId, '#u_rot_source_location', true, true,function(data) {
                     $.each(data, function(key, value) {
                         if(value.location_id != response.SourceLocationId)
                         {
@@ -452,11 +453,11 @@ $(document).ready(function() {
                         }
                     });
                 });
-                SiteChangeActivatedServiceLocation('#u_rot_source_site','#u_rot_source_location', '#update_reqothertransaction',true );
+                SiteChangeActivatedServiceLocation('#u_rot_source_site','#u_rot_source_location', '#update_reqothertransaction',true,true );
 
 
                 $('#u_rot_destination_location').html("<option selected value="+ response.DestinationLocationId +">" + response.DestinationlocationName + "</option>");
-                fetchActiveSL(response.destinationsiteId, '#u_rot_destination_location', true, function(data) {
+                fetchActiveSL(response.destinationsiteId, '#u_rot_destination_location', true, true, function(data) {
                     $.each(data, function(key, value) {
                         if(value.location_id != response.DestinationLocationId)
                         {
@@ -464,7 +465,7 @@ $(document).ready(function() {
                         }
                     });
                 });
-                SiteChangeActivatedServiceLocation('#u_rot_destination_site','#u_rot_destination_location', '#update_reqothertransaction',true );
+                SiteChangeActivatedServiceLocation('#u_rot_destination_site','#u_rot_destination_location', '#update_reqothertransaction',true, true );
 
 
 
@@ -498,7 +499,7 @@ $(document).ready(function() {
                         fetchInventoryGenerics('#u_rot_itemgeneric' + index, 'material', function (data) {
                             if (data.length > 0) {
                                 $.each(data, function (key, value) {
-                                    if ($.inArray(value.id.toString(), genericIds[index]) === -1) 
+                                    if ($.inArray(value.id.toString(), genericIds[index]) === -1)
                                     {
                                         $('#u_rot_itemgeneric' + index).append('<option value="' + value.id + '">' + value.name + '</option>');
                                     }
@@ -506,7 +507,7 @@ $(document).ready(function() {
                                 $('#u_rot_itemgeneric' + index).select2();
                             }
                         });
-                    })(i); 
+                    })(i);
 
                     var qtyField = '<div class="col-md-6">' +
                         '<div class="form-group row">' +
@@ -519,7 +520,7 @@ $(document).ready(function() {
                         '</div>' +
                         '</div>' +
                         '</div>';
-                
+
                     var row =+ '</div>';
                     $('.uduplicate').append('<div class="row pt-3 pb-1 rot_details" style="border: 1px solid #939393;">' + GenericField + qtyField +'</div>');
                 }

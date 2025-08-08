@@ -1,14 +1,14 @@
 $(document).ready(function() {
         //Employee Inventory Location Allocation
         $('.site_ela,.invSite').html("<option selected disabled value=''>Select Site</option>").prop('disabled', true);
-        $('.emp_location').show(); 
+        $('.emp_location').show();
         $(document).on('click', '.emp-locationAllocation', function() {
             $('#emp-info-row').hide();
             $('.duplicate').not(':first').remove();
             var orgId = $('.org_ela').val();
             if(orgId)
             {
-                
+
                 fetchOrganizationSites(orgId, '.site_ela, .invSite', function(data) {
                     $('.site_ela, .invSite').html("<option selected disabled value=''>Select Site</option>").prop('disabled', false);
                     $.each(data, function(key, value) {
@@ -23,7 +23,7 @@ $(document).ready(function() {
                 });
             }
             else{
-               
+
                 fetchOrganizations(null,null,'.org_ela', function(data) {
                     var options = ["<option selected disabled value=''>Select Organization</option>"];
                     $.each(data, function(key, value) {
@@ -38,9 +38,9 @@ $(document).ready(function() {
             $('.emp_ela').empty();
             $('.service_sa').select2();
             $('.emp_ela').html("<option selected disabled value=''>Select Employee</option>").prop('disabled',true);
-    
+
             SiteChangeEmployees('.site_ela', '.emp_ela', '#emp_locationallocation');
-                
+
             $('input[name="location_ela_value"]').prop('disabled', true);
             // var currentRow = $(this).closest('.duplicate'); // Find the current row
             // var currentRowSiteSelect = currentRow.find('.location_ela_value'); // Find the cost center dropdown in the current row
@@ -92,7 +92,7 @@ $(document).ready(function() {
                         // $('#emailLabel').hide();
                         // $('input[name="useremail"]').val(value.email).attr('readonly', true);
                     });
-            
+
                 }, function(error) {
                     console.log(error);
                 });
@@ -100,10 +100,10 @@ $(document).ready(function() {
         });
 
         $(document).on('change', '.invSite', function() {
-            $('.emp_location').hide(); 
+            $('.emp_location').hide();
             var siteId = $(this).val();
-            var currentRow = $(this).closest('.duplicate'); 
-            var currentRowLocationSelect = currentRow.find('.location_ela_value'); 
+            var currentRow = $(this).closest('.duplicate');
+            var currentRowLocationSelect = currentRow.find('.location_ela_value');
             var inventoryStatus = false;
             var empCheck = false;
             if (siteId) {
@@ -113,10 +113,10 @@ $(document).ready(function() {
                         $('#multiServicelocation').empty();
 
                         if ($.fn.DataTable.isDataTable('#emplocationallocationtable')) {
-                            $('#emplocationallocationtable').DataTable().clear().destroy(); 
+                            $('#emplocationallocationtable').DataTable().clear().destroy();
                         }
                         data.forEach(item => {
-                                                
+
                             var embedData = `
                                 <tr style="font-size:14px;cursor:pointer;">
                                     <td>
@@ -128,7 +128,7 @@ $(document).ready(function() {
                                     <td>${item.name}</td>
                                 </tr>`;
 
-                            
+
                             $('#multiServicelocation').append(embedData);
                         });
                         $('#multiServicelocation').off('click', 'tr').on('click', 'tr', function(e) {
@@ -137,13 +137,13 @@ $(document).ready(function() {
                         });
                         $('#emplocationallocationtable').DataTable({
                             paging: false,
-                            searching: true, 
-                            ordering: true, 
+                            searching: true,
+                            ordering: true,
                             columnDefs: [
-                                { orderable: false, targets: [0] } 
+                                { orderable: false, targets: [0] }
                             ]
                         });
-                    } 
+                    }
                     else {
                         Swal.fire({
                             text: 'Locations are not activated for selected Site',
@@ -159,29 +159,29 @@ $(document).ready(function() {
                     }
                 });
 
-               
+
             } else {
-                currentRowCCSelect.empty();
-                currentRowCCSelect.html("<option selected disabled value=''>Select Cost Center</option>").prop('disabled', true);
+                currentRowLocationSelect.empty();
+                currentRowLocationSelect.html("<option selected disabled value=''>Select Inventory Locations</option>").prop('disabled', true);
             }
         });
 
         $(document).on('change', '.uinvSite', function() {
             var siteId = $(this).val();
             if (siteId) {
-                $('.uemp_location').hide(); 
-                var currentRow = $(this).closest('.sl-item'); 
-                var currentRowLocationSelect = currentRow.find('.ulocation_ela_value'); 
+                $('.uemp_location').hide();
+                var currentRow = $(this).closest('.sl-item');
+                var currentRowLocationSelect = currentRow.find('.ulocation_ela_value');
                 currentRow.find('#umultiServicelocation').empty();
                 currentRow.find('input[name="ulocation_ela[]"]').val('');
                 currentRow.find('.ulocation_ela_value').val('').attr('placeholder', 'Select Service location');;
             }
         });
-    
+
         $('#emp_locationallocation').submit(function(e) {
             e.preventDefault(); // Prevent the form from submitting normally
             var data = SerializeForm(this);
-           
+
             var resp = true;
             $(".duplicate").each(function() {
                 var row = $(this);
@@ -222,14 +222,14 @@ $(document).ready(function() {
                 {
                     var FieldName = field.name;
                     var FieldID = '.'+FieldName + "_error";
-                  
+
                     $(FieldID).text("This field is required");
                     $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
                     $( 'input[name= "' +FieldName +'"' ).focus(function() {
                         $(FieldID).text("");
                         $('input[name= "' +FieldName +'"' ).removeClass("requirefield");
                     })
-    
+
                     $('select[name= "' +FieldName +'"' ).next('.select2-container').find('.select2-selection').addClass('requirefield');
                     $('select[name= "' +FieldName +'"' ).on('select2:open', function() {
                         $(FieldID).text("");
@@ -258,7 +258,7 @@ $(document).ready(function() {
                         });
                     },
                     success: function(response) {
-    
+
                         for (var fieldName in response) {
                             var fieldErrors = response[fieldName];
                         }
@@ -304,7 +304,7 @@ $(document).ready(function() {
                                 }
                             });
                         }
-    
+
                     },
                     error: function(error) {
                         if (error.responseJSON && error.responseJSON.errors) {
@@ -323,12 +323,12 @@ $(document).ready(function() {
                 });
             }
         });
-    
+
         $('#viewempLocation').on('change', function() {
             var EmployeeId = $(this).val();
             LoadEmpAllocatedLocation(EmployeeId);
         });
-    
+
         //Update Employee Location
         $('#updateEmpLocation').submit(function(e) {
             e.preventDefault();
@@ -398,7 +398,7 @@ $(document).ready(function() {
                     console.log(error);
                 }
             });
-    
+
         });
         //Update Employee Location
 });

@@ -6,8 +6,8 @@ $(document).ready(function() {
     $(document).on('click', '.emp-serviceallocation', function() {
         $('#emp-info-row').hide();
         var orgId = $('#org_sa').val();
-        $('#emp_services').show(); 
-        
+        $('#emp_services').show();
+
         if(orgId)
         {
             fetchOrganizationSites(orgId, '#site_sa', function(data) {
@@ -34,7 +34,7 @@ $(document).ready(function() {
 
         $('input[name="service_sa_value"]').prop('disabled', true);
         EmployeeChangeMultiSelectService('#emp_sa', '#site_sa', '#service_sa_value', '#emp_serviceallocation');
-        
+
         $('#empserviceallocation').modal('show');
         $('#emp_sa').change(function() {
             var empId = $(this).val();
@@ -78,7 +78,7 @@ $(document).ready(function() {
                     // $('#emailLabel').hide();
                     // $('input[name="useremail"]').val(value.email).attr('readonly', true);
                 });
-        
+
             }, function(error) {
                 console.log(error);
             });
@@ -92,10 +92,10 @@ $(document).ready(function() {
     });
 
     $('#selectAllempServiceAllocation').on('change', function() {
-        $('input[name="selectedServices[]"]').prop('checked', $(this).prop('checked')); 
+        $('input[name="selectedServices[]"]').prop('checked', $(this).prop('checked'));
         updateHiddenServices();
     });
-    
+
     $('#emp_serviceallocation').submit(function(e) {
         e.preventDefault();
         updateHiddenServices();
@@ -260,11 +260,11 @@ $(document).ready(function() {
     $('.nested-services-table').each(function () {
         if (!$.fn.DataTable.isDataTable(this)) {
                     $(this).DataTable({
-                    paging: true,  
-                    searching: false,  
-                    info: false,  
-                    ordering: false, 
-                    lengthChange: false 
+                    paging: true,
+                    searching: false,
+                    info: false,
+                    ordering: false,
+                    lengthChange: false
                 });
             }
         });
@@ -315,7 +315,7 @@ $(document).ready(function() {
 
     $(document).on('click', '.edit-serviceallocation', function() {
         $('input[name="uselectedServices[]"]').prop('checked', false);
-        $('#umultiService').empty(); 
+        $('#umultiService').empty();
         $( 'input[name= "uservice_value"' ).removeClass('requirefield');
         var serviceallocationId = $(this).data('serviceallocation-id');
         $('#u_saemp').empty();
@@ -349,26 +349,26 @@ $(document).ready(function() {
 
                 AllocateEmpServices(empID, siteId,'#u_saservice', function(data) {
                     if ($.fn.DataTable.isDataTable('#umultiserviceTable')) {
-                        $('#umultiserviceTable').DataTable().clear().destroy(); 
+                        $('#umultiserviceTable').DataTable().clear().destroy();
                     }
                     data.forEach(item => {
-                        var billingCostCenter = item.BillingCCNames  ? 
-                        item.BillingCCNames .split(',').map((billingcc, index, array) => 
+                        var billingCostCenter = item.BillingCCNames  ?
+                        item.BillingCCNames .split(',').map((billingcc, index, array) =>
                             `${billingcc}${index < array.length - 1 ? '<hr class="mt-1 mb-1">' : ''}`
-                        ).join('') : 
-                        'No Billing Cost Center Available';  
+                        ).join('') :
+                        'No Billing Cost Center Available';
 
-                        var performingCostCenter = item.PerformingCCNames  ? 
-                        item.PerformingCCNames .split(',').map((performingcc, index, array) => 
+                        var performingCostCenter = item.PerformingCCNames  ?
+                        item.PerformingCCNames .split(',').map((performingcc, index, array) =>
                             `${performingcc}${index < array.length - 1 ? '<hr class="mt-1 mb-1">' : ''}`
-                        ).join('') : 
-                        'No Performing Cost Center Available';  
-                        
-                        var serviceModes = item.ServiceModeNames ? 
-                        item.ServiceModeNames.split(',').map((mode, index, array) => 
+                        ).join('') :
+                        'No Performing Cost Center Available';
+
+                        var serviceModes = item.ServiceModeNames ?
+                        item.ServiceModeNames.split(',').map((mode, index, array) =>
                             `${mode}${index < array.length - 1 ? '<hr class="mt-1 mb-1">' : ''}`
-                        ).join('') : 
-                        'No Modes Available';                       
+                        ).join('') :
+                        'No Modes Available';
                         var embedData = `
                             <tr style="font-size:14px;cursor:pointer;">
                                 <td>
@@ -389,7 +389,7 @@ $(document).ready(function() {
                         if (serviceIDs.includes(item.id.toString())) {
                             $('#uas_' + item.id).prop('checked', true);
                         }
-                        
+
                     });
                     $('#umultiService').off('click', 'tr').on('click', 'tr', function(e) {
                         let $checkbox = $(this).find('input[type="checkbox"]');
@@ -397,10 +397,10 @@ $(document).ready(function() {
                     });
                     $('#umultiserviceTable').DataTable({
                         paging: false,
-                        searching: true, 
-                        ordering: true, 
+                        searching: true,
+                        ordering: true,
                         columnDefs: [
-                            { orderable: false, targets: [0] } 
+                            { orderable: false, targets: [0] }
                         ]
                     });
 

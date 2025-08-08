@@ -65,6 +65,7 @@
     <script src="{{ asset('assets/lib/plugins/bootstrap-material-datetimepicker/js/bootstrap-material-datetimepicker.js') }}"></script>
     <script src="{{ asset('assets/lib/plugins/bootstrap-daterangepicker/daterangepicker.js') }}"></script>
     <script src="{{ asset('assets/lib/plugins/bootstrap-datepicker/bootstrap-datepicker.min.js') }}"></script>
+    
     <!-- icheck -->
     <script src="{{ asset('assets/lib/plugins/icheck/icheck.min.js') }}"></script>
     <script src="{{ asset('assets/lib/plugins/icheck/icheck.init.js') }}"></script>

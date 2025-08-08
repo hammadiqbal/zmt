@@ -143,14 +143,14 @@
                                                         <div class="col-md-12">
                                                             <div class="form-group has-custom m-b-5">
                                                                 <label class="control-label">Services <code id="emp_services">(Select an employee to choose services)</code></label>
-                                                                <input type="text" class="form-control cursor-pointer" data-toggle="modal" 
+                                                                <input type="text" class="form-control cursor-pointer" data-toggle="modal"
                                                                 data-target="#serviceAllocationModal" id="service_sa_value" readonly placeholder="Select Services" name="service_sa_value">
                                                                 <span class="text-danger" id="service_sa_value_error"></span>
                                                                 <input type="hidden" name="service_sa[]">
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div> 
+                                                </div>
 
                                                 <div class="col-md-6">
                                                     <div class="form-group row">
@@ -209,7 +209,7 @@
                                                     <th>Billing Cost Center</th>
                                                     <th>Performing Cost Center</th>
                                                     <th>Primary Service Modes</th>
-                                                    
+
                                             </thead>
                                             <tbody id="multiService">
                                             </tbody>
@@ -280,13 +280,13 @@
                                                         <div class="col-md-12">
                                                             <div class="form-group has-custom m-b-5">
                                                                 <label class="control-label">Update Services</label>
-                                                                <input type="text" class="form-control cursor-pointer" data-toggle="modal" 
+                                                                <input type="text" class="form-control cursor-pointer" data-toggle="modal"
                                                                 data-target="#uservicesModal" readonly required name="uservice_value">
                                                                 <input type="hidden" name="u_saservice[]">
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div> 
+                                                </div>
 
                                                 <div class="col-md-6">
                                                     <div class="form-group">
@@ -336,14 +336,14 @@
                                             <th>Billing Cost Center</th>
                                             <th>Performing Cost Center</th>
                                             <th>Primary Service Modes</th>
-                                            
+
                                     </thead>
                                     <tbody id="umultiService">
                                     </tbody>
                                 </table>
                             </div>
                         {{-- <div class="row" id="umultiService">
-                           
+
                         </div> --}}
                     </div>
                 </div>
@@ -369,7 +369,7 @@
         $('#date-format').bootstrapMaterialDatePicker({
             format: 'dddd DD MMMM YYYY - hh:mm A',
             currentDate: new Date()
-        });          
+        });
         $('#date-format1').bootstrapMaterialDatePicker({ format : 'dddd DD MMMM YYYY - hh:mm:ss A' });
     </script>
     <script src="{{ asset('assets/custom/emp_service_allocation.js') }}"></script>

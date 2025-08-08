@@ -11,15 +11,15 @@ $(document).ready(function() {
         $('.addep').hide();
         clearTimeout(typingTimer);
         const selectedMr = $(this).val();
-        if (selectedMr && selectedMr.length >= minLength) { 
+        if (selectedMr && selectedMr.length >= minLength) {
             typingTimer = setTimeout(function () {
                 FetchEncounterProcedureRecord();
                 $(document).off('click', '.add_complain').on('click', '.add_complain', function () {
                     var serviceId = $(this).attr('data-serviceid');
                     currentPage = 1;
                     searchQuery = '';
-                    $('#icd-search').val(''); 
-                    fetchSymptomsICDCodes(serviceId); 
+                    $('#icd-search').val('');
+                    fetchSymptomsICDCodes(serviceId);
                     $('#add-complain').modal('show');
                 });
 
@@ -28,8 +28,8 @@ $(document).ready(function() {
 
                     searchQuery = $(this).val();
                     currentPage = 1;
-                    
-                    fetchSymptomsICDCodes(serviceId,currentPage, searchQuery); 
+
+                    fetchSymptomsICDCodes(serviceId,currentPage, searchQuery);
                 });
 
                 $(document).off('click', '.load-more').on('click', '.load-more', function () {
@@ -38,17 +38,17 @@ $(document).ready(function() {
                 });
 
             }, doneTypingInterval);
-            
-    
+
+
             clearDataTable('#view-complain');
-            $('#icd-codes-container').empty(); 
-            selectedICDIds.clear(); 
-            selectedICDCodes = []; 
-            table.clear().draw(); 
+            $('#icd-codes-container').empty();
+            selectedICDIds.clear();
+            selectedICDCodes = [];
+            table.clear().draw();
             $('input[id="icdIDs"]').val('');
-        } 
+        }
     });
-    
+
     function FetchEncounterProcedureRecord(selectedService) {
         $('#ajax-loader').show();
         var mrNumber = $("#ep_mr").val();
@@ -66,27 +66,27 @@ $(document).ready(function() {
                 url: url,
                 type: 'GET',
                 dataType: 'json',
-                data: { serviceId: selectedService }, 
+                data: { serviceId: selectedService },
                 success: function(response) {
                     if (response.info && response.info == '200') {
                         $('#ajax-loader').hide();
                         let modalContent = "";
                         response.services.forEach(service => {
                             modalContent += `<button class="service-btn btn btn-primary btn-block mb-2 text-left" data-serviceid="${service.serviceId}">
-                                ${service.serviceName} 
+                                ${service.serviceName}
                             </button>`;
                         });
-        
+
                         $('#service-modal .modal-body').html(modalContent);
-                        $('#service-modal').modal({ 
-                            backdrop: 'static', 
-                            keyboard: false 
+                        $('#service-modal').modal({
+                            backdrop: 'static',
+                            keyboard: false
                         });
                         $('#service-modal').modal('show');
-        
+
                         $('.service-btn').click(function () {
                             let selectedServiceId = $(this).attr('data-serviceid');
-                            FetchEncounterProcedureRecord(selectedServiceId); 
+                            FetchEncounterProcedureRecord(selectedServiceId);
                             $('#service-modal').modal('hide');
                         });
                     }
@@ -139,6 +139,24 @@ $(document).ready(function() {
                             $('#ep_details, #billing_details_section').hide();
                             $('#ep_table, #ep_history').show();
 
+                            $('.encounterModal, .procedureModal, .investigationModal').each(function () {
+                                $(this)
+                                    .prop('disabled', true)
+                                    .css({
+                                        'cursor': 'not-allowed',
+                                        'opacity': '0.65'
+                                    })
+                                    .attr('title', 'Disabled');
+                            });
+
+                            $('#order-medication-link button')
+                            .prop('disabled', true)
+                            .css({
+                                'cursor': 'not-allowed',
+                                'opacity': '0.65'          
+                            })
+                            .attr('title', 'Disabled');
+
                             $('.sevice_id').val('');
                             $('.add_complain').removeAttr('data-serviceid');
                             $('.load-more').removeAttr('data-serviceid');
@@ -160,7 +178,7 @@ $(document).ready(function() {
                             $('.ep_age').val(response.patientDOB);
 
                             $('.encounterModal, .investigationModal, .procedureModal').attr('data-mr', mrNumber);
-                            
+
 
                             fetchLatestVitalSignRecord(mrNumber);
                             fetchMedicalHistory(mrNumber);
@@ -183,11 +201,41 @@ $(document).ready(function() {
                             // }
                             // $('#ajax-loader').hide();
 
-                            // fetchVitalSignData(mrNumber) 
+                            // fetchVitalSignData(mrNumber)
                         }
                         else{
                             $('.addep').show();
                             $('#ep_details, #ep_table, #ep_history,#billing_details_section').show();
+                            if (response.billingCCId && response.performingCCId && response.billingCCId === response.performingCCId) {
+                                // Enable buttons
+                                $('.encounterModal, .procedureModal, .investigationModal, #order-medication-link button')
+                                    .prop('disabled', false)
+                                    .css({
+                                        'cursor': '',
+                                        'opacity': ''
+                                    })
+                                    .removeAttr('title');
+
+                                $('#order-medication-link').css({
+                                    'pointer-events': 'auto',
+                                    'cursor': ''
+                                }).removeAttr('title');
+                            } else {
+                                // Disable buttons visually and functionally
+                                $('.encounterModal, .procedureModal, .investigationModal, #order-medication-link button')
+                                    .prop('disabled', true)
+                                    .css({
+                                        'cursor': 'not-allowed',
+                                        'opacity': '0.65'
+                                    })
+                                    .attr('title', 'Disabled');
+
+                                $('#order-medication-link').css({
+                                    'pointer-events': 'none',
+                                    'cursor': 'not-allowed'
+                                }).attr('title', 'Disabled');
+}
+
                             var siteName = response.siteName;
                             var serviceMode = response.serviceMode;
                             var serviceName = response.serviceName;
@@ -206,6 +254,8 @@ $(document).ready(function() {
                             $('#ep_smt').html('<b>Service Mode & Type</b> : ' + serviceMode + ' & ' + serviceType);
                             $('#ep_sgb').html('<b>Service Group & Booking</b> : ' + serviceGroup + ' & Booked');
                             $('#ep_service').html('<b>Service</b> : ' + serviceName);
+                            let remarks = response.patientInOutRemarks?.trim() || 'N/A';
+                            $('#ep_remarks').html('<b>Remarks</b> : ' + remarks);
                             $('#ep_pname').val(response.patientName);
                             $('#ep_gender').val(response.genderName);
                             $('.ep_age').val(response.patientDOB);
@@ -226,6 +276,7 @@ $(document).ready(function() {
                             // response.billingCCId
                             // response.empID
                             // response.empName
+                            console.log(response);
                             $('#ep_bcc').val(response.billingCCName);
                             $('#ep_pcc').val(response.performingCCName);
                             $('.sevice_id').val(response.serviceId);
@@ -269,7 +320,7 @@ $(document).ready(function() {
         }
     }
 
-    // Open Tracking Visit 
+    // Open Tracking Visit
     $(document).on('click', '.viewVisitDetails', function() {
         var Id = $(this).data('id');
         $('#view-visitDetails').modal('show');
@@ -297,8 +348,8 @@ $(document).ready(function() {
         });
         $('#ajax-loader').hide();
     });
-    // Open Tracking Visit 
-    
+    // Open Tracking Visit
+
     // Open Medical Diagnosis History Modal
     $(document).on('click', '.add_diagnosehistory', function() {
         $('#m_sincedate').bootstrapMaterialDatePicker({ weekStart : 0, time: false,  maxDate: new Date() });
@@ -308,7 +359,7 @@ $(document).ready(function() {
         $('#m_icddiagnose').select2({
             placeholder: 'Select Medical Diagnosis',
             ajax: {
-                url: 'medicalrecord/getdiagnosisicdcode', 
+                url: 'medicalrecord/getdiagnosisicdcode',
                 type: 'GET',
                 dataType: 'json',
                 delay: 250,
@@ -320,7 +371,7 @@ $(document).ready(function() {
                 },
                 processResults: function (data, params) {
                     params.page = params.page || 1;
-        
+
                     return {
                         results: data.data.map(function (item) {
                             return { id: item.id, text: `${item.code} - ${item.description}` };
@@ -334,7 +385,7 @@ $(document).ready(function() {
             },
             minimumInputLength: 0
         });
-        
+
         // fetchDiagnosisICDCodes('#m_icddiagnose', function(data) {
         //     $.each(data, function(key, value) {
         //         $('#m_icddiagnose').append('<option value="' + value.id + '">' + value.code + '</option>');
@@ -411,8 +462,8 @@ $(document).ready(function() {
 
                             }
                         });
-                
-                        successMessageShown = true; 
+
+                        successMessageShown = true;
                     }
                 }
             },
@@ -434,14 +485,14 @@ $(document).ready(function() {
     });
     //Add Medical Diagnosis History
 
-    // Open Allergies Diagnosis History 
+    // Open Allergies Diagnosis History
     $(document).on('click', '.add_allergieshistory', function() {
         $('#al_sincedate').bootstrapMaterialDatePicker({ weekStart : 0, time: false,  maxDate: new Date() });
 
         $('#add-allergieshistory').modal('show');
         $('#ajax-loader').hide();
     });
-    // Open Allergies Diagnosis History 
+    // Open Allergies Diagnosis History
 
     //Add Allergies History
     $('#add_allergieshistory').submit(function(e) {
@@ -506,8 +557,8 @@ $(document).ready(function() {
                                 $('.text-danger').hide();
                             }
                         });
-                
-                        successMessageShown = true; 
+
+                        successMessageShown = true;
                     }
                 }
             },
@@ -529,14 +580,14 @@ $(document).ready(function() {
     });
     //Add Allergies History
 
-    // Open Immunization Diagnosis History 
+    // Open Immunization Diagnosis History
     $(document).on('click', '.add_immunizationhistory', function() {
         $('#ih_date').bootstrapMaterialDatePicker({ weekStart : 0, time: false,  maxDate: new Date() });
 
         $('#add-immunizationhistory').modal('show');
         $('#ajax-loader').hide();
     });
-    // Open Immunization History 
+    // Open Immunization History
 
     //Add Immunization History
     $('#add_immunizationhistory').submit(function(e) {
@@ -601,8 +652,8 @@ $(document).ready(function() {
                                 $('.text-danger').hide();
                             }
                         });
-                
-                        successMessageShown = true; 
+
+                        successMessageShown = true;
                     }
                 }
             },
@@ -624,12 +675,12 @@ $(document).ready(function() {
     });
     //Add Immunization History
 
-    // Open Drug  History 
+    // Open Drug  History
     $(document).on('click', '.add_drughistory', function() {
         $('#add-drughistory').modal('show');
         $('#ajax-loader').hide();
     });
-    // Open Drug History 
+    // Open Drug History
 
     //Add Drug History
     $('#add_drughistory').submit(function(e) {
@@ -694,8 +745,8 @@ $(document).ready(function() {
                                 $('.text-danger').hide();
                             }
                         });
-                
-                        successMessageShown = true; 
+
+                        successMessageShown = true;
                     }
                 }
             },
@@ -717,15 +768,15 @@ $(document).ready(function() {
     });
     //Add Drug History
 
-    // Open Past  History 
+    // Open Past  History
     $(document).on('click', '.add_pasthistory', function() {
         $('#ph_date').bootstrapMaterialDatePicker({ weekStart : 0, time: false,  maxDate: new Date() });
 
         $('#add-pasthistory').modal('show');
         $('#ajax-loader').hide();
     });
-    // Open Past History 
-    
+    // Open Past History
+
     //Add Past History
     $('#add_pasthistory').submit(function(e) {
         e.preventDefault();
@@ -789,8 +840,8 @@ $(document).ready(function() {
                                 $('.text-danger').hide();
                             }
                         });
-                
-                        successMessageShown = true; 
+
+                        successMessageShown = true;
                     }
                 }
             },
@@ -812,14 +863,14 @@ $(document).ready(function() {
     });
     //Add Past History
 
-    // Open Obsteric  History 
+    // Open Obsteric  History
     $(document).on('click', '.add_obsterichistory', function() {
         $('#oh_date').bootstrapMaterialDatePicker({ weekStart : 0, time: false,  maxDate: new Date() });
 
         $('#add-obsterichistory').modal('show');
         $('#ajax-loader').hide();
     });
-    // Open Obsteric History 
+    // Open Obsteric History
 
     //Add Obsteric History
     $('#add_obsterichistory').submit(function(e) {
@@ -884,8 +935,8 @@ $(document).ready(function() {
                                 $('.text-danger').hide();
                             }
                         });
-                
-                        successMessageShown = true; 
+
+                        successMessageShown = true;
                     }
                 }
             },
@@ -906,14 +957,14 @@ $(document).ready(function() {
         });
     });
     //Add Obsteric History
-    
-    // Open Social  History 
+
+    // Open Social  History
     $(document).on('click', '.add_socialhistory', function() {
         $('#sh_date').bootstrapMaterialDatePicker({ weekStart : 0, time: false,  maxDate: new Date() });
         $('#add-socialhistory').modal('show');
         $('#ajax-loader').hide();
     });
-    // Open Social History 
+    // Open Social History
 
     //Add Social History
     $('#add_socialhistory').submit(function(e) {
@@ -978,8 +1029,8 @@ $(document).ready(function() {
                                 $('.text-danger').hide();
                             }
                         });
-                
-                        successMessageShown = true; 
+
+                        successMessageShown = true;
                     }
                 }
             },
@@ -1001,17 +1052,17 @@ $(document).ready(function() {
     });
     //Add Social History
 
-   
+
     $(document).on('change', '#add-complain input[type="checkbox"]', function () {
         console.log('click');
         const icdId = $(this).data('id');
         if ($(this).is(':checked')) {
-            selectedICDIds.add(icdId); 
+            selectedICDIds.add(icdId);
         } else {
-            selectedICDIds.delete(icdId); 
+            selectedICDIds.delete(icdId);
         }
     });
-    // Open Complaint Modal 
+    // Open Complaint Modal
 
     // Complain Table
     var table = $('#view-complain').DataTable({
@@ -1049,7 +1100,7 @@ $(document).ready(function() {
     });
 
     function updateTable() {
-        table.clear().draw(); 
+        table.clear().draw();
         selectedICDCodes.forEach(function (complaint) {
             table.row.add([
                 complaint.icdCode,
@@ -1076,7 +1127,7 @@ $(document).ready(function() {
             if (field.name == 'Complaints[]'){
                 if(field.value == '')
                 {
-                    alert('Please select at least one complaint.'); 
+                    alert('Please select at least one complaint.');
                     resp = false;
                 }
             }
@@ -1143,7 +1194,7 @@ $(document).ready(function() {
                                         searching: false,
                                         info: false,
                                         ordering: false,
-                                    }); 
+                                    });
                                     $('#view-vbd').DataTable().ajax.reload();
                                     $('input[name="selectedicd[]"]').prop('checked', false);
                                     $('#add_visitdetails')[0].reset();
@@ -1153,7 +1204,7 @@ $(document).ready(function() {
                                     $('.text-danger').hide();
                                 }
                             });
-                            successMessageShown = true; 
+                            successMessageShown = true;
                         }
                     }
                 },
@@ -1197,8 +1248,8 @@ $(document).ready(function() {
             $(tablename).DataTable().clear().destroy();
             $(tablename + ' tbody').empty(); // Optional: Reset tbody
         }
-        
-        
+
+
         viewRequisitionEPI = $(tablename).DataTable({
             processing: true,
             serverSide: true,
@@ -1206,7 +1257,7 @@ $(document).ready(function() {
                 url: '/medicalrecord/viewreqepi',
                 data: function(d) {
                     d.act = act;
-                    d.mr = mrNumber; 
+                    d.mr = mrNumber;
                 }
             },
             pageLength: 3,
@@ -1245,13 +1296,13 @@ $(document).ready(function() {
     }
     // View Requisition For EPI
 
-    // Open Requisition For Encounter Modal 
+    // Open Requisition For Encounter Modal
     $(document).on('click', '.encounterModal', function() {
         // $('#add_reqe')[0].reset();
         $('#ajax-loader').show();
-        let act = $(this).data('act'); 
+        let act = $(this).data('act');
         // let mrNumber = $(this).data('mr');  // ✅ Get the data-mr value
-        let mrNumber = $('#ep_mr').val(); 
+        let mrNumber = $('#ep_mr').val();
         var orgId = $('#reqe_org').val();
         if(orgId)
         {
@@ -1281,7 +1332,7 @@ $(document).ready(function() {
         $('#reqe_billingcc').html("<option selected disabled value=''>Select Speciality (Billing CC)</option>").prop('disabled', true);
         ServiceChangeCostCenter('#reqe_site', '#reqe_sevice', '#reqe_billingcc', '#add_reqe');
 
-        reqEPIDataTable(act,mrNumber); 
+        reqEPIDataTable(act,mrNumber);
 
         $('#ajax-loader').hide();
         $('#add_reqe .text-danger').each(function () {
@@ -1294,7 +1345,7 @@ $(document).ready(function() {
         $('#add-reqe').modal('show');
 
     });
-    // Open Requisition For Encounter Modal 
+    // Open Requisition For Encounter Modal
 
     //Add Requisition For Encounter
     $('#add_reqe').submit(function(e) {
@@ -1303,11 +1354,11 @@ $(document).ready(function() {
     });
     //Add Requisition For Encounter
 
-    // Open Requisition For Procedure Modal 
+    // Open Requisition For Procedure Modal
     $(document).on('click', '.procedureModal', function() {
         // $('#add_reqp')[0].reset();
-        let act = $(this).data('act'); 
-        let mrNumber = $('#ep_mr').val(); 
+        let act = $(this).data('act');
+        let mrNumber = $('#ep_mr').val();
 
         $('#add_reqp .text-danger').each(function () {
             if ($(this).text().trim() !== '(Optional)') {
@@ -1345,16 +1396,16 @@ $(document).ready(function() {
         //     $('#reqp_physician').html("<option selected disabled value=''>Select Physician</option>").prop('disabled', true);
         //     SiteChangeEmployees('#reqp_site', '#reqp_physician', '#add_reqp');
         // }
-        
+
         // $('#reqp_billingcc').html("<option selected disabled value=''>Select Speciality (Billing CC)</option>").prop('disabled', true);
         // ServiceChangeCostCenter('#reqp_site', '#reqp_sevice', '#reqp_billingcc', '#add_reqp');
-        
-        reqEPIDataTable(act,mrNumber); 
+
+        reqEPIDataTable(act,mrNumber);
 
         $('#ajax-loader').hide();
 
     });
-    // Open Requisition For Procedure Modal 
+    // Open Requisition For Procedure Modal
 
     //Add Requisition For Procedure
     $('#add_reqp').submit(function(e) {
@@ -1363,12 +1414,12 @@ $(document).ready(function() {
     });
     //Add Reqisition For Procedure
 
-    // Open Requisition For Investigation Modal 
+    // Open Requisition For Investigation Modal
     $(document).on('click', '.investigationModal', function() {
         // $('#add_reqi')[0].reset();
-        let act = $(this).data('act'); 
-        // let mrNumber = $(this).data('mr');  
-        let mrNumber = $('#ep_mr').val(); 
+        let act = $(this).data('act');
+        // let mrNumber = $(this).data('mr');
+        let mrNumber = $('#ep_mr').val();
         // $('#add_reqi').find('.text-danger').text('');
         $('#add_reqi .text-danger').each(function () {
             if ($(this).text().trim() !== '(Optional)') {
@@ -1406,16 +1457,16 @@ $(document).ready(function() {
             $('#reqi_physician').html("<option selected disabled value=''>Select Physician</option>").prop('disabled', true);
             SiteChangeEmployees('#reqi_site', '#reqi_physician', '#add_reqi');
         }
-        
+
 
         // $('#reqi_billingcc').html("<option selected disabled value=''>Select Speciality (Billing CC)</option>").prop('disabled', true);
         // ServiceChangeCostCenter('#reqi_site', '#reqi_sevice', '#reqi_billingcc', '#add_reqi');
-        reqEPIDataTable(act,mrNumber); 
+        reqEPIDataTable(act,mrNumber);
         $('#ajax-loader').hide();
         $('#add-reqi').modal('show');
 
     });
-    // Open Requisition For Investigation Modal 
+    // Open Requisition For Investigation Modal
 
     //Add Requisition For Investigation
     $('#add_reqi').submit(function(e) {
@@ -1543,9 +1594,9 @@ $(document).ready(function() {
     });
     //Update Requisition For EPI
 
-    // Open Patient Attachments Modal 
+    // Open Patient Attachments Modal
     $(document).on('click', '.p_attachmentModal', function() {
-        var mrNumber = $('#ep_mr').val(); 
+        var mrNumber = $('#ep_mr').val();
         $('#ajax-loader').show();
         $('#view-pattachment').DataTable().destroy();
         if ($.fn.DataTable.isDataTable('#view-pattachment')) {
@@ -1557,17 +1608,17 @@ $(document).ready(function() {
         // $('#ajax-loader').hide();
         // setTimeout(function() {
         //     $('#ajax-loader').hide();
-        // }, 2000); 
+        // }, 2000);
     });
 
     $(document).on('click', '.downloadattachements', function () {
         var attachmentPaths = $(this).data('path'); // Get the file paths from the button's data attribute
         var id = $(this).data('id'); // Get the ID from the button's data attribute
-    
+
         if (attachmentPaths) {
             // Split the attachmentPaths by commas
             var files = attachmentPaths.split(',');
-    
+
             // Iterate over each file and trigger a download
             files.forEach(function (file) {
                 var tempLink = document.createElement('a');
@@ -1585,14 +1636,14 @@ $(document).ready(function() {
             });
         }
     });
-    // Open Patient Attachments Modal  
+    // Open Patient Attachments Modal
 
     //Add Patient Attachments
     $('#add_patientattachment').submit(function (e) {
         e.preventDefault();
         var formData = new FormData(this);
         $('.text-danger').text('');
-    
+
         $.ajax({
             url: "/medicalrecord/addpatientattachment",
             method: "POST",
@@ -1601,7 +1652,7 @@ $(document).ready(function() {
             },
             data: formData,
             processData: false,
-            contentType: false, 
+            contentType: false,
             beforeSend: function () {
                 Swal.fire({
                     title: "Processing",
@@ -1624,7 +1675,7 @@ $(document).ready(function() {
                     }).then(() => {
                         $('#add_patientattachment')[0].reset();
                         $('#view-pattachment').DataTable().ajax.reload();
-                        $('.dropify').dropify(); 
+                        $('.dropify').dropify();
                         $('#file-names').empty();
                     });
                 } else {

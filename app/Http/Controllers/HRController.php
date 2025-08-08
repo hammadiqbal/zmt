@@ -80,7 +80,7 @@ class HRController extends Controller
     public function GetSelectedGender(Request $request)
     {
         $genderID = $request->input('genderID');
-      
+
         $Gender = EmployeeGender::whereNotIn('id', [$genderID])
                      ->where('status', 1)
                      ->get();
@@ -92,7 +92,7 @@ class HRController extends Controller
     {
         $colName = 'gender_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         return view('dashboard.gender', compact('user'));
@@ -226,9 +226,9 @@ class HRController extends Controller
                     $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
                     . '<i class="fa fa-eye"></i> View Logs'
                     . '</button>';
-                   
+
                     return $EmployeeGender->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
-                   
+
             })
             ->editColumn('status', function ($EmployeeGender) {
                 $rights = $this->rights;
@@ -364,7 +364,7 @@ class HRController extends Controller
     {
         $colName = 'prefix_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         return view('dashboard.prefix_setup', compact('user'));
@@ -493,9 +493,9 @@ class HRController extends Controller
                     $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
                     . '<i class="fa fa-eye"></i> View Logs'
                     . '</button>';
-                   
+
                     return $Prefix->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
-                   
+
             })
             ->editColumn('status', function ($Prefix) {
                 $rights = $this->rights;
@@ -690,18 +690,18 @@ class HRController extends Controller
     //     }
 
     //     $data = PrefixSetup::select('*');
-        
+
     //     return DataTables::of($data)
     //         ->addIndexColumn()
     //         ->addColumn('action', function($row) use ($rights){
     //             $btn = '';
     //             $edit = explode(',', $rights->prefix_setup)[2];
     //             $updateStatus = explode(',', $rights->prefix_setup)[3];
-                
+
     //             if($edit == 1) {
     //                 $btn .= '<button type="button" data-id="'.$row->id.'" class="btn btn-primary btn-sm edit-prefix"><i class="fas fa-edit"></i></button> ';
     //             }
-                
+
     //             if($updateStatus == 1) {
     //                 if($row->status == 1) {
     //                     $btn .= '<button type="button" data-id="'.$row->id.'" data-status="0" class="btn btn-danger btn-sm update-status"><i class="fas fa-times"></i></button>';
@@ -709,7 +709,7 @@ class HRController extends Controller
     //                     $btn .= '<button type="button" data-id="'.$row->id.'" data-status="1" class="btn btn-success btn-sm update-status"><i class="fas fa-check"></i></button>';
     //                 }
     //             }
-                
+
     //             return $btn;
     //         })
     //         ->rawColumns(['action'])
@@ -727,7 +727,7 @@ class HRController extends Controller
 
     //     $id = $request->input('id');
     //     $status = $request->input('status');
-        
+
     //     $prefix = PrefixSetup::find($id);
     //     if(!$prefix) {
     //         return response()->json(['error' => 'Prefix not found']);
@@ -738,7 +738,7 @@ class HRController extends Controller
 
     //     $prefix->status = $status;
     //     $prefix->last_updated = $this->currentDatetime;
-        
+
     //     if($prefix->save()) {
     //         $logs = Logs::create([
     //             'module' => 'hr',
@@ -845,7 +845,7 @@ class HRController extends Controller
     {
         $colName = 'employee_status_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         return view('dashboard.emp-status', compact('user'));
@@ -980,7 +980,7 @@ class HRController extends Controller
                     $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
                     . '<i class="fa fa-eye"></i> View Logs'
                     . '</button>';
-                   
+
                     return $EmployeeStatus->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
 
             })
@@ -1128,7 +1128,7 @@ class HRController extends Controller
     {
         $colName = 'employee_working_status_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         return view('dashboard.emp-working-status', compact('user'));
@@ -1275,7 +1275,7 @@ class HRController extends Controller
                     $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
                     . '<i class="fa fa-eye"></i> View Logs'
                     . '</button>';
-                   
+
                     return $EmployeeWorkingStatus->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
 
             })
@@ -1431,7 +1431,7 @@ class HRController extends Controller
     {
         $colName = 'qualification_level_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         return view('dashboard.emp-qualification-level', compact('user'));
@@ -1545,7 +1545,7 @@ class HRController extends Controller
                 $ModuleCode = 'EQL';
                 $firstLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $EmployeeQualificationLevelName))));
                 $Code = $ModuleCode.'-'.$firstLetters.'-'.$idStr;
-        
+
 
                 return $Code
                     . '<hr class="mt-1 mb-2">'
@@ -1567,7 +1567,7 @@ class HRController extends Controller
                     $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
                     . '<i class="fa fa-eye"></i> View Logs'
                     . '</button>';
-                   
+
                     return $EmployeeQualificationLevel->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
 
             })
@@ -1705,7 +1705,7 @@ class HRController extends Controller
     {
         $colName = 'cadre_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
@@ -1870,7 +1870,7 @@ class HRController extends Controller
                     $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
                     . '<i class="fa fa-eye"></i> View Logs'
                     . '</button>';
-                   
+
                     return $EmployeeCadre->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
 
             })
@@ -1975,7 +1975,7 @@ class HRController extends Controller
         $orgID = $request->input('u_cadreOrg');
         if (isset($orgID)) {
             $EmployeeCadre->org_id = $orgID;
-        }  
+        }
         $EmployeeCadre->name = $request->input('u_ec');
         $effective_date = $request->input('u_ec_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
@@ -2029,7 +2029,7 @@ class HRController extends Controller
     {
         $colName = 'position_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $empCadres = EmployeeCadre::where('status', 1)->get();
@@ -2044,7 +2044,7 @@ class HRController extends Controller
         if($add == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $empPosition = trim($request->input('empPosition'));
         $Edt = $request->input('ep_edt');
         $EmpCadre = $request->input('emp-cadre');
@@ -2111,7 +2111,7 @@ class HRController extends Controller
         if($view == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $EmployeePositions = EmployeePosition::select('emp_position.*', 'emp_cadre.name as empcadre',
         'organization.organization as orgName',)
         ->join('emp_cadre', 'emp_cadre.id', '=', 'emp_position.cadre_id')
@@ -2127,7 +2127,7 @@ class HRController extends Controller
         if ($request->has('cadre') && $request->cadre != '' && $request->cadre != 'Loading...') {
             $EmployeePositions->where('emp_position.cadre_id', $request->cadre);
         }
-         
+
         $EmployeePositions = $EmployeePositions;
         // ->get()
 
@@ -2207,7 +2207,7 @@ class HRController extends Controller
                     $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
                     . '<i class="fa fa-eye"></i> View Logs'
                     . '</button>';
-                   
+
                     return $EmployeePosition->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
 
             })
@@ -2229,7 +2229,7 @@ class HRController extends Controller
         if($UpdateStatus == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $empPositionID = $request->input('id');
         $Status = $request->input('status');
         $CurrentTimestamp = $this->currentDatetime;
@@ -2276,7 +2276,7 @@ class HRController extends Controller
         if($edit == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $EmployeePosition = EmployeePosition::select('emp_position.*', 'emp_cadre.name as empcadre',
         'organization.organization as orgName',)
         ->join('emp_cadre', 'emp_cadre.id', '=', 'emp_position.cadre_id')
@@ -2313,12 +2313,12 @@ class HRController extends Controller
         if($edit == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $EmployeePosition = EmployeePosition::findOrFail($id);
         $orgID = $request->input('u_positionOrg');
         if (isset($orgID)) {
             $EmployeePosition->org_id = $orgID;
-        }  
+        }
         $EmployeePosition->name = $request->input('u_ep');
         $effective_date = $request->input('u_ep_edt');
         $EmployeePosition->cadre_id = $request->input('u_cadre');
@@ -2386,7 +2386,7 @@ class HRController extends Controller
                      ->where('status', 1)
                      ->whereNotIn('id', Users::select('emp_id'))
                      ->get();
-        
+
         if ($Employee->isEmpty()) {
             return response()->json(null);
         }
@@ -2438,7 +2438,7 @@ class HRController extends Controller
     {
         $colName = 'employee_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Genders = EmployeeGender::where('status', 1)->get();
@@ -2462,7 +2462,7 @@ class HRController extends Controller
         if($add == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $Name = trim($request->input('emp_name'));
         $Guardian = trim($request->input('emp_guardian_name'));
         $GuardianRelation = trim($request->input('emp_guardian_relation'));
@@ -2557,8 +2557,8 @@ class HRController extends Controller
                 return response()->json(['info' => 'This email is already associated with a registered user.']);
             }
         }
-       
-       
+
+
         $Employee = new Employee();
         $Employee->name = $Name;
         $Employee->prefix_id = $Prefix;
@@ -2668,12 +2668,12 @@ class HRController extends Controller
         if($view == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
 
-        
+
         $Employees = Employee::select('employee.*',
         'organization.organization as org_name',
         'organization.code as orgCode',
@@ -2700,12 +2700,12 @@ class HRController extends Controller
         ->join('district', 'district.id', '=', 'employee.district_id')
         ->join('emp_working_status', 'emp_working_status.id', '=', 'employee.work_status_id')
         ->join('prefix', 'prefix.id', '=', 'employee.prefix_id');
-        
+
         if($sessionOrg != '0')
         {
             $Employees->where('employee.org_id', '=', $sessionOrg);
         }
-        
+
         $Employees = $Employees;
         // ->get()
         // return DataTables::of($Employees)
@@ -2732,7 +2732,7 @@ class HRController extends Controller
                 }
             })
             ->addColumn('id_raw', function ($Employee) {
-                return $Employee->id; 
+                return $Employee->id;
             })
             ->editColumn('id', function ($Employee) {
                 $session = auth()->user();
@@ -2744,7 +2744,7 @@ class HRController extends Controller
                 $timestamp = Carbon::createFromTimestamp($Employee->timestamp)->format('l d F Y - h:i A');
                 $lastUpdated = Carbon::createFromTimestamp($Employee->last_updated)->format('l d F Y - h:i A');
                 $createdByName = getUserNameById($Employee->user_id);
-                
+
                 $createdInfo = "<b>Created By:</b> " . ucwords($createdByName) . " <br> <b>Effective Date&amp;Time:</b> "
                     . $effectiveDate . " <br><b>RecordedAt:</b> " . $timestamp ." <br><b>LastUpdated:</b>
                     " . $lastUpdated;
@@ -2755,11 +2755,11 @@ class HRController extends Controller
 
                 $completionPercentage = $this->EmployeeProfileCompletion($Employee->id);
 
-                $cnicExpiryDate = Carbon::createFromTimestamp($Employee->cnic_expiry); 
+                $cnicExpiryDate = Carbon::createFromTimestamp($Employee->cnic_expiry);
                 $isExpired = $cnicExpiryDate->isPast() ? '<span class="label label-danger blinking">CNIC Expired</span><hr class="mt-1 mb-2">' : null;
 
-                return 
-                    $isExpired 
+                return
+                    $isExpired
                     . '<b>Emp Code</b>: '.$Code.'<hr class="m-1">'
                     .$empName.'<hr class="m-1">'
                     .$genderName.'<br>'
@@ -2850,10 +2850,10 @@ class HRController extends Controller
                         $actionButtons .= '<button type="button" class="btn btn-outline-secondary mt-1 employee-detail" data-emp-id="'.$EmployeeId.'">'
                         . '<i class="fa fa-plus-circle"></i> View All Details'
                         . '</button>';
-                        
+
                     }
- 
-                   
+
+
                     return $Employee->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
 
             })
@@ -2899,7 +2899,7 @@ class HRController extends Controller
         if($updaetStatus == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $EmployeeID = $request->input('id');
         $Status = $request->input('status');
         $CurrentTimestamp = $this->currentDatetime;
@@ -2946,7 +2946,7 @@ class HRController extends Controller
         if($view == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $Employee = Employee::select('employee.*',
         'gender.name as gender_name',
         'organization.organization as org_name',
@@ -3098,7 +3098,7 @@ class HRController extends Controller
         if($edit == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $Employee = Employee::select('employee.*',
         'gender.name as gender_name',
         'organization.organization as org_name',
@@ -3271,7 +3271,7 @@ class HRController extends Controller
         if($edit == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $Employee = Employee::findOrFail($id);
         $oldEmail = $Employee->email;
 
@@ -3327,7 +3327,7 @@ class HRController extends Controller
             }
 
             $userExists = Users::where('email', $newEmail)
-            ->where('emp_id', '!=', $id)  
+            ->where('emp_id', '!=', $id)
             ->exists();
             if ($userExists) {
                 return response()->json(['info' => 'This email is already associated with a registered user.']);
@@ -3417,9 +3417,9 @@ class HRController extends Controller
                 }
                 // return response()->json(['info' => 'This email is already associated with a registered user.']);
             }
-           
+
         }
-        
+
         if (isset($empImg)) {
             $oldImagePath = public_path('assets/emp/' . $id . '_' .$Employee->image);
             if (File::exists($oldImagePath)) {
@@ -3451,7 +3451,7 @@ class HRController extends Controller
         $EmployeeLog->save();
 
         $successMessage = '<b>Employee details updated successfully.</b>';
-        
+
         if ($emailPasswordUpdated) {
             $successMessage .= '<br>The email address of this employee has been updated, and a new password has been emailed to the employee for login.';
         }
@@ -3476,7 +3476,7 @@ class HRController extends Controller
     {
         $colName = 'employee_salary_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         // $Employees = Employee::where('status', 1)->get();
@@ -3487,8 +3487,8 @@ class HRController extends Controller
 
         $payrollAdditions = FinancialPayrollAddition::where('status', 1)->orderBy('id')->get();
         $payrollDeductions = FinancialPayrollDeduction::where('status', 1)->orderBy('id')->get();
-    
-    
+
+
         return view('dashboard.emp_salary', compact('user', 'payrollAdditions', 'payrollDeductions'));
         // return view('dashboard.emp_salary', compact('user'));
         // return view('dashboard.emp_salary', compact('user','Employees'));
@@ -3501,16 +3501,16 @@ class HRController extends Controller
         if($add == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $payrollAdditions = FinancialPayrollAddition::where('status', 1)->get();
         $payrollDeductions = FinancialPayrollDeduction::where('status', 1)->get();
-    
+
         // Prepare arrays to store addition and deduction values
         $additions = [];
         $deductions = [];
         $totalAdditions = 0;
         $totalDeductions = 0;
-    
+
         // Collect addition values from the request
         foreach ($payrollAdditions as $pa) {
             $columnName = strtolower(str_replace(' ', '_', $pa->name));
@@ -3533,7 +3533,7 @@ class HRController extends Controller
         $empId = ($request->input('emp-id'));
         $empRemarks = trim($request->input('salary_remarks'));
         // $empSalary = encrypt(trim($request->input('empSalary')));
-       
+
         $Edt = $request->input('salary_edt');
         $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
@@ -3564,8 +3564,8 @@ class HRController extends Controller
         {
             $EmpSalary= new EmployeeSalary();
             $EmpSalary->emp_id = $empId;
-            $EmpSalary->additions = implode(',', $additions); 
-            $EmpSalary->deductions = implode(',', $deductions); 
+            $EmpSalary->additions = implode(',', $additions);
+            $EmpSalary->deductions = implode(',', $deductions);
             $EmpSalary->remarks = $empRemarks;
             $EmpSalary->status = $status;
             $EmpSalary->user_id = $sessionId;
@@ -3600,7 +3600,7 @@ class HRController extends Controller
         if($view == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $EmployeeSalaries = EmployeeSalary::select('emp_salary.*', 'employee.name as empName',
         'organization.organization as orgName','org_site.name as siteName')
         ->join('employee', 'employee.id', '=', 'emp_salary.emp_id')
@@ -3655,7 +3655,7 @@ class HRController extends Controller
             if($sessionOrg == 0)
             {
                 $orgName ='<hr class="mt-1 mb-1"><b>Organization:</b> '.ucwords($EmployeeSalary->orgName);
-            }       
+            }
             $additions = $EmployeeSalary->additions;
             $additionIds = explode(',', $additions);
             $totalAdditions = 0;
@@ -3671,7 +3671,7 @@ class HRController extends Controller
                 $value = decrypt(trim($deductionId));
                 $totalDeductions += $value;
             }
-    
+
             // Total salary calculation
             $totalSalary = $totalAdditions - $totalDeductions;
             $totalSalary = 'Rs ' . number_format($totalSalary, 2);
@@ -3711,16 +3711,16 @@ class HRController extends Controller
             })
             ->addColumn('additions', function ($EmployeeSalary) {
                 $payrollAdditions = FinancialPayrollAddition::where('status', 1)->orderBy('id')->get();
-                
+
                 $additions = $EmployeeSalary->additions;
                 $additionIds = explode(',', $additions);
                 $formattedAdditions = [];
-            
+
                 // Start the table structure
                 $formattedAdditions[] = '<table>';
                 // $formattedAdditions[] = '<thead><tr><th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Name</th><th  style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Amount</th></tr></thead>';
                 $formattedAdditions[] = '<tbody>';
-                
+
                 foreach ($payrollAdditions as $key => $addition) {
                     if (isset($additionIds[$key])) {
                         $value = decrypt($additionIds[$key]);
@@ -3730,11 +3730,11 @@ class HRController extends Controller
                         $formattedAdditions[] = '</tr>';
                     }
                 }
-                
+
                 // Close the table structure
                 $formattedAdditions[] = '</tbody>';
                 $formattedAdditions[] = '</table>';
-            
+
                 return implode('', $formattedAdditions);
             })
             ->addColumn('deductions', function ($EmployeeSalary) {
@@ -3778,7 +3778,7 @@ class HRController extends Controller
         if($UpdateStatus == 0)
         {
             abort(403, 'Forbidden');
-        } 
+        }
         $salaryId = $request->input('id');
         $Status = $request->input('status');
         $CurrentTimestamp = $this->currentDatetime;
@@ -3834,14 +3834,14 @@ class HRController extends Controller
             try {
                 $additions[] = decrypt($encryptedValue);
             } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
-                $additions[] = 0; 
+                $additions[] = 0;
             }
         }
         foreach (explode(',', $EmployeeSalary->deductions) as $encryptedValue) {
             try {
                 $deductions[] = decrypt($encryptedValue);
             } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
-                $deductions[] = 0; 
+                $deductions[] = 0;
             }
         }
         $payrollAdditions = FinancialPayrollAddition::pluck('name')->toArray();
@@ -3980,11 +3980,11 @@ class HRController extends Controller
         // Initialize arrays to hold new additions and deductions
         $newAdditions = [];
         $newDeductions = [];
-    
+
         // Calculate total additions and deductions from input values
         $totalAdditions = 0;
         $totalDeductions = 0;
-    
+
         foreach ($payrollAdditions as $addition) {
             $inputName = 'u_' . strtolower(str_replace(' ', '_', $addition->name));
             $value = $request->input($inputName);
@@ -3993,7 +3993,7 @@ class HRController extends Controller
                 $totalAdditions += (float) $value;
             // }
         }
-    
+
         foreach ($payrollDeductions as $deduction) {
             $inputName = 'u_' . strtolower(str_replace(' ', '_', $deduction->name));
             $value = $request->input($inputName);
@@ -4003,40 +4003,40 @@ class HRController extends Controller
             // }
         }
 
-    
+
         // Calculate old salary
         $EmployeeNewSalary = $totalAdditions - $totalDeductions;
         $EmployeeNewSalary = number_format($EmployeeNewSalary, 2);
-    
+
         // Get new salary from the request
         // $EmployeeNewSalary = number_format(trim($request->input('uempSalary')), 2);
         // $EmployeeSalary->salary = encrypt(trim($request->input('uempSalary')));
-    
+
         // Handle effective date
         $effective_date = $request->input('usalary_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
         $EffectDateTime->subMinute(1);
-    
+
         $status = $EffectDateTime->isPast() ? 1 : 0; // 1 for Active, 0 for Inactive
-    
+
         // Update employee salary record
         $EmployeeSalary->effective_timestamp = $effective_date;
         $EmployeeSalary->last_updated = $this->currentDatetime;
         $EmployeeSalary->status = $status;
         $EmployeeSalary->additions = implode(',', $newAdditions);
         $EmployeeSalary->deductions = implode(',', $newDeductions);
-    
+
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
-    
+
         $EmployeeSalary->save();
-    
+
         if (empty($EmployeeSalary->id)) {
             return response()->json(['error' => 'Failed to update Employee Salary. Please try again']);
         }
-    
+
         // Log the changes
         $logs = Logs::create([
             'module' => 'salary',
@@ -4044,22 +4044,22 @@ class HRController extends Controller
             'event' => 'update',
             'timestamp' => $this->currentDatetime,
         ]);
-    
+
         $EmployeeSalaryLog = EmployeeSalary::where('id', $EmployeeSalary->id)->first();
         $logIds = $EmployeeSalary->logid ? explode(',', $EmployeeSalary->logid) : [];
         $logIds[] = $logs->id;
         $EmployeeSalaryLog->logid = implode(',', $logIds);
         $EmployeeSalaryLog->save();
-    
+
         return response()->json(['success' => 'Employee Salary updated successfully']);
     }
-    
+
 
     public function EmployeeQualification()
     {
         $colName = 'employee_qualification_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $QualificationLevels = EmployeeQualificationLevel::where('status', 1)->get();
@@ -4151,7 +4151,7 @@ class HRController extends Controller
     public function ViewQualificationSetup($id)
     {
         $rights = $this->rights;
-    
+
         $view = explode(',', $rights->employee_qualification_setup)[1];
         if($view == 0)
         {
@@ -4273,7 +4273,7 @@ class HRController extends Controller
     {
         $colName = 'employee_documents';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $sessionOrg = $user->org_id;
@@ -4316,7 +4316,7 @@ class HRController extends Controller
         } else {
             $status = 0;
         }
-     
+
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
@@ -4354,7 +4354,7 @@ class HRController extends Controller
                 $uploadedFiles = $request->file('emp_documents');
                 $lastId = $EmpDocuments->id;
                 foreach ($uploadedFiles as $file) {
-                    $insertFileName = time() . '_' . $file->getClientOriginalName(); 
+                    $insertFileName = time() . '_' . $file->getClientOriginalName();
                     $uniqueFileName = $lastId . '_' .time() . '_' . $file->getClientOriginalName();
                     $file->move(public_path('assets/emp/documents'), $uniqueFileName);
                     $filePaths[] = $insertFileName;
@@ -4402,28 +4402,30 @@ class HRController extends Controller
             abort(403, 'Forbidden');
         }
         $user = auth()->user();
-      
+
         $EmployeeDocuments = EmployeeDocuments::select('emp_documents.*',
-        'employee.name as empName')
+        'employee.name as empName', 'prefix.name as prefixName', 'org_site.name as siteName')
         ->join('employee', 'employee.id', '=', 'emp_documents.emp_id')
+        ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
+        ->join('org_site', 'org_site.id', '=', 'employee.site_id')
         ->orderBy('emp_documents.id', 'desc');
 
         return DataTables::eloquent($EmployeeDocuments)
             ->addColumn('id_raw', function ($EmployeeDocument) {
-                return $EmployeeDocument->id;  
+                return $EmployeeDocument->id;
             })
             ->addColumn('empDetails', function ($EmployeeDocument) {
-                $empName = $EmployeeDocument->empName;  
-                return $empName;  
+                $empName = $EmployeeDocument->prefixName.' '.$EmployeeDocument->empName;
+                return $empName."<hr class='mt-1 mb-1'><b>Site:</b> " . ucwords($EmployeeDocument->siteName) . "  <br>";
             })
             ->addColumn('desc', function ($EmployeeDocument) {
-                $documentDesc = ucwords($EmployeeDocument->document_desc);  
-                return $documentDesc;  
+                $documentDesc = ucwords($EmployeeDocument->document_desc);
+                return $documentDesc;
             })
             ->editColumn('documents', function ($EmployeeDocument) {
                 $id = $EmployeeDocument->id;
-                $attachmentPath = $EmployeeDocument->documents; 
-            
+                $attachmentPath = $EmployeeDocument->documents;
+
                 $actionButtons = '<button type="button" data-id="' . $id . '" data-path="' . $attachmentPath . '" class="btn waves-effect waves-light btn-sm btn-primary downloadempDocuments">'
                     . '<i class="fa fa-download"></i> Download Documents'
                     . '</button>';
@@ -4451,17 +4453,17 @@ class HRController extends Controller
             ->editColumn('status', function ($EmployeeDocument) {
                 $rights = $this->rights;
                 $updateStatus = explode(',', $rights->employee_documents)[3];
-                return $updateStatus == 1 
-                    ? ($EmployeeDocument->status 
-                        ? '<span class="label label-success ed_status cursor-pointer" data-id="'.$EmployeeDocument->id.'" data-status="'.$EmployeeDocument->status.'">Active</span>' 
+                return $updateStatus == 1
+                    ? ($EmployeeDocument->status
+                        ? '<span class="label label-success ed_status cursor-pointer" data-id="'.$EmployeeDocument->id.'" data-status="'.$EmployeeDocument->status.'">Active</span>'
                         : '<span class="label label-danger ed_status cursor-pointer" data-id="'.$EmployeeDocument->id.'" data-status="'.$EmployeeDocument->status.'">Inactive</span>'
                     )
-                    : ($EmployeeDocument->status 
-                        ? '<span class="label label-success">Active</span>' 
+                    : ($EmployeeDocument->status
+                        ? '<span class="label label-success">Active</span>'
                         : '<span class="label label-danger">Inactive</span>'
                     );
             })
-           
+
             ->rawColumns(['id_raw','empDetails','desc','documents','action','status'])
             ->make(true);
     }
@@ -4525,7 +4527,7 @@ class HRController extends Controller
         // ->where('emp_documents.id', '=', $id)
         // ->first();
         $EmployeeDocument = EmployeeDocuments::where('id', $id)->firstOrFail();
-        
+
 
         $Desc = ucwords($EmployeeDocument->document_desc);
         $effective_timestamp = $EmployeeDocument->effective_timestamp;
@@ -4554,11 +4556,11 @@ class HRController extends Controller
             foreach ($removedDocs as $doc) {
                 $filePath = public_path('assets/emp/documents/'.$id.'_'.$doc);
                 if (file_exists($filePath)) {
-                    unlink($filePath); 
+                    unlink($filePath);
                 }
             }
-            $existingDocuments = $employeeDocument->documents 
-            ? explode(',', $employeeDocument->documents) 
+            $existingDocuments = $employeeDocument->documents
+            ? explode(',', $employeeDocument->documents)
             : [];
             $removedDocs = array_map('trim', $removedDocs);
             $existingDocuments = array_map('trim', $existingDocuments);
@@ -4570,13 +4572,13 @@ class HRController extends Controller
         if ($request->hasFile('u_emp_documents')) {
             $newDocs = [];
             foreach ($request->file('u_emp_documents') as $file) {
-                $uniqueFileName = time() . '_' . $file->getClientOriginalName(); 
-                $uniqueFileNameWithId = $id. '_'. time() . '_' . $file->getClientOriginalName(); 
-                $file->move(public_path('assets/emp/documents'), $uniqueFileNameWithId); 
-                $newDocs[] = $uniqueFileName; 
+                $uniqueFileName = time() . '_' . $file->getClientOriginalName();
+                $uniqueFileNameWithId = $id. '_'. time() . '_' . $file->getClientOriginalName();
+                $file->move(public_path('assets/emp/documents'), $uniqueFileNameWithId);
+                $newDocs[] = $uniqueFileName;
             }
-            $existingDocuments = $employeeDocument->documents 
-            ? explode(',', $employeeDocument->documents) 
+            $existingDocuments = $employeeDocument->documents
+            ? explode(',', $employeeDocument->documents)
             : [];
 
             $mergedDocuments = array_merge($existingDocuments, $newDocs);
@@ -4590,9 +4592,9 @@ class HRController extends Controller
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
         $EffectDateTime->subMinute(1);
         if ($EffectDateTime->isPast()) {
-            $status = 1; 
+            $status = 1;
         } else {
-             $status = 0; 
+             $status = 0;
         }
         $employeeDocument->effective_timestamp = $effective_date;
         $employeeDocument->last_updated = $this->currentDatetime;
@@ -4623,7 +4625,7 @@ class HRController extends Controller
     {
         $colName = 'employee_medical_license_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         // $Employees = Employee::where('status', 1)->get();
@@ -4857,7 +4859,7 @@ class HRController extends Controller
     {
         $colName = 'employee_cost_center_allocation';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
@@ -4973,9 +4975,9 @@ class HRController extends Controller
         $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
         $EffectDateTime->subMinute(1);
         if ($EffectDateTime->isPast()) {
-            $status = 1; 
+            $status = 1;
         } else {
-            $status = 0; 
+            $status = 0;
         }
         $session = auth()->user();
         $sessionName = $session->name;
@@ -5154,9 +5156,9 @@ class HRController extends Controller
         $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
         $EffectDateTime->subMinute(1);
         if ($EffectDateTime->isPast()) {
-            $status = 1; 
+            $status = 1;
         } else {
-            $status = 0; 
+            $status = 0;
         }
 
         // $CCEffectiveDateTimes = [];
@@ -5227,7 +5229,7 @@ class HRController extends Controller
     {
         $colName = 'employee_services_allocation';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
@@ -5341,10 +5343,10 @@ class HRController extends Controller
                             ->orWhere('org_site.name', 'like', "%{$search}%")
                             ->orWhere('emp_service_allocation.id', 'like', "%{$search}%")
                             ->orWhereRaw("EXISTS (
-                                SELECT 1 FROM services 
+                                SELECT 1 FROM services
                                 JOIN service_group ON services.group_id = service_group.id
                                 JOIN service_type ON service_group.type_id = service_type.id
-                                WHERE FIND_IN_SET(services.id, emp_service_allocation.service_id) 
+                                WHERE FIND_IN_SET(services.id, emp_service_allocation.service_id)
                                 AND (services.name LIKE '%{$search}%' OR service_group.name LIKE '%{$search}%' OR service_type.name LIKE '%{$search}%')
                             )");
                     });
@@ -5394,7 +5396,7 @@ class HRController extends Controller
                     ->whereIn('services.id', $serviceIds)
                     ->select('services.name as serviceName', 'service_group.name as serviceGroupName', 'service_type.name as serviceTypeName')
                     ->get();
-                
+
                 $tableId = 'services-table-' . $EmployeeServiceAllocation->id;
 
                 $formattedData = '<table id="'.$tableId.'" class="nested-services-table table table-bordered" style="width: 100%;">';
@@ -5412,7 +5414,7 @@ class HRController extends Controller
                     $formattedData .= '</tr>';
                 }
                 $formattedData .= '</tbody></table>';
-            
+
                 return $formattedData;
             })
             ->addColumn('action', function ($EmployeeServiceAllocation) {
@@ -5500,7 +5502,7 @@ class HRController extends Controller
             abort(403, 'Forbidden');
         }
 
-        $EmployeeServiceAllocation = EmployeeServiceAllocation::select('emp_service_allocation.*', 
+        $EmployeeServiceAllocation = EmployeeServiceAllocation::select('emp_service_allocation.*',
         'employee.name as empName', 'organization.organization as orgName', 'org_site.name as siteName')
         ->join('employee', 'employee.id', '=', 'emp_service_allocation.emp_id')
         ->join('organization', 'organization.id', '=', 'emp_service_allocation.org_id')
@@ -5597,7 +5599,7 @@ class HRController extends Controller
     {
         $colName = 'employee_inventory_location_allocation';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         // $Services = Service::where('status', 1)->get();
@@ -5623,8 +5625,8 @@ class HRController extends Controller
         $Site = trim($request->input('site_ela'));
         $InventorySites = $request->input('invSite');
         $LocationArray = $request->input('location_ela');
-        
-    
+
+
         $serviceLocations = [];
         if (is_array($InventorySites) && is_array($LocationArray)) {
             foreach ($LocationArray as $index => $locations) {
@@ -5702,7 +5704,7 @@ class HRController extends Controller
         if ($view == 0) {
             abort(403, 'Forbidden');
         }
-    
+
         $Employee = DB::table('employee')
             ->join('emp_inventory_location', 'employee.id', '=', 'emp_inventory_location.emp_id')
             ->join('organization', 'organization.id', '=', 'emp_inventory_location.org_id')
@@ -5725,26 +5727,26 @@ class HRController extends Controller
                 'costcenter.name as headCountCC'
             )
             ->first();
-    
+
         $org_id = $Employee->org_id;
         $site_id = $Employee->site_id;
         $siteName = $Employee->siteName;
         $orgName = $Employee->orgName;
         $LocationSiteIds = explode(',', $Employee->location_site);
-        $LocationIdsArray = json_decode($Employee->service_location_id, true); 
-            
+        $LocationIdsArray = json_decode($Employee->service_location_id, true);
+
         $siteNames = DB::table('org_site')
         ->whereIn('id', $LocationSiteIds)
         ->pluck('name', 'id');
         $locations = DB::table('service_location')
             ->whereIn('id', collect($LocationIdsArray)->flatten()->toArray())
             ->pluck('name', 'id');
-    
+
         $siteLocationMapping = [];
         foreach ($LocationSiteIds as $index => $siteId) {
             $locationNames = [];
             $locationIds = [];
-            $locationSiteName = $siteNames[$siteId] ?? 'N/A'; 
+            $locationSiteName = $siteNames[$siteId] ?? 'N/A';
 
             if (isset($LocationIdsArray[$index])) {
                 foreach ($LocationIdsArray[$index] as $locationId) {
@@ -5761,7 +5763,7 @@ class HRController extends Controller
                 'serviceLocationIds' => implode(',', $locationIds),
             ];
         }
-         
+
         $effective_timestamp = Carbon::createFromTimestamp($Employee->edt)->format('l d F Y - h:i A');
         $data = [
             'id' => $Employee->id,
@@ -5778,7 +5780,7 @@ class HRController extends Controller
             'effective_timestamp' => $effective_timestamp,
             'rights' => $rights->employee_inventory_location_allocation,
         ];
-    
+
         return response()->json($data);
     }
 
@@ -5816,7 +5818,7 @@ class HRController extends Controller
                 }
             }
         }
-    
+
         $serviceLocations = [];
         if (is_array($InventorySites) && is_array($LocationArray)) {
             foreach ($LocationArray as $index => $locations) {
@@ -5865,7 +5867,7 @@ class HRController extends Controller
 
         return response()->json(['success' => 'Employee Inventory Location Allocation updated successfully']);
     }
-    
+
 
     // public function GetAllocatedEmpLocation()
     // {

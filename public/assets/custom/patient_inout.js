@@ -12,8 +12,16 @@ $(document).ready(function() {
 
         fetchOrgPatient(filterOrgId, '#pad_mrno', function(data) {
             $('#pad_mrno').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', false);
+            // $.each(data, function(key, value) {
+            //     $('#pad_mrno').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name + '</option>');
+            // });
             $.each(data, function(key, value) {
-                $('#pad_mrno').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name + '</option>');
+                $('#pad_mrno').append(
+                    '<option value="' + value.mr_code + '">' +
+                        value.mr_code + ' - ' + value.name +
+                        (value.cell_no ? ' - ' + value.cell_no : '') +
+                    '</option>'
+                );
             });
         });
     }
@@ -51,15 +59,15 @@ $(document).ready(function() {
         const locationid = urlParams.get('locationid');
         const schedulename = urlParams.get('schedulename');
         const scheduleid = urlParams.get('scheduleid');
+        const remarks = urlParams.get('remarks');
     
         return { mr, billedamount, orgid, orgname, sitename, siteid, servicemode, servicemodeId, empname, empId, service, serviceId, billingcc, billingccId, 
-            patientstatusval, patientstatus, patientpriorityval, patientpriority, locationname, locationid, schedulename, scheduleid};
+            patientstatusval, patientstatus, patientpriorityval, patientpriority, locationname, locationid, schedulename, scheduleid,remarks};
     }
     
     const encryptedParams = getEncryptedParams();
     const hasEmptyParam = Object.values(encryptedParams).some(param => param === null || param === '');
         if (!hasEmptyParam) {
-        
         fetch('/decrypt-data', {
             method: 'POST',
             headers: {
@@ -92,7 +100,8 @@ $(document).ready(function() {
                 data.locationname,
                 data.locationid,
                 data.schedulename,
-                data.scheduleid
+                data.scheduleid,
+                data.remarks
             );
         })
         .catch(error => console.error('Error:', error));
@@ -121,7 +130,6 @@ $(document).ready(function() {
 
     //Add Patient Arrival & Departure
     $('#add_patientinout').submit(function(e) {
-        console.log('submit');
         e.preventDefault();
         var data = SerializeForm(this);
         var resp = true;

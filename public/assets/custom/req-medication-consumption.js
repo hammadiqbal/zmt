@@ -20,7 +20,7 @@ $(document).ready(function() {
         });
 
 
-        fetchActiveSL(siteId, '#rmc_inv_location', function(data) {
+        fetchActiveSL(siteId, '#rmc_inv_location', true, true, function(data) {
             $.each(data, function(key, value) {
                 $('#rmc_inv_location').append('<option value="' + value.location_id + '">' + value.name + '</option>');
             });
@@ -28,7 +28,7 @@ $(document).ready(function() {
 
         // $('#rmc_inv_location').html("<option selected disabled value=''>Select Inventory Location</option>").prop('disabled', true);
         // SiteChangeActivatedServiceLocation(siteId,'#rmc_inv_location', '#add_reqmc',true );
-        
+
 
         $(".rmc_inv_generic, .rmc_route, .rmc_frequency").each(function() {
             $(this).val($(this).find("option:first").val()).change();
@@ -44,7 +44,7 @@ $(document).ready(function() {
         var resp = true;
         $(data).each(function(i, field){
             // if ((field.value == '') || (field.value == null) && field.name != 'rmc_remarks')
-            if ((field.value == '' || field.value == null) && field.name != 'rmc_remarks') 
+            if ((field.value == '' || field.value == null) && field.name != 'rmc_remarks')
             {
                 var FieldName = field.name;
 
@@ -113,8 +113,8 @@ $(document).ready(function() {
                                     $('.text-danger').hide();
                                 }
                             });
-                    
-                            successMessageShown = true; 
+
+                            successMessageShown = true;
                         }
                     }
                 },
@@ -234,7 +234,7 @@ $(document).ready(function() {
                 //                 $('#u_rmc_transaction_type').append('<option value="' + value.id + '">' + value.name + '</option>');
                 //             }
                 //         });
-                //     } 
+                //     }
                 // });
 
                 fetchMaterialManagementTransactionTypes(response.orgId, '#u_rmc_transaction_type','issue_dispense','y', function(data) {
@@ -247,7 +247,7 @@ $(document).ready(function() {
 
                 // $('#u_rmc_inv_location').val(response.ServiceLocationId).change();
                 $('#u_rmc_inv_location').html("<option selected value="+ response.ServiceLocationId +">" + response.ServiceLocation + "</option>");
-                fetchActiveSL(response.siteId, '#u_rmc_inv_location', function(data) {
+                fetchActiveSL(response.siteId, '#u_rmc_inv_location', true, true, function(data) {
                     $.each(data, function(key, value) {
                         if(value.location_id != response.ServiceLocationId)
                         {
@@ -255,6 +255,7 @@ $(document).ready(function() {
                         }
                     });
                 });
+
 
                 var genericIds = response.genericIds.split(',');
                 var genericNames = response.genericNames.split(',');
@@ -280,7 +281,7 @@ $(document).ready(function() {
                         fetchInventoryGenerics('#u_rmc_inv_generic' + index, 'medication', function (data) {
                             if (data.length > 0) {
                                 $.each(data, function (key, value) {
-                                    if ($.inArray(value.id.toString(), genericIds[index]) === -1) 
+                                    if ($.inArray(value.id.toString(), genericIds[index]) === -1)
                                     {
                                         $('#u_rmc_inv_generic' + index).append('<option value="' + value.id + '">' + value.name + '</option>');
                                     }
@@ -288,7 +289,7 @@ $(document).ready(function() {
                                 $('#u_rmc_inv_generic' + index).select2();
                             }
                         });
-                    })(i); 
+                    })(i);
 
                     var routeField = '<div class="col-md-6">' +
                         '<div class="form-group">' +
@@ -327,7 +328,7 @@ $(document).ready(function() {
                         fetchMedicationFrequency('#u_rmc_frequency' + index, function (data) {
                             if (data.length > 0) {
                                 $.each(data, function (key, value) {
-                                    if ($.inArray(value.id.toString(), frequencyIds[index]) === -1) 
+                                    if ($.inArray(value.id.toString(), frequencyIds[index]) === -1)
                                     {
                                         $('#u_rmc_frequency' + index).append('<option value="' + value.id + '">' + value.name + '</option>');
                                     }
@@ -335,20 +336,21 @@ $(document).ready(function() {
                                 $('#u_rmc_frequency' + index).select2();
                             }
                         });
-                    })(i); 
+                    })(i);
+                    console.log(genericIds[i], dose[i], days[i], routeIds[i], frequencyIds[i]);
 
                     var doseField = '<div class="col-md-6">' +
                         '<div class="form-group row">' +
                         '<div class="col-md-12">' +
                         '<div class="form-group has-custom m-b-5">' +
                         '<label class="control-label">Update Dose</label>' +
-                        '<input type="number" class="form-control input-sm" required name="u_rmc_dose[]" value="' + dose[i] + '">' +
+                        '<input type="text" class="form-control input-sm" required name="u_rmc_dose[]" value="' + dose[i] + '">' +
                         '</div>' +
                         '<span class="text-danger u_rmc_dose_error"></span>' +
                         '</div>' +
                         '</div>' +
                         '</div>';
-        
+
                     var daysField = '<div class="col-md-6">' +
                         '<div class="form-group row">' +
                         '<div class="col-md-12">' +
@@ -359,8 +361,8 @@ $(document).ready(function() {
                         '</div>' +
                         '</div>' +
                         '</div>';
-        
-                
+
+
                     var row =+ '</div>';
                     $('.uduplicate').append('<div class="row pt-3 pb-1 rmc_details" style="border: 1px solid #939393;">' + GenericField + doseField + routeField + frequencyField + daysField +'</div>');
                 }
@@ -421,7 +423,7 @@ $(document).ready(function() {
                     }).then((result) => {
                         if (result.isConfirmed) {
                             $('#edit-reqmc').modal('hide');
-                            $('#view-reqmc').DataTable().ajax.reload(); 
+                            $('#view-reqmc').DataTable().ajax.reload();
                             $('.text-danger').hide();
                         }
                     });

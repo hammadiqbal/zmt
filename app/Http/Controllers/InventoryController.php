@@ -96,7 +96,7 @@ class InventoryController extends Controller
     {
         $colName = 'item_category';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
@@ -122,9 +122,9 @@ class InventoryController extends Controller
         $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
         $EffectDateTime->subMinute(1);
         if ($EffectDateTime->isPast()) {
-            $status = 1; 
+            $status = 1;
         } else {
-            $status = 0; 
+            $status = 0;
         }
 
         $session = auth()->user();
@@ -385,7 +385,7 @@ class InventoryController extends Controller
         $orgID = $request->input('u_ic_org');
         if (isset($orgID)) {
             $InventoryCategories->org_id = $orgID;
-        }  
+        }
         $InventoryCategories->consumption_group = $request->input('u_ic_cg');
         $InventoryCategories->consumption_method = $request->input('u_ic_cm');
         $effective_date = $request->input('u_ic_edt');
@@ -430,7 +430,7 @@ class InventoryController extends Controller
     {
         $colName = 'item_sub_category';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $Categories = InventoryCategory::where('status', 1)->get();
 
@@ -664,7 +664,7 @@ class InventoryController extends Controller
         {
             abort(403, 'Forbidden');
         }
-        
+
         $InventorySubCategories = InventorySubCategory::select('inventory_subcategory.*',
         'inventory_category.name as catName','organization.organization as orgName')
         ->join('organization', 'organization.id', '=', 'inventory_subcategory.org_id')
@@ -761,7 +761,7 @@ class InventoryController extends Controller
             ->join('consumption_group', 'consumption_group.id', '=', 'inventory_category.consumption_group')
             ->where('inventory_category.id', '=', $id)
             ->first();
-            
+
         $isConsumable = false;
         if ($InventoryCategories && preg_match('/\bconsumable\b/i', $InventoryCategories->consumptionGroup)) {
             $isConsumable = true;
@@ -789,7 +789,7 @@ class InventoryController extends Controller
     {
         $colName = 'item_type';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Categories = InventoryCategory::where('status', 1)->get();
@@ -933,7 +933,7 @@ class InventoryController extends Controller
                         <b>Effective Date&amp;Time:</b> " . $effectiveDate . " <br>
                         <b>RecordedAt:</b> " . $timestamp ." <br>
                         <b>LastUpdated:</b> " . $lastUpdated;
-                        
+
                 $ModuleCode = 'INV';
                 $firstLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $InventoryTypeName))));
                 $Code = $ModuleCode.'-'.$firstLetters.'-'.$idStr;
@@ -1119,7 +1119,7 @@ class InventoryController extends Controller
     {
         $colName = 'item_generic_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Categories = InventoryCategory::where('status', 1)->get();
@@ -1259,7 +1259,7 @@ class InventoryController extends Controller
                 }
             })
             ->addColumn('id_raw', function ($InventoryGeneric) {
-                return $InventoryGeneric->id;  
+                return $InventoryGeneric->id;
             })
             ->editColumn('id', function ($InventoryGeneric) {
                 $session = auth()->user();
@@ -1517,7 +1517,7 @@ class InventoryController extends Controller
         $InventoryGenerics = InventoryGeneric::select('inventory_generic.id', 'inventory_generic.name')
         ->join('inventory_category', 'inventory_category.id', '=', 'inventory_generic.cat_id')
         ->where('inventory_generic.status', 1);
-            
+
         if($condition == 'material'){
             $InventoryGenerics->where('inventory_category.name', 'not like', 'Medicine%');
         }
@@ -1548,7 +1548,7 @@ class InventoryController extends Controller
     {
         $colName = 'item_brand_setup';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Categories = InventoryCategory::where('status', 1)->get();
@@ -1911,13 +1911,13 @@ class InventoryController extends Controller
     {
         $colName = 'transaction_types';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $TransactionActivities = InventoryTransactionActivity::where('status', 1)->get();
         $InventorySourceDestinationTypes = InventorySourceDestinationType::where('status', 1)->get();
         $ServiceLocations = ServiceLocation::where('status', 1)->get();
-        
+
         return view('dashboard.inv-transaction-type', compact('user','TransactionActivities','InventorySourceDestinationTypes','ServiceLocations'));
     }
 
@@ -2019,14 +2019,14 @@ class InventoryController extends Controller
             'inventory_transaction_type.*',
             'organization.organization as orgName',
             'source_type.name as sourceLocationType',
-            'destination_type.name as destinationLocationType', 
+            'destination_type.name as destinationLocationType',
             // 'service_location.name as serviceLocation',
             'inventory_transaction_activity.name as transactionActivity'
         )
         ->join('organization', 'organization.id', '=', 'inventory_transaction_type.org_id')
         ->join('inventory_transaction_activity', 'inventory_transaction_activity.id', '=', 'inventory_transaction_type.activity_type')
-        ->join('inventory_source_destination_type as source_type', 'source_type.id', '=', 'inventory_transaction_type.source_location_type') 
-        ->join('inventory_source_destination_type as destination_type', 'destination_type.id', '=', 'inventory_transaction_type.destination_location_type') 
+        ->join('inventory_source_destination_type as source_type', 'source_type.id', '=', 'inventory_transaction_type.source_location_type')
+        ->join('inventory_source_destination_type as destination_type', 'destination_type.id', '=', 'inventory_transaction_type.destination_location_type')
         // ->join('service_location', 'service_location.id', '=', 'inventory_transaction_type.service_location_id')
         ->orderBy('inventory_transaction_type.id', 'desc');
 
@@ -2122,10 +2122,10 @@ class InventoryController extends Controller
                     .'<b>Destination Action: </b>'.$destinationAction.'<br>';
             })
             ->addColumn('locationDetails', function ($InventoryTransactionType) {
-                $serviceLocationIds = explode(',', $InventoryTransactionType->service_location_id); 
+                $serviceLocationIds = explode(',', $InventoryTransactionType->service_location_id);
                 $serviceLocationNames = ServiceLocation::whereIn('id', $serviceLocationIds)
                 ->pluck('name')
-                ->toArray();  
+                ->toArray();
                 $serviceLocationNames = implode(', ', $serviceLocationNames);
 
                 // $AllocatedInventoryLocation = $InventoryTransactionType->serviceLocation;
@@ -2214,19 +2214,19 @@ class InventoryController extends Controller
         if($edit == 0)
         {
             abort(403, 'Forbidden');
-        }    
+        }
         $InventoryTransactionTypes = InventoryTransactionType::select(
             'inventory_transaction_type.*',
             'organization.organization as orgName',
             'source_type.name as sourceLocationType',
-            'destination_type.name as destinationLocationType', 
+            'destination_type.name as destinationLocationType',
             // 'service_location.name as serviceLocation',
             'inventory_transaction_activity.name as transactionActivity'
         )
         ->join('organization', 'organization.id', '=', 'inventory_transaction_type.org_id')
         ->join('inventory_transaction_activity', 'inventory_transaction_activity.id', '=', 'inventory_transaction_type.activity_type')
-        ->join('inventory_source_destination_type as source_type', 'source_type.id', '=', 'inventory_transaction_type.source_location_type') 
-        ->join('inventory_source_destination_type as destination_type', 'destination_type.id', '=', 'inventory_transaction_type.destination_location_type') 
+        ->join('inventory_source_destination_type as source_type', 'source_type.id', '=', 'inventory_transaction_type.source_location_type')
+        ->join('inventory_source_destination_type as destination_type', 'destination_type.id', '=', 'inventory_transaction_type.destination_location_type')
         // ->join('service_location', 'service_location.id', '=', 'inventory_transaction_type.service_location_id')
         ->where('inventory_transaction_type.id', '=', $id)
         ->first();
@@ -2293,7 +2293,7 @@ class InventoryController extends Controller
         $InventoryTransactionTypes->service_location_id = implode(',', $request->input('u_inventory_location'));
         $InventoryTransactionTypes->applicable_location_to = $request->input('u_applicable_location');
         $InventoryTransactionTypes->transaction_expired_status = $request->input('u_transaction_expired_status');
-        
+
         $effective_date = $request->input('u_itt_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -2336,7 +2336,7 @@ class InventoryController extends Controller
     // {
     //     $colName = 'vendor_registration';
     //     if (PermissionDenied($colName)) {
-    //         abort(403); 
+    //         abort(403);
     //     }
     //     $user = auth()->user();
     //     return view('dashboard.inventory-vendor-registration', compact('user'));
@@ -2525,7 +2525,7 @@ class InventoryController extends Controller
     //         })
     //         ->editColumn('contactDetails', function ($Vendor) {
 
-    //             return 
+    //             return
     //                 '<b>Email:</b> '.($Vendor->person_email)
     //                 .'<br><b>Cell #:</b> '.ucwords($Vendor->cell_no)
     //                 .'<br><b>Landline:</b> '.ucwords($Vendor->landline_no)
@@ -2711,7 +2711,7 @@ class InventoryController extends Controller
     {
         $colName = 'third_party_registration';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
@@ -2921,7 +2921,7 @@ class InventoryController extends Controller
                     . '</span>';
             })
             ->editColumn('contactDetails', function ($ThirdParty) {
-                return 
+                return
                     '<b>Email:</b> '.($ThirdParty->person_email)
                     .'<br><b>Cell #:</b> '.ucwords($ThirdParty->person_cell)
                     .'<br><b>Landline:</b> '. (!empty($ThirdParty->landline) ? ucwords($ThirdParty->landline) : 'N/A')
@@ -3107,7 +3107,7 @@ class InventoryController extends Controller
     {
         $colName = 'consumption_group';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
@@ -3217,7 +3217,7 @@ class InventoryController extends Controller
                 }
             })
             ->addColumn('id_raw', function ($ConsumptionGroup) {
-                return $ConsumptionGroup->id; 
+                return $ConsumptionGroup->id;
             })
             ->editColumn('id', function ($ConsumptionGroup) {
                 $session = auth()->user();
@@ -3421,7 +3421,7 @@ class InventoryController extends Controller
     {
         $colName = 'consumption_method';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
@@ -3537,7 +3537,7 @@ class InventoryController extends Controller
                 }
             })
             ->addColumn('id_raw', function ($ConsumptionMethod) {
-                return $ConsumptionMethod->id; 
+                return $ConsumptionMethod->id;
             })
             ->editColumn('id', function ($ConsumptionMethod) {
                 $session = auth()->user();
@@ -3744,7 +3744,7 @@ class InventoryController extends Controller
     {
         $colName = 'stock_monitoring';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
@@ -3774,7 +3774,7 @@ class InventoryController extends Controller
         $PrimaryEmail = $request->input('sm_primary_email');
         $SecondaryEmail = $request->input('sm_secondary_email');
 
-        
+
         $Edt = $request->input('sm_edt');
         $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
@@ -3908,7 +3908,7 @@ class InventoryController extends Controller
                 }
             })
             ->addColumn('id_raw', function ($StockMonitoring) {
-                return $StockMonitoring->id; 
+                return $StockMonitoring->id;
             })
             ->editColumn('id', function ($StockMonitoring) {
                 $session = auth()->user();
@@ -3954,7 +3954,7 @@ class InventoryController extends Controller
                 .'<b>Min Redorder Qty:</b> '.($StockMonitoring->min_reorder_qty);
             })
             ->editColumn('contact_details', function ($StockMonitoring) {
-                return 
+                return
                 '<b>Primary Email:</b> '.($StockMonitoring->primary_email).'<br>'
                 .'<b>Secondary Email:</b> '.($StockMonitoring->secondary_email);
             })
@@ -4041,7 +4041,7 @@ class InventoryController extends Controller
         {
             abort(403, 'Forbidden');
         }
-   
+
         $StockMonitoring = StockMonitoring::select('stock_monitoring.*',
         'organization.organization as orgName','org_site.name as siteName',
         'inventory_generic.name as genericName','inventory_brand.name as brandName','service_location.name as serviceLocationName')
@@ -4098,7 +4098,7 @@ class InventoryController extends Controller
         $StockMonitoring->item_generic_id = $request->input('u_sm_generic');
         $StockMonitoring->item_brand_id = $request->input('u_sm_brand');
         $StockMonitoring->service_location_id = $request->input('u_sm_servicelocation');
-       
+
         $effective_date = $request->input('u_sm_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -4111,7 +4111,7 @@ class InventoryController extends Controller
         $PrimaryEmail = $request->input('u_sm_primary_email');
         $SecondaryEmail = $request->input('u_sm_secondary_email');
 
-        
+
         if ($maxStock < $minStock) {
             return response()->json(['error' => 'Maximum stock cannot be less than Minimum stock.']);
         }
@@ -4130,9 +4130,9 @@ class InventoryController extends Controller
         $StockMonitoring->secondary_email = $SecondaryEmail;
 
         if ($EffectDateTime->isPast()) {
-            $status = 1; 
+            $status = 1;
         } else {
-             $status = 0; 
+             $status = 0;
         }
 
         $StockMonitoring->effective_timestamp = $effective_date;
@@ -4166,7 +4166,7 @@ class InventoryController extends Controller
     {
         $colName = 'inventory_source_destination_type';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
@@ -4274,7 +4274,7 @@ class InventoryController extends Controller
                 }
             })
             ->addColumn('id_raw', function ($InventorySourceDestinationType) {
-                return $InventorySourceDestinationType->id; 
+                return $InventorySourceDestinationType->id;
             })
             ->editColumn('id', function ($InventorySourceDestinationType) {
                 $session = auth()->user();
@@ -4442,9 +4442,9 @@ class InventoryController extends Controller
         $EffectDateTime->subMinute(1);
 
         if ($EffectDateTime->isPast()) {
-            $status = 1; 
+            $status = 1;
         } else {
-             $status = 0; 
+             $status = 0;
         }
 
         $InventorySourceDestinationType->effective_timestamp = $effective_date;
@@ -4478,7 +4478,7 @@ class InventoryController extends Controller
     {
         $colName = 'inventory_transaction_activity';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
@@ -4583,7 +4583,7 @@ class InventoryController extends Controller
                 }
             })
             ->addColumn('id_raw', function ($InventoryTransactionActivity) {
-                return $InventoryTransactionActivity->id; 
+                return $InventoryTransactionActivity->id;
             })
             ->editColumn('id', function ($InventoryTransactionActivity) {
                 $session = auth()->user();
@@ -4746,9 +4746,9 @@ class InventoryController extends Controller
         $EffectDateTime->subMinute(1);
 
         if ($EffectDateTime->isPast()) {
-            $status = 1; 
+            $status = 1;
         } else {
-             $status = 0; 
+             $status = 0;
         }
 
         $InventoryTransactionActivity->effective_timestamp = $effective_date;
@@ -4782,7 +4782,7 @@ class InventoryController extends Controller
     {
         $colName = 'medication_routes';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         return view('dashboard.medication-routes', compact('user'));
@@ -5036,7 +5036,7 @@ class InventoryController extends Controller
         $orgID = $request->input('u_medicationroute_org');
         if (isset($orgID)) {
             $MedicationRoute->org_id = $orgID;
-        }  
+        }
         $effective_date = $request->input('u_medicationroute_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -5079,7 +5079,7 @@ class InventoryController extends Controller
     {
         $colName = 'medication_frequency';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         return view('dashboard.medication-frequency', compact('user'));
@@ -5335,7 +5335,7 @@ class InventoryController extends Controller
         $orgID = $request->input('u_medicationfrequency_org');
         if (isset($orgID)) {
             $MedicationFrequency->org_id = $orgID;
-        }  
+        }
         $effective_date = $request->input('u_medicationfrequency_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -5378,7 +5378,7 @@ class InventoryController extends Controller
     {
         $colName = 'requisition_for_material_consumption';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $ServiceLocations = ServiceLocation::select('id', 'name')->where('status', 1)->get();
@@ -5497,19 +5497,19 @@ class InventoryController extends Controller
         $Site = $request->input('mc_site');
         $TransactionType = $request->input('mc_transactiontype');
         $InvLocation = $request->input('mc_inv_location');
-      
+
         $Remarks = trim($request->input('mc_remarks'));
 
         $PatientMR = $request->input('mc_patient');
         $Service = $request->input('mc_service');
-        
+
 
         if (!empty($PatientMR) && !empty($Service)) {
 
             $PatientDetails = PatientRegistration::select(
                 'gender.id as genderId', 'patient.dob as patientDOB',
                 'employee.id as empID',
-                'patient_inout.org_id as OrgId', 'patient_inout.site_id as SiteId', 
+                'patient_inout.org_id as OrgId', 'patient_inout.site_id as SiteId',
                 'service_mode.id as serviceModeId', 'billingCC.id as billingCCId', 'service_group.id as serviceGroupId',
                 'service_type.id as serviceTypeId'
             )
@@ -5527,17 +5527,17 @@ class InventoryController extends Controller
             ->where('patient.mr_code', $PatientMR)
             ->first();
 
-           
+
 
             if ($PatientDetails) {
                 $dob = Carbon::createFromTimestamp($PatientDetails->patientDOB);
                 $now = Carbon::now();
                 $diff = $dob->diff($now);
-            
+
                 $years = $diff->y;
                 $months = $diff->m;
                 $days = $diff->d;
-            
+
                 $ageString = "";
                 if ($years > 0) {
                     $ageString .= $years . " " . ($years == 1 ? "year" : "years");
@@ -5562,12 +5562,12 @@ class InventoryController extends Controller
             $ResponsiblePhysician = null;
             $billingCCId = null;
         }
-       
+
         $itemGeneric =  implode(',',($request->input('mc_itemgeneric')));
         $Qty =  implode(',',($request->input('mc_qty')));
 
-       
-        $status = 1; 
+
+        $status = 1;
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
@@ -5577,7 +5577,7 @@ class InventoryController extends Controller
         $logId = null;
 
 
-       
+
         $MaterialConsumptionRequisition = new MaterialConsumptionRequisition();
         $MaterialConsumptionRequisition->org_id = $Organization;
         $MaterialConsumptionRequisition->site_id = $Site;
@@ -5601,7 +5601,7 @@ class InventoryController extends Controller
         $MaterialConsumptionRequisition->save();
 
         $SiteName = Site::find($Site); // $Site is the site_id
-        $SiteName = $SiteName ? $SiteName->name : '';  
+        $SiteName = $SiteName ? $SiteName->name : '';
         $idStr = str_pad($MaterialConsumptionRequisition->id, 5, "0", STR_PAD_LEFT);
         $firstSiteNameLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $SiteName))));
         $RequisitionCode = $firstSiteNameLetters.'-MTC-'.$idStr;
@@ -5632,7 +5632,7 @@ class InventoryController extends Controller
         {
             abort(403, 'Forbidden');
         }
-    
+
         $Requisitions = DB::table('material_consumption_requisition')
         ->join('organization', 'organization.id', '=', 'material_consumption_requisition.org_id')
         ->join('org_site', 'org_site.id', '=', 'material_consumption_requisition.site_id')
@@ -5640,7 +5640,7 @@ class InventoryController extends Controller
         ->join('service_location', 'service_location.id', '=', 'material_consumption_requisition.inv_location_id')
         ->leftJoin('patient', 'patient.mr_code', '=', 'material_consumption_requisition.mr_code')
         ->leftJoin('gender', 'gender.id', '=', 'patient.gender_id')
-        ->leftJoin(DB::raw('(SELECT * FROM patient_inout WHERE status = 1 AND id IN (SELECT MAX(id) FROM patient_inout WHERE status = 1 GROUP BY mr_code)) as patient_inout'), 
+        ->leftJoin(DB::raw('(SELECT * FROM patient_inout WHERE status = 1 AND id IN (SELECT MAX(id) FROM patient_inout WHERE status = 1 GROUP BY mr_code)) as patient_inout'),
         'patient_inout.mr_code', '=', 'material_consumption_requisition.mr_code')
         ->leftJoin('employee', 'employee.id', '=', 'material_consumption_requisition.physician_id')
         ->leftJoin('services', 'services.id', '=', 'material_consumption_requisition.service_id')
@@ -5649,23 +5649,23 @@ class InventoryController extends Controller
         ->leftJoin('service_mode', 'service_mode.id', '=', 'material_consumption_requisition.service_mode_id')
         ->leftJoin('costcenter', 'costcenter.id', '=', 'material_consumption_requisition.billing_cc')
         ->select(
-            'material_consumption_requisition.*', 
+            'material_consumption_requisition.*',
             'inventory_transaction_type.name as transactionType',
             'organization.organization as orgName',
-            'org_site.name as siteName', 
+            'org_site.name as siteName',
             'service_location.name as locationName',
-            'gender.name as Gender', 
-            'patient.name as patientName', 
-            'patient.mr_code as mr_code', 
+            'gender.name as Gender',
+            'patient.name as patientName',
+            'patient.mr_code as mr_code',
             'patient.dob as DOB',
-            'employee.name as Physician', 
+            'employee.name as Physician',
             'services.name as serviceName',
-            'service_mode.name as serviceModeName', 
-            'costcenter.name as CCName', 
+            'service_mode.name as serviceModeName',
+            'costcenter.name as CCName',
             'service_group.name as serviceGroupName',
             'service_location.name as ServiceLocationName'
         );
-        
+
         $session = auth()->user();
         $sessionOrg = $session->org_id;
         if($sessionOrg != '0')
@@ -5718,7 +5718,7 @@ class InventoryController extends Controller
                         $Age = '<br><b>Age: </b> '.$age;
                         $Gender = '<br><b>Gender: </b> '.ucwords($Requisition->Gender);
                     }
-                } 
+                }
                 else
                 {
                     $MrCode = '';
@@ -5774,23 +5774,23 @@ class InventoryController extends Controller
             ->editColumn('InventoryDetails', function ($Requisition) {
                 $genericIds = explode(',', $Requisition->generic_id);
                 $Quantities = explode(',', $Requisition->qty);
-            
+
                 $genericNames = InventoryGeneric::whereIn('id', $genericIds)->pluck('name', 'id')->toArray();
-            
+
                 $tableRows = '';
                 $maxRows = max(count($genericIds), count($Quantities));
-            
+
                 for ($i = 0; $i < $maxRows; $i++) {
                     $genericName = isset($genericIds[$i]) && isset($genericNames[$genericIds[$i]]) ? $genericNames[$genericIds[$i]] : 'N/A';
-                    $qtyValue = isset($Quantities[$i]) ? $Quantities[$i] : 'N/A';  
-            
+                    $qtyValue = isset($Quantities[$i]) ? $Quantities[$i] : 'N/A';
+
                     $tableRows .= '
                         <tr>
                             <td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . ucwords($genericName) . '</td>
                             <td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . $qtyValue . '</td>
                         </tr>';
                 }
-            
+
                 // Return the table structure with dynamic rows
                 return '
                     <table class="table" style="width:100%;">
@@ -5934,7 +5934,7 @@ class InventoryController extends Controller
             'Qty' => $Requisitions->qty,
         ];
 
-   
+
         return response()->json($data);
     }
 
@@ -5950,7 +5950,7 @@ class InventoryController extends Controller
         $orgID = $request->input('u_mc_org');
         if (isset($orgID)) {
             $MaterialConsumptionRequisition->org_id = $orgID;
-        }  
+        }
         $MaterialConsumptionRequisition->site_id = $request->input('u_mc_site');
         $MaterialConsumptionRequisition->transaction_type_id = $request->input('u_mc_transactionType');
         $PatientMR =  $request->input('u_mc_patient');
@@ -5970,7 +5970,7 @@ class InventoryController extends Controller
             $PatientDetails = PatientRegistration::select(
                 'gender.id as genderId', 'patient.dob as patientDOB',
                 'employee.id as empID',
-                'patient_inout.org_id as OrgId', 'patient_inout.site_id as SiteId', 
+                'patient_inout.org_id as OrgId', 'patient_inout.site_id as SiteId',
                 'service_mode.id as serviceModeId', 'billingCC.id as billingCCId', 'service_group.id as serviceGroupId',
                 'service_type.id as serviceTypeId'
             )
@@ -5993,11 +5993,11 @@ class InventoryController extends Controller
                 $dob = Carbon::createFromTimestamp($PatientDetails->patientDOB);
                 $now = Carbon::now();
                 $diff = $dob->diff($now);
-            
+
                 $years = $diff->y;
                 $months = $diff->m;
                 $days = $diff->d;
-            
+
                 $ageString = "";
                 if ($years > 0) {
                     $ageString .= $years . " " . ($years == 1 ? "year" : "years");
@@ -6008,7 +6008,7 @@ class InventoryController extends Controller
                 if ($days > 0) {
                     $ageString .= " " . $days . " " . ($days == 1 ? "day" : "days");
                 }
-                
+
                 $Age = $ageString;
 
                 $MaterialConsumptionRequisition->service_id = $Service;
@@ -6048,13 +6048,13 @@ class InventoryController extends Controller
     {
         $colName = 'requisition_for_other_transaction';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $isEmployee = $user->is_employee;
         $empId      = $user->emp_id;
         $roleId     = $user->role_id;
-        
+
         $Generics = InventoryGeneric::select('inventory_generic.id', 'inventory_generic.name')
         ->join('inventory_category', 'inventory_category.id', '=', 'inventory_generic.cat_id')
         ->where('inventory_generic.status', 1)
@@ -6062,7 +6062,7 @@ class InventoryController extends Controller
         ->get();
         return view('dashboard.req_other_transaction', compact('user','Generics'));
     }
-    
+
     public function AddRequisitionOtherTransactions(RequisitionForOtherTransactionRequest $request)
     {
         $rights = $this->rights;
@@ -6080,8 +6080,8 @@ class InventoryController extends Controller
         $Remarks = trim($request->input('rot_remarks'));
         $itemGeneric =  implode(',',($request->input('rot_itemgeneric')));
         $Qty =  implode(',',($request->input('rot_qty')));
-       
-        $status = 1; 
+
+        $status = 1;
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
@@ -6089,7 +6089,7 @@ class InventoryController extends Controller
         $last_updated = $this->currentDatetime;
         $timestamp = $this->currentDatetime;
         $logId = null;
-       
+
         $OtherTransactionRequisition = RequisitionForOtherTransaction::create([
             'org_id'              => $Organization,
             'source_site'         => $SourceSite,
@@ -6111,15 +6111,15 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to add Requisition For Other Transaction.']);
         }
 
-        $TransactionType = InventoryTransactionType::find($TransactionType); 
-        $TransactionTypeName = $TransactionType ? $TransactionType->name : '';  
+        $TransactionType = InventoryTransactionType::find($TransactionType);
+        $TransactionTypeName = $TransactionType ? $TransactionType->name : '';
         $idStr = str_pad($OtherTransactionRequisition->id, 5, "0", STR_PAD_LEFT);
         $firstSiteNameLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $TransactionTypeName))));
         $RequisitionCode = $firstSiteNameLetters.'-ROT-'.$idStr;
         $OtherTransactionRequisition->code = $RequisitionCode;
         $OtherTransactionRequisition->save();
 
-       
+
 
         $logs = Logs::create([
             'module' => 'inventory',
@@ -6141,17 +6141,17 @@ class InventoryController extends Controller
         {
             abort(403, 'Forbidden');
         }
-    
+
         // $Requisitions = DB::table('requisition_other_transaction')
         // ->join('organization', 'organization.id', '=', 'requisition_other_transaction.org_id')
         // ->join('org_site', 'org_site.id', '=', 'requisition_other_transaction.site_id')
         // ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'requisition_other_transaction.transaction_type_id')
         // ->join('service_location', 'service_location.id', '=', 'requisition_other_transaction.inv_location_id')
         // ->select(
-        //     'requisition_other_transaction.*', 
+        //     'requisition_other_transaction.*',
         //     'inventory_transaction_type.name as transactionType',
         //     'organization.organization as orgName',
-        //     'org_site.name as siteName', 
+        //     'org_site.name as siteName',
         //     'service_location.name as locationName'
         // );
 
@@ -6163,7 +6163,7 @@ class InventoryController extends Controller
         ->leftJoin('service_location as destinationLocation', 'destinationLocation.id', '=', 'requisition_other_transaction.destination_location')
         ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'requisition_other_transaction.transaction_type_id')
         ->select(
-            'requisition_other_transaction.*', 
+            'requisition_other_transaction.*',
             'inventory_transaction_type.name as transactionType',
             'organization.organization as orgName',
             'source.name as sourceSiteName',
@@ -6171,7 +6171,7 @@ class InventoryController extends Controller
             'destinationLocation.name as DestinationLocationName',
             'destination.name as destinationSiteName'
         );
-        
+
         $session = auth()->user();
         $sessionOrg = $session->org_id;
         if($sessionOrg != '0')
@@ -6213,7 +6213,7 @@ class InventoryController extends Controller
                 $destinationLocation = '';
 
                 if (($Requisition->sourceSiteName) && ($Requisition->SourceLocationName))
-                {   
+                {
                     $sourceSite ='<br><b>Source Site: </b>'.ucwords($Requisition->sourceSiteName);
                     $sourceLocation ='<br><b>Source Location: </b>'.ucwords($Requisition->SourceLocationName);
                 }
@@ -6238,23 +6238,23 @@ class InventoryController extends Controller
             ->editColumn('InventoryDetails', function ($Requisition) {
                 $genericIds = explode(',', $Requisition->generic_id);
                 $Quantities = explode(',', $Requisition->qty);
-            
+
                 $genericNames = InventoryGeneric::whereIn('id', $genericIds)->pluck('name', 'id')->toArray();
-            
+
                 $tableRows = '';
                 $maxRows = max(count($genericIds), count($Quantities));
-            
+
                 for ($i = 0; $i < $maxRows; $i++) {
                     $genericName = isset($genericIds[$i]) && isset($genericNames[$genericIds[$i]]) ? $genericNames[$genericIds[$i]] : 'N/A';
-                    $qtyValue = isset($Quantities[$i]) ? $Quantities[$i] : 'N/A';  
-            
+                    $qtyValue = isset($Quantities[$i]) ? $Quantities[$i] : 'N/A';
+
                     $tableRows .= '
                         <tr>
                             <td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . ucwords($genericName) . '</td>
                             <td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . $qtyValue . '</td>
                         </tr>';
                 }
-            
+
                 // Return the table structure with dynamic rows
                 return '
                     <table class="table" style="width:100%;">
@@ -6357,10 +6357,10 @@ class InventoryController extends Controller
         // ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'requisition_other_transaction.transaction_type_id')
         // ->join('service_location', 'service_location.id', '=', 'requisition_other_transaction.inv_location_id')
         // ->select(
-        //     'requisition_other_transaction.*', 
+        //     'requisition_other_transaction.*',
         //     'inventory_transaction_type.name as transactionType',
         //     'organization.organization as orgName',
-        //     'org_site.name as siteName', 
+        //     'org_site.name as siteName',
         //     'service_location.name as locationName'
         // )
         // ->where('requisition_other_transaction.id', '=', $id)
@@ -6374,7 +6374,7 @@ class InventoryController extends Controller
         ->join('service_location as destinationLocation', 'destinationLocation.id', '=', 'requisition_other_transaction.destination_location')
         ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'requisition_other_transaction.transaction_type_id')
         ->select(
-            'requisition_other_transaction.*', 
+            'requisition_other_transaction.*',
             'inventory_transaction_type.name as transactionType',
             'organization.organization as orgName',
             'source.name as sourceSiteName',
@@ -6435,7 +6435,7 @@ class InventoryController extends Controller
         $orgID = $request->input('u_rot_org');
         if (isset($orgID)) {
             $OtherTransactionRequisition->org_id = $orgID;
-        }  
+        }
         $OtherTransactionRequisition->source_site = $request->input('u_rot_source_site');
         $OtherTransactionRequisition->source_location = $request->input('u_rot_source_location');
 
@@ -6477,7 +6477,7 @@ class InventoryController extends Controller
     {
         $colName = 'purchase_order';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         return view('dashboard.purchase-order', compact('user'));
@@ -6533,7 +6533,7 @@ class InventoryController extends Controller
         $Vendor = $request->input('po_vendor');
         $Brand = implode(',',$request->input('po_brand'));
         $Qty = implode(',',$request->input('po_qty'));
-        $AmountArray = $request->input('po_amount'); 
+        $AmountArray = $request->input('po_amount');
         $DiscountArray = $request->input('po_discount');
         $Remarks = implode(',',$request->input('po_remarks'));
         $Edt = $request->input('po_edt');
@@ -6544,7 +6544,7 @@ class InventoryController extends Controller
                 return response()->json(['info' => "Discount cannot be greater than or equal to the amount for the item at index " . ($key + 1)]);
             }
         }
-    
+
         $Amount = implode(',', $AmountArray);
         $Discount = implode(',', $DiscountArray);
 
@@ -6654,11 +6654,11 @@ class InventoryController extends Controller
         $formattedData = '';
         foreach ($BrandIds as $key => $brandId) {
             $brandName = InventoryBrand::where('id', $brandId)->pluck('name')->first();
-            
+
             $Payable = $Amounts[$key] - $Discounts[$key];
-            
+
             $remarksValue = (!empty($Remarks[$key]) && $Remarks[$key] !== null) ? $Remarks[$key] : 'N/A';
-            
+
             $netQty += $Quantities[$key];
             $netAmount += $Amounts[$key];
             $netDiscount += $Discounts[$key];
@@ -6794,7 +6794,7 @@ class InventoryController extends Controller
                     . '<span class="mt-1 label label-info popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $createdInfo .'">'
                     . '<i class="fa fa-toggle-right"></i> View Details'
                     . '</span>';
-                    
+
             })
             ->editColumn('item_details', function ($PO) {
                 $session = auth()->user();
@@ -6805,12 +6805,12 @@ class InventoryController extends Controller
                 $Amounts = explode(',', $PO->amount);
                 $Discounts = explode(',', $PO->discount);
                 $Remarks = explode(',', $PO->remarks);
-            
+
                 $netQty = 0;
                 $netAmount = 0;
                 $netDiscount = 0;
                 $netPayable = 0;
-            
+
                 $formattedData = '<table>';
                 $formattedData .= '<tr>';
                 $formattedData .= '<th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">BrandName</th>';
@@ -6820,17 +6820,17 @@ class InventoryController extends Controller
                 $formattedData .= '<th style="padding: 5px 15px 5px 5px;border: 1px solid grey;width: 150px;">Net Payable</th>';
                 $formattedData .= '<th style="padding: 5px 15px 5px 5px;border: 1px solid grey;width: 150px;">Remarks</th>';
                 $formattedData .= '</tr>';
-            
+
                 foreach ($BrandIds as $key => $brandId) {
                     $brandName = InventoryBrand::whereIn('id', [$brandId])->pluck('name')->first();
                     $Payable = $Amounts[$key] - $Discounts[$key];
                     $remarksValue = (!empty($Remarks[$key]) && $Remarks[$key] !== null) ? $Remarks[$key] : 'N/A'; // Check for null or empty remarks
-            
+
                     $netQty += $Quantities[$key];
                     $netAmount += $Amounts[$key];
                     $netDiscount += $Discounts[$key];
                     $netPayable += $Payable;
-            
+
                     $formattedData .= '<tr>';
                     $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . ucwords($brandName) . '</td>';
                     $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . ucwords($Quantities[$key]) . '</td>';
@@ -6840,7 +6840,7 @@ class InventoryController extends Controller
                     $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . ucwords($remarksValue) . '</td>';
                     $formattedData .= '</tr>';
                 }
-            
+
                 // Adding the footer row with totals
                 $formattedData .= '<tr style="font-weight:bold">';
                 $formattedData .= '<td colspan="1" style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Total</td>';
@@ -6850,9 +6850,9 @@ class InventoryController extends Controller
                 $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Rs '. number_format($netPayable, 2) . '</td>';
                 $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;"> </td>';
                 $formattedData .= '</tr>';
-            
+
                 $formattedData .= '</table>';
-            
+
                 return $formattedData;
             })
             // ->editColumn('other_details', function ($PO) {
@@ -6965,7 +6965,7 @@ class InventoryController extends Controller
         $POLog->logid = implode(',', $logIds);
         $POLog->save();
         $PurchaseOrderStatus->save();
-        
+
         return response()->json(['success' => true, 200]);
     }
 
@@ -7000,7 +7000,7 @@ class InventoryController extends Controller
         $POLog->logid = implode(',', $logIds);
         $POLog->save();
         $PurchaseOrder->save();
-        
+
         return response()->json(['success' => true, 200]);
     }
 
@@ -7076,12 +7076,12 @@ class InventoryController extends Controller
         $PO->inventory_brand_id = implode(',',$request->input('u_po_brand'));
         $PO->demand_qty = implode(',',$request->input('u_po_qty'));
 
-        $AmountArray = $request->input('u_po_amount'); 
+        $AmountArray = $request->input('u_po_amount');
         $DiscountArray = $request->input('u_po_discount');
 
         // $PO->amount = implode(',',$request->input('u_po_amount'));
         // $PO->discount = implode(',',$request->input('u_po_discount'));
-        
+
         foreach ($AmountArray as $key => $amount) {
             $discount = $DiscountArray[$key] ?? 0;
             if ($discount >= $amount) {
@@ -7112,7 +7112,7 @@ class InventoryController extends Controller
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
-        
+
         $PO->save();
 
         if (empty($PO->id)) {
@@ -7136,7 +7136,7 @@ class InventoryController extends Controller
     {
         $colName = 'work_order';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         return view('dashboard.work-order', compact('user'));
@@ -7156,7 +7156,7 @@ class InventoryController extends Controller
         $Particulars = implode(',',$request->input('wo_particulars'));
         $Remarks = implode(',',$request->input('wo_remarks'));
 
-        $AmountArray = $request->input('wo_amount'); 
+        $AmountArray = $request->input('wo_amount');
         $DiscountArray = $request->input('wo_discount');
 
 
@@ -7271,11 +7271,11 @@ class InventoryController extends Controller
 
         $formattedData = '';
         foreach ($Particulars as $key => $particular) {
-            
+
             $Payable = $Amounts[$key] - $Discounts[$key];
             $particularValue = (!empty($Particulars[$key]) && $Particulars[$key] !== null) ? $Particulars[$key] : 'N/A';
             $remarksValue = (!empty($Remarks[$key]) && $Remarks[$key] !== null) ? $Remarks[$key] : 'N/A';
-            
+
             $netAmount += $Amounts[$key];
             $netDiscount += $Discounts[$key];
             $netPayable += $Payable;
@@ -7368,7 +7368,7 @@ class InventoryController extends Controller
                     <b>Created By:</b> " . ucwords($createdByName) . "  <br>
                     <b>RecordedAt:</b> " . $timestamp ." <br>
                     <b>LastUpdated:</b> " . $lastUpdated;
-                    
+
 
                 $session = auth()->user();
                 $sessionOrg = $session->org_id;
@@ -7391,8 +7391,8 @@ class InventoryController extends Controller
                 .$orgName.
                 '<b>Site: </b>'.ucwords($WO->siteName).'<hr class="mt-1 mb-2">
                 <b>Vendor: </b>'.ucwords($WO->vendorName)
-                
-             
+
+
                 .'<hr class="mt-1 mb-2">'
                 . '<span class="label label-info popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $createdInfo .'">'
                 . '<i class="fa fa-toggle-right"></i> View Details'
@@ -7411,13 +7411,13 @@ class InventoryController extends Controller
                     <b>Effective Date&amp;Time:</b> " . $effectiveDate . " <br>
                     <b>RecordedAt:</b> " . $timestamp ." <br>
                     <b>LastUpdated:</b> " . $lastUpdated;
-                    
+
                 $Particulars = explode(',', $WO->particulars);
                 $Amounts = explode(',', $WO->amount);
                 $Discounts = explode(',', $WO->discount);
                 $Remarks = explode(',', $WO->remarks);
 
-            
+
                 $formattedData = '<table>';
                 $formattedData .= '<tr>';
                 $formattedData .= '<th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Particulars</th>';
@@ -7426,21 +7426,21 @@ class InventoryController extends Controller
                 $formattedData .= '<th style="padding: 5px 15px 5px 5px;border: 1px solid grey;width: 150px;">Net Payable</th>';
                 $formattedData .= '<th style="padding: 5px 15px 5px 5px;border: 1px solid grey;width: 150px;">Remarks</th>';
                 $formattedData .= '</tr>';
-            
+
                 // Initialize totals
                 $totalAmount = 0;
                 $totalDiscount = 0;
                 $totalPayable = 0;
-            
+
                 foreach ($Particulars as $key => $Particular) {
                     $Payable = $Amounts[$key] - $Discounts[$key];
-                    
+
                     // Add to totals
                     $totalAmount += $Amounts[$key];
                     $totalDiscount += $Discounts[$key];
                     $totalPayable += $Payable;
-                    $remarksValue = (!empty($Remarks[$key]) && $Remarks[$key] !== null) ? $Remarks[$key] : 'N/A'; 
-            
+                    $remarksValue = (!empty($Remarks[$key]) && $Remarks[$key] !== null) ? $Remarks[$key] : 'N/A';
+
                     $formattedData .= '<tr>';
                     $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . ucwords($Particular) . '</td>';
                     $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;"> Rs ' . number_format(($Amounts[$key]),2) . '</td>';
@@ -7449,7 +7449,7 @@ class InventoryController extends Controller
                     $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . ucwords($remarksValue) . '</td>';
                     $formattedData .= '</tr>';
                 }
-            
+
                 // Footer row with totals
                 $formattedData .= '<tr style="font-weight: bold;">';
                 $formattedData .= '<td colspan="1" style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Total</td>';
@@ -7458,9 +7458,9 @@ class InventoryController extends Controller
                 $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;"> Rs ' . number_format($totalPayable, 2) . '</td>';
                 $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;"> </td>';
                 $formattedData .= '</tr>';
-            
+
                 $formattedData .= '</table>';
-                
+
                 return $formattedData . '<hr class="mt-1 mb-2">'
                     . '<span class="label label-info popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $createdInfo .'">'
                     . '<i class="fa fa-toggle-right"></i> View Details'
@@ -7574,7 +7574,7 @@ class InventoryController extends Controller
         $WOLog->logid = implode(',', $logIds);
         $WOLog->save();
         $WorkOrderStatus->save();
-        
+
         return response()->json(['success' => true, 200]);
     }
 
@@ -7608,7 +7608,7 @@ class InventoryController extends Controller
         $WOLog->logid = implode(',', $logIds);
         $WOLog->save();
         $WorkOrder->save();
-        
+
         return response()->json(['success' => true, 200]);
     }
 
@@ -7667,7 +7667,7 @@ class InventoryController extends Controller
         $WO->site_id = $request->input('u_wo_site');
         $WO->vendor_id = $request->input('u_wo_vendor');
 
-        $AmountArray = $request->input('u_wo_amount'); 
+        $AmountArray = $request->input('u_wo_amount');
         $DiscountArray = $request->input('u_wo_discount');
 
         foreach ($AmountArray as $key => $amount) {
@@ -7702,7 +7702,7 @@ class InventoryController extends Controller
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
-        
+
         $WO->save();
 
         if (empty($WO->id)) {
@@ -7726,12 +7726,12 @@ class InventoryController extends Controller
     {
         $siteId            = $request->input('siteId');
         $transactionTypeId = $request->input('transactionTypeId');
-    
+
         $user       = auth()->user();
         $roleId     = $user->role_id;
         $isEmployee = $user->is_employee;
         $empId      = $user->emp_id;
-    
+
         $TransactionType = InventoryTransactionType::select(
             'source_type.name as Source',
             'destination_type.name as Destination',
@@ -7747,7 +7747,7 @@ class InventoryController extends Controller
         ->where('inventory_transaction_type.id', '=', $transactionTypeId)
         ->first();
 
-    
+
         if (! $TransactionType) {
             return response()->json([
                 'Source'          => null,
@@ -7756,12 +7756,12 @@ class InventoryController extends Controller
                 'destinationData' => [],
             ]);
         }
-    
+
         $sourceName      = strtolower($TransactionType->Source);
         $destinationName = strtolower($TransactionType->Destination);
         $applicableLocationTo = $TransactionType->applicable_location_to;
 
-    
+
         $serviceLocationIDs = [];
         if (! empty($TransactionType->service_location_id)) {
             // e.g. "1,2,3"
@@ -7769,7 +7769,7 @@ class InventoryController extends Controller
             $serviceLocationIDs = array_map('trim', $serviceLocationIDs);
             $serviceLocationIDs = array_filter($serviceLocationIDs);
         }
-    
+
         $empServiceLocationIDs = [];
         if ($roleId != 1 && $isEmployee == 1) {
             // $empInv = DB::table('emp_inventory_location')
@@ -7808,31 +7808,31 @@ class InventoryController extends Controller
                 'message'     => 'Currently no locations are activated for you. Please contact the administrator.',
             ], 200);
         }
-    
+
         // Prepare final arrays
         $sourceData      = [];
         $destinationData = [];
-    
+
         if (stripos($sourceName, 'location') !== false) {
             $srcQuery = DB::table('service_location')
                 ->where('service_location.status', 1)
                 ->select('service_location.id', 'service_location.name')
                 ->orderBy('service_location.name', 'asc');
-        
+
             if ($applicableLocationTo === 'source') {
                 if(count($empServiceLocationIDs) > 0) {
                     $srcQuery->whereIn('service_location.id', array_intersect($serviceLocationIDs, $empServiceLocationIDs));
-                } 
+                }
                 else {
                     $srcQuery->whereIn('service_location.id', $serviceLocationIDs);
                 }
-            } 
+            }
             else {
                 if (count($empServiceLocationIDs) > 0) {
                     $srcQuery->whereIn('service_location.id', $empServiceLocationIDs);
                 }
             }
-        
+
             $sourceData = $srcQuery->get();
 
         }
@@ -7857,8 +7857,8 @@ class InventoryController extends Controller
             //         'pio.mr_code as id',
             //         DB::raw("CONCAT(pio.mr_code, ' - ', p.name) as patient_name")
             //     )
-            //     ->where('pio.status', 1)              
-            //     ->where('pio.site_id', $siteId)    
+            //     ->where('pio.status', 1)
+            //     ->where('pio.site_id', $siteId)
             //     ->orderBy('p.name', 'asc')
             //     ->get();
 
@@ -7878,7 +7878,7 @@ class InventoryController extends Controller
             $sourceData = $query->get();
 
         }
-    
+
         // DESTINATION
         if (stripos($destinationName, 'location') !== false) {
         // if ($destinationName === 'inventory location') {
@@ -7886,23 +7886,23 @@ class InventoryController extends Controller
                 ->where('service_location.status', 1)
                 ->select('service_location.id', 'service_location.name')
                 ->orderBy('service_location.name', 'asc');
-            
+
 
             if ($applicableLocationTo === 'destination') {
                 if(count($empServiceLocationIDs) > 0) {
                     $destQuery->whereIn('service_location.id', array_intersect($serviceLocationIDs, $empServiceLocationIDs));
-                } 
+                }
                 else {
                     $destQuery->whereIn('service_location.id', $serviceLocationIDs);
                 }
-            } 
+            }
             else {
                 if (count($empServiceLocationIDs) > 0) {
                     $destQuery->whereIn('service_location.id', $empServiceLocationIDs);
                 }
             }
-      
-    
+
+
             $destinationData = $destQuery->get();
         }
         elseif ($destinationName === 'vendor') {
@@ -7926,7 +7926,7 @@ class InventoryController extends Controller
             //         'pio.mr_code as id',
             //         DB::raw("CONCAT(pio.mr_code, ' - ', p.name) as patient_name")
             //     )
-            //     ->where('pio.status', 1)     
+            //     ->where('pio.status', 1)
             //     ->where('pio.site_id', $siteId)
             //     ->orderBy('p.name', 'asc')
             //     ->get();
@@ -7947,7 +7947,7 @@ class InventoryController extends Controller
             $destinationData = $query->get();
         }
                 // dd($sourceData, $destinationData, $applicableLocationTo);
-    
+
         return response()->json([
             'Source'          => $TransactionType->Source,
             'Destination'     => $TransactionType->Destination,
@@ -7964,11 +7964,11 @@ class InventoryController extends Controller
     {
         $colName = 'external_transaction';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $empId = $user->emp_id;
-        
+
         // $costcenters = DB::table('emp_cc as e')
         // ->join('costcenter as c', DB::raw('FIND_IN_SET(c.id, e.cc_id)'), '>', DB::raw('0'))
         // ->join('cc_type as ct', 'c.cc_type', '=', 'ct.id')
@@ -8000,7 +8000,7 @@ class InventoryController extends Controller
         // dd($costcenters);
 
 
-        
+
 
         return view('dashboard.material_management.external_transactions', compact('user','costcenters'));
     }
@@ -8012,7 +8012,7 @@ class InventoryController extends Controller
         if ($add == 0) {
             abort(403, 'Forbidden');
         }
-    
+
         // Retrieve single value inputs
         $TransactionTypeID   = $request->input('et_transactiontype');
         $Organization        = $request->input('et_org');
@@ -8022,20 +8022,20 @@ class InventoryController extends Controller
         $Destination         = $request->input('et_destination');
         $ReferenceDocument   = $request->input('et_reference_document');
         $Remarks             = $request->input('et_remarks');
-    
+
         // Retrieve array inputs
         $Generics   = $request->input('et_generic');
         $Brands     = $request->input('et_brand');
         $Batches    = $request->input('et_batch');
         // $ExpireDate = $request->input('et_expiry');
         $Quantities = $request->input('et_qty');
-    
+
         // Convert arrays to comma-separated strings for non-date fields
         $GenericsCSV   = is_array($Generics) ? implode(',', $Generics) : '';
         $BrandsCSV     = is_array($Brands) ? implode(',', $Brands) : '';
         $BatchesCSV    = is_array($Batches) ? implode(',', $Batches) : '';
         $QuantitiesCSV = is_array($Quantities) ? implode(',', $Quantities) : '';
-    
+
         $ExpireDate = $request->input('et_expiry');
         $ExpireDates = [];
         foreach ($ExpireDate as $ed) {
@@ -8044,7 +8044,7 @@ class InventoryController extends Controller
         }
 
         $ExpireDates = is_array($ExpireDates) ? implode(',', $ExpireDates) : '';
-    
+
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
@@ -8072,9 +8072,9 @@ class InventoryController extends Controller
         $ExternalTransaction->last_updated        = $last_updated;
         $ExternalTransaction->timestamp           = $timestampNow;
         $ExternalTransaction->effective_timestamp = $timestampNow; // Adjust if necessary
-    
+
         // $ExternalTransaction->save();
-    
+
         // if (empty($ExternalTransaction->id)) {
         //     return response()->json(['error' => 'Failed to Add External Transaction.']);
         // }
@@ -8082,7 +8082,7 @@ class InventoryController extends Controller
             DB::rollBack();
             return response()->json(['error' => 'Failed to Add External Transaction.']);
         }
-    
+
         // Log creation
         $logs = Logs::create([
             'module'    => 'inventory',
@@ -8090,7 +8090,7 @@ class InventoryController extends Controller
             'event'     => 'add',
             'timestamp' => $timestampNow,
         ]);
-    
+
         $ExternalTransaction->logid = $logs->id;
         $ExternalTransaction->save();
 
@@ -8162,7 +8162,7 @@ class InventoryController extends Controller
 
         //     $dateTime   = Carbon::createFromTimestamp($timestampNow)->format('d-M-Y H:i');
         //     $remarkText = "Transaction by {$session->name} on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSiteBalance}";
-        
+
         //     InventoryBalance::create([
         //         'management_id' => $ExternalTransaction->id,
         //         'generic_id'    => $genId,
@@ -8177,7 +8177,7 @@ class InventoryController extends Controller
         //         'timestamp'     => $timestampNow,
         //     ]);
         // }
-       
+
         for ($i = 0; $i < $count; $i++) {
             $genId   = $Generics[$i]   ?? null;
             $brandId = $Brands[$i]     ?? null;
@@ -8401,7 +8401,7 @@ class InventoryController extends Controller
                 ]);
             }
         }
-        DB::commit();   
+        DB::commit();
         return response()->json(['success' => 'External Transaction added successfully']);
     }
 
@@ -8443,7 +8443,7 @@ class InventoryController extends Controller
         ->join('org_site', 'org_site.id', '=', 'inventory_management.site_id')
         ->leftJoin('inventory_generic', 'inventory_generic.id', '=', 'inventory_management.inv_generic_id')
         ->leftJoin('inventory_brand', 'inventory_brand.id', '=', 'inventory_management.brand_id')
-        ->where('inventory_transaction_activity.name', 'external transaction') 
+        ->where('inventory_transaction_activity.name', 'external transaction')
         ->orderBy('inventory_management.id', 'desc');
 
         // 3) Filter by user's org if needed
@@ -8480,24 +8480,24 @@ class InventoryController extends Controller
                 $SiteCode  = strtoupper(substr($row->siteName, 0, 3));
                 $idStr     = str_pad($row->id, 5, "0", STR_PAD_LEFT);
                 $code      =  $SiteCode . '-ET-' . $idStr;
-            
+
                 $issueDate = $row->effective_timestamp
                     ? \Carbon\Carbon::createFromTimestamp($row->effective_timestamp)->format('d F Y')
                     : 'N/A';
                 // $issueDate   = Carbon::createFromTimestamp($row->effective_timestamp)->format('d-M-Y H:i');
-            
+
                 $referenceNumber = $row->ref_document_no ?: 'N/A';
                 $siteName        = $row->siteName       ?: 'N/A';
                 $remarks         = $row->remarks        ?: 'N/A';
-            
+
                 // Source & Destination Type Lookup from transaction_type
                 $transactionType = InventoryTransactionType::select(
                     'source_location_type', 'destination_location_type'
                 )->where('id', $row->transaction_type_id)->first();
-            
+
                 $sourceText = '';
                 $destinationText = '';
-            
+
                 if ($transactionType) {
                     // Get Source
                     // dd($transactionType,$row->source_location_id,$transactionType->source_location_type);
@@ -8508,7 +8508,7 @@ class InventoryController extends Controller
                         $sourceType = DB::table('inventory_source_destination_type')
                             ->where('id', $transactionType->source_location_type)
                             ->value('name');
-        
+
                         if ($sourceType) {
                             if (stripos($sourceType, 'vendor') !== false || stripos($sourceType, 'donor') !== false) {
                                 $sourceName = DB::table('third_party')
@@ -8525,14 +8525,14 @@ class InventoryController extends Controller
                         }
                     }
                     // }
-                   
+
                     // Get Destination
                     // if ($row->destination_location_id) {
                     if ($transactionType->destination_location_type) {
                         $destinationType = DB::table('inventory_source_destination_type')
                             ->where('id', $transactionType->destination_location_type)
                             ->value('name');
-        
+
                         if ($destinationType) {
                             if (stripos($destinationType, 'vendor') !== false || stripos($destinationType, 'donor') !== false) {
                                 $destinationName = DB::table('third_party')
@@ -8550,7 +8550,7 @@ class InventoryController extends Controller
                     }
                     // }
                 }
-            
+
                 return $code . '<br>'
                      . '<b>Ref #:</b> ' . $referenceNumber . '<br>'
                      . ucwords($row->TransactionTypeName) . '<br>'
@@ -8640,7 +8640,7 @@ class InventoryController extends Controller
                     })
                     ->values()
                     ->toArray();
-              
+
                     $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
 
                     $formattedExpiry = is_numeric($expiry)
@@ -8683,11 +8683,11 @@ class InventoryController extends Controller
     {
         $colName = 'issue_and_dispense';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $empId = $user->emp_id;
-        
+
         // $costcenters = DB::table('emp_cc as e')
         // ->join('costcenter as c', DB::raw('FIND_IN_SET(c.id, e.cc_id)'), '>', DB::raw('0'))
         // ->join('cc_type as ct', 'c.cc_type', '=', 'ct.id')
@@ -8827,7 +8827,7 @@ class InventoryController extends Controller
             DB::raw('service_group.name as serviceGroup'),
             DB::raw('service_type.name as serviceType'),
             DB::raw('inventory_transaction_type.name as TransactionType'),
-            DB::raw('"N/A" as ServiceLocationName') 
+            DB::raw('"N/A" as ServiceLocationName')
         ];
 
         $directIssueDIspense = DB::table('inventory_management as im')
@@ -8874,7 +8874,7 @@ class InventoryController extends Controller
                     DB::raw("CAST(im.inv_generic_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as inv_generic_ids"),
                     DB::raw("CAST(im.remarks AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as remarks")
                 ],
-                $inventoryJoinFields, 
+                $inventoryJoinFields,
                 [DB::raw("CAST('inventory' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")]
             ))->get();
 
@@ -8913,7 +8913,7 @@ class InventoryController extends Controller
             ->editColumn('InventoryDetails', function ($row) {
                 $Rights = $this->rights;
                 $respond = explode(',', $Rights->issue_and_dispense)[2];
-                
+
                 $tableRows = '';
                 $genericIds = explode(',', $row->inv_generic_ids);
                 $genericNames = InventoryGeneric::whereIn('id', $genericIds)->pluck('name', 'id')->toArray();
@@ -8922,7 +8922,7 @@ class InventoryController extends Controller
                 if ($row->source === 'inventory') {
                     if (!empty($row->referenceNumber)) {
                         if (str_contains($row->referenceNumber, '-MTC-') || str_contains($row->referenceNumber, '-MDC-')) {
-                          
+
                             $isDirectEntry = false;
                         } else {
                             $isDirectEntry = true;
@@ -8943,7 +8943,7 @@ class InventoryController extends Controller
                     $frequencyIds = explode(',', $row->frequency_ids);
                     $frequencies = MedicationFrequency::whereIn('id', $frequencyIds)->pluck('name', 'id')->toArray();
                     $days = explode(',', $row->days);
-                
+
                     // Get responded entries from inventory_management
                     $respondedEntries = [];
                     if (!empty($row->referenceNumber)) {
@@ -8972,7 +8972,7 @@ class InventoryController extends Controller
                     $count = max(count($genericIds), count($dose), count($routeIds), count($frequencyIds), count($days));
                     for ($i = 0; $i < $count; $i++) {
                         $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
-                        
+
                         $currentGenericId = $genericIds[$i] ?? '';
                         $isResponded = array_key_exists($currentGenericId, $respondedEntries);
 
@@ -9024,7 +9024,7 @@ class InventoryController extends Controller
                                     })
                                     ->values()
                                     ->toArray();
-                        
+
                                 $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
 
                                 $balances = [
@@ -9079,7 +9079,7 @@ class InventoryController extends Controller
                                     })
                                     ->values()
                                     ->toArray();
-                        
+
                                 $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
 
                                 $balances = [
@@ -9094,7 +9094,7 @@ class InventoryController extends Controller
                         if ($isDirectEntry || $isResponded) {
                             if ($isIssue) {
                                 $status = 'Issued';
-                                $statusClass = 'megna'; 
+                                $statusClass = 'megna';
                             } else {
                                 $status = 'Dispensed';
                                 $statusClass = 'success';
@@ -9117,7 +9117,7 @@ class InventoryController extends Controller
                                 ->where('inv_generic_id', $currentGenericId)
                                 ->select('brand_id', 'batch_no', 'expiry_date')
                                 ->first();
-                                
+
 
                             if ($itemData) {
                                 $brandName = DB::table('inventory_brand')->where('id', $itemData->brand_id)->value('name') ?? '';
@@ -9133,9 +9133,9 @@ class InventoryController extends Controller
                             $expiryDate = is_numeric($row->expiry_date)
                                 ? Carbon::createFromTimestamp($row->expiry_date)->format('d-M-Y')
                                 : $row->expiry_date;
-                                
+
                         }
-                
+
                         $tableRows .= '<tr style="background-color:'.$bg.';cursor:pointer;" class="balance-row" data-expiry="'.$expiryDate.'" data-brand="'.$brandName.'" data-batch="'.$batchNo.'" data-loc-balance="'.$balances['locBalance'].'" data-org-balance="'.$balances['orgBalance'].'" data-site-balance="'.$balances['siteBalance'].'">'
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$currentGenericId] ?? 'N/A').'</td>'
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($dose[$i] ?? 'N/A').'</td>'
@@ -9143,7 +9143,7 @@ class InventoryController extends Controller
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($frequencies[$frequencyIds[$i]] ?? 'N/A').'</td>'
                             .'<td style="padding:8px;border:1px solid #ccc;">'.($days[$i] ?? 'N/A').'</td>';
                             $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($respondedEntries[$currentGenericId] ?? '0').'</td>';
-                
+
                         if ($isResponded) {
                                 $respondedEntry = DB::table('inventory_management')
                                     ->where('ref_document_no', $row->referenceNumber)
@@ -9179,14 +9179,14 @@ class InventoryController extends Controller
                         {
                             $actionBtn = '<code>Unauthorized Access</code>';
                         }
-                
+
                         $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>
                             <td style="padding:8px;border:1px solid #ccc;">
                                 <span class="label label-'.$statusClass.'">'.$status.'</span>
                             </td>
                             </tr>';
                     }
-                
+
                     // Build table header
                     $tableHeader = '<tr>'
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic</th>'
@@ -9195,15 +9195,15 @@ class InventoryController extends Controller
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Frequency</th>'
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Duration (Days)</th>';
                     $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>';
-                    
+
                     // Add transaction qty header if there are any responded entries
                     if (!empty($respondedEntries)) {
                     }
-                
+
                     $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
                         .'</tr>';
-                
+
                     return '<table style="width:100%;border-collapse:collapse;font-size:13px;" class="table table-bordered">'
                         .'<thead style="background-color:#e2e8f0;color:#000;">'
                         .$tableHeader
@@ -9219,7 +9219,7 @@ class InventoryController extends Controller
                         //     ->where('ref_document_no', $row->referenceNumber)
                         //     ->pluck('transaction_qty', 'inv_generic_id')
                         //     ->toArray();
-             
+
                         $respondedQtys = DB::table('inventory_management as im')
                         ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
                         ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'itt.activity_type')
@@ -9234,7 +9234,7 @@ class InventoryController extends Controller
                         ->toArray();
                     }
 
-                    
+
                     $dose = !empty($row->dose) ? explode(',', $row->dose) : [];
                     $routeIds = !empty($row->route_ids) ? explode(',', $row->route_ids) : [];
                     $frequencyIds = !empty($row->frequency_ids) ? explode(',', $row->frequency_ids) : [];
@@ -9251,10 +9251,10 @@ class InventoryController extends Controller
 
                     $routes = MedicationRoutes::whereIn('id', $routeIds)->pluck('name', 'id')->toArray();
                     $frequencies = MedicationFrequency::whereIn('id', $frequencyIds)->pluck('name', 'id')->toArray();
-                
+
                     for ($i = 0; $i < count($genericIds); $i++) {
                         $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
-                        
+
                         $currentGenericId = $genericIds[$i];
 
                         $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A', 'locBalance' => 'N/A'];
@@ -9304,7 +9304,7 @@ class InventoryController extends Controller
                                     })
                                     ->values()
                                     ->toArray();
-                        
+
                                 $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
 
                                 $balances = [
@@ -9314,7 +9314,7 @@ class InventoryController extends Controller
 
                                 ];
                             }
-                        } 
+                        }
                         else if (!empty($row->referenceNumber) && $respondedQtys) {
                             $respondedEntry = DB::table('inventory_management')
                                 ->where('ref_document_no', $row->referenceNumber)
@@ -9361,7 +9361,7 @@ class InventoryController extends Controller
                                     })
                                     ->values()
                                     ->toArray();
-                        
+
                                 $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
 
                                 $balances = [
@@ -9380,7 +9380,7 @@ class InventoryController extends Controller
                             if ($currentRespondedQty >= $currentDemandQty) {
                                 if ($isIssue) {
                                     $status = 'Issued';
-                                    $statusClass = 'megna'; 
+                                    $statusClass = 'megna';
                                 } else {
                                     $status = 'Dispensed';
                                     $statusClass = 'success';
@@ -9400,12 +9400,12 @@ class InventoryController extends Controller
                             $statusClass = 'warning';
                             $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
                         }
-                
+
                         // Override for direct entries
                         if ($isDirectEntry) {
                              if ($isIssue) {
                                 $status = 'Issued';
-                                $statusClass = 'megna'; 
+                                $statusClass = 'megna';
                             } else {
                                 $status = 'Dispensed';
                                 $statusClass = 'success';
@@ -9422,7 +9422,7 @@ class InventoryController extends Controller
                                 ->where('inv_generic_id', $currentGenericId)
                                 ->select('brand_id', 'batch_no', 'expiry_date')
                                 ->first();
-                                
+
 
                             if ($itemData) {
                                 $brandName = DB::table('inventory_brand')->where('id', $itemData->brand_id)->value('name') ?? '';
@@ -9438,7 +9438,7 @@ class InventoryController extends Controller
                             $expiryDate = is_numeric($expiry_date[$i])
                                 ? Carbon::createFromTimestamp($expiry_date[$i])->format('d-M-Y')
                                 : $expiry_date[$i];
-                                
+
                         }
                     //  data-expiry="'.$expiryDate.'" data-brand="'.$brandName.'" data-batch="'.$batchNo.'"
                         $tableRows .= '<tr style="background-color:'.$bg.'; cursor:pointer;" class="balance-row" data-expiry="'.$expiryDate.'" data-brand="'.$brandName.'" data-batch="'.$batchNo.'" data-loc-balance="'.$balances['locBalance'].'" data-org-balance="'.$balances['orgBalance'].'" data-site-balance="'.$balances['siteBalance'].'">'
@@ -9459,7 +9459,7 @@ class InventoryController extends Controller
                         if ($row->source === 'inventory' && $transactionQty !== null) {
                             $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($transactionQty[$i] ?? 'N/A').'</td>';
                         }
-                
+
                         // Add responded qty column if not inventory source
                         if ($row->source !== 'inventory' && $currentRespondedQty >= 0) {
                             $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$currentRespondedQty.'</td>';
@@ -9472,14 +9472,14 @@ class InventoryController extends Controller
                         {
                             $actionBtn = '<code>Unauthorized Access</code>';
                         }
-                
+
                         $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>
                             <td style="padding: 5px 15px;border: 1px solid #ccc;">
                                 <span class="label label-'.$statusClass.'">'.$status.'</span>
                             </td>
                             </tr>';
                     }
-                
+
                     // Build table header
                     // $tableHeader = '<tr>'
                     //     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic</th>'
@@ -9500,25 +9500,25 @@ class InventoryController extends Controller
 
                     $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>';
 
-                    
+
                     // Add transaction qty header only for inventory source
                     // if ($row->source === 'inventory') {
                     //     $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>';
                     // }
-                
+
                     // // Add responded qty header if not inventory source
                     // if ($row->source !== 'inventory' && !empty($respondedQtys)) {
                     //     $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>';
                     // }
-                
+
                     $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
                         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
                         .'</tr>';
-                
+
                     return '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
                         .'<thead style="background-color:#e2e8f0;color:#000;">'
                         .$tableHeader
-                        .'</thead><tbody>'.$tableRows.'</tbody></table>';   
+                        .'</thead><tbody>'.$tableRows.'</tbody></table>';
                 }
             })
         ->rawColumns(['id_raw', 'id', 'patientDetails', 'InventoryDetails'])
@@ -9574,7 +9574,7 @@ class InventoryController extends Controller
                 // })
                 ->where('r.id', $id)
                 ->first();
-                    
+
             if (! $med) {
                 return response()->json(['error'=>'Medication record not found'], 404);
             }
@@ -9646,7 +9646,7 @@ class InventoryController extends Controller
                 //     'sg.name                       as service_group_name',
                 //     'st.name                       as service_type_name',
                 //     'im.transaction_qty            as issuedQty',
-                    
+
                 //     'ib.site_balance              as maxQty'  // Added this line
                 // ])
                 // ->join('organization                as o',   'o.id',  '=', 'm.org_id')
@@ -9668,7 +9668,7 @@ class InventoryController extends Controller
                 // })
                 // ->where('m.id', $id)
                 // ->first();
-                
+
                 $mat = MaterialConsumptionRequisition::from('material_consumption_requisition as m')
                 ->select([
                     'm.id',
@@ -9727,7 +9727,7 @@ class InventoryController extends Controller
                 ->leftJoin('inventory_transaction_type as itt2', 'itt2.id', '=', 'im.transaction_type_id')
                 ->leftJoin('inventory_transaction_activity as ita', 'ita.id', '=', 'itt2.activity_type')
                 ->where(function($query) {
-                    $query->whereNull('im.id') 
+                    $query->whereNull('im.id')
                         ->orWhere(function($q) {
                             $q->where(function($sub) {
                                 $sub->where('ita.name', 'like', '%issue%')
@@ -9759,7 +9759,7 @@ class InventoryController extends Controller
                     'ib.site_balance'
                 ])
                 ->first();
-                
+
             if (! $mat) {
                 return response()->json(['error'=>'Material record not found'], 404);
             }
@@ -9773,7 +9773,7 @@ class InventoryController extends Controller
             $issuedQty = $mat->issuedQty;
             $maxQty = $mat->maxQty;
 
-            $remainingQty = max(0, $originalQty - $issuedQty); 
+            $remainingQty = max(0, $originalQty - $issuedQty);
             // dd($originalQty,$issuedQty,$remainingQty);
 
             return response()->json([
@@ -9801,7 +9801,7 @@ class InventoryController extends Controller
                 'billing_cc_name'        => $mat->billing_cc_name,
                 'generic_id'             => $gIds[$i]      ?? null,
                 'generic_name'           => $genericName,
-                'brand_id'               => null,         
+                'brand_id'               => null,
                 'brand_name'             => '',
                 // 'demand_qty'             => $qtys[$i]      ?? '',
                 'demand_qty'             => $remainingQty      ?? '0',
@@ -9842,7 +9842,7 @@ class InventoryController extends Controller
                 )',
                 [$orgId, $siteId, $brandId, $genericId]
             )
-            ->where('site_balance', '>', 0) 
+            ->where('site_balance', '>', 0)
             ->get(['batch_no', 'management_id', 'site_balance']);
 
         $batchList = [];
@@ -9913,14 +9913,14 @@ class InventoryController extends Controller
         $inventory->site_id = $validated['id_site'];
         $inventory->source = $validated['id_source'];
         $inventory->destination = $validated['id_destination'];
-        
+
         if (isset($validated['id_mr']) && !empty($validated['id_mr'])) {
             $inventory->mr_code = $validated['id_mr'];
             // $inventory->dose = $validated['id_duration'][0];
             // $inventory->frequency_id = $validated['id_frequency'][0];
             // $inventory->route_id = $validated['id_route'][0];
             // $inventory->duration = $validated['id_duration'][0];
-            
+
             // If MR exists, check for service details
             if (isset($validated['id_service']) && !empty($validated['id_service'])) {
                 $inventory->service_id = $validated['id_service'];
@@ -9936,7 +9936,7 @@ class InventoryController extends Controller
         // Remarks field
         $inventory->remarks = $validated['id_remarks'] ?? null;
         // Handle item specific fields based on count
-        
+
         if ($itemCount > 1) {
             $inventory->inv_generic_id = implode(',', $validated['id_generic']);
             $inventory->brand_id = implode(',', $validated['id_brand']);
@@ -9960,7 +9960,7 @@ class InventoryController extends Controller
                 return Carbon::createFromFormat('Y-m-d', $date)->timestamp;
             }, $validated['id_expiry']);
             $inventory->expiry_date = implode(',', $formattedDates);
-            
+
             $inventory->transaction_qty = implode(',', $validated['id_qty']);
         } else {
             $inventory->inv_generic_id = $validated['id_generic'][0];
@@ -9981,7 +9981,7 @@ class InventoryController extends Controller
                 $inventory->duration = $validated['id_duration'][0];
             }
         }
-        
+
         $inventory->status = 1;
         $inventory->user_id = auth()->id();
         $inventory->effective_timestamp = now()->timestamp;
@@ -10065,7 +10065,7 @@ class InventoryController extends Controller
             $brandId = $validated['id_brand'][$i];
             $batchNo = $validated['id_batch'][$i];
             $qty = (int)$validated['id_qty'][$i];
-            
+
             // $expTs = Carbon::createFromFormat('Y-m-d', $validated['id_expiry'][$i])->timestamp;
             if (! $genId || ! $brandId || ! $batchNo) {
                 continue;
@@ -10123,7 +10123,7 @@ class InventoryController extends Controller
                         $newSiteBalance = $prevSiteBalance;
                 }
             }
-        
+
             // $dateTime = Carbon::createFromTimestamp(now()->timestamp)->format('d-M-Y H:i');
             $remarkText = "Transaction Initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSiteBalance}";
             if (strtolower($sourceType) === 'inventory location' && $validated['id_source'] && strtolower($destinationType) === 'inventory location' && $validated['id_destination']) {
@@ -10272,7 +10272,7 @@ class InventoryController extends Controller
                 } else {
                     $newLocBalance = $prevLocBalance;
                 }
-            
+
                 // dd($newLocBalance, $Destination)
                 InventoryBalance::create([
                     'management_id'    => $inventory->id,
@@ -10354,7 +10354,7 @@ class InventoryController extends Controller
                 'event' => 'add',
                 'timestamp' => now()->timestamp,
             ]);
-           
+
             $inventory->logid = $logs->id;
             $inventory->save();
 
@@ -10374,11 +10374,11 @@ class InventoryController extends Controller
     {
         $colName = 'other_transactions';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
         $user = auth()->user();
         $empId = $user->emp_id;
-        
+
         // $costcenters = DB::table('emp_cc as e')
         // ->join('costcenter as c', DB::raw('FIND_IN_SET(c.id, e.cc_id)'), '>', DB::raw('0'))
         // ->join('cc_type as ct', 'c.cc_type', '=', 'ct.id')
@@ -10437,7 +10437,7 @@ class InventoryController extends Controller
         // ->leftJoin('inventory_brand', 'inventory_brand.id', '=', 'inventory_management.brand_id')
         ->select([
             'rot.*',
-            'rot.qty as demand_qty', 
+            'rot.qty as demand_qty',
             'organization.organization as orgName',
             'sourceSite.name as sourceSite',
             'destinationSite.name as destinationSite',
@@ -10459,10 +10459,10 @@ class InventoryController extends Controller
         ->join('org_site', 'org_site.id', '=', 'im.site_id')
         ->join('inventory_brand', 'inventory_brand.id', '=', 'im.brand_id')
         // ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'im.billing_cc')
-        // ->leftJoin('service_location', 'service_location.id', '=', 'im.source') 
+        // ->leftJoin('service_location', 'service_location.id', '=', 'im.source')
         ->select([
             'im.*',
-            'im.inv_generic_id as generic_id', 
+            'im.inv_generic_id as generic_id',
             'organization.organization as orgName',
             'org_site.name as siteName',
             'inventory_brand.name as brandName',
@@ -10494,7 +10494,7 @@ class InventoryController extends Controller
             $destinationLocation = '';
 
             if (($row->sourceSite) && ($row->sourceLocation))
-            {   
+            {
                 $sourceSite ='<br><b>Source Site: </b>'.ucwords($row->sourceSite);
                 $sourceLocation ='<br><b>Source Location: </b>'.ucwords($row->sourceLocation);
             }
@@ -10617,7 +10617,7 @@ class InventoryController extends Controller
                                 ->where('org_id', $row->org_id)
                                 ->where('site_id', $row->source_site)
                                 ->whereNotNull('location_id')
-                                ->orderBy('id', 'desc') 
+                                ->orderBy('id', 'desc')
                                 ->get()
                                 ->groupBy('location_id')
                                 ->filter(function ($records) {
@@ -10631,7 +10631,7 @@ class InventoryController extends Controller
                                 })
                                 ->values()
                                 ->toArray();
-                    
+
                             // $sourceLocationJson = htmlspecialchars(json_encode($sourceLocationBalances), ENT_QUOTES, 'UTF-8');
                             $sourceLocationJson = json_encode($sourceLocationBalances);
                         }
@@ -10652,7 +10652,7 @@ class InventoryController extends Controller
                                 ->where('org_id', $row->org_id)
                                 ->where('site_id', $row->destination_site)
                                 ->whereNotNull('location_id')
-                                ->orderBy('id', 'desc') 
+                                ->orderBy('id', 'desc')
                                 ->get()
                                 ->groupBy('location_id')
                                 ->filter(function ($records) {
@@ -10666,7 +10666,7 @@ class InventoryController extends Controller
                                 })
                                 ->values()
                                 ->toArray();
-                    
+
                             $destinationLocationJson = json_encode($destinationLocationBalances);
                         }
 
@@ -10695,7 +10695,7 @@ class InventoryController extends Controller
                         //     'destinationLocBalance' => $destinationLocationJson
                         // ];
                     }
-                } 
+                }
                 else if (!empty($row->referenceNumber) && $respondedQtys) {
                     $respondedEntry = DB::table('inventory_management')
                         ->where('ref_document_no', $row->referenceNumber)
@@ -10722,14 +10722,14 @@ class InventoryController extends Controller
                             ->where('batch_no', $respondedEntry->batch_no)
                             ->orderBy('id', 'desc')
                             ->value('site_balance') ?? 'N/A';
-                            
+
                             $sourceLocationBalances = InventoryBalance::where('generic_id', $currentGenericId)
                                 ->where('brand_id', $respondedEntry->brand_id)
                                 ->where('batch_no', $respondedEntry->batch_no)
                                 ->where('org_id', $row->org_id)
                                 ->where('site_id', $row->source_site)
                                 ->whereNotNull('location_id')
-                                ->orderBy('id', 'desc') 
+                                ->orderBy('id', 'desc')
                                 ->get()
                                 ->groupBy('location_id')
                                 ->filter(function ($records) {
@@ -10743,7 +10743,7 @@ class InventoryController extends Controller
                                 })
                                 ->values()
                                 ->toArray();
-                    
+
                             // $sourceLocationJson = htmlspecialchars(json_encode($sourceLocationBalances), ENT_QUOTES, 'UTF-8');
                             $sourceLocationJson = json_encode($sourceLocationBalances);
 
@@ -10758,14 +10758,14 @@ class InventoryController extends Controller
                             ->where('batch_no', $respondedEntry->batch_no)
                             ->orderBy('id', 'desc')
                             ->value('site_balance') ?? 'N/A';
-                            
+
                             $destinationLocationBalances = InventoryBalance::where('generic_id', $currentGenericId)
                                 ->where('brand_id', $respondedEntry->brand_id)
                                 ->where('batch_no', $respondedEntry->batch_no)
                                 ->where('org_id', $row->org_id)
                                 ->where('site_id', $row->destination_site)
                                 ->whereNotNull('location_id')
-                                ->orderBy('id', 'desc') 
+                                ->orderBy('id', 'desc')
                                 ->get()
                                 ->groupBy('location_id')
                                 ->filter(function ($records) {
@@ -10779,12 +10779,12 @@ class InventoryController extends Controller
                                 })
                                 ->values()
                                 ->toArray();
-                    
+
                             // $destinationLocationJson = htmlspecialchars(json_encode($destinationLocationBalances), ENT_QUOTES, 'UTF-8');
                             $destinationLocationJson = json_encode($destinationLocationBalances);
                         }
 
-                        
+
                         $balances = [
                             'orgBalance' => $orgBalance
                         ];
@@ -10810,7 +10810,7 @@ class InventoryController extends Controller
                         //     'destinationLocBalance' => $destinationLocationJson
                         // ];
 
-                      
+
 
 
                         // $balances = [
@@ -10838,9 +10838,9 @@ class InventoryController extends Controller
                 } else {
                     $status = 'Pending';
                     $statusClass = 'warning';
-                    $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';               
+                    $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
                 }
-        
+
                 // Override for direct entries
                 if ($isDirectEntry) {
                     $status = 'Completed';
@@ -10899,17 +10899,17 @@ class InventoryController extends Controller
 
                 $tableRows .= '>'
                     .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$currentGenericId] ?? 'N/A').'</td>';
-                
-                //  $tableRows .= '<tr style="background-color:'.$bg.'; cursor:pointer;" class="other-transaction-balance" data-expiry="'.$expiryDate.'" data-brand="'.$brandName.'" data-batch="'.$batchNo.'" data-source-loc-balance="'.$balances['sourceLocBalance'].'" 
+
+                //  $tableRows .= '<tr style="background-color:'.$bg.'; cursor:pointer;" class="other-transaction-balance" data-expiry="'.$expiryDate.'" data-brand="'.$brandName.'" data-batch="'.$batchNo.'" data-source-loc-balance="'.$balances['sourceLocBalance'].'"
                 // data-org-balance="'.$balances['orgBalance'].'" data-source-site-balance="'.$balances['sourceSiteBalance'].'" data-destination-loc-balance="'.$balances['destinationLocBalance'].'" data-destination-site-balance="'.$balances['destinationSiteBalance'].'">'
                 // .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$currentGenericId] ?? 'N/A').'</td>';
-               
+
                 // $tableRows .= '<tr style="background-color:'.$bg.'; cursor:pointer;" class="balance-row" data-expiry="'.$expiryDate.'" data-brand="'.$brandName.'" data-batch="'.$batchNo.'" data-loc-balance="'.$balances['locBalance'].'" data-org-balance="'.$balances['orgBalance'].'" data-site-balance="'.$balances['siteBalance'].'">'
                 //     .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$currentGenericId] ?? 'N/A').'</td>';
                     // .'<td style="padding:8px;border:1px solid #ccc;">'.($currentGenericId ?? 'N/A').'</td>';
                 // .'<td style="padding:8px;border:1px solid #ccc;">'.($transactionQty[$i] ?? '0').'</td>'
 
-            
+
                 // $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$brandName.'</td>';
                 // $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$batchNo.'</td>';
                 // $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$formattedExpiry.'</td>';
@@ -10919,11 +10919,11 @@ class InventoryController extends Controller
                 if ($isDirectEntry && $transactionQty !== null) {
                     $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($transactionQty[$i] ?? 'N/A').'</td>';
                 }
-        
+
                 if (!$isDirectEntry && $currentRespondedQty >= 0) {
                     $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$currentRespondedQty.'</td>';
                 }
-               
+
 
                 if($respond != 1)
                 {
@@ -10992,7 +10992,7 @@ class InventoryController extends Controller
         //         $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
         //         $currentGenericId = $genericIds[$i];
         //         $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A', 'locBalance' => 'N/A'];
-                
+
         //         $hasSourceSite = !empty($row->site_id);
         //         $hasDestinationSite = !empty($row->d_site_id);
 
@@ -11027,7 +11027,7 @@ class InventoryController extends Controller
         //                     ->where('org_id', $row->org_id)
         //                     ->where('site_id', $row->source_site)
         //                     ->whereNotNull('location_id')
-        //                     ->orderBy('id', 'desc') 
+        //                     ->orderBy('id', 'desc')
         //                     ->get()
         //                     ->groupBy('location_id')
         //                     ->filter(function ($records) {
@@ -11041,7 +11041,7 @@ class InventoryController extends Controller
         //                     })
         //                     ->values()
         //                     ->toArray();
-                
+
         //                 $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
 
         //                 $balances = [
@@ -11051,7 +11051,7 @@ class InventoryController extends Controller
 
         //                 ];
         //             }
-        //         } 
+        //         }
         //         else if (!empty($row->referenceNumber) && $respondedQtys) {
         //             $respondedEntry = DB::table('inventory_management')
         //                 ->where('ref_document_no', $row->referenceNumber)
@@ -11083,7 +11083,7 @@ class InventoryController extends Controller
         //                     ->where('org_id', $row->org_id)
         //                     ->where('site_id', $row->source_site)
         //                     ->whereNotNull('location_id')
-        //                     ->orderBy('id', 'desc') 
+        //                     ->orderBy('id', 'desc')
         //                     ->get()
         //                     ->groupBy('location_id')
         //                     ->filter(function ($records) {
@@ -11097,7 +11097,7 @@ class InventoryController extends Controller
         //                     })
         //                     ->values()
         //                     ->toArray();
-                
+
         //                 $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
 
         //                 $balances = [
@@ -11125,9 +11125,9 @@ class InventoryController extends Controller
         //         } else {
         //             $status = 'Pending';
         //             $statusClass = 'warning';
-        //             $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';               
+        //             $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
         //         }
-        
+
         //         // Override for direct entries
         //         if ($isDirectEntry) {
         //             $status = 'Completed';
@@ -11159,13 +11159,13 @@ class InventoryController extends Controller
         //                 ? Carbon::createFromTimestamp($row->expiry_date)->format('d-M-Y')
         //                 : $row->expiry_date;
         //         }
-                
+
         //         $tableRows .= '<tr style="background-color:'.$bg.'; cursor:pointer;" class="balance-row" data-expiry="'.$expiryDate.'" data-brand="'.$brandName.'" data-batch="'.$batchNo.'" data-loc-balance="'.$balances['locBalance'].'" data-org-balance="'.$balances['orgBalance'].'" data-site-balance="'.$balances['siteBalance'].'">'
         //             .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$currentGenericId] ?? 'N/A').'</td>';
         //             // .'<td style="padding:8px;border:1px solid #ccc;">'.($currentGenericId ?? 'N/A').'</td>';
         //         // .'<td style="padding:8px;border:1px solid #ccc;">'.($transactionQty[$i] ?? '0').'</td>'
 
-            
+
         //         // $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$brandName.'</td>';
         //         // $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$batchNo.'</td>';
         //         // $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$formattedExpiry.'</td>';
@@ -11175,11 +11175,11 @@ class InventoryController extends Controller
         //         if ($isDirectEntry && $transactionQty !== null) {
         //             $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($transactionQty[$i] ?? 'N/A').'</td>';
         //         }
-        
+
         //         if (!$isDirectEntry && $currentRespondedQty >= 0) {
         //             $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$currentRespondedQty.'</td>';
         //         }
-               
+
 
         //         if($respond != 1)
         //         {
@@ -11224,7 +11224,7 @@ class InventoryController extends Controller
         $id        = $r->query('id');
         $genericId = $r->query('genericId');
 
-                
+
         $ROT = RequisitionForOtherTransaction::from('requisition_other_transaction as rot')
         ->select([
             'rot.id',
@@ -11278,13 +11278,13 @@ class InventoryController extends Controller
             'rot.transaction_type_id', 'rot.source_location',  'rot.destination_location',
             'rot.generic_id',
             'rot.qty', 'rot.status',
-            'o.organization', 'source.name', 'destination.name', 'itt.name', 
-            'itt.source_action', 'itt.destination_action', 
+            'o.organization', 'source.name', 'destination.name', 'itt.name',
+            'itt.source_action', 'itt.destination_action',
             'sourceLocation.name','destinationLocation.name',
             'ib.site_balance'
         ])
         ->first();
-                
+
         if (! $ROT) {
             return response()->json(['error'=>'Record not found'], 404);
         }
@@ -11298,7 +11298,7 @@ class InventoryController extends Controller
         $issuedQty = $ROT->issuedQty;
         $maxQty = $ROT->maxQty;
         // dd($maxQty);
-        $remainingQty = max(0, $originalQty - $issuedQty); 
+        $remainingQty = max(0, $originalQty - $issuedQty);
         // dd($originalQty,$issuedQty,$remainingQty);
         return response()->json([
             'code'                   => $ROT->code,
@@ -11318,7 +11318,7 @@ class InventoryController extends Controller
             'destinationLocationName'=> $ROT->destinationLocationName,
             'generic_id'             => $gIds[$i]      ?? null,
             'generic_name'           => $genericName,
-            'brand_id'               => null,         
+            'brand_id'               => null,
             'brand_name'             => '',
             // 'demand_qty'             => $qtys[$i]      ?? '',
             'demand_qty'             => $remainingQty      ?? '0',
@@ -11350,10 +11350,10 @@ class InventoryController extends Controller
         $inventory->source = $validated['ot_source_location'];
         $inventory->d_site_id = $validated['ot_destination_site'];
         $inventory->destination = $validated['ot_destination_location'];
-        
+
         // Optional reference document
         $inventory->ref_document_no = $validated['ot_reference_document'] ?? null;
-        
+
         // Remarks field
         $inventory->remarks = $validated['ot_remarks'] ?? null;
 
@@ -11363,12 +11363,12 @@ class InventoryController extends Controller
             $inventory->brand_id = implode(',', $validated['ot_brand']);
             $inventory->batch_no = implode(',', $validated['ot_batch']);
             $inventory->demand_qty = implode(',', $validated['ot_demand_qty']);
-            
+
             $formattedDates = array_map(function($date) {
                 return Carbon::createFromFormat('Y-m-d', $date)->timestamp;
             }, $validated['ot_expiry']);
             $inventory->expiry_date = implode(',', $formattedDates);
-            
+
             $inventory->transaction_qty = implode(',', $validated['ot_qty']);
         } else {
             $inventory->inv_generic_id = $validated['ot_generic'][0];
@@ -11378,7 +11378,7 @@ class InventoryController extends Controller
             $inventory->transaction_qty = $validated['ot_qty'][0];
             $inventory->demand_qty = $validated['ot_demand_qty'][0];
         }
-        
+
         $inventory->status = 1;
         $inventory->user_id = auth()->id();
         $inventory->logid = auth()->user()->username ?? auth()->id();
@@ -11450,12 +11450,12 @@ class InventoryController extends Controller
             $brandId = $validated['ot_brand'][$i];
             $batchNo = $validated['ot_batch'][$i];
             $qty = (int)$validated['ot_qty'][$i];
-            
+
             // $expTs = Carbon::createFromFormat('Y-m-d', $validated['ot_expiry'][$i])->timestamp;
             if (! $genId || ! $brandId || ! $batchNo) {
                 continue;
             }
-       
+
             $prevOrgRow = InventoryBalance::where('generic_id', $genId)
             ->where('brand_id',  $brandId)
             ->where('batch_no',  $batchNo)
@@ -11469,7 +11469,7 @@ class InventoryController extends Controller
             $dateTime = Carbon::createFromTimestamp(now()->timestamp)->format('d-M-Y H:i');
 
             if (strtolower($sourceType) === 'inventory location' && $validated['ot_source_location'] && strtolower($destinationType) === 'inventory location' && $validated['ot_destination_location']) {
-                
+
                 $prevOrgRow = InventoryBalance::where('generic_id', $genId)
                 ->where('brand_id',  $brandId)
                 ->where('batch_no',  $batchNo)
@@ -11490,10 +11490,10 @@ class InventoryController extends Controller
                 $prevSourceSiteBalance = $prevSourceSiteRow->site_balance ?? 0;
                 $newSourceSiteBalance = $prevSourceSiteBalance;
 
-                
+
 
                 $remarkText = "Internal transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSourceSiteBalance}";
-                
+
                 // Source location row
                 $prevSourceLocRow = InventoryBalance::where('generic_id', $genId)
                     ->where('brand_id',  $brandId)
@@ -11510,7 +11510,7 @@ class InventoryController extends Controller
                 //         'info' => "Insufficient source location balance. Available: $prevSourceLocBalance, Requested: $qty"
                 //     ]);
                 // }
-        
+
 
                 if ($rule->source_action === 'a') {
                     $newSourceLocBalance = $prevSourceLocBalance + $qty;
@@ -11547,7 +11547,7 @@ class InventoryController extends Controller
 
                 // Destination location row
 
-                                
+
                 $prevOrgRow = InventoryBalance::where('generic_id', $genId)
                 ->where('brand_id',  $brandId)
                 ->where('batch_no',  $batchNo)
@@ -11568,7 +11568,7 @@ class InventoryController extends Controller
                 $prevDestinatonSiteBalance = $prevDestinationSiteRow->site_balance ?? 0;
                 $newDestinatioinSiteBalance = $prevDestinatonSiteBalance;
                 $remarkText = "Internal transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newDestinatioinSiteBalance}";
-                
+
 
                 $prevDestLocRow = InventoryBalance::where('generic_id', $genId)
                     ->where('brand_id',  $brandId)
@@ -11623,7 +11623,7 @@ class InventoryController extends Controller
 
 
                 $remarkText = "Internal transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSourceSiteBalance}";
-                
+
                 $prevSourceLocRow = InventoryBalance::where('generic_id', $genId)
                     ->where('brand_id',  $brandId)
                     ->where('batch_no',  $batchNo)
@@ -11644,7 +11644,7 @@ class InventoryController extends Controller
                     $newSourceLocBalance = $prevSourceLocBalance + $qty;
                     $newSourceSiteBalance += $qty;
                     $newOrgBalance  = $prevOrgBalance  + $qty;
-                    
+
                 } elseif ($rule->source_action === 's' || $rule->source_action === 'r') {
                     $newSourceLocBalance = $prevSourceLocBalance - $qty;
                     $newSourceSiteBalance -= $qty;
@@ -11683,7 +11683,7 @@ class InventoryController extends Controller
                 $newDestinationSiteBalance = $prevDestinationSiteBalance;
 
                 $remarkText = "Internal transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newDestinatioinSiteBalance}";
-                
+
 
                 $prevDestinationLocRow = InventoryBalance::where('generic_id', $genId)
                     ->where('brand_id',  $brandId)
@@ -11713,7 +11713,7 @@ class InventoryController extends Controller
                     $newDestinationLocBalance = $prevDestinationLocBalance + $qty;
                     $newDestinationSiteBalance += $qty;
                     $newOrgBalance  = $prevOrgBalance  + $qty;
-                    
+
                 } elseif ($rule->source_action === 's' || $rule->source_action === 'r') {
                     $newDestinationLocBalance = $prevDestinationLocBalance - $qty;
                     $newDestinationSiteBalance -= $qty;
@@ -11724,7 +11724,7 @@ class InventoryController extends Controller
                     $newOrgBalance  = $prevOrgBalance;
                 }
 
-               
+
                 // dd($newLocBalance, $Destination)
                 InventoryBalance::create([
                     'management_id'    => $inventory->id,
@@ -11752,7 +11752,7 @@ class InventoryController extends Controller
                 $SourceSiteBalance = $prevSourceSiteRow->site_balance ?? 0;
 
                 $remarkText = "Internal transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$OrgBalance} | New Site Balance: {$SourceSiteBalance}";
-                
+
                 InventoryBalance::create([
                     'management_id'    => $inventory->id,
                     'generic_id'       => $genId,
@@ -11788,11 +11788,11 @@ class InventoryController extends Controller
     {
         $colName = 'consumption';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
-        $user = auth()->user(); 
+        $user = auth()->user();
         $empId = $user->emp_id;
-        
+
         // $costcenters = DB::table('emp_cc as e')
         // ->join('costcenter as c', DB::raw('FIND_IN_SET(c.id, e.cc_id)'), '>', DB::raw('0'))
         // ->join('cc_type as ct', 'c.cc_type', '=', 'ct.id')
@@ -11858,7 +11858,7 @@ class InventoryController extends Controller
                 $query->where('ita.name', 'like', '%issue%')
                     ->orWhere('ita.name', 'like', '%dispense%');
             })
-            ->where('itt.name', 'like', '%issue%') 
+            ->where('itt.name', 'like', '%issue%')
             ->select(array_merge(
                 array_map(fn($col) => "im.$col", [
                     'id', 'transaction_type_id', 'status', 'org_id', 'site_id',
@@ -11881,7 +11881,7 @@ class InventoryController extends Controller
                     DB::raw("CAST(im.destination AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as Destination"),
                     DB::raw("CAST(im.remarks AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as remarks"),
                     DB::raw("CAST('inventory' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")
-                    
+
                 ],
                 [
                     DB::raw('patient.name as patientName'),
@@ -11923,12 +11923,12 @@ class InventoryController extends Controller
                             ->where('id', $row->Destination)
                             ->value('name') ?? 'N/A';
                         $Location = '<b>Location</b>: ' .ucwords($destinationLocationName). '<br>';
-                } 
+                }
 
                 return $RequisitionCode
                 . '<hr class="mt-1 mb-2">'
                 .  (ucwords($row->TransactionType) ?? 'N/A') . '<br>'
-                .  $Location 
+                .  $Location
                 . '<b>Site</b>: ' . ($row->SiteName ?? 'N/A') . '<br>'
                 . '<b>Issue Date </b>: ' . $timestamp . '<br>'
                 . '<b>Effective Date </b>: ' . $effectiveDate . '<br>'
@@ -11947,7 +11947,7 @@ class InventoryController extends Controller
             ->editColumn('InventoryDetails', function ($row) {
                 $Rights = $this->rights;
                 $respond = explode(',', $Rights->consumption)[0];
-                
+
                 $tableRows = '';
                 $genericIds = explode(',', $row->inv_generic_ids);
                 $genericNames = InventoryGeneric::whereIn('id', $genericIds)->pluck('name', 'id')->toArray();
@@ -11959,7 +11959,7 @@ class InventoryController extends Controller
                 $frequencyIds = explode(',', $row->frequency_id);
                 // $frequencies = MedicationFrequency::whereIn('id', $frequencyIds)->pluck('name', 'id')->toArray();
                 $days = explode(',', $row->days);
-            
+
                 $respondedEntries = [];
                 if (!empty($row->referenceNumber)) {
                     $respondedEntries = DB::table('inventory_management as im')
@@ -11976,7 +11976,7 @@ class InventoryController extends Controller
                 $count = max(count($genericIds), count($dose), count($routeIds), count($frequencyIds), count($days));
                 for ($i = 0; $i < $count; $i++) {
                     $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
-                    
+
                     $currentGenericId = $genericIds[$i] ?? '';
                     $isResponded = array_key_exists($currentGenericId, $respondedEntries);
                     // return $isResponded;
@@ -12028,7 +12028,7 @@ class InventoryController extends Controller
                             })
                             ->values()
                             ->toArray();
-                
+
                         $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
 
                         $balances = [
@@ -12065,11 +12065,11 @@ class InventoryController extends Controller
                         $expiryDate = is_numeric($row->expiry_date)
                             ? Carbon::createFromTimestamp($row->expiry_date)->format('d-M-Y')
                             : $row->expiry_date;
-                            
+
                     }
 
-                    // $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" 
-                    // data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '" 
+                    // $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+                    // data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '"
                     // data-batch-no="' . $batchNo . '" data-expiry="'.$expiryDate.'"
                     // data-issue-qty="'.$row->transaction_qty.'">Respond</a>';
 
@@ -12084,14 +12084,14 @@ class InventoryController extends Controller
                     //     $status = 'Pending';
                     //     $statusClass = 'warning';
 
-                    //     $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" 
-                    //     data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '" 
+                    //     $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+                    //     data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '"
                     //     data-batch-no="' . $batchNo . '" data-expiry="'.$expiryDate.'"
-                    //     data-issue-qty="'.$row->transaction_qty.'">Respond</a>';                    
+                    //     data-issue-qty="'.$row->transaction_qty.'">Respond</a>';
                     // }
                        $currentIssuedQty = $row->transaction_qty ?? 0;
                         $currentRespondedQty = $respondedEntries[$currentGenericId] ?? '0';
-                        
+
                         if ($currentRespondedQty > 0) {
                             if ($currentRespondedQty == $currentIssuedQty) {
                                 $status = 'Consumed';
@@ -12100,18 +12100,18 @@ class InventoryController extends Controller
                             } else {
                                 $status = 'Partially Consumed';
                                 $statusClass = 'info';
-                                $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"      
-                                data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '" 
+                                $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+                                data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '"
                                 data-batch-no="' . $batchNo . '" data-expiry="'.$expiryDate.'"
-                                data-issue-qty="'.$row->transaction_qty.'">Respond</a>';                             
+                                data-issue-qty="'.$row->transaction_qty.'">Respond</a>';
                             }
                         } else {
                             $status = 'Pending';
                             $statusClass = 'warning';
-                            $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"      
-                            data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '" 
+                            $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+                            data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '"
                             data-batch-no="' . $batchNo . '" data-expiry="'.$expiryDate.'"
-                            data-issue-qty="'.$row->transaction_qty.'">Respond</a>';                          
+                            data-issue-qty="'.$row->transaction_qty.'">Respond</a>';
                         }
 
                         // return $currentIssuedQty . ' - ' . $currentRespondedQty;
@@ -12124,14 +12124,14 @@ class InventoryController extends Controller
                     //     } else {
                     //         $status = 'Pending';
                     //         $statusClass = 'warning';
-                    //         $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" 
-                    //         data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '" 
+                    //         $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+                    //         data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '"
                     //         data-batch-no="' . $batchNo . '" data-expiry="'.$expiryDate.'"
-                    //         data-issue-qty="'.$row->transaction_qty.'">Respond</a>';                    
+                    //         data-issue-qty="'.$row->transaction_qty.'">Respond</a>';
                     //     }
                     // }
                     // else{
-                    //     // return $respondedEntries[$currentGenericId] ?? '0';  
+                    //     // return $respondedEntries[$currentGenericId] ?? '0';
                     //     $currentDemandQty = $row->demand_qty ?? 0;
                     //     $currentRespondedQty = $respondedEntries[$currentGenericId] ?? '0';
 
@@ -12141,35 +12141,35 @@ class InventoryController extends Controller
                     //             $statusClass = 'success';
                     //             $actionBtn = 'N/A';
                     //         } else {
-                                
+
                     //             $status = 'Partially Consumed';
                     //             $statusClass = 'info';
-                    //             $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"      
-                    //             data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '" 
+                    //             $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+                    //             data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '"
                     //             data-batch-no="' . $batchNo . '" data-expiry="'.$expiryDate.'"
-                    //             data-issue-qty="'.$row->transaction_qty.'">Respond</a>';                             
+                    //             data-issue-qty="'.$row->transaction_qty.'">Respond</a>';
                     //         }
                     //     } else {
                     //         $status = 'Pending';
                     //         $statusClass = 'warning';
-                    //         $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"      
-                    //         data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '" 
+                    //         $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+                    //         data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '"
                     //         data-batch-no="' . $batchNo . '" data-expiry="'.$expiryDate.'"
-                    //         data-issue-qty="'.$row->transaction_qty.'">Respond</a>';                          
+                    //         data-issue-qty="'.$row->transaction_qty.'">Respond</a>';
                     //     }
                     // }
 
 
-                    $tableRows .= '<tr style="background-color:'.$bg.';cursor:pointer;" class="balance-row" 
-                                    data-expiry="'.$expiryDate.'" 
-                                    data-brand="'.$brandName.'" 
-                                    data-batch="'.$batchNo.'" 
-                                    data-loc-balance="'.$balances['locBalance'].'" 
-                                    data-org-balance="'.$balances['orgBalance'].'" 
+                    $tableRows .= '<tr style="background-color:'.$bg.';cursor:pointer;" class="balance-row"
+                                    data-expiry="'.$expiryDate.'"
+                                    data-brand="'.$brandName.'"
+                                    data-batch="'.$batchNo.'"
+                                    data-loc-balance="'.$balances['locBalance'].'"
+                                    data-org-balance="'.$balances['orgBalance'].'"
                                     data-site-balance="'.$balances['siteBalance'].'">';
 
                     $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$currentGenericId] ?? 'N/A').'</td>';
-                    
+
                     // if ($isMedication) {
                     //     $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($dose[$i] ?? 'N/A').'</td>'
                     //         .'<td style="padding:8px;border:1px solid #ccc;">'.($routes[$routeIds[$i]] ?? 'N/A').'</td>'
@@ -12180,7 +12180,7 @@ class InventoryController extends Controller
                     // }
                     if (!$isMedication) {
                         $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($row->demand_qty ?? 'N/A').'</td>';
-                    } 
+                    }
 
                     $tableRows .= '<td style="padding: 5px 1;border: 1px solid #ccc;">'.($row->transaction_qty ?? 0).'</td>';
                     $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($respondedEntries[$currentGenericId] ?? 0).'</td>';
@@ -12223,7 +12223,7 @@ class InventoryController extends Controller
                     {
                         $actionBtn = '<code>Unauthorized Access</code>';
                     }
-            
+
                     $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>
                         <td style="padding:8px;border:1px solid #ccc;">
                             <span class="label label-'.$statusClass.'">'.$status.'</span>
@@ -12244,19 +12244,19 @@ class InventoryController extends Controller
 
                 if (!$isMedication) {
                     $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Demand Qty</th>';
-                } 
+                }
 
                 $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Issued Qty</th>'
                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>'
                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
                     .'</tr>';
-            
+
                 return '<table style="width:100%;border-collapse:collapse;font-size:13px;" class="table table-bordered">'
                     .'<thead style="background-color:#e2e8f0;color:#000;">'
                     .$tableHeader
                     .'</thead><tbody>'.$tableRows.'</tbody></table>';
-            
+
             })
         ->rawColumns(['id_raw', 'id', 'patientDetails', 'InventoryDetails'])
         ->make(true);
@@ -12271,7 +12271,7 @@ class InventoryController extends Controller
         }
 
         $id  = $r->query('id');
-       
+
         $IssuedData = DB::table('inventory_management as im')
             ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
             ->join('inventory_source_destination_type as isdt', 'isdt.id', '=', 'itt.destination_location_type')
@@ -12289,7 +12289,7 @@ class InventoryController extends Controller
                 $query->where('ita.name', 'like', '%issue%')
                     ->orWhere('ita.name', 'like', '%dispense%');
             })
-            ->where('itt.name', 'like', '%issue%') 
+            ->where('itt.name', 'like', '%issue%')
             ->select(array_merge(
                 array_map(fn($col) => "im.$col", [
                     'id', 'transaction_type_id', 'status', 'org_id', 'site_id',
@@ -12346,7 +12346,7 @@ class InventoryController extends Controller
 
                 if($itemData) {
                     $issuedQty = $issuedQty - $itemData->transaction_qty;
-                } 
+                }
                 else{
                     $issuedQty = $IssuedData->transaction_qty; // Default to the original issued quantity if no item data found
                 }
@@ -12376,15 +12376,15 @@ class InventoryController extends Controller
                 'billing_cc_name'        => $IssuedData->billingCC,
                 'generic_id'             => $genericId,
                 'generic_name'           => $genericName,
-                'brand_id'               => $brandid,         
+                'brand_id'               => $brandid,
                 'brand_name'             => $brandName,
                 'expiry'                 => $expiry,
                 'batchNo'                => $batchNo,
                 'dose'                   => $Dose,
                 'days'                   => $Days,
-                'route_id'               => $Route,         
+                'route_id'               => $Route,
                 'route_name'             => $routeName,
-                'frequency_id'           => $Frequency,         
+                'frequency_id'           => $Frequency,
                 'frequency_name'         => $frequencyName,
                 'batchNo'                => $batchNo,
                 'issue_qty'              => $issuedQty ?? '0',
@@ -12412,7 +12412,7 @@ class InventoryController extends Controller
         $inventory->site_id = $validated['consumption_site'];
         $inventory->source = $validated['consumption_source'];
         $inventory->destination = $validated['consumption_destination'];
-        
+
         if (isset($validated['consumption_mr']) && !empty($validated['consumption_mr'])) {
             $inventory->mr_code = $validated['consumption_mr'];
             // If MR exists, check for service details
@@ -12429,7 +12429,7 @@ class InventoryController extends Controller
         $inventory->ref_document_no = $validated['consumption_reference_document'] ?? null;
         // Remarks field
         $inventory->remarks = $validated['consumption_remarks'] ?? null;
-        
+
         if ($itemCount > 1) {
             $inventory->inv_generic_id = implode(',', $validated['consumption_generic']);
             $inventory->brand_id = implode(',', $validated['consumption_brand']);
@@ -12451,7 +12451,7 @@ class InventoryController extends Controller
                 return Carbon::createFromFormat('Y-m-d', $date)->timestamp;
             }, $validated['consumption_expiry']);
             $inventory->expiry_date = implode(',', $formattedDates);
-            
+
             $inventory->transaction_qty = implode(',', $validated['consumption_qty']);
         } else {
             $inventory->inv_generic_id = $validated['consumption_generic'][0];
@@ -12471,7 +12471,7 @@ class InventoryController extends Controller
                 $inventory->duration = $validated['consumption_duration'][0];
             }
         }
-        
+
         $inventory->status = 1;
         $inventory->user_id = auth()->id();
         $inventory->effective_timestamp = now()->timestamp;
@@ -12544,7 +12544,7 @@ class InventoryController extends Controller
             $brandId = $validated['consumption_brand'][$i];
             $batchNo = $validated['consumption_batch'][$i];
             $qty = (int)$validated['consumption_qty'][$i];
-            
+
             // $expTs = Carbon::createFromFormat('Y-m-d', $validated['consumption_expiry'][$i])->timestamp;
             if (! $genId || ! $brandId || ! $batchNo) {
                 continue;
@@ -12600,7 +12600,7 @@ class InventoryController extends Controller
                         $newSiteBalance = $prevSiteBalance;
                 }
             }
-        
+
             // $dateTime = Carbon::createFromTimestamp(now()->timestamp)->format('d-M-Y H:i');
             $remarkText = "Transaction Initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSiteBalance}";
             if (strtolower($sourceType) === 'inventory location' && $validated['consumption_source'] && strtolower($destinationType) === 'inventory location' && $validated['consumption_destination']) {
@@ -12720,7 +12720,7 @@ class InventoryController extends Controller
                     ->first();
                 $prevLocBalance = $prevLocRow->location_balance ?? 0;
 
-              
+
 
                 if ($rule->destination_action === 'a') {
                     $newLocBalance = $prevLocBalance + $qty;
@@ -12729,7 +12729,7 @@ class InventoryController extends Controller
                 } else {
                     $newLocBalance = $prevLocBalance;
                 }
-            
+
                 // dd($newLocBalance, $Destination)
                 InventoryBalance::create([
                     'management_id'    => $inventory->id,
@@ -12772,7 +12772,7 @@ class InventoryController extends Controller
                 'event' => 'add',
                 'timestamp' => now()->timestamp,
             ]);
-           
+
             $inventory->logid = $logs->id;
             $inventory->save();
 
@@ -12792,11 +12792,11 @@ class InventoryController extends Controller
     {
         $colName = 'inventory_return';
         if (PermissionDenied($colName)) {
-            abort(403); 
+            abort(403);
         }
-        $user = auth()->user(); 
+        $user = auth()->user();
         $empId = $user->emp_id;
-        
+
         // $costcenters = DB::table('emp_cc as e')
         // ->join('costcenter as c', DB::raw('FIND_IN_SET(c.id, e.cc_id)'), '>', DB::raw('0'))
         // ->join('cc_type as ct', 'c.cc_type', '=', 'ct.id')
@@ -12836,7 +12836,7 @@ class InventoryController extends Controller
 
         return view('dashboard.material_management.return', compact('user','RequisitionNonMandatory','costcenters','MedicationRoutes','MedicationFrequencies'));
     }
-    
+
     public function GetReturnData(Request $request)
     {
         $rights = $this->rights;
@@ -12929,11 +12929,11 @@ class InventoryController extends Controller
                             ->where('id', $row->destination)
                             ->value('name') ?? 'N/A';
                         $Location = '<b>Location</b>: ' .ucwords($destinationLocationName). '<br>';
-                } 
+                }
                 return $RequisitionCode
                     . '<hr class="mt-1 mb-2">'
                     .  (ucwords($row->transaction_type) ?? 'N/A') . '<br>'
-                    .  $Location 
+                    .  $Location
                     . '<b>Site</b>: ' . ($row->SiteName ?? 'N/A') . '<br>'
                     . '<b>Issue Date </b>: ' . $timestamp . '<br>'
                     . '<b>Effective Date </b>: ' . $effectiveDate . '<br>'
@@ -13000,7 +13000,7 @@ class InventoryController extends Controller
                     })
                     ->values()
                     ->toArray();
-        
+
                 $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
 
                 $balances = [
@@ -13022,28 +13022,28 @@ class InventoryController extends Controller
                     else {
                         $status = 'Partially Returned';
                         $statusClass = 'info';
-                        $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" 
-                        data-id="'. $row->id.'" data-generic-id="' . $row->inv_generic_id . '" data-brand-id="' . $brandName . '" 
+                        $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+                        data-id="'. $row->id.'" data-generic-id="' . $row->inv_generic_id . '" data-brand-id="' . $brandName . '"
                         data-batch-no="' . $batchNo . '" data-expiry="'.$expiryDate.'"
-                        data-issue-qty="'.$row->remaining_qty.'">Return</a>';                           
+                        data-issue-qty="'.$row->remaining_qty.'">Return</a>';
                     }
                 }
 
                 else {
                     $status = 'Available for Return';
                     $statusClass = 'inverse';
-                    $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" 
-                    data-id="'. $row->id.'" data-generic-id="' . $row->inv_generic_id . '" data-brand-id="' . $brandName . '" 
+                    $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+                    data-id="'. $row->id.'" data-generic-id="' . $row->inv_generic_id . '" data-brand-id="' . $brandName . '"
                     data-batch-no="' . $batchNo . '" data-expiry="'.$expiryDate.'"
-                    data-issue-qty="'.$row->remaining_qty.'">Return</a>';                          
+                    data-issue-qty="'.$row->remaining_qty.'">Return</a>';
                 }
-                
+
                 // $status = 'Available for Return';
                 // $statusClass = 'info';
 
 
-                // $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" 
-                //     data-id="'. $row->id.'" data-generic-id="' . $row->inv_generic_id . '" data-brand-id="' . $brandName . '" 
+                // $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+                //     data-id="'. $row->id.'" data-generic-id="' . $row->inv_generic_id . '" data-brand-id="' . $brandName . '"
                 //     data-batch-no="' . $batchNo . '" data-expiry="'.$expiryDate.'"
                 //     data-issue-qty="'.$row->remaining_qty.'">Return</a>';
 
@@ -13051,19 +13051,19 @@ class InventoryController extends Controller
                 if($respond != 1) {
                     $actionBtn = '<code>Unauthorized Access</code>';
                 }
-                // $tableRows .= '<tr style="background-color:'.$bg.';cursor:pointer;" class="balance-row" 
-                //                     data-expiry="'.$expiryDate.'" 
-                //                     data-brand="'.$brandName.'" 
-                //                     data-batch="'.$batchNo.'" 
-                //                     data-loc-balance="'.$balances['locBalance'].'" 
-                //                     data-org-balance="'.$balances['orgBalance'].'" 
+                // $tableRows .= '<tr style="background-color:'.$bg.';cursor:pointer;" class="balance-row"
+                //                     data-expiry="'.$expiryDate.'"
+                //                     data-brand="'.$brandName.'"
+                //                     data-batch="'.$batchNo.'"
+                //                     data-loc-balance="'.$balances['locBalance'].'"
+                //                     data-org-balance="'.$balances['orgBalance'].'"
                 //                     data-site-balance="'.$balances['siteBalance'].'">';
 
                 $availableForReturn = $remainingQty - $returnQty;
 
-                $tableRows .= '<tr style="background-color:#f9f9f9;cursor:pointer;" class="balance-row" 
-                    data-expiry="'.$expiryDate.'" 
-                    data-brand="'.$brandName.'" 
+                $tableRows .= '<tr style="background-color:#f9f9f9;cursor:pointer;" class="balance-row"
+                    data-expiry="'.$expiryDate.'"
+                    data-brand="'.$brandName.'"
                     data-batch="'.$batchNo.'"
                     data-loc-balance="'.$balances['locBalance'].'"
                     data-org-balance="'.$balances['orgBalance'].'"
@@ -13233,7 +13233,7 @@ class InventoryController extends Controller
         $inventory->site_id = $validated['return_site'];
         $inventory->source = $validated['return_source'];
         $inventory->destination = $validated['return_destination'];
-        
+
         if (isset($validated['return_mr']) && !empty($validated['return_mr'])) {
             $inventory->mr_code = $validated['return_mr'];
             // If MR exists, check for service details
@@ -13250,7 +13250,7 @@ class InventoryController extends Controller
         $inventory->ref_document_no = $validated['return_reference_document'] ?? null;
         // Remarks field
         $inventory->remarks = $validated['return_remarks'] ?? null;
-        
+
         if ($itemCount > 1) {
             $inventory->inv_generic_id = implode(',', $validated['return_generic']);
             $inventory->brand_id = implode(',', $validated['return_brand']);
@@ -13272,7 +13272,7 @@ class InventoryController extends Controller
                 return Carbon::createFromFormat('Y-m-d', $date)->timestamp;
             }, $validated['return_expiry']);
             $inventory->expiry_date = implode(',', $formattedDates);
-            
+
             $inventory->transaction_qty = implode(',', $validated['return_qty']);
         } else {
             $inventory->inv_generic_id = $validated['return_generic'][0];
@@ -13292,7 +13292,7 @@ class InventoryController extends Controller
                 $inventory->duration = $validated['return_duration'][0];
             }
         }
-        
+
         $inventory->status = 1;
         $inventory->user_id = auth()->id();
         $inventory->effective_timestamp = now()->timestamp;
@@ -13364,7 +13364,7 @@ class InventoryController extends Controller
             $brandId = $validated['return_brand'][$i];
             $batchNo = $validated['return_batch'][$i];
             $qty = (int)$validated['return_qty'][$i];
-            
+
             if (! $genId || ! $brandId || ! $batchNo) {
                 continue;
             }
@@ -13419,7 +13419,7 @@ class InventoryController extends Controller
                         $newSiteBalance = $prevSiteBalance;
                 }
             }
-        
+
             // $dateTime = Carbon::createFromTimestamp(now()->timestamp)->format('d-M-Y H:i');
             $remarkText = "Transaction Initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSiteBalance}";
             if (strtolower($sourceType) === 'inventory location' && $validated['return_source'] && strtolower($destinationType) === 'inventory location' && $validated['return_destination']) {
@@ -13539,7 +13539,7 @@ class InventoryController extends Controller
                     ->first();
                 $prevLocBalance = $prevLocRow->location_balance ?? 0;
 
-              
+
 
                 if ($rule->destination_action === 'a') {
                     $newLocBalance = $prevLocBalance + $qty;
@@ -13548,7 +13548,7 @@ class InventoryController extends Controller
                 } else {
                     $newLocBalance = $prevLocBalance;
                 }
-            
+
                 // dd($newLocBalance, $Destination)
                 InventoryBalance::create([
                     'management_id'    => $inventory->id,
@@ -13591,7 +13591,7 @@ class InventoryController extends Controller
                 'event' => 'add',
                 'timestamp' => now()->timestamp,
             ]);
-           
+
             $inventory->logid = $logs->id;
             $inventory->save();
 
@@ -13612,7 +13612,7 @@ class InventoryController extends Controller
     // {
     //     $colName = 'inventory_management';
     //     if (PermissionDenied($colName)) {
-    //         abort(403); 
+    //         abort(403);
     //     }
     //     $user = auth()->user();
     //     $Categories = InventoryCategory::where('status', 1)->get();
@@ -13677,23 +13677,23 @@ class InventoryController extends Controller
     //         ->where('site_id', $Site)
     //         ->where('brand_id', $BrandId);
     //         if ($EffectDateTime->isPast()) {
-    //             $status = 1; 
+    //             $status = 1;
     //             $query->where('status', 1);
     //         }
     //         $InventoryExist = $query->exists();
-        
+
     //         if ($Balance) {
     //             $updatedOrgBalance = $Balance->org_balance + $Qty;
     //             $updatedSiteBalance = $Balance->site_balance + $Qty;
-    //             $Balance->org_balance = $updatedOrgBalance; 
+    //             $Balance->org_balance = $updatedOrgBalance;
     //             $Balance->site_balance = $updatedSiteBalance;
-    //             $Balance->last_updated = $this->currentDatetime; 
+    //             $Balance->last_updated = $this->currentDatetime;
     //         } else {
     //             $Balance = new InventoryBalance();
     //             $Balance->org_id = $Organization;
     //             $Balance->site_id = $Site;
     //             $Balance->brand_id = $BrandId;
-    //             $Balance->org_balance = $Qty; 
+    //             $Balance->org_balance = $Qty;
     //             $Balance->site_balance = $Qty;
     //             $Balance->status = $status;
     //             $Balance->last_updated = $this->currentDatetime;
@@ -13708,15 +13708,15 @@ class InventoryController extends Controller
     //         if ($Balance) {
     //             $updatedOrgBalance = $Balance->org_balance + $Qty;
     //             $updatedSiteBalance = $Balance->site_balance + $Qty;
-    //             $Balance->org_balance = $updatedOrgBalance; 
+    //             $Balance->org_balance = $updatedOrgBalance;
     //             $Balance->site_balance = $updatedSiteBalance;
-    //             $Balance->last_updated = $this->currentDatetime; 
+    //             $Balance->last_updated = $this->currentDatetime;
     //         } else {
     //             $Balance = new InventoryBalance();
     //             $Balance->org_id = $Organization;
     //             $Balance->site_id = $Site;
     //             $Balance->brand_id = $BrandId;
-    //             $Balance->org_balance = $Qty; 
+    //             $Balance->org_balance = $Qty;
     //             $Balance->site_balance = $Qty;
     //             $Balance->status = $status;
     //             $Balance->last_updated = $this->currentDatetime;
@@ -13735,9 +13735,9 @@ class InventoryController extends Controller
     //             }
     //             $updatedOrgBalance = $Balance->org_balance - $Qty;
     //             $updatedSiteBalance = $Balance->site_balance - $Qty;
-    //             $Balance->org_balance = $updatedOrgBalance; 
+    //             $Balance->org_balance = $updatedOrgBalance;
     //             $Balance->site_balance = $updatedSiteBalance;
-    //             $Balance->last_updated = $this->currentDatetime; 
+    //             $Balance->last_updated = $this->currentDatetime;
     //         } else {
     //             return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
     //         }
@@ -13750,9 +13750,9 @@ class InventoryController extends Controller
     //         if ($Balance) {
     //             $updatedOrgBalance = $Balance->org_balance - $Qty;
     //             $updatedSiteBalance = $Balance->site_balance - $Qty;
-    //             $Balance->org_balance = $updatedOrgBalance; 
+    //             $Balance->org_balance = $updatedOrgBalance;
     //             $Balance->site_balance = $updatedSiteBalance;
-    //             $Balance->last_updated = $this->currentDatetime; 
+    //             $Balance->last_updated = $this->currentDatetime;
     //         } else {
     //             return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
     //         }
@@ -13764,16 +13764,16 @@ class InventoryController extends Controller
     //         if ($DestinationBalance) {
     //             $updatedOrgBalance = $DestinationBalance->org_balance + $Qty;
     //             $updatedSiteBalance = $DestinationBalance->site_balance + $Qty;
-    //             $DestinationBalance->org_balance = $updatedOrgBalance; 
+    //             $DestinationBalance->org_balance = $updatedOrgBalance;
     //             $DestinationBalance->site_balance = $updatedSiteBalance;
-    //             $DestinationBalance->last_updated = $this->currentDatetime; 
+    //             $DestinationBalance->last_updated = $this->currentDatetime;
     //             $DestinationBalance->save();
     //         } else {
     //             $DestinationBalance = new InventoryBalance();
     //             $DestinationBalance->org_id = $Organization;
     //             $DestinationBalance->site_id = $Destination;
     //             $DestinationBalance->brand_id = $BrandId;
-    //             $DestinationBalance->org_balance = $Qty; 
+    //             $DestinationBalance->org_balance = $Qty;
     //             $DestinationBalance->site_balance = $Qty;
     //             $DestinationBalance->status = $status;
     //             $DestinationBalance->last_updated = $this->currentDatetime;
@@ -13792,13 +13792,13 @@ class InventoryController extends Controller
     //             }
     //             $updatedOrgBalance = $Balance->org_balance - $Qty;
     //             $updatedSiteBalance = $Balance->site_balance - $Qty;
-    //             $Balance->org_balance = $updatedOrgBalance; 
+    //             $Balance->org_balance = $updatedOrgBalance;
     //             $Balance->site_balance = $updatedSiteBalance;
-    //             $Balance->last_updated = $this->currentDatetime; 
+    //             $Balance->last_updated = $this->currentDatetime;
     //         } else {
     //             return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
     //         }
-            
+
     //     }
     //     else if($transactionType == 'patient consumption')
     //     {
@@ -13813,9 +13813,9 @@ class InventoryController extends Controller
     //             }
     //             $updatedOrgBalance = $Balance->org_balance - $Qty;
     //             $updatedSiteBalance = $Balance->site_balance - $Qty;
-    //             $Balance->org_balance = $updatedOrgBalance; 
+    //             $Balance->org_balance = $updatedOrgBalance;
     //             $Balance->site_balance = $updatedSiteBalance;
-    //             $Balance->last_updated = $this->currentDatetime; 
+    //             $Balance->last_updated = $this->currentDatetime;
     //         } else {
     //             return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
     //         }
@@ -13839,15 +13839,15 @@ class InventoryController extends Controller
     //         if ($OriginBalance) {
     //             $updatedOrgBalance = $OriginBalance->org_balance - $Qty;
     //             $updatedSiteBalance = $OriginBalance->site_balance - $Qty;
-    //             $OriginBalance->org_balance = $updatedOrgBalance; 
+    //             $OriginBalance->org_balance = $updatedOrgBalance;
     //             $OriginBalance->site_balance = $updatedSiteBalance;
-    //             $OriginBalance->last_updated = $this->currentDatetime; 
+    //             $OriginBalance->last_updated = $this->currentDatetime;
     //             $OriginBalance->save();
-    //         } 
+    //         }
     //         else {
     //             return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
     //         }
-            
+
     //     }
     //     if ($InventoryExist) {
     //         return response()->json(['info' => 'Opening Balance already exists for this Organization, Site, and Brand.']);
@@ -13910,7 +13910,7 @@ class InventoryController extends Controller
     //     return response()->json($PreviousTransactions);
     // }
 
-    
+
 
     public function GetOrgItemGeneric(Request $request)
     {
@@ -14034,7 +14034,7 @@ class InventoryController extends Controller
     //                 <b>Effective Date&amp;Time:</b> " . $effectiveDate . " <br>
     //                 <b>RecordedAt:</b> " . $timestamp ." <br>
     //                 <b>LastUpdated:</b> " . $lastUpdated;
-                    
+
     //             $OrgCode = $ManageInventory->orgCode;
     //             // $OrgName = $ManageInventory->orgName;
     //             $SiteName = $ManageInventory->siteName;
@@ -14090,7 +14090,7 @@ class InventoryController extends Controller
     //                 . '<span class="label label-info popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $createdInfo .'">'
     //                 . '<i class="fa fa-toggle-right"></i> View Details'
     //                 . '</span>';
-                    
+
     //         })
     //         ->editColumn('brand_details', function ($ManageInventory) {
     //             $expiryDate = Carbon::createFromTimestamp($ManageInventory->expiry_date)->format('d F Y');
@@ -14152,7 +14152,7 @@ class InventoryController extends Controller
     //             ->value('site_balance');
 
     //             $OrgBalance = InventoryBalance::where('org_id', $OrgId)
-    //             ->where('brand_id', '=', $BrandId) 
+    //             ->where('brand_id', '=', $BrandId)
     //             ->sum('org_balance');
 
     //             return '
@@ -14180,7 +14180,7 @@ class InventoryController extends Controller
     //                 . '<i class="fa fa-eye"></i> View Logs'
     //                 . '</button>';
     //                 return $ManageInventory->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
-                    
+
     //                 // if ($TransactionType === 'opening balance') {
     //                 //     return '<span class="font-weight-bold">' . $TransactionTypeName . ' is not editable</span>'
     //                 //         . '<br><br><button type="button" class="btn btn-outline-info logs-modal" data-log-id="' . $logId . '">'
@@ -14413,7 +14413,7 @@ class InventoryController extends Controller
     //     $orgID = $request->input('u_im_org');
     //     if (isset($orgID)) {
     //         $ManageInventory->org_id = $orgID;
-    //     }  
+    //     }
     //     $ManageInventory->site_id = $Site;
     //     $ManageInventory->brand_id = $Brand;
     //     $ManageInventory->batch_no = $BatchNo;
@@ -14430,7 +14430,7 @@ class InventoryController extends Controller
     //     $ManageInventory->user_id = $sessionId;
     //     $ManageInventory->last_updated = $this->currentDatetime;
     //     $ManageInventory->effective_timestamp = $effective_date;
-        
+
     //     $ManageInventory->save();
 
     //     if (empty($ManageInventory->id)) {

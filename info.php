@@ -1,30 +1,48 @@
-
-
-
 ...........................................................................
-Requisition For Other Transaction.
-<!-- Show Inventory Location based on transaction type allocated locations. -->
-<!-- Change Requisition For Other Transaction according to excel select 2 site with their location -->
-<!-- Show source site, location and destination site and location based in transaction type selection if both are 
-location then show both else show speciic based on transaction type -->
+HUMAN RESOURCE / EMPLOYEE SERVICE ALLOCATION
+<!-- a.	For Encounters & Procedures, the Performing Cost Center should be in Employees’s Cost Center Allocation
+b.	For Investigations, the Billing Cost Center should be in Employee’s Cost Center Allocation. -->
 
-<!-- 
-Other Transaction:
-check addothertransaction module one more time properly
-show all balnace is source and destination both are available the show both details in balance if any one details 
-are available then show details according to the availability. -->
 
-<!-- check which site to be used for fetching brand details add condition here according to the source or destination 
-action based on subtraction or reversal -->
+<!-- FRONT DESK SERVICES / PATIENT ARRIVAL & SERVICE BOOKING
+1.	Patient Cell no. should also be displayed with MR no. -->
 
-Reversal Transaction:
-Complete Reversal Transaction and Update Logs module in whole software.
 
+FRONT DESK / PATIENT ARRIVAL & DEPARTURE
+<!-- without any duplication of MR no, Arrival Date, Service Mode, Service Code, Billing CC and Responsible Person. -->
+
+
+MEDICAL RECORD / ENCOUNTERS & PROCEDURES
+5.	Cross-check following
+    a.	Only User based Cost Centers (Employee Cost Center Allocation) should be displayed in dropdown of Performing Cost Center
+    b.	These should be further filtered for the specific service being displayed (Employee Service Allocation)
+<!-- 6.	If the Performing Cost center is NOT listed as Billing Cost Center, then disable Encounter, Procedure, Investigation, Medicine requisition buttons. -->
+<!-- 7.  Show Remarks in the screen if it is available if not available then show N/A -->
+
+PATIENT MEDICAL RECORD / ENCOUNTERS & PROCEDURES / REQUISITIONS
+d.	The services data will be filtered as per; i) Services activated for that site, and ii) Services allocated to that employee.
+5.	List of Investigations and Procedures to be ordered/planned should be displayed with multi-select option
+
+PATIENT MEDICAL RECORD / INVESTIGATIONS TRACKING
+5.	This form should also have separate access from main menu.
+
+<!-- MATERIAL MANAGEMENT / EXTERNAL TRANSACTIONS -->
+<!-- All vendors are not displayed, please check  -->
+
+MATERIAL MANAGEMENT / REQUISITION FOR OTHER TRANSACTIONS
+All locations should be as per Site Location Activation
+
+
+Check Service Scheduling in all modules
+
+Check these routes properlyin all modules where it is called
+services/getactivatedsl
+services/getactivatesldata
+services/activatesl
 .........................................................................
 check before upload to hosting
-set landline bydefault null into org_site table
 .........................................................................
 
 ............................................................................
-when mutiple time ajax run error change the .change function with like this   
+when mutiple time ajax run error change the .change function with like this
  $(siteSelector).off('change.siteLookup').on('change.siteLookup', function(){

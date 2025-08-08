@@ -63,7 +63,8 @@ Route::post('/decrypt-data', function (Request $request) {
             'locationname' => unserialize(Crypt::decryptString($request->input('locationname'))),
             'locationid' => unserialize(Crypt::decryptString($request->input('locationid'))),
             'schedulename' => unserialize(Crypt::decryptString($request->input('schedulename'))),
-            'scheduleid' => unserialize(Crypt::decryptString($request->input('scheduleid')))
+            'scheduleid' => unserialize(Crypt::decryptString($request->input('scheduleid'))),
+            'remarks' => unserialize(Crypt::decryptString($request->input('remarks')))
         ]);
     } catch (\Exception $e) {
         return response()->json(['error' => 'Decryption or deserialization failed'], 500);
