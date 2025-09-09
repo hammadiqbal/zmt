@@ -64,6 +64,9 @@ Route::post('/decrypt-data', function (Request $request) {
             'locationid' => unserialize(Crypt::decryptString($request->input('locationid'))),
             'schedulename' => unserialize(Crypt::decryptString($request->input('schedulename'))),
             'scheduleid' => unserialize(Crypt::decryptString($request->input('scheduleid'))),
+            'scheduleStartTime' => unserialize(Crypt::decryptString($request->input('scheduleStartTime'))),
+            'scheduleEndTime' => unserialize(Crypt::decryptString($request->input('scheduleEndTime'))),
+            'pattern' => unserialize(Crypt::decryptString($request->input('pattern'))),
             'remarks' => unserialize(Crypt::decryptString($request->input('remarks')))
         ]);
     } catch (\Exception $e) {
@@ -564,10 +567,10 @@ Route::get('inventory/issuedispense', [App\Http\Controllers\InventoryController:
 Route::get('inventory/respond-issuedispense', [App\Http\Controllers\InventoryController::class, 'RespondIssueDispense'])->name('RespondIssueDispense');
 Route::post('inventory/addissuedispense', [InventoryController::class, 'AddIssueDispense'])->name('AddIssueDispense');
 
-Route::get('other-transactions', [App\Http\Controllers\InventoryController::class, 'ShowOtherTransactions'])->name('other-transactions');
-Route::get('inventory/othertransaction', [App\Http\Controllers\InventoryController::class, 'GetOtherTransactionData'])->name('GetOtherTransactionData');
-Route::get('inventory/respond-othertransaction', [App\Http\Controllers\InventoryController::class, 'RespondOtherTransaction'])->name('RespondOtherTransaction');
-Route::post('inventory/addothertransaction', [InventoryController::class, 'AddOtherTransaction'])->name('AddOtherTransaction');
+Route::get('material-transfer', [App\Http\Controllers\InventoryController::class, 'ShowMaterialTransfer'])->name('material-transfer');
+Route::get('inventory/materialtransfer', [App\Http\Controllers\InventoryController::class, 'GetMaterialTransferData'])->name('GetMaterialTransferData');
+Route::get('inventory/respond-materialtransfer', [App\Http\Controllers\InventoryController::class, 'RespondMaterialTransfer'])->name('RespondMaterialTransfer');
+Route::post('inventory/addmaterialtransfer', [InventoryController::class, 'AddMaterialTransfer'])->name('AddMaterialTransfer');
 
 Route::get('consumption', [App\Http\Controllers\InventoryController::class, 'ShowConsumedData'])->name('consumption');
 Route::get('inventory/consumption', [App\Http\Controllers\InventoryController::class, 'GetConsumptionData'])->name('GetConsumptionData');
@@ -646,12 +649,12 @@ Route::get('inventory/materialconsumption-status', [App\Http\Controllers\Invento
 Route::get('inventory/updatematerialconsumption/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumptionModal'])->name('UpdateMaterialConsumptionModal');
 Route::post('inventory/update-materialconsumption/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateMaterialConsumption'])->name('UpdateMaterialConsumption');
 
-Route::get('req-other-transaction', [App\Http\Controllers\InventoryController::class, 'RequisitionOtherTransactions'])->name('req-other-transaction');
-Route::post('inventory/addreqothertransaction', [InventoryController::class, 'AddRequisitionOtherTransactions'])->name('AddRequisitionOtherTransactions');
-Route::get('inventory/reqothertransaction', [App\Http\Controllers\InventoryController::class, 'GetRequisitionOtherTransactionsData'])->name('GetRequisitionOtherTransactionsData');
-Route::get('inventory/reqothertransaction-status', [App\Http\Controllers\InventoryController::class, 'UpdateRequisitionOtherTransactionStatus'])->name('UpdateRequisitionOtherTransactionStatus');
-Route::get('inventory/updatereqothertransaction/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateRequisitionOtherTransactionModal'])->name('UpdateRequisitionOtherTransactionModal');
-Route::post('inventory/update-reqothertransaction/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateRequisitionOtherTransaction'])->name('UpdateRequisitionOtherTransaction');
+Route::get('req-material-transfer', [App\Http\Controllers\InventoryController::class, 'RequisitionMaterialTransfers'])->name('req-material-transfer');
+Route::post('inventory/addreqmaterialtransfer', [InventoryController::class, 'AddRequisitionMaterialTransfers'])->name('AddRequisitionMaterialTransfers');
+Route::get('inventory/reqmaterialtransfer', [App\Http\Controllers\InventoryController::class, 'GetRequisitionMaterialTransfersData'])->name('GetRequisitionMaterialTransfersData');
+Route::get('inventory/reqmaterialtransfer-status', [App\Http\Controllers\InventoryController::class, 'UpdateRequisitionMaterialTransferStatus'])->name('UpdateRequisitionMaterialTransferStatus');
+Route::get('inventory/updatereqmaterialtransfer/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateRequisitionMaterialTransferModal'])->name('UpdateRequisitionMaterialTransferModal');
+Route::post('inventory/update-reqmaterialtransfer/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateRequisitionMaterialTransfer'])->name('UpdateRequisitionMaterialTransfer');
 
 
 Route::get('inventory/getbatchno', [InventoryController::class, 'GetBatchNo'])->name('GetBatchNo');
@@ -930,6 +933,7 @@ Route::get('investigationtracking/{mr}', [App\Http\Controllers\PatientMedicalRec
 Route::post('medicalrecord/sampleconfirmationdate', [PatientMedicalRecord::class, 'ConfirmSampleReport'])->name('ConfirmSampleReport');
 Route::post('medicalrecord/uploadreport', [PatientMedicalRecord::class, 'UploadReport'])->name('UploadReport');
 Route::get('medicalrecord/viewinvestigationTracking/{mr}', [App\Http\Controllers\PatientMedicalRecord::class, 'GetInvestigationTrackingData'])->name('GetInvestigationTrackingData');
+Route::get('medicalrecord/get-patients-for-sidebar', [App\Http\Controllers\PatientMedicalRecord::class, 'GetPatientsForSidebar'])->name('get-patients-for-sidebar');
 // Route::get('medicalrecord/reqmc-status', [App\Http\Controllers\PatientMedicalRecord::class, 'UpdateRequisitionMedicationConsumptionStatus'])->name('UpdateRequisitionMedicationConsumptionStatus');
 // Route::get('medicalrecord/updatereqmc/{id}', [App\Http\Controllers\PatientMedicalRecord::class, 'UpdateReqMedicationConsumptionModal'])->name('UpdateReqMedicationConsumptionModal');
 // Route::post('/medicalrecord/update-reqmc/{id}', [App\Http\Controllers\PatientMedicalRecord::class, 'UpdateReqMedicationConsumption'])->name('UpdateReqMedicationConsumption');

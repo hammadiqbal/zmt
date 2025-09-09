@@ -65,109 +65,9 @@
             </div>
             <br>
            
-            {{-- <div class="mt-3">
-                <div class="row justify-content-center">
-                    <div class="col-12 col-md-12">
-                        <div class="border p-4 rounded shadow-sm" style="font-weight:bolder;">
-                            <div class="row mb-3">
-                                @if(!empty($PatientDetails->orgName))
-                                    <div class="col">
-                                        <div class="form-group">
-                                            <label><b>Organization</b></label>
-                                            <div class="border p-2 rounded">
-                                                {{ ucfirst($PatientDetails->orgName) }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-            
-                                @if(!empty($PatientDetails->siteName))
-                                    <div class="col">
-                                        <div class="form-group">
-                                            <label><b>Site</b></label>
-                                            <div class="border p-2 rounded">
-                                                {{ ucfirst($PatientDetails->siteName) }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-            
-                                @if(!empty($PatientDetails->patientMR))
-                                    <div class="col">
-                                        <div class="form-group">
-                                            <label><b>MR#</b></label>
-                                            <div class="border p-2 rounded">
-                                                {{ $PatientDetails->patientMR }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-            
-                                @if(!empty($PatientDetails->patientName))
-                                    <div class="col">
-                                        <div class="form-group">
-                                            <label><b>Patient Name</b></label>
-                                            <div class="border p-2 rounded">
-                                                {{ ucfirst($PatientDetails->patientName) }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
-                            <div class="row mb-3">
-                                @if(!empty($ageString))
-                                    <div class="col">
-                                        <div class="form-group">
-                                            <label><b>Age</b></label>
-                                            <div class="border p-2 rounded">
-                                                {{ $ageString }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-            
-                                @if(!empty($PatientDetails->gender))
-                                    <div class="col">
-                                        <div class="form-group">
-                                            <label><b>Gender</b></label>
-                                            <div class="border p-2 rounded">
-                                                {{ ucfirst($PatientDetails->gender) }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-            
-                                @if(!empty($PatientDetails->responsiblePhysician))
-                                    <div class="col">
-                                        <div class="form-group">
-                                            <label><b>Responsible Physician</b></label>
-                                            <div class="border p-2 rounded">
-                                                {{ ucfirst($PatientDetails->responsiblePhysician) }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-            
-                                @if(!empty($PatientDetails->billingCCName))
-                                    <div class="col">
-                                        <div class="form-group">
-                                            <label><b>Billing CostCenter</b></label>
-                                            <div class="border p-2 rounded">
-                                                {{ ucfirst($PatientDetails->billingCCName) }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div> --}}
-
             <div class="container mt-4">
                 <div class="card shadow-sm border rounded-3">
                     <div class="card-body px-4 py-3" style="font-size: 14px;">
-                        {{-- First Row --}}
                         <div class="row text-center">
                             @if(!empty($PatientDetails->orgName))
                                 <div class="col-md-3 mb-3">
@@ -232,8 +132,6 @@
                 </div>
             </div>
             
-            
-            
 
             @if ($add == 1)
             <div class="modal fade bs-example-modal-lg" id="add-reqmc" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
@@ -241,8 +139,10 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <h4 class="modal-title" id="myLargeModalLabel">Add Requisition For Medication Consumption</h4>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
                         </div>
+                        <div class="row" id="transaction-info-row" style="width:98%;display:none;font-size:13px;border:1px solid black;margin: 0 auto;"></div>
+
                         <form id="add_reqmc" method="post">
                             <input type="hidden" id="rmc_orgid" value=" {{ $PatientDetails->orgId }}">
                             <input type="hidden" name="rmc_mr" value=" {{ $PatientDetails->patientMR }}">
@@ -269,19 +169,30 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-6 rmc_source_location">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Select Inventory Locations </label>
-                                                                    <select class="form-control selecter p-0" name="rmc_inv_location" id="rmc_inv_location" style="color:#222d32">
-                                                                        {{-- <option selected disabled >Select Inventory Location</option>
-                                                                        @foreach ($ServiceLocations as $ServiceLocation)
-                                                                            <option value="{{ $ServiceLocation['id'] }}">{{ $ServiceLocation['name'] }}</option>
-                                                                        @endforeach --}}
+                                                                    <label class="control-label">Select Source Location </label>
+                                                                    <select class="form-control selecter p-0" name="rmc_source_location" id="rmc_source_location" style="color:#222d32">
+                                                                        <option selected disabled value="">Select Source Location</option>
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="rmc_inv_location_error"></span>
+                                                                <span class="text-danger" id="rmc_source_location_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6 rmc_destination_location">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Select Destination Location</label>
+                                                                    <select class="form-control selecter p-0" name="rmc_destination_location" id="rmc_destination_location" style="color:#222d32">
+                                                                        <option selected disabled value="">Select Destination Location</option>
+                                                                    </select>
+                                                                </div>
+                                                                <span class="text-danger" id="rmc_destination_location_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -297,9 +208,7 @@
                                                         </div>
                                                     </div>
 
-                                                </div>
-
-                                                <div class="row pt-4 pb-1 duplicate" style="border: 1px solid #939393;">
+                                                <div class="row pt-4 pb-1 duplicate" style="border: 1px solid #939393;margin: 8px;">
                                                     <div class="col-md-6">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
@@ -394,8 +303,9 @@
                     </div>
                 </div>
             </div>
+        
             @endif
-
+        </div>
             @if ($view == 1)
             <div class="table-responsive m-t-40">
                 <table id="view-reqmc" class="table table-bordered table-striped">
@@ -421,7 +331,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h4 class="modal-title" id="myLargeModalLabel">Update Requisition For Medication Consumption Details</h4>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form id="update_reqmc">
                 @csrf
@@ -445,16 +355,24 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-6">
+                                            <div class="col-md-6 u_rmc_source_location">
                                                 <div class="form-group row">
                                                     <div class="col-md-12">
                                                         <div class="form-group has-custom m-b-5">
-                                                            <label class="control-label">Select Inventory Locations </label>
-                                                            <select class="form-control selecter p-0" name="u_rmc_inv_location" id="u_rmc_inv_location" style="color:#222d32">
-                                                                <option selected disabled >Select Inventory Location</option>
-                                                                @foreach ($ServiceLocations as $ServiceLocation)
-                                                                    <option value="{{ $ServiceLocation['id'] }}">{{ $ServiceLocation['name'] }}</option>
-                                                                @endforeach
+                                                            <label class="control-label">Update Source Location</label>
+                                                            <select class="form-control selecter p-0" name="u_rmc_source_location" id="u_rmc_source_location" style="color:#222d32">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6 u_rmc_destination_location">
+                                                <div class="form-group row">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group has-custom m-b-5">
+                                                            <label class="control-label">Select Destination Location</label>
+                                                            <select class="form-control selecter p-0" name="u_rmc_destination_location" id="u_rmc_destination_location" style="color:#222d32">
                                                             </select>
                                                         </div>
                                                     </div>
@@ -472,6 +390,10 @@
                                                 </div>
                                             </div>
                                         </div>
+
+                                            {{-- </div>
+
+                                            </div> --}}
 
                                         <div class="uduplicate">
                                         </div>

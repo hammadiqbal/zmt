@@ -149,7 +149,6 @@
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Effective DateTime</label>
                                                                     <input type="text" id="date-format" class="form-control input06 dt edt" name="empCC-ed" placeholder="Select Effective Date & Time">
-                                                                    {{-- <input type="text" id="date-format" class="form-control input06 dt edt" name="empCC-ed[]" placeholder="Select Effective Date & Time"> --}}
                                                                 </div>
                                                                 <span class="text-danger" id="empCC-ed_error"></span>
                                                             </div>

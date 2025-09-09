@@ -13,10 +13,10 @@ $(document).ready(function() {
                 });
             });
 
-            fetchOrganizationBrand(orgId,'#ir_brand', function(data) {
-                $('#ir_brand').html("<option selected disabled value=''>Select Item Brand</option>");
+            fetchOrganizationItemGeneric(orgId,'#ir_generic', function(data) {
+                $('#ir_generic').html("<option selected disabled value=''>Select Item Generic</option>");
                 $.each(data, function(key, value) {
-                    $('#ir_brand').append('<option value="' + value.id + '">' + value.name + '</option>');
+                    $('#ir_generic').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
         }
@@ -31,10 +31,30 @@ $(document).ready(function() {
             $('#ir_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled', true);
             OrgChangeSites('#ir_org', '#ir_site', '#add_financepayment');
     
-            $('#ir_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled',true);
-            OrgChangeBrand('#ir_org', '#ir_brand', '#add_itemrate');
-    
+            $('#ir_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled',true);
+            OrgChangeInventoryGeneric('#ir_org', '#ir_generic', '#add_itemrate');
         }
+        $('#ir_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled',true);
+        GenericChangeBrand('#ir_generic', '#ir_brand', '#add_itemrate');
+        
+        $('#ir_batch').html("<option selected disabled value=''>Select Batch Number</option>").prop('disabled',true);
+        BrandChangeBatchForItemRates('#ir_brand', '#ir_batch');
+        
+        // Add site change handler to reset dependent dropdowns
+        $('#ir_site').off('change.siteChange').on('change.siteChange', function() {
+            // Reset generic dropdown to first option
+            $('#ir_generic').val($('#ir_generic option:first').val()).prop('disabled', false);
+            
+            // Reset brand dropdown to first option
+            $('#ir_brand').val($('#ir_brand option:first').val()).prop('disabled', true);
+            
+            // Reset batch dropdown to first option
+            $('#ir_batch').val($('#ir_batch option:first').val()).prop('disabled', true);
+            
+            // Trigger generic change to populate brands
+            $('#ir_generic,#ir_brand,#ir_batch').trigger('change');
+        });
+        
         // $('#ft_discount').hide();
         // $('#fp_discount').attr('required', false);
         $('#add-itemrate').modal('show');
@@ -97,6 +117,22 @@ $(document).ready(function() {
                             icon: fieldName,
                             confirmButtonText: 'OK'
                         })
+                    }
+                    else if (fieldName == 'info')
+                    {
+                        Swal.fire({
+                            text: fieldErrors,
+                            icon: fieldName,
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $('#add_itemrate')[0].reset();
+                                $('#add_itemrate').find('select').each(function(){
+                                    $(this).val($(this).find('option:first').val()).trigger('change');
+                                });
+                                $('.text-danger').hide();
+                            }
+                        });
                     }
                     else if (fieldName == 'success')
                     {
@@ -236,8 +272,19 @@ $(document).ready(function() {
 
                 OrgChangeSites('#u_ir_org', '#u_ir_site', '#update_itemrate');
 
+                $('#u_ir_generic').html("<option selected value="+ response.GenericId +">" + response.GenericName + "</option>");
+                fetchOrganizationItemGeneric(response.orgId,'#u_ir_generic', function(data) {
+                    $.each(data, function(key, value) {
+                        if(value.id != response.GenericId)
+                        {
+                            $('#u_ir_generic').append('<option value="' + value.id + '">' + value.name + '</option>');
+                        }
+                    });
+                });
+                OrgChangeInventoryGeneric('#u_ir_org', '#u_ir_generic', '#update_itemrate');
+
                 $('#u_ir_brand').html("<option selected value="+ response.BrandId +">" + response.BrandName + "</option>");
-                fetchOrganizationBrand(response.orgId,'#u_ir_brand', function(data) {
+                fetchGenericItemBrand(response.GenericId,'#u_ir_brand', function(data) {
                     $.each(data, function(key, value) {
                         if(value.id != response.BrandId)
                         {
@@ -245,10 +292,13 @@ $(document).ready(function() {
                         }
                     });
                 });
-                OrgChangeBrand('#u_ir_org', '#u_ir_brand', '#update_itemrate');
+                GenericChangeBrand('#u_ir_generic', '#u_ir_brand', '#update_itemrate');
+                
+                $('#u_ir_batch').html("<option selected value="+ response.batch +">" + response.batch + "</option>");
+                BrandChangeBatchForItemRates('#u_ir_brand', '#u_ir_batch');
 
-                $('#u_ir_batch').val(response.batch);
                 $('#u_ir_unitcost').val(response.UnitCost);
+                $('#u_ir_packsize').val(response.packSize);
                 $('#u_ir_billedamount').val(response.BilledAmount);
 
                 $('#edit-itemrate').modal('show');
@@ -330,4 +380,74 @@ $(document).ready(function() {
     });
     //Update Item Rates
 });
+
+// Brand Change Batch Function specifically for Item Rates
+function BrandChangeBatchForItemRates(brandSelector, batchSelector) {
+    $(brandSelector).off('change.BrandChangeBatch').on('change.BrandChangeBatch', function(){
+        var brandId = $(this).val();
+        
+        // Determine which modal we're in (add or edit)
+        var isEditModal = $(this).closest('#edit-itemrate').length > 0;
+        
+        var orgId, siteId, genericId;
+        
+        if (isEditModal) {
+            // Edit modal selectors
+            orgId = $('#u_ir_org').val();
+            siteId = $('#u_ir_site').val();
+            genericId = $('#u_ir_generic').val();
+        } else {
+            // Add modal selectors
+            orgId = $('#ir_org').val();
+            siteId = $('#ir_site').val();
+            genericId = $('#ir_generic').val();
+        }
+        
+        console.log('BrandChangeBatchForItemRates called with:', {brandId, orgId, siteId, genericId, isEditModal});
+        
+        if (brandId && orgId && siteId && genericId) {
+            const $batch = $(batchSelector);
+            
+            // Show loading
+            $batch.empty()
+                .append('<option selected disabled value="">Loading...</option>')
+                .prop('disabled', true);
+
+            $.ajax({
+                url: 'inventory/getbatchno',
+                type: 'GET',
+                data: { orgId, siteId, genericId, brandId },
+            })
+            .done(function(resp) {
+                if (resp && Array.isArray(resp) && resp.length > 0) {
+                    $batch.empty()
+                        .append(resp.map(({batch_no}) => `<option value="${batch_no}">${batch_no}</option>`).join(''))
+                        .prop('disabled', false)
+                        .find('option:contains("Loading...")').remove();
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'No batch# found',
+                        text: 'Batch no is not available for selected combination.',
+                    });
+                    
+                    $batch.empty()
+                        .append('<option selected disabled value="">Select Batch Number</option>')
+                        .prop('disabled', true);
+                }
+            })
+            .fail(function() {
+                Swal.fire('Error','Could not fetch batch info','error');
+                $batch.empty()
+                    .append('<option selected disabled value="">Select Batch Number</option>')
+                    .prop('disabled', true);
+            });
+        } else {
+            $(batchSelector).empty()
+                .append('<option selected disabled value="">Select Batch Number</option>')
+                .prop('disabled', true);
+        }
+    });
+}
+
 //Item Rates

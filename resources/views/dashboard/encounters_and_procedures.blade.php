@@ -75,7 +75,7 @@
                             @if ($add == 1 || $view == 1)
                             <div class="col-md-12 p-2">
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-5">
                                         <div class="main_custom">
                                             <!-- @if(empty($orgCode))
                                             <span class="main_label">ZMTP - </span>
@@ -106,7 +106,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <div class="main_custom">
                                             <label class="main_label">Age</label>
                                             <input type="text" class="form-control input-sm color_red ep_age" name="ep_age" readonly placeholder="Age" >
@@ -137,7 +137,9 @@
                                         <div class="col-md-6">
                                             <div>
                                                 <label class="main_label">Speciality (Performing Cost Center)</label>
-                                                <input type="text" class="form-control input-sm color_red"  id="ep_pcc" readonly placeholder="Speciality (Performing Cost Center)">
+                                                <select class="form-control selecter p-0" id="ep_pcc" name="performing_cc" disabled style="color:#222d32">
+                                                    <option selected disabled value="">Select Performing Cost Center</option>
+                                                </select>
                                             </div>
                                         </div>
 
@@ -178,6 +180,7 @@
                                 <div class="row mt-3" id="ep_history" style="position: relative;">
                                     @csrf
                                     <input type="hidden" name="billingcc_id" class="billingcc_id">
+                                    <input type="hidden" name="service_type" id="service_type">
                                     <input type="hidden" name="servicemode_id" class="servicemode_id">
                                     <input type="hidden" name="sevice_id" class="sevice_id">
                                     <input type="hidden" name="patient_age" class="ep_age">
@@ -190,8 +193,8 @@
                                         <div class="row mb-5">
                                             <div class="col-md-12">
                                                 <div class="d-flex justify-content-between align-items-center">
-                                                    <h6 class="main_heading" id="sp_head"></h6>
-                                                    <i class="fa fa-plus add_complain addep" style="cursor:pointer;font-size:20px;color:#0f0f66;"></i>
+                                                    <h6 class="main_heading sp_head" ></h6>
+                                                    <i class="fa fa-plus add_complain addep vbd" style="cursor:pointer;font-size:20px;color:#0f0f66;"></i>
                                                 </div>
                                                 <table class="table-bordered table-hover table" id="view-complain" style="border:none;">
                                                     <thead>
@@ -205,12 +208,12 @@
                                             </div>
                                             <div class="col-md-12 mt-1">
                                                 <h6 class="main_heading">Clinical Notes</h6>
-                                                <textarea class="form-control" required style="height: 100%;" name="clnical_notes" rows="5" maxlength="3000"></textarea>
+                                                <textarea class="form-control vbd" required style="height: 100%;" name="clnical_notes" rows="5" maxlength="3000"></textarea>
                                             </div>
 
                                             <div class="col-md-12 mt-5">
                                                 <h6 class="main_heading">Summary / Plan</h6>
-                                                <textarea class="form-control" required style="height: 100%;" name="summary" rows="4" maxlength="500"></textarea>
+                                                <textarea class="form-control vbd" required style="height: 100%;" name="summary" rows="4" maxlength="500"></textarea>
                                             </div>
                                         </div>
 
@@ -247,7 +250,7 @@
                                             @endif
                                         </div>
 
-                                        <div class="row mt-2 mb-2 pr-2">
+                                        <div class="row mt-2 mb-2 pr-1">
                                            {{-- <div class="col-md-4"> --}}
                                                 {{-- <a href="#" id="order-medication-link" target="_blank"> --}}
                                                     {{-- <button type="button" class="waves-effect waves-light btn-info btn-custom">Edit or Update</button> --}}
@@ -258,8 +261,8 @@
                                                 <button type="button" class="waves-effect waves-light btn-warning btn-custom">View log</button>
                                             </div> --}}
 
-                                            <div class="col-md-12 pr-1 pl-1">
-                                                <button type="submit" class="addep waves-effect waves-light btn-danger btn-custom">Save</button>
+                                            <div class="col-md-12 pr-1 pl-2">
+                                                <button type="submit" class="addep waves-effect waves-light btn-danger btn-custom vbd">Save</button>
                                             </div>
 
 
@@ -484,8 +487,7 @@
                                     </div>
                                 </div>
                             </form>
-
-                            @endif
+                        @endif
                         {{-- </form> --}}
 
                         @if ($view == 1)
@@ -571,7 +573,7 @@
                                             <div class="col-md-6">
                                                 <div class="form-group">
                                                     <label class="control-label">Till Date</label>
-                                                    <input type="text" id="m_tilledate" required name="m_tilledate" style="height:40px" class="form-control input-sm" placeholder="Select Date">
+                                                    <input type="text" id="m_tilledate"  name="m_tilledate" style="height:40px" class="form-control input-sm" placeholder="Select Date">
                                                 </div>
                                             </div>
 
@@ -962,7 +964,7 @@
         <div class="modal-dialog modal-fullscreen" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="myLargeModalLabel">Add Symptoms</h4>
+                    <h4 class="modal-title sp_head" id="myLargeModalLabel"></h4>
                     <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button> -->
                 </div>
                 <div class="modal-body">
@@ -1400,34 +1402,6 @@
                                             <div class="form-group row">
                                                 <div class="col-md-12">
                                                     <div class="form-group has-custom m-b-5">
-                                                        <h6 class="box-title font-weight-bold">Services</h6>
-                                                        <select class="form-control selecter p-0" id="reqi_sevice" name="sevice_id" style="color:#222d32">
-                                                        </select>
-
-                                                    </div>
-                                                    <span class="text-danger sevice_id_error"></span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="form-group row">
-                                                <div class="col-md-12">
-                                                    <div class="form-group has-custom m-b-5">
-                                                        <h6 class="box-title font-weight-bold">Service Modes</h6>
-                                                        <select class="form-control selecter p-0" id="reqi_servicemode" name="servicemode_id" style="color:#222d32">
-                                                        </select>
-
-                                                    </div>
-                                                    <span class="text-danger servicemode_id_error"></span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="col-md-6">
-                                            <div class="form-group row">
-                                                <div class="col-md-12">
-                                                    <div class="form-group has-custom m-b-5">
                                                         <h6 class="box-title font-weight-bold">Speciality (Billing Cost Center)<h6>
                                                         <select class="form-control selecter p-0" id="reqi_billingcc" name="billingcc_id" style="color:#222d32">
                                                         </select>
@@ -1467,6 +1441,57 @@
                                             <span class="text-danger" id="repi_edt_error"></span>
                                         </div> --}}
 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Row -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="duplicate" style="border: 1px solid grey;padding: 30px 20px 0 20px;margin-bottom:10px">
+                                    <div class="row">
+                                        <div class="col-md-5">
+                                            <div class="form-group row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group has-custom m-b-5">
+                                                        <label class="control-label">Services</label>
+                                                        <select class="form-control selecter p-0 reqi_service" name="sevice_id[]" style="color:#222d32">
+                                                        </select>
+                                                    </div>
+                                                    <span class="text-danger sevice_id_error"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-5">
+                                            <div class="form-group row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group has-custom m-b-5">
+                                                        <label class="control-label">Service Modes</label>
+                                                        <select class="form-control selecter p-0 reqi_servicemode" name="servicemode_id[]" style="color:#222d32">
+                                                        </select>
+                                                    </div>
+                                                    <span class="text-danger servicemode_id_error"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <div class="form-group row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group has-custom m-b-5">
+                                                        <label class="control-label">&nbsp;</label>
+                                                        <div class="d-flex">
+                                                            <button type="button" id="addMoreReqi" class="btn btn-success btn-sm mr-1"> <i class="mdi mdi-plus"></i></button>
+                                                            <button type="button" id="removeReqi" class="btn btn-danger btn-sm"> <i class="mdi mdi-minus"></i></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
                                     </div>
                                 </div>
                             </div>

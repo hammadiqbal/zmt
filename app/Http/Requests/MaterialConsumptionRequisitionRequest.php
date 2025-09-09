@@ -25,7 +25,8 @@ class MaterialConsumptionRequisitionRequest extends FormRequest
             'mc_org' => 'required',
             'mc_site' => 'required',
             'mc_transactiontype' => 'required',
-            'mc_inv_location' => 'required',
+            'mc_source_location' => 'nullable',
+            'mc_destination_location' => 'nullable',
             'mc_itemgeneric' => 'required',
             'mc_qty' => 'required',
         ];
@@ -37,7 +38,8 @@ class MaterialConsumptionRequisitionRequest extends FormRequest
             'mc_org.required' => 'Please select Organization',
             'mc_site.required' => 'Please select Site',
             'mc_transactiontype.required' => 'Please select Transaction Type',
-            'mc_inv_location.required' => 'Please select Inventory Location',
+            'mc_source_location.required' => 'Please select Source Location',
+            'mc_destination_location.required' => 'Please select Destination Location',
             'mc_itemgeneric.required' => 'Please select Item Generic',
             'mc_qty.required' => 'Please Enter Demand Quantity',
         ];

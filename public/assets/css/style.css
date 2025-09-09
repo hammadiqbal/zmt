@@ -776,7 +776,8 @@
     }
 
     .table td, .table th {
-        border-color: #f3f1f1
+        border-color: #f3f1f1;
+        font-size: 12px;
     }
 
     .table th, .table thead th {
@@ -3762,7 +3763,7 @@
         text-align: center;
         text-decoration: none;
         cursor: pointer;
-        *cursor: hand;
+        cursor: hand;
         color: #67757c;
         border: 1px solid #ddd
     }
@@ -9408,7 +9409,7 @@
     }
 
     .main_row {
-        background-color: #cdcdcd;
+        background-color: #ffffff;
         position: relative;
     }
 

@@ -196,7 +196,7 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-12">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
@@ -430,9 +430,29 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group row">
+                                        <div class="col-md-12">
+                                            <div class="form-group has-custom m-b-5">
+                                                <select class="form-control selecter p-0" id="pad_date_filter" style="color:#222d32">
+                                                    <option selected disabled value="">Select Date Filter</option>
+                                                    <option value="today" selected>Today</option>
+                                                    <option value="yesterday">Yesterday</option>
+                                                    <option value="this_week">This Week</option>
+                                                    <option value="last_week">Last Week</option>
+                                                    <option value="this_month">This Month</option>
+                                                    <option value="last_month">Last Month</option>
+                                                    <option value="this_year">This Year</option>
+                                                    <option value="last_year">Last Year</option>
+                                                </select>
+                                            </div>
+                                    </div>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
                 </div>
             </div>
 
@@ -454,6 +474,8 @@
             @endif
         </div>
     </div>
+
+
 
     @if ($edit == 1)
     <div class="modal fade bs-example-modal-lg" id="edit-patientinout" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
@@ -533,12 +555,14 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-6">
+                                            <div class="col-md-12">
                                                 <div class="mb-2 row">
                                                     <div class="col-md-12">
                                                         <div class="mb-2 has-custom m-b-5">
-                                                            <label class="control-label">Calendar Day & Time (Start - End):</label>
-                                                            <input type="text" class="form-control input-daterange-timepicker" id="u_pio_scheduleDatetime"/>
+                                                            {{-- <label class="control-label">Calendar Day & Time (Start - End):</label> --}}
+                                                            {{-- <input type="text" class="form-control input-daterange-timepicker" id="u_pio_scheduleDatetime"/> --}}
+                                                            <label class="control-label">Service Schedule:</label>
+                                                            <input type="text" class="form-control" id="u_pio_scheduleDatetime"/>
                                                         </div>
                                                     </div>
                                                 </div>

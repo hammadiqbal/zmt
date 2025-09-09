@@ -205,7 +205,7 @@
             </div>
 
             <!-- Services Modal -->
-            <div class="modal fade" id="empLocationAllocationModal" tabindex="-1" role="dialog" aria-labelledby="empLocationAllocationModalLabel" aria-hidden="true">
+            <div class="modal fade" id="empLocationAllocationModal" tabindex="-1" role="dialog" aria-labelledby="empLocationAllocationModalLabel">
                 <div class="modal-dialog modal-fullscreen" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -284,7 +284,7 @@
 
     @if ($edit == 1)
     <!-- Update Services Modal -->
-    <div class="modal fade" id="uempLocationAllocationModal" tabindex="-1" role="dialog" aria-labelledby="uempLocationAllocationModalLabel" aria-hidden="true">
+    <div class="modal fade" id="uempLocationAllocationModal" tabindex="-1" role="dialog" aria-labelledby="uempLocationAllocationModalLabel" >
         <div class="modal-dialog modal-fullscreen" role="document">
             <div class="modal-content">
                 <div class="modal-header">

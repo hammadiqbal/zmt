@@ -127,9 +127,9 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Vendor Category</label>
+                                                                    <label class="control-label">Category</label>
                                                                     <select class="form-control selecter p-0"  name="vendor_cat" id="vendor_cat" style="color:#222d32">
-                                                                        <option selected disabled value=' '>Select Vendor Category</option>
+                                                                        <option selected disabled value=' '>Select Category</option>
                                                                         <option value="c">Corporate</option>
                                                                         <option value="i">Individual</option>
                                                                     </select>

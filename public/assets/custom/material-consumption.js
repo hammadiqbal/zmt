@@ -4,6 +4,7 @@ $(document).ready(function() {
         $('.duplicate:not(:first)').remove();
         $('#mc_patient,#mc_service').prop('required', false);
         $('.mr_optional,.text-danger').show();
+        $('.mc_source_location, .mc_destination_location').hide(); // Hide source/destination sections initially
         var orgId = $('#mc_org').val();
         $('#serviceSelect').hide();
         if(!orgId)
@@ -19,9 +20,8 @@ $(document).ready(function() {
             OrgChangeSites('#mc_org', '#mc_site', '#add_materialconsumption');
             // $('#mc_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
             // OrgChangeTransactionTypes('#mc_org', '#mc_transactiontype', '#add_materialconsumption',true);
-
             $('.mc_itemgeneric').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
-            OrgChangeInventoryGeneric('#mc_org', '.mc_itemgeneric', '#add_materialconsumption');
+            OrgChangeInventoryGeneric('#mc_org', '.mc_itemgeneric', '#add_materialconsumption' ,'material');
 
         }
         else{
@@ -40,7 +40,15 @@ $(document).ready(function() {
             //     }
             // });
              $('.mc_itemgeneric').html("<option selected disabled value=''>Select Item Generic</option>");
-            fetchOrganizationItemGeneric(orgId, '.mc_itemgeneric', function(data) {
+            //  fetchInventoryGenerics('.mc_itemgeneric', 'material', function (data) {
+            //     if (data.length > 0) {
+            //         $.each(data, function (key, value) {
+            //             $('.mc_itemgeneric' ).append('<option value="' + value.id + '">' + value.name + '</option>');
+            //         });
+            //         $('.mc_itemgeneric').select2();
+            //     }
+            // });
+            fetchOrganizationItemGeneric(orgId, '.mc_itemgeneric', 'material', function(data) {
                 $.each(data, function(key, value) {
                     $('.mc_itemgeneric').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
@@ -50,12 +58,88 @@ $(document).ready(function() {
         $('#mc_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
         SiteChangeMaterialManagementTransactionTypes('#mc_site','#mc_org', '#mc_transactiontype', '#add_materialconsumption','issue_dispense','y');
 
-        $('#mc_inv_location').html("<option selected disabled value=''>Select Inventory Location</option>").prop('disabled', true);
-        SiteChangeActivatedServiceLocation('#mc_site','#mc_inv_location', '#add_materialconsumption',true, true );
+        // Initialize source and destination location dropdowns
+        $('#mc_source_location').html("<option selected disabled value=''>Select Source Location</option>").prop('disabled', true);
+        $('#mc_destination_location').html("<option selected disabled value=''>Select Destination Location</option>").prop('disabled', true);
 
         $('#mc_patient').html("<option selected disabled value=''>Select Patient MR#</option>").prop('disabled',true);
         SiteChangeMRCode('#mc_site', '#mc_patient', '#add_materialconsumption', 'materialConsumption');
         MRChangeService('#mc_patient', '#mc_service');
+        
+        // // Add change event listener for site field to refresh generics
+        // $(document).off('change', '#mc_site').on('change', '#mc_site', function() {
+        //     var orgId = $('#mc_org').val();
+        //     var selectedMR = $('#mc_patient').val();
+            
+        //     if (orgId) {
+        //         // Clear existing generics
+        //         $('.mc_itemgeneric').empty().append('<option selected disabled value="">Select Item Generic</option>');
+                
+        //         // Determine condition based on MR selection
+        //         var condition = selectedMR && selectedMR !== '' ? 'medicine' : 'material';
+                
+        //         // Fetch generics based on condition
+        //         fetchOrganizationItemGeneric(orgId, '.mc_itemgeneric', condition, function(data) {
+        //             if (data && data.length > 0) {
+        //                 $.each(data, function(key, value) {
+        //                     $('.mc_itemgeneric').append('<option value="' + value.id + '">' + value.name + '</option>');
+        //                 });
+        //             } else {
+        //                 $('.mc_itemgeneric').append('<option disabled value="">No generics available</option>');
+        //             }
+        //         });
+        //     }
+        // });
+
+        // Add change event listener for organization field to update generics
+        // $(document).off('change', '#mc_org').on('change', '#mc_org', function() {
+        //     var orgId = $(this).val();
+        //     var selectedMR = $('#mc_patient').val();
+            
+        //     if (orgId) {
+        //         // Clear existing generics
+        //         $('.mc_itemgeneric').empty().append('<option selected disabled value="">Select Item Generic</option>');
+                
+        //         // Determine condition based on MR selection
+        //         var condition = selectedMR && selectedMR !== '' ? 'medicine' : 'material';
+                
+        //         // Fetch generics based on condition
+        //         fetchOrganizationItemGeneric(orgId, '.mc_itemgeneric', condition, function(data) {
+        //             if (data && data.length > 0) {
+        //                 $.each(data, function(key, value) {
+        //                     $('.mc_itemgeneric').append('<option value="' + value.id + '">' + value.name + '</option>');
+        //                 });
+        //             } else {
+        //                 $('.mc_itemgeneric').append('<option disabled value="">No generics available</option>');
+        //             }
+        //         });
+        //     }
+        // });
+
+        // Add change event listener for MR patient field to update generics
+        $(document).off('change', '#mc_patient').on('change', '#mc_patient', function() {
+            var selectedMR = $(this).val();
+            var orgId = $('#mc_org').val();
+            
+            if (orgId) {
+                // Clear existing generics in all generic fields
+                $('.mc_itemgeneric').empty().append('<option selected disabled value="">Select Item Generic</option>');
+                
+                // Determine condition based on MR selection
+                var condition = 'material_medicine';
+                
+                // Fetch generics based on condition and populate all generic fields
+                fetchOrganizationItemGeneric(orgId, '.mc_itemgeneric', condition, function(data) {
+                    if (data && data.length > 0) {
+                        $.each(data, function(key, value) {
+                            $('.mc_itemgeneric').append('<option value="' + value.id + '">' + value.name + '</option>');
+                        });
+                    } else {
+                        $('.mc_itemgeneric').append('<option disabled value="">No generics available</option>');
+                    }
+                });
+            }
+        });
 
         $(document).off('change', '#mc_transactiontype').on('change', '#mc_transactiontype', function() {
             let transactionTypeID = $(this).val();
@@ -88,18 +172,101 @@ $(document).ready(function() {
                 type: 'GET',
                 data: {
                     transactionTypeId: transactionTypeID,
-                    siteId: siteId
+                    siteId: siteId,
+                    transactionType: 'requisition'
                 },
                 success: function(resp) {
-                    console.log(resp);
                     Swal.close();
+                    // Show transaction info
+                    let infoHtml = `
+                        <div class="col-12 mt-1 mb-1 transaction-block">
+                            <div class="card shadow-sm border mb-0">
+                                <div class="card-body py-2 px-3">
+                                    <div class="row align-items-center text-center">
+                                        <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                            <small class="text-muted">Source:</small><br>
+                                            <strong class="text-primary source">${resp.Source || '-'}</strong>
+                                        </div>
+                                        <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                            <small class="text-muted">Destination:</small><br>
+                                            <strong class="text-primary destination">${resp.Destination || '-'}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Remove existing transaction info and add new one
+                     $('#transaction-info-row').find('.transaction-block').remove();
+
+                       $('#transaction-info-row')
+                        .append(infoHtml)
+                        .show();
+
                     let sourceType = (resp.Source || '').toLowerCase();
                     let destType = (resp.Destination || '').toLowerCase();
+                    
+                    // Handle source location
+                    if (sourceType.includes('location')) {
+                        $('.mc_source_location').show();
+                        $('#mc_source_location').prop('required', true);
+                        $('#mc_source_location').prop('disabled', false);
+                        
+                        // Populate source locations
+                        $('#mc_source_location').empty().append('<option selected disabled value="">Select Source Location</option>');
+                        if (resp.sourceData && resp.sourceData.length > 0) {
+                            resp.sourceData.forEach(function(item) {
+                                $('#mc_source_location').append('<option value="' + item.id + '">' + item.name + '</option>');
+                            });
+                        }
+                        else{
+                            $('#mc_source_location')
+                            .empty()
+                            .append('<option selected disabled value="">No Data Found</option>')
+                            .prop('disabled', true)
+                            .prop('required', false);
+                        }
+                            
+                    } else {
+                        // console.log('else');
+                        $('.mc_source_location').hide();
+                        $('#mc_source_location').prop('required', false);
+                        $('#mc_source_location').val('').prop('disabled', true);
+                    }
+                    
+                    // Handle destination location
+                    if (destType.includes('location')) {
+                        $('.mc_destination_location').show();
+                        $('#mc_destination_location').prop('required', true);
+                        $('#mc_destination_location').prop('disabled', false);
+                        
+                        // Populate destination locations
+                        $('#mc_destination_location').empty().append('<option selected disabled value="">Select Destination Location</option>');
+                        if (resp.destinationData && resp.destinationData.length > 0) {
+                            resp.destinationData.forEach(function(item) {
+                                $('#mc_destination_location').append('<option value="' + item.id + '">' + item.name + '</option>');
+                            });
+                        }
+                        else{
+                            $('#mc_destination_location')
+                            .empty()
+                            .append('<option selected disabled value="">No Data Found</option>')
+                            .prop('disabled', true)
+                            .prop('required', false);
+                        }
+                    } else {
+                        $('.mc_destination_location').hide();
+                        $('#mc_destination_location').prop('required', false);
+                        $('#mc_destination_location').val('').prop('disabled', true);
+                    }
+                    
+                    // Handle patient requirement
                     if (sourceType.includes('patient') || destType.includes('patient')) {
                         $('.mr_optional').hide();
                         $('#mc_patient')
                             .prop('required', true)
-                            .attr('data-validation-required', 'true'); // Add custom attribute
+                            .attr('data-validation-required', 'true');
                     }
                     else {
                         $('.mr_optional').show();
@@ -107,17 +274,6 @@ $(document).ready(function() {
                             .prop('required', false)
                             .removeAttr('data-validation-required');
                     }
-                    // if (resp.LocationMandatory && resp.LocationMandatory.toLowerCase() === 'y') {
-                    //     // Show the inventory location dropdown
-                    //     $('.mc_inv_location').show(); // Add a class to the container div for easy selection
-                    //     $('#mc_inv_location').prop('required', true);
-                    // } else {
-                    //     // Hide the inventory location dropdown and set value to 0
-                    //     $('.mc_inv_location').hide();
-                    //     // $('#mc_inv_location').val(0).prop('required', false);
-                    //     $('#mc_inv_location').html("<option selected value='0'>0</option>").prop('required',true);
-
-                    // }
                 },
                 error: function(xhr, status, error) {
                     Swal.close();
@@ -142,7 +298,6 @@ $(document).ready(function() {
                 var fieldName = elem.attr('name').replace('[]', '');
                 var errorField = row.find('.' + fieldName + '_error');
                 if (!value || value === "" || (elem.is('select') && value === null)) {
-                    console.log(errorField);
                     errorField.text("This field is required");
                     if (elem.is('select')) {
                         elem.next('.select2-container').find('.select2-selection').addClass('requirefield');
@@ -171,6 +326,14 @@ $(document).ready(function() {
         });
 
         var excludedFields = ['mc_patient', 'mc_service', 'mc_remarks'];
+        
+        // Exclude source/destination location fields if they are hidden
+        if ($('.mc_source_location').is(':hidden')) {
+            excludedFields.push('mc_source_location');
+        }
+        if ($('.mc_destination_location').is(':hidden')) {
+            excludedFields.push('mc_destination_location');
+        }
         $(data).each(function(i, field){
             var originalFieldName = field.name;
             var sanitizedFieldName = originalFieldName.replace(/\[\]/g, '');
@@ -181,6 +344,7 @@ $(document).ready(function() {
             {
                 var FieldName = field.name;
                 var FieldName = FieldName.replace('[]', '');
+                    console.log(FieldName);
 
                 var FieldID = '#'+FieldName + "_error";
 
@@ -381,11 +545,16 @@ $(document).ready(function() {
             dataType: 'json',
             success: function(response) {
                 $('#u_serviceSelect').hide();
-                var formattedDateTime = moment(response.effective_timestamp, 'dddd DD MMMM YYYY - hh:mm A').format('dddd DD MMMM YYYY - hh:mm A');
-                $('.uedt').each(function() {
-                    var edtElement = $(this);
-                    edtElement.val(formattedDateTime);
-                });
+                
+                // Set effective date/time
+                if (response.effective_timestamp) {
+                    var formattedDateTime = moment(response.effective_timestamp, 'dddd DD MMMM YYYY - hh:mm A').format('dddd DD MMMM YYYY - hh:mm A');
+                    $('.uedt').each(function() {
+                        var edtElement = $(this);
+                        edtElement.val(formattedDateTime);
+                    });
+                }
+                
                 $('.u_mc-id').val(response.id);
                 $('#u_mc_org').html("<option selected value="+ response.orgId +">" + response.orgName + "</option>");
                 fetchOrganizations('null', '','#u_mc_org', function(data) {
@@ -409,18 +578,7 @@ $(document).ready(function() {
                     console.log(error);
                 },response.siteId);
                 OrgChangeSites('#u_mc_org', '#u_mc_site', '#update_materialconsumption');
-
-                // $('#u_mc_transactionType').html("<option selected value='"+response.transactionTypeId+"'>" + response.transactionType + "</option>").trigger('change');
-                // fetchTransactionTypes(response.orgId, '#u_mc_transactionType', true, function(data) {
-                //     if (data && data.length > 0) {
-                //         $.each(data, function(key, value) {
-                //             if(value.id != response.transactionTypeId){
-                //                 $('#u_mc_transactionType').append('<option value="' + value.id + '">' + value.name + '</option>');
-                //             }
-                //         });
-                //     }
-                // });
-
+               
                 $('#u_mc_transactionType').html("<option selected value="+ response.transactionTypeId +">" + response.transactionType + "</option>");
                 fetchMaterialManagementTransactionTypes(response.orgId, '#u_mc_transactionType','issue_dispense','y', function(data) {
                     $.each(data, function(key, value) {
@@ -433,19 +591,77 @@ $(document).ready(function() {
 
                 OrgChangeTransactionTypes('#u_mc_org', '#u_mc_transactionType', '#update_materialconsumption',true);
 
-                // $('#u_mc_inv_location').val(response.ServiceLocationId).change();
-                $('#u_mc_inv_location').html("<option selected value="+ response.ServiceLocationId +">" + response.ServiceLocationName + "</option>");
-                fetchActiveSL(response.siteId, '#u_mc_inv_location', true, true, function(data) {
-                    $.each(data, function(key, value) {
-                        if(value.location_id != response.ServiceLocationId)
-                        {
-                            $('#u_mc_inv_location').append('<option value="' + value.location_id + '">' + value.name + '</option>');
+                // Initialize source and destination location dropdowns for update modal
+                // $('#u_mc_source_location').html("<option selected disabled value=''>Select Source Location</option>").prop('disabled', true);
+                // $('#u_mc_destination_location').html("<option selected disabled value=''>Select Destination Location</option>").prop('disabled', true);
+                
+                if (response.sourceLocationId && response.sourceLocationName) {
+                    $('.u_mc_source_location').show();
+                    $('#u_mc_source_location').html("<option selected value='" + response.sourceLocationId + "'>" + response.sourceLocationName + "</option>");
+                } else {
+                    $('.u_mc_source_location').hide();
+                    $('#u_mc_source_location').html("<option selected disabled value=''>Select Source Location</option>");
+                }
+
+                // Set current value and populate options
+                if (response.destinationLocationId && response.destinationLocationName) {
+                    $('.u_mc_destination_location').show();
+                    $('#u_mc_destination_location').html("<option selected value='" + response.destinationLocationId + "'>" + response.destinationLocationName + "</option>");
+                } else {
+                    $('.u_mc_destination_location').hide();
+                    $('#u_mc_destination_location').html("<option selected disabled value=''>Select Destination Location</option>");
+                }
+
+                // Use the same route as add modal to respect employee location filtering
+                $.ajax({
+                    url: 'inventory/gettransactiontypeim',
+                    type: 'GET',
+                    data: { 
+                        transactionTypeId: response.transactionTypeId, 
+                        siteId: response.siteId,
+                        transactionType: 'requisition'
+                    },
+                    success: function(resp) {
+                        // Handle source location
+                        if (resp.Source && resp.Source.toLowerCase().includes('location')) {
+                            // $('.u_mc_source_location').show();
+                            $('#u_mc_source_location').prop('required', true);
+                            $('#u_mc_source_location').prop('disabled', false);
+                            
+                            // Set current value and populate options
+                            if (resp.sourceData && resp.sourceData.length > 0) {
+                                resp.sourceData.forEach(function(item) {
+                                    if (item.id != response.sourceLocationId) {
+                                        $('#u_mc_source_location').append('<option value="' + item.id + '">' + item.name + '</option>');
+                                    }
+                                });
+                            }
+                        } else {
+                            $('.u_mc_source_location').hide();
+                            $('#u_mc_source_location').prop('required', false);
+                            $('#u_mc_source_location').val('').prop('disabled', true);
                         }
-                    });
+                        
+                        // Handle destination location
+                        if (resp.Destination && resp.Destination.toLowerCase().includes('location')) {
+                            // $('.u_mc_destination_location').show();
+                            $('#u_mc_destination_location').prop('required', true);
+                            $('#u_mc_destination_location').prop('disabled', false);
+                            
+                            if (resp.destinationData && resp.destinationData.length > 0) {
+                                resp.destinationData.forEach(function(item) {
+                                    if (item.id != response.destinationLocationId) {
+                                        $('#u_mc_destination_location').append('<option value="' + item.id + '">' + item.name + '</option>');
+                                    }
+                                });
+                            }
+                        } else {
+                            // $('.u_mc_destination_location').hide();
+                            $('#u_mc_destination_location').prop('required', false);
+                            $('#u_mc_destination_location').val('').prop('disabled', true);
+                        }
+                    }
                 });
-                SiteChangeActivatedServiceLocation('#u_mc_site','#u_mc_inv_location', '#update_materialconsumption',true, true );
-
-
 
                 fetchPatientMR(response.siteId, '#u_mc_patient', 'materialConsumption', function(data) {
                     $('#u_mc_patient').empty();
@@ -530,17 +746,54 @@ $(document).ready(function() {
                         type: 'GET',
                         data: {
                             transactionTypeId: transactionTypeID,
-                            siteId: siteId
+                            siteId: siteId,
+                            transactionType: 'requisition'
                         },
                         success: function(resp) {
-                            Swal.close();
                             let sourceType = (resp.Source || '').toLowerCase();
                             let destType = (resp.Destination || '').toLowerCase();
+                            // Handle source location
+                            if (sourceType.includes('location')) {
+                                $('.u_mc_source_location').show();
+                                $('#u_mc_source_location').prop('required', true);
+                                $('#u_mc_source_location').prop('disabled', false);
+                                
+                                // Populate source locations
+                                $('#u_mc_source_location').empty().append('<option selected disabled value="">Select Source Location</option>');
+                                if (resp.sourceData && resp.sourceData.length > 0) {
+                                    resp.sourceData.forEach(function(item) {
+                                        $('#u_mc_source_location').append('<option value="' + item.id + '">' + item.name + '</option>');
+                                    });
+                                }
+                            } else {
+                                $('.u_mc_source_location').hide();
+                                $('#u_mc_source_location').prop('required', false);
+                                $('#u_mc_source_location').val('').prop('disabled', true);
+                            }
+                            // Handle destination location
+                            if (destType.includes('location')) {
+                                $('.u_mc_destination_location').show();
+                                $('#u_mc_destination_location').prop('required', true);
+                                $('#u_mc_destination_location').prop('disabled', false);
+                                
+                                // Populate destination locations
+                                $('#u_mc_destination_location').empty().append('<option selected disabled value="">Select Destination Location</option>');
+                                if (resp.destinationData && resp.destinationData.length > 0) {
+                                    resp.destinationData.forEach(function(item) {
+                                        $('#u_mc_destination_location').append('<option value="' + item.id + '">' + item.name + '</option>');
+                                    });
+                                }
+                            } else {
+                                $('.u_mc_destination_location').hide();
+                                $('#u_mc_destination_location').prop('required', false);
+                                $('#u_mc_destination_location').val('').prop('disabled', true);
+                            }
+                            
                             if (sourceType.includes('patient') || destType.includes('patient')) {
                                 $('.umr_optional').hide();
                                 $('#u_mc_patient')
                                     .prop('required', true)
-                                    .attr('data-validation-required', 'true'); // Add custom attribute
+                                    .attr('data-validation-required', 'true');
                             }
                             else {
                                 $('.umr_optional').show();
@@ -548,6 +801,8 @@ $(document).ready(function() {
                                     .prop('required', false)
                                     .removeAttr('data-validation-required');
                             }
+
+                            Swal.close();
                         },
                         error: function(xhr, status, error) {
                             Swal.close();
@@ -556,14 +811,59 @@ $(document).ready(function() {
                     });
                 });
 
-                $('#u_mc_remarks').val(response.remarks);
+                // $(document).off('change', '#u_mc_patient').on('change', '#u_mc_patient', function() {
+                //     var selectedMR = $(this).val();
+                //     var orgId = $('#mc_org').val();
+                    
+                //     if (orgId) {
+                //         // Clear existing generics in all generic fields
+                //         $('.mc_itemgeneric').empty().append('<option selected disabled value="">Select Item Generic</option>');
+                        
+                //         // Determine condition based on MR selection
+                //         var condition = 'material_medicine';
+                        
+                //         // Fetch generics based on condition and populate all generic fields
+                //         fetchOrganizationItemGeneric(orgId, '.u_mc_itemgeneric', condition, function(data) {
+                //             if (data && data.length > 0) {
+                //                 $.each(data, function(key, value) {
+                //                     $('.u_mc_itemgeneric').append('<option value="' + value.id + '">' + value.name + '</option>');
+                //                 });
+                //             } else {
+                //                 $('.u_mc_itemgeneric').append('<option disabled value="">No generics available</option>');
+                //             }
+                //         });
+                //     }
+                // });
 
-                var genericIds = response.genericIds.split(',');
-                var genericNames = response.genericNames.split(',');
-                var Qty = response.Qty.split(',');
+                // Set remarks
+                if (response.remarks) {
+                    $('#u_mc_remarks').val(response.remarks);
+                } else {
+                    $('#u_mc_remarks').val('');
+                }
+
+                // Handle generic IDs and names
+                var genericIds = [];
+                var genericNames = [];
+                var Qty = [];
+                
+                if (response.genericIds && response.genericIds.trim() !== '') {
+                    genericIds = response.genericIds.split(',');
+                }
+                if (response.genericNames && response.genericNames.trim() !== '') {
+                    genericNames = response.genericNames.split(',');
+                }
+                if (response.Qty && response.Qty.trim() !== '') {
+                    Qty = response.Qty.split(',');
+                }
 
                 $('.uduplicate').empty();
-                for (var i = 0; i < genericIds.length; i++) {
+                
+                // Only process if we have generic data
+                if (genericIds.length > 0 && genericNames.length > 0 && Qty.length > 0) {
+                    var selectedMR = $('#u_mc_patient').val();
+                    var condition = (selectedMR && selectedMR !== '') ? 'material' : 'material_medicine';
+                    for (var i = 0; i < genericIds.length; i++) {
                     var GenericField = '<div class="col-md-6">' +
                         '<div class="form-group">' +
                         '<label class="control-label">Update Inventory Generic</label>' +
@@ -574,15 +874,15 @@ $(document).ready(function() {
                         '</div>';
 
                     (function (index) {
-                        fetchInventoryGenerics('#u_mc_itemgeneric' + index, 'material', function (data) {
+                        fetchInventoryGenerics('#u_mc_itemgeneric' + index, condition, function (data) {
                             if (data.length > 0) {
+                                $('#u_mc_itemgeneric' + index).select2();
                                 $.each(data, function (key, value) {
-                                    if ($.inArray(value.id.toString(), genericIds[index]) === -1)
+                                    if ($.inArray(value.id.toString(), genericIds) === -1)
                                     {
                                         $('#u_mc_itemgeneric' + index).append('<option value="' + value.id + '">' + value.name + '</option>');
                                     }
                                 });
-                                $('#u_mc_itemgeneric' + index).select2();
                             }
                         });
                     })(i);
@@ -599,9 +899,61 @@ $(document).ready(function() {
                         '</div>' +
                         '</div>';
 
-                    var row =+ '</div>';
-                    $('.uduplicate').append('<div class="row pt-3 pb-1 mc_details" style="border: 1px solid #939393;">' + GenericField + qtyField +'</div>');
+                        var row =+ '</div>';
+                        $('.uduplicate').append('<div class="row pt-3 pb-1 mc_details" style="border: 1px solid #939393;">' + GenericField + qtyField +'</div>');
+                    }
+                } else {
+                    $('.uduplicate').html('<div class="col-12"><p class="text-muted">No generic items found for this requisition.</p></div>');
                 }
+
+                $(document).off('change', '#u_mc_patient').on('change', '#u_mc_patient', function() {
+                    var selectedMR = $(this).val();
+                    var orgId = $('#u_mc_org').val() || response.orgId;
+                    
+                    if (orgId) {
+                        // Clear existing generic fields and keep only the first one
+                        $('.uduplicate').empty();
+                        
+                        // Create a single clean generic field
+                        var cleanGenericField = '<div class="row pt-3 pb-1 mc_details" style="border: 1px solid #939393;">' +
+                            '<div class="col-md-6">' +
+                            '<div class="form-group">' +
+                            '<label class="control-label">Update Inventory Generic</label>' +
+                            '<select class="form-control selecter p-0 u_mc_itemgeneric" name="u_mc_itemgeneric[]" id="u_mc_itemgeneric0" required style="color:#222d32">' +
+                            '<option selected disabled value="">Select Item Generic</option>' +
+                            '</select>' +
+                            '</div>' +
+                            '</div>' +
+                            '<div class="col-md-6">' +
+                            '<div class="form-group row">' +
+                            '<div class="col-md-12">' +
+                            '<div class="form-group has-custom m-b-5">' +
+                            '<label class="control-label">Update Demand Qty</label>' +
+                            '<input type="number" class="form-control input-sm" required name="u_mc_qty[]" min="1" value="1">' +
+                            '</div>' +
+                            '<span class="text-danger u_mc_qty_error"></span>' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>';
+                        
+                        $('.uduplicate').append(cleanGenericField);
+                        
+                        var condition = 'material_medicine';
+                        
+                        fetchInventoryGenerics('.uduplicate .u_mc_itemgeneric', condition, function(data) {
+                            if (data && data.length > 0) {
+                                $('.uduplicate .u_mc_itemgeneric').select2();
+                                $.each(data, function(key, value) {
+                                    $('.uduplicate .u_mc_itemgeneric').append('<option value="' + value.id + '">' + value.name + '</option>');
+                                });
+
+                            } else {
+                                $('.uduplicate .u_mc_itemgeneric').append('<option disabled value="">No generics available</option>');
+                            }
+                        });
+                    }
+                });
 
 
                 $('#edit-materialconsumption').modal('show');
@@ -696,7 +1048,7 @@ $(document).ready(function() {
                     let sourceType = (resp.Source || '').toLowerCase();
                     let destType = (resp.Destination || '').toLowerCase();
 
-                    // If either source or destination includes 'patient'
+                    // If either source or destination includes 'patient')
                     if (sourceType.includes('patient') || destType.includes('patient')) {
                         // Make the patient field required
                         $('.mr_optional').text('(Required)');

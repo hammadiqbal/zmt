@@ -1,11 +1,28 @@
 $(document).ready(function() {
+
+    function resetLocationSelections() {
+        // clear display fields
+        $('#source_locations_value, #destination_locations_value').val('');
+        // clear stored csv ids
+        $('input[name="source_locations[]"], input[name="destination_locations[]"]').val('');
+
+        // if the location modal UI already exists, clear its checkboxes + select-all
+        if ($('#invLocationModal').length) {
+            $('#invLocationModal input[name="selectedSL[]"]').prop('checked', false);
+            $('#selectAllInventory, #selectAllNonInventory').prop('checked', false);
+        }
+    }
+
     //Open Add Inventory Transaction Type Setup
     $(document).on('click', '.add-invtransactiontype', function() {
         $('#add_invtransactiontype').find('form').trigger('reset');
         var orgId = $('#itt_org').val();
+          resetLocationSelections();
+
         $('#source_action,#destination_action').prop('disabled', true);
-        $('#inventory_location_value').val('');
-        FetchAllServiceLocation('#inventory_location_value', '#add_invtransactiontype');
+        $('#source_locations_value, #destination_locations_value').val('');
+        // FetchAllServiceLocation('#source_locations_value', '#add_invtransactiontype');
+        // FetchAllServiceLocation('#destination_locations_value', '#add_invtransactiontype');
         if(!orgId)
         {
             $('#itt_org').html("<option selected disabled value=''>Select Organization</option>");
@@ -33,14 +50,14 @@ $(document).ready(function() {
         //     // $('#itt_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled', true);
         //     // OrgChangeSites('#itt_org', '#itt_site', '#add_invtransactiontype');
         // }
-        $('#request_mandatory').on('change', function() {
-            var mandatoryValue = $(this).val();
-            if (mandatoryValue === 'y') {
-                $('#request_location_mandatory').val('y').prop('disabled', true).trigger('change');
-            } else if (mandatoryValue === 'n') {
-                $('#request_location_mandatory').val('').prop('disabled', false);
-            }
-        });
+        // $('#request_mandatory').on('change', function() {
+        //     var mandatoryValue = $(this).val();
+        //     if (mandatoryValue === 'y') {
+        //         $('#request_location_mandatory').val('y').prop('disabled', true).trigger('change');
+        //     } else if (mandatoryValue === 'n') {
+        //         $('#request_location_mandatory').val('').prop('disabled', false);
+        //     }
+        // });
 
         $('#source_location_type, #destination_location_type').on('change', function() {
             var selectedText = $(this).find('option:selected').text().trim(); // Get selected text
@@ -92,7 +109,8 @@ $(document).ready(function() {
         $(data).each(function(i, field){
             if ((field.value == '') || (field.value == null))
             {
-                var FieldName = field.name;
+                // var FieldName = field.name;
+                var FieldName = field.name.replace(/\[\]$/, '');
                 var FieldID = '#'+FieldName + "_error";
                 $(FieldID).text("This field is required");
                 $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
@@ -212,7 +230,7 @@ $(document).ready(function() {
         columnDefs: [
             {
                 targets: 1,
-                width: "250px"
+                width: "300px"
             },
             {
                 targets: 2,
@@ -300,13 +318,13 @@ $(document).ready(function() {
                 });
                 $('#u_activity_type').val(response.activitytypeId).change();
                
-                $('input[name="u_inventorylocation_value"]').val(response.serviceLocation);
+                $('input[name="u_source_locations_value"]').val(response.sourceLocations);
 
                 $.ajax({
                     url: '/services/getallsl',
                     type: 'GET',
                     success: function(resp) {
-                        $('#uinvserviceLocationModal .modal-body .row').empty();
+                        $('#uinvsourceLocationModal .modal-body .row').empty();
                         resp.forEach(function(item) {
                             let checkboxHtml = `
                                 <div class="col-md-3">
@@ -316,14 +334,14 @@ $(document).ready(function() {
                                     </div>
                                 </div>
                             `;
-                            $('#uinvserviceLocationModal .modal-body .row').append(checkboxHtml);
+                            $('#uinvsourceLocationModal .modal-body .row').append(checkboxHtml);
                         });
 
-                        var serviceLocationIds = response.serviceLocationId;
-                        if (serviceLocationIds) {
-                            var serviceLocationIdsArray = serviceLocationIds.split(',');
-                            for(var i = 0; i < serviceLocationIdsArray.length; i++) {
-                                $('#usl_' + serviceLocationIdsArray[i]).prop('checked', true);
+                        var sourcelocationIds = response.sourcelocationId;
+                        if (sourcelocationIds) {
+                            var sourcelocationIdsArray = sourcelocationIds.split(',');
+                            for(var i = 0; i < sourcelocationIdsArray.length; i++) {
+                                $('#usl_' + sourcelocationIdsArray[i]).prop('checked', true);
                             }
                         }
                     },
@@ -334,22 +352,60 @@ $(document).ready(function() {
                     }
                 });
 
+                $('input[name="u_destination_locations_value"]').val(response.destinationLocations);
+
+                $.ajax({
+                    url: '/services/getallsl',
+                    type: 'GET',
+                    success: function(resp) {
+                        $('#uinvdestinationLocationModal .modal-body .row').empty();
+                        resp.forEach(function(item) {
+                            let checkboxHtml = `
+                                <div class="col-md-3">
+                                    <div class="custom-control custom-checkbox mb-3">
+                                        <input type="checkbox" name="uselectedDL[]" data-id="${item.id}" data-name="${item.name}" class="custom-control-input" id="udl_${item.id}">
+                                        <label class="custom-control-label" for="udl_${item.id}">${item.name}</label>
+                                    </div>
+                                </div>
+                            `;
+                            $('#uinvdestinationLocationModal .modal-body .row').append(checkboxHtml);
+                        });
+
+                        var destinationlocationIds = response.destinationlocationId;
+                        if (destinationlocationIds) {
+                            var destinationlocationIdsArray = destinationlocationIds.split(',');
+                            for(var i = 0; i < destinationlocationIdsArray.length; i++) {
+                                $('#udl_' + destinationlocationIdsArray[i]).prop('checked', true);
+                            }
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        if (typeof errorCallback === "function") {
+                            errorCallback(error);
+                        }
+                    }
+                });
+
+
                 // $('#u_inventory_location').val(response.serviceLocationId).change();
                 $('#u_applicable_location').val(response.ApplicableLocation).change();
                 $('#u_transaction_expired_status').val(response.TransactionExpiredStatus).change();
 
-                $('#u_request_mandatory').on('change', function() {
-                    var mandatoryValue = $(this).val();
-                    if (mandatoryValue === 'y') {
-                        $('#u_request_location_mandatory').val('y').prop('disabled', true).trigger('change');
-                    } else if (mandatoryValue === 'n') {
-                        // $('#u_request_location_mandatory').val('').prop('disabled', false);
-                $('#u_request_location_mandatory').val(response.requestLocationMandatory).change().prop('disabled', false);
+                // $('#u_request_mandatory').on('change', function() {
+                //     var mandatoryValue = $(this).val();
+                //     if (mandatoryValue === 'y') {
+                //         $('#u_request_location_mandatory').val('y').prop('disabled', true).trigger('change');
+                //     } else if (mandatoryValue === 'n') {
+                //         // $('#u_request_location_mandatory').val('').prop('disabled', false);
+                //         $('#u_request_location_mandatory').val(response.requestLocationMandatory).change().prop('disabled', false);
 
-                    }
-                });
+                //     }
+                // });
+                // console.log(response.empCheckSourceDestination);
                 $('#u_request_mandatory').val(response.requestMandatory).change();
-                $('#u_request_location_mandatory').val(response.requestLocationMandatory).change();
+                // $('#u_request_location_mandatory').val(response.requestLocationMandatory).change();
+                $('#u_request_emp_location').val(response.requisitionEmpCheck).change();
+                $('#u_emp_location_check').val(response.empCheckSourceDestination).change();
 
                 $('#u_source_location_type, #u_destination_location_type').on('change', function() {
                     var selectedText = $(this).find('option:selected').text().trim(); // Get selected text
@@ -400,14 +456,19 @@ $(document).ready(function() {
         });
     });
     $(document).on('change', 'input[name="uselectedSL[]"]', function() {
-        updateHiddenUpdatedServiceLocation();
+        updateHiddenUpdatedSourceLocation();
+    });
+
+    $(document).on('change', 'input[name="uselectedDL[]"]', function() {
+        updateHiddenUpdatedDestinationLocation();
     });
     //Update Inventory Transaction Type Modal
 
     //Update Inventory Transaction Type
     $('#u_invtransactiontype').on('submit', function (event) {
         event.preventDefault();
-        updateHiddenUpdatedServiceLocation();
+        updateHiddenUpdatedSourceLocation();
+        updateHiddenUpdatedDestinationLocation();
         var formData = SerializeForm(this);
         var invtransactiontypeId;
         for (var i = 0; i < formData.length; i++) {

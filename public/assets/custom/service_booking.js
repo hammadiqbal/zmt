@@ -97,13 +97,12 @@ $(document).ready(function() {
                 ServiceChangeCostCenter('#sb_site', '#sb_service', '#sb_billingCC', '#add_servicebooking');
             }
             
-            fetchServiceLocations(orgId, '#sb_location', function(data) {
-                $('#sb_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', false);
-                $.each(data, function(key, value) {
-                    $('#sb_location').append('<option value="' + value.id + '">' + value.name + '</option>');
-                });
-            });
-
+            // fetchServiceLocations(orgId, '#sb_location', function(data) {
+            //     $('#sb_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', false);
+            //     $.each(data, function(key, value) {
+            //         $('#sb_location').append('<option value="' + value.id + '">' + value.name + '</option>');
+            //     });
+            // });
         }
         else{
             $('#sb_org').empty();
@@ -129,12 +128,12 @@ $(document).ready(function() {
                 $('#sb_service').html('<option value="' + ServiceId + '" selected>' + Service + '</option>').prop('disabled', true);
                 $('#sb_billingCC').html('<option value="' + billingCCId + '" selected>' + billingCC + '</option>').prop('disabled', true);
                 
-                fetchServiceLocations(orgId, '#sb_location', function(data) {
-                    $('#sb_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', false);
-                    $.each(data, function(key, value) {
-                        $('#sb_location').append('<option value="' + value.id + '">' + value.name + '</option>');
-                    });
-                });
+                // fetchServiceLocations(orgId, '#sb_location', function(data) {
+                //     $('#sb_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', false);
+                //     $.each(data, function(key, value) {
+                //         $('#sb_location').append('<option value="' + value.id + '">' + value.name + '</option>');
+                //     });
+                // });
             } 
             else {
                 $('#sb_mr').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', true);
@@ -152,14 +151,15 @@ $(document).ready(function() {
                 $('#sb_billingCC').html("<option selected disabled value=''>Select Billing Cost Center</option>").prop('disabled', true);
                 ServiceChangeCostCenter('#sb_site', '#sb_service', '#sb_billingCC', '#add_servicebooking');
 
-                $('#sb_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', true);
-                OrgChangeServiceLocation('#sb_org', '#sb_location', '#add_servicebooking');
+                // $('#sb_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', true);
+                // OrgChangeServiceLocation('#sb_org', '#sb_location', '#add_servicebooking');
             }
         }
 
-        $('#sb_schedule').html("<option selected disabled value=''>Select Service Location Schedule</option>").prop('disabled', true);
         $('#sb_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', true);
+        SiteChangeActivatedServiceLocation('#sb_site','#sb_location', '#add_servicebooking',false, false );
         // Show Service Scheduling
+        $('#sb_schedule').html("<option selected disabled value=''>Select Service Location Schedule</option>").prop('disabled', true);
         LocationChangeServiceScheduling('#sb_location', '#sb_site', '#sb_schedule', '#add_servicebooking');
         // Show Service Scheduling
 
@@ -301,7 +301,8 @@ $(document).ready(function() {
             url: '/services/viewservicebooking',
             data: function (d) {
                 d.site_id = $('#fb_site').val();  
-                d.mr_no = $('#fb_mrno').val();    
+                d.mr_no = $('#fb_mrno').val();
+                d.date_filter = $('#fb_date_filter').val();
             }
         },
         // ajax: '/services/viewservicebooking',
@@ -338,13 +339,48 @@ $(document).ready(function() {
         ]
     });
 
+    // Initialize date filter state based on site and MR selection
+    function updateDateFilterState() {
+        var siteSelected = $('#fb_site').val() && $('#fb_site').val() !== '' && $('#fb_site').val() !== 'Select Site';
+        var mrSelected = $('#fb_mrno').val() && $('#fb_mrno').val() !== '' && $('#fb_mrno').val() !== 'Select MR #';
+        
+        if (siteSelected || mrSelected) {
+            // If site or MR is selected, unselect date filter but keep it enabled
+            $('#fb_date_filter').val('').prop('disabled', false);
+        } else {
+            // If neither site nor MR is selected, enable date filter and set to today
+            $('#fb_date_filter').val('today').prop('disabled', false);
+        }
+    }
+
+    // Call on page load
+    updateDateFilterState();
+
     $('#fb_site, #fb_mrno').on('change', function () {
+        // Check if site or MR number is selected
+        var siteSelected = $('#fb_site').val() && $('#fb_site').val() !== '' && $('#fb_site').val() !== 'Select Site';
+        var mrSelected = $('#fb_mrno').val() && $('#fb_mrno').val() !== '' && $('#fb_mrno').val() !== 'Select MR #';
+        
+        if (siteSelected || mrSelected) {
+            // If site or MR is selected, unselect date filter but keep it enabled
+            $('#fb_date_filter').val('').prop('disabled', false).change();
+        } else {
+            // If neither site nor MR is selected, enable date filter and set to today
+            $('#fb_date_filter').val('today').prop('disabled', false);
+        }
+        
         ServiceBooking.ajax.reload();  
+    });
+
+    // Handle date filter selection
+    $('#fb_date_filter').on('change', function() {
+        ServiceBooking.ajax.reload();
     });
 
     $('.clearFilter').on('click', function () {
         $('#fb_site').val($('#fb_site option:first').val()).change();
         $('#fb_mrno').val($('#fb_mrno option:first').val()).change();
+        $('#fb_date_filter').val('today').prop('disabled', false).change();
         ServiceBooking.ajax.reload();   
     });
 
@@ -357,8 +393,8 @@ $(document).ready(function() {
     ServiceBooking.on('preXhr.dt', function() {
         $('#ajax-loader').show();
     });
-    // Hide the loader after the AJAX request is complete
-    ServiceBooking.on('xhr.dt', function() {
+    // Hide the loader after the DataTable has finished rendering
+    ServiceBooking.on('draw.dt', function() {
         $('#ajax-loader').hide();
     });
     // View Service Booking
@@ -435,13 +471,18 @@ $(document).ready(function() {
                 var CCName = response.CCName;
                 var CCid = response.CCid;
 
-                var startFormatted = moment.unix(response.startdateTime).format('MM/DD/YYYY h:mm A');
-                var endFormatted = moment.unix(response.enddateTime).format('MM/DD/YYYY h:mm A');
+                var startFormatted = moment.unix(response.startdateTime).format('h:mm A');
+                var endFormatted = moment.unix(response.enddateTime).format('h:mm A');
+
+                // Capitalize first letter of each day and format pattern
+                const formattedPattern = response.schedulePattern.split(', ').map(day => 
+                    day.charAt(0).toUpperCase() + day.slice(1)
+                ).join(', ');
 
                 $('#u_sb_org').html("<option selected value='"+orgID+"'>" + orgName + "</option>");
                 $('#u_sb_site').html("<option selected value='"+siteId+"'>" + siteName + "</option>");
                 $('#u_sb_location').html("<option selected value='"+locationId+"'>" + locationName + "</option>");
-                $('#u_sb_schedule').html("<option selected value='"+locationScheduleId+"'>" + locationScheduleName + " (StartTime: " + startFormatted + " EndTime: " + endFormatted + ")</option>");
+                $('#u_sb_schedule').html("<option selected value='" + locationScheduleId + "'>" + locationScheduleName + " (StartTime: " + startFormatted + " EndTime: " + endFormatted + ") - " + formattedPattern + "</option>");
                 $('#u_sbp_status').html("<option selected value='"+PatientStatus+"'>" + capitalizeFirstLetterOfEachWord(PatientStatus) + "</option>");
                 $('#u_sbp_priority').html("<option selected value='"+PatientPriority+"'>" + capitalizeFirstLetterOfEachWord(PatientPriority) + "</option>");
                 $('#u_sb_emp').html("<option selected value='"+empId+"'>" + capitalizeFirstLetterOfEachWord(empName) + "</option>");
@@ -542,45 +583,57 @@ $(document).ready(function() {
                     });
                 });
 
-                fetchServiceLocations(orgID, '#u_sb_location', function(data) {
-                    if (data.length > 0) {
+                
+                fetchActiveSL(siteId, '#u_sb_location', false, false, function(data) {
+                    const $serviceLocation = $('#u_sb_location');
+                    if (data && data.length > 0) {
                         $.each(data, function(key, value) {
                             if(locationId != value.id)
                             {
-                                $('#u_sb_location').append('<option value="' + value.id + '">' + value.name + '</option>');
+                                $('#u_sb_location').append('<option value="' + value.location_id + '">' + value.name + '</option>');
                             }
                         });
-                        $('#u_sb_location').find('option:contains("Loading...")').remove();
-                        $('#u_sb_location').prop('disabled', false);
-                    }
-                    else{
+                    } else {
                         Swal.fire({
-                            text: 'Service Locations are not available for selected Site',
+                            text: 'Service Locations are not available for selected Organization',
                             icon: 'error',
-                            confirmButtonText: 'OK',
-                            allowOutsideClick: false
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                $('#edit-servicebooking').modal('hide');
-                            }
+                            confirmButtonText: 'OK'
                         });
-
                     }
-                }, function(error) {
-                    console.log(error);
+                    $('#u_sb_location').find('option:contains("Loading...")').remove();
+                    $('#u_sb_location').prop('disabled', false);
                 });
 
+                
                 fetchServiceScheduling(locationId, siteId, '#u_sb_schedule', function(data) {
                     $.each(data, function(key, value) {
                         if(locationScheduleId != value.id)
                         {
-                            const startDate = new Date(value.start_timestamp * 1000); // Convert to milliseconds
-                            const endDate = new Date(value.end_timestamp * 1000); // Convert to milliseconds
+                            const startDate = new Date(value.start_timestamp * 1000); 
+                            const endDate = new Date(value.end_timestamp * 1000); 
 
-                            const formattedStartDate = `${startDate.getMonth() + 1}-${startDate.getDate()}-${startDate.getFullYear()} ${startDate.getHours()}:${(startDate.getMinutes() < 10 ? '0' : '') + startDate.getMinutes()} ${startDate.getHours() >= 12 ? 'PM' : 'AM'}`;
-                            const formattedEndDate = `${endDate.getMonth() + 1}-${endDate.getDate()}-${endDate.getFullYear()} ${endDate.getHours()}:${(endDate.getMinutes() < 10 ? '0' : '') + endDate.getMinutes()} ${endDate.getHours() >= 12 ? 'PM' : 'AM'}`;
+                            const startHours = startDate.getHours();
+                            const startMinutes = startDate.getMinutes();
+                            const startAmPm = startHours >= 12 ? 'PM' : 'AM';
+                            const start12Hour = startHours % 12 || 12;
+                            const formattedStartTime = `${start12Hour}:${(startMinutes < 10 ? '0' : '') + startMinutes} ${startAmPm}`;
+
+                            const endHours = endDate.getHours();
+                            const endMinutes = endDate.getMinutes();
+                            const endAmPm = endHours >= 12 ? 'PM' : 'AM';
+                            const end12Hour = endHours % 12 || 12;
+                            const formattedEndTime = `${end12Hour}:${(endMinutes < 10 ? '0' : '') + endMinutes} ${endAmPm}`;
+                            const formattedPattern = schedule_pattern.split(', ').map(day => 
+                                day.charAt(0).toUpperCase() + day.slice(1)
+                            ).join(', ');
+
+                            // const startDate = new Date(value.start_timestamp * 1000); // Convert to milliseconds
+                            // const endDate = new Date(value.end_timestamp * 1000); // Convert to milliseconds
+
+                            // const formattedStartDate = `${startDate.getMonth() + 1}-${startDate.getDate()}-${startDate.getFullYear()} ${startDate.getHours()}:${(startDate.getMinutes() < 10 ? '0' : '') + startDate.getMinutes()} ${startDate.getHours() >= 12 ? 'PM' : 'AM'}`;
+                            // const formattedEndDate = `${endDate.getMonth() + 1}-${endDate.getDate()}-${endDate.getFullYear()} ${endDate.getHours()}:${(endDate.getMinutes() < 10 ? '0' : '') + endDate.getMinutes()} ${endDate.getHours() >= 12 ? 'PM' : 'AM'}`;
                             $('#u_sb_schedule').append(
-                                `<option value="${value.id}">${value.name} (StartTime: ${formattedStartDate} - EndTime: ${formattedEndDate})</option>`
+                                `<option value="${value.id}">${value.name}  (StartTime: ${formattedStartTime} - EndTime: ${formattedEndTime}) - ${formattedPattern}</option>`
                             );
                             // $('#u_sb_schedule').append('<option value="' + value.id + '">' + value.name + ' </option>');
                         }
@@ -592,45 +645,48 @@ $(document).ready(function() {
                     console.log(error);
                 });
 
+                // $('#u_sb_location').html("<option selected disabled value=''>Select Service Location Schedule</option>").prop('disabled', true);
+                LocationChangeServiceScheduling('#u_sb_location', '#u_sb_site', '#u_sb_schedule', '#update_servicebooking');
 
-                $('#u_sb_location').off('change').on('change', function() {
-                    var locationId = $(this).val();
-                    if (locationId) {
-                        var siteId = $('#u_sb_site').val();
-                        fetchServiceScheduling(locationId, siteId, '#u_sb_schedule', function(data) {
-                            if (data.length > 0) {
-                                $('#u_sb_schedule').empty();
-                                $('#u_sb_schedule').append('<option selected disabled value="">Select Schedule</option>');
-                                $.each(data, function(key, value) {
-                                    const startDate = new Date(value.start_timestamp * 1000); // Convert to milliseconds
-                                    const endDate = new Date(value.end_timestamp * 1000); // Convert to milliseconds
 
-                                    const formattedStartDate = `${startDate.getMonth() + 1}-${startDate.getDate()}-${startDate.getFullYear()} ${startDate.getHours()}:${(startDate.getMinutes() < 10 ? '0' : '') + startDate.getMinutes()} ${startDate.getHours() >= 12 ? 'PM' : 'AM'}`;
-                                    const formattedEndDate = `${endDate.getMonth() + 1}-${endDate.getDate()}-${endDate.getFullYear()} ${endDate.getHours()}:${(endDate.getMinutes() < 10 ? '0' : '') + endDate.getMinutes()} ${endDate.getHours() >= 12 ? 'PM' : 'AM'}`;
-                                    $('#u_sb_schedule').append(
-                                        `<option value="${value.id}">${value.name} (StartTime: ${formattedStartDate} - EndTime: ${formattedEndDate})</option>`
-                                    );
-                                });
-                                $('#u_sb_schedule').find('option:contains("Loading...")').remove();
-                                $('#u_sb_schedule').prop('disabled', false);
-                            }
-                            else {
-                                Swal.fire({
-                                    text: 'Service Locations Schedules are not available for selected Service Location',
-                                    icon: 'error',
-                                    confirmButtonText: 'OK'
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        $('#edit-servicebooking').modal('hide');
-                                    }
-                                });
-                            }
+                // $('#u_sb_location').off('change').on('change', function() {
+                //     var locationId = $(this).val();
+                //     if (locationId) {
+                //         var siteId = $('#u_sb_site').val();
+                //         fetchServiceScheduling(locationId, siteId, '#u_sb_schedule', function(data) {
+                //             if (data.length > 0) {
+                //                 $('#u_sb_schedule').empty();
+                //                 $('#u_sb_schedule').append('<option selected disabled value="">Select Schedule</option>');
+                //                 $.each(data, function(key, value) {
+                //                     const startDate = new Date(value.start_timestamp * 1000); // Convert to milliseconds
+                //                     const endDate = new Date(value.end_timestamp * 1000); // Convert to milliseconds
 
-                        }, function(error) {
-                            console.log(error);
-                        });
-                    }
-                });
+                //                     const formattedStartDate = `${startDate.getMonth() + 1}-${startDate.getDate()}-${startDate.getFullYear()} ${startDate.getHours()}:${(startDate.getMinutes() < 10 ? '0' : '') + startDate.getMinutes()} ${startDate.getHours() >= 12 ? 'PM' : 'AM'}`;
+                //                     const formattedEndDate = `${endDate.getMonth() + 1}-${endDate.getDate()}-${endDate.getFullYear()} ${endDate.getHours()}:${(endDate.getMinutes() < 10 ? '0' : '') + endDate.getMinutes()} ${endDate.getHours() >= 12 ? 'PM' : 'AM'}`;
+                //                     $('#u_sb_schedule').append(
+                //                         `<option value="${value.id}">${value.name} (StartTime: ${formattedStartDate} - EndTime: ${formattedEndDate})</option>`
+                //                     );
+                //                 });
+                //                 $('#u_sb_schedule').find('option:contains("Loading...")').remove();
+                //                 $('#u_sb_schedule').prop('disabled', false);
+                //             }
+                //             else {
+                //                 Swal.fire({
+                //                     text: 'Service Locations Schedules are not available for selected Service Location',
+                //                     icon: 'error',
+                //                     confirmButtonText: 'OK'
+                //                 }).then((result) => {
+                //                     if (result.isConfirmed) {
+                //                         $('#edit-servicebooking').modal('hide');
+                //                     }
+                //                 });
+                //             }
+
+                //         }, function(error) {
+                //             console.log(error);
+                //         });
+                //     }
+                // });
 
                 fetchPhysicians(siteId, '#u_sb_emp', function(data) {
                     $.each(data, function(key, value) {

@@ -1832,13 +1832,35 @@ class ServicesController extends Controller
                 ->get();
 
                 $serviceModeNames = $serviceModes->map(function($mode) {
-                    $costPrice = $mode->cost_price ? 'Unit Cost: ' . $mode->cost_price : '';
-                    $sellPrice = $mode->sell_price ? 'Billed Amount: ' . $mode->sell_price : '';
-                    if (!$costPrice && !$sellPrice) {
-                        $popoverContent = 'N/A';  // Show N/A if both are missing
-                    } else {
-                        $popoverContent = ($costPrice ? $costPrice : 'N/A') . ($sellPrice ? "<br>" . $sellPrice : '');
-                    }
+                // return  $mode->cost_price.$mode->cost_price;
+
+                // $costPrice = $mode->cost_price ? 'Unit Cost: ' . $mode->cost_price : '';
+                // $sellPrice = $mode->sell_price ? 'Billed Amount: ' . $mode->sell_price : '';
+                // if (!$costPrice && !$sellPrice) {
+                //     $popoverContent = 'N/A';  // Show N/A if both are missing
+                // } else {
+                //     $popoverContent = ($costPrice ? $costPrice : 'Unit Cost: N/A') . ($sellPrice ? "<br>" . $sellPrice : '');
+                // }
+
+                $costPrice = ($mode->cost_price === null || $mode->cost_price === '') 
+                    ? '' 
+                    : 'Unit Cost: Rs ' . number_format($mode->cost_price,2);
+
+                $sellPrice = ($mode->sell_price === null || $mode->sell_price === '') 
+                    ? '' 
+                    : 'Billed Amount: Rs ' . number_format($mode->sell_price,2);
+
+                if ($costPrice === '' && $sellPrice === '') {
+                    // If both are missing (null/empty)
+                    $popoverContent = 'N/A';
+                } else {
+                    // Always show both with fallback N/A
+                    $costDisplay = $costPrice !== '' ? $costPrice : 'Unit Cost: N/A';
+                    $sellDisplay = $sellPrice !== '' ? $sellPrice : 'Billed Amount: N/A';
+
+                    $popoverContent = $costDisplay . "<br>" . $sellDisplay;
+                }
+
 
                     // $popoverContent = $costPrice . "<br>" . $sellPrice;
 
@@ -2374,6 +2396,7 @@ class ServicesController extends Controller
     {
         $siteId = $request->input('siteId');
         $serviceId = $request->input('serviceId');
+        // dd($siteId, $serviceId);
 
         $ServiceModes = ServiceMode::select('service_mode.*','activated_service_rate.sell_price')
         ->join('activated_service', function ($join) use ($siteId, $serviceId) {
@@ -2382,7 +2405,7 @@ class ServicesController extends Controller
                 ->where('activated_service.service_id', $serviceId)
                 ->where('activated_service.status', 1);
         })
-        ->leftJoin('activated_service_rate', 'activated_service_rate.service_mode_id', '=', 'service_mode.id')
+        ->leftJoin('activated_service_rate', 'activated_service_rate.activated_service_id', '=', 'activated_service.id')
         ->distinct()
         ->get();
 
@@ -2877,6 +2900,8 @@ class ServicesController extends Controller
         //     }
         // }
         if ($empCheck === 'true' || $empCheck === true) {
+            // dd($empCheck);
+
             if ($roleId != 1 && $isEmployee == 1) {
 
                 $empInv = DB::table('emp_inventory_location')
@@ -2916,7 +2941,6 @@ class ServicesController extends Controller
                 }
             }
         }
-
 
         $query = $query->get();
         return response()->json($query);
@@ -3291,6 +3315,7 @@ class ServicesController extends Controller
             $ServiceLocationScheduling->where('site_id', $siteId);
         }
         $ServiceLocationScheduling = $ServiceLocationScheduling->get();
+        // dd($ServiceLocationScheduling);
         return response()->json($ServiceLocationScheduling);
     }
 
@@ -4016,155 +4041,305 @@ class ServicesController extends Controller
             abort(403, 'Forbidden');
         }
 
-        $combinedData = DB::table(DB::raw("(
-            SELECT mr_code, emp_id, billing_cc, service_id, service_mode_id
-            FROM service_booking
-            UNION ALL
-            SELECT mr_code, emp_id, billing_cc, service_id, service_mode_id
-            FROM patient_inout
-            UNION ALL
-            SELECT mr_code, emp_id, billing_cc, service_id, service_mode_id
-            FROM req_epi
-        ) as combined_data"));
-
-        $ServiceBookings = DB::table($combinedData, 'combined_data')
-            ->select(
-                'combined_data.mr_code',
-                'combined_data.emp_id',
-                'combined_data.billing_cc',
-                'combined_data.service_id',
-                'combined_data.service_mode_id',
-                DB::raw('MAX(organization.organization) as orgName'),
-                DB::raw('MAX(organization.id) as orgId'),
-                DB::raw('MAX(org_site.name) as siteName'),
-                DB::raw('MAX(org_site.id) as siteId'),
-                DB::raw('MAX(service_booking.id) as id'),
-                DB::raw('MAX(service_booking.service_starttime) as service_starttime'),
-                DB::raw('MAX(service_booking.service_endtime) as service_endtime'),
-                DB::raw('MAX(service_booking.effective_timestamp) as effective_timestamp'),
-                // DB::raw('MAX(service_booking.remarks) as bookingRemarks'),
-                DB::raw("MAX(COALESCE(
-                    CONVERT(patient_inout.remarks USING utf8mb4),
-                    CONVERT(service_booking.remarks USING utf8mb4),
-                    CONVERT(req_epi.remarks USING utf8mb4)
-                )) as Remarks"),
-                DB::raw('MAX(service_booking.timestamp) as timestamp'),
-                DB::raw('MAX(service_booking.last_updated) as last_updated'),
-                DB::raw('MAX(service_booking.logid) as logid'),
-                DB::raw('MAX(service_booking.user_id) as user_id'),
-                DB::raw('MAX(service_booking.status) as status'),
-                DB::raw('MAX(service_booking.logid) as logid'),
-                DB::raw('MAX(service_booking.patient_status) as BookingPatientStatus'),
-                DB::raw('MAX(service_booking.patient_priority) as BookingPatientPriority'),
-                DB::raw('MAX(services.name) as ServiceName'),
-                DB::raw('MAX(services.id) as ServiceId'),
-                DB::raw('MAX(service_mode.name) as serviceModeName'),
-                DB::raw('MAX(service_mode.id) as serviceModeId'),
-                DB::raw('MAX(costcenter.name) as billingCC'),
-                DB::raw('MAX(costcenter.id) as billingCCId'),
-                DB::raw('MAX(service_location.name) as locationName'),
-                DB::raw('MAX(service_location.id) as locationId'),
-                DB::raw('MAX(service_location_scheduling.name) as LocationSchedule'),
-                DB::raw('MAX(service_location_scheduling.id) as LocationScheduleId'),
-                DB::raw('MAX(service_location_scheduling.start_timestamp) as start_timestamp'),
-                DB::raw('MAX(service_location_scheduling.end_timestamp) as end_timestamp'),
-                DB::raw('MAX(service_location_scheduling.schedule_pattern) as schedule_pattern'),
-                DB::raw('MAX(employee.name) as empName'),
-                DB::raw('MAX(employee.id) as empId'),
-                DB::raw('MAX(patient.name) as patientName'),
-                DB::raw('MAX(gender.name) as genderName'),
-                DB::raw('MAX(patient.dob) as patientDOB'),
-                DB::raw('MAX(patient.cnic) as patientCNIC'),
-                DB::raw('MAX(patient.cell_no) as patientCellNo'),
-                DB::raw('MAX(patient.email) as patientEmail'),
-                DB::raw('MAX(patient.address) as patientAddress'),
-                DB::raw('MAX(province.name) as provinceName'),
-                DB::raw('MAX(division.name) as divisionName'),
-                DB::raw('MAX(district.name) as districtName'),
-                DB::raw('MAX(patient_inout.id) as patientInOutId'),
-                DB::raw('MAX(patient_inout.service_start_time) as patientArrivalTime'),
-                DB::raw('MAX(patient_inout.service_end_time) as patientEndTime'),
-                DB::raw('MAX(patient_inout.status) as patientArrivalStatus'),
-                DB::raw('MAX(performing_cc.name) as performingCC'),
-                DB::raw('MAX(activated_service_rate.sell_price) as sellPrice'),
-                DB::raw('COALESCE(patient_inout.service_start_time, service_booking.service_starttime) as service_starttime_combined'),
-            )
-            ->leftJoin('service_booking', function($join) {
-                $join->on('combined_data.mr_code', '=', 'service_booking.mr_code')
-                    //  ->on('combined_data.emp_id', '=', 'service_booking.emp_id')
-                     ->whereRaw('(combined_data.emp_id = service_booking.emp_id OR (combined_data.emp_id IS NULL AND service_booking.emp_id IS NULL))')
-                     ->on('combined_data.billing_cc', '=', 'service_booking.billing_cc')
-                     ->on('combined_data.service_id', '=', 'service_booking.service_id')
-                     ->on('combined_data.service_mode_id', '=', 'service_booking.service_mode_id');
-            })
-            ->leftJoin('patient_inout', function($join) {
-                $join->on('combined_data.mr_code', '=', 'patient_inout.mr_code')
-                    //  ->on('combined_data.emp_id', '=', 'patient_inout.emp_id')
-                     ->whereRaw('(combined_data.emp_id = patient_inout.emp_id OR (combined_data.emp_id IS NULL AND patient_inout.emp_id IS NULL))')
-                     ->on('combined_data.billing_cc', '=', 'patient_inout.billing_cc')
-                     ->on('combined_data.service_id', '=', 'patient_inout.service_id')
-                     ->on('combined_data.service_mode_id', '=', 'patient_inout.service_mode_id');
-            })
-            ->leftJoin('req_epi', function($join) {
-                $join->on('combined_data.mr_code', '=', 'req_epi.mr_code')
-                      ->whereRaw('(combined_data.emp_id = req_epi.emp_id OR (combined_data.emp_id IS NULL AND req_epi.emp_id IS NULL))')
-                    //  ->on('combined_data.emp_id', '=', 'req_epi.emp_id')
-                     ->on('combined_data.billing_cc', '=', 'req_epi.billing_cc')
-                     ->on('combined_data.service_id', '=', 'req_epi.service_id')
-                     ->on('combined_data.service_mode_id', '=', 'req_epi.service_mode_id');
-            })
-            ->join('patient', 'patient.mr_code', '=', 'combined_data.mr_code')
-            ->leftJoin('employee', 'employee.id', '=', 'combined_data.emp_id')
-            ->join('gender', 'gender.id', '=', 'patient.gender_id')
-            ->leftJoin('organization', function ($join) {
-                $join->on('organization.id', '=', 'service_booking.org_id')
-                     ->orOn('organization.id', '=', 'patient_inout.org_id')
-                     ->orOn('organization.id', '=', 'req_epi.org_id');
-            })
-            ->leftJoin('org_site', function ($join) {
-                $join->on('org_site.id', '=', 'service_booking.site_id')
-                     ->orOn('org_site.id', '=', 'patient_inout.site_id')
-                     ->orOn('org_site.id', '=', 'req_epi.site_id');
-            })
-            ->leftJoin('province', 'province.id', '=', 'patient.province_id')
-            ->join('division', 'division.id', '=', 'patient.division_id')
-            ->join('district', 'district.id', '=', 'patient.district_id')
-            ->leftJoin('service_location', 'service_location.id', '=', 'service_booking.service_location_id')
-            ->leftJoin('service_location_scheduling', 'service_location_scheduling.id', '=', 'service_booking.schedule_id')
-            ->leftJoin('costcenter as performing_cc', 'performing_cc.id', '=', 'employee.cc_id')
-            ->join('services', 'services.id', '=', 'combined_data.service_id')
-            ->join('service_mode', 'service_mode.id', '=', 'combined_data.service_mode_id')
-            ->leftJoin('activated_service_rate', 'activated_service_rate.service_mode_id', '=', 'service_mode.id')
-            ->join('costcenter', 'costcenter.id', '=', 'combined_data.billing_cc')
-            ->groupBy(
-                'combined_data.mr_code',
-                'combined_data.emp_id',
-                'combined_data.billing_cc',
-                'combined_data.service_id',
-                'combined_data.service_mode_id',
-                DB::raw('COALESCE(patient_inout.service_start_time, service_booking.service_starttime)')
-            )
-            ->orderBy('combined_data.mr_code', 'desc');
-
+        // Get session user for organization filtering
         $session = auth()->user();
         $sessionOrg = $session->org_id;
-
-        if ($sessionOrg != '0') {
-            $ServiceBookings->where('patient.org_id', '=', $sessionOrg);
+        
+        // Get DataTables server-side parameters
+        $start = $request->input('start', 0);
+        $length = $request->input('length', 10);
+        $search = $request->input('search.value', '');
+        $orderColumn = $request->input('order.0.column', 0);
+        $orderDir = $request->input('order.0.dir', 'desc');
+        $draw = $request->input('draw', 1);
+        
+        // Debug: Log server-side parameters
+        \Log::info('=== DATATABLES SERVER-SIDE DEBUG ===');
+        \Log::info('Start: ' . $start . ', Length: ' . $length . ', Draw: ' . $draw);
+        \Log::info('Search: "' . $search . '"');
+        \Log::info('Order Column: ' . $orderColumn . ', Order Dir: ' . $orderDir);
+        
+        $query = DB::table(DB::raw("(
+            SELECT mr_code, emp_id, billing_cc, service_id, service_mode_id
+            FROM (
+                SELECT mr_code, emp_id, billing_cc, service_id, service_mode_id FROM service_booking
+                UNION ALL
+                SELECT mr_code, emp_id, billing_cc, service_id, service_mode_id FROM patient_inout
+                UNION ALL
+                SELECT mr_code, COALESCE(emp_id, 0) as emp_id, billing_cc, service_id, service_mode_id FROM req_epi
+            ) all_records
+        ) combined"))
+        ->select([
+            'combined.mr_code',
+            'combined.emp_id',
+            'combined.billing_cc',
+            'combined.service_id',
+            'combined.service_mode_id',
+            'p.name as patientName',
+            'g.name as genderName',
+            'p.dob as patientDOB',
+            'p.cnic as patientCNIC',
+            'p.cell_no as patientCellNo',
+            'p.email as patientEmail',
+            'p.address as patientAddress',
+            'prov.name as provinceName',
+            'div_table.name as divisionName',
+            'dist.name as districtName',
+            'sb.id as serviceBookingId',
+            'sb.service_starttime',
+            'sb.service_endtime',
+            'sb.patient_status as BookingPatientStatus',
+            'sb.patient_priority as BookingPatientPriority',
+            'sb.remarks as sb_remarks',
+            'sb.effective_timestamp',
+            'sb.timestamp',
+            'sb.last_updated',
+            'sb.logid',
+            'sb.user_id',
+            'sb.status',
+            'pi.id as patientInOutId',
+            'pi.service_start_time as patientArrivalTime',
+            'pi.service_end_time as patientEndTime',
+            'pi.status as patientArrivalStatus',
+            'pi.remarks as pi_remarks',
+            's.name as ServiceName',
+            's.id as ServiceId',
+            'sm.name as serviceModeName',
+            'sm.id as serviceModeId',
+            'cc.name as billingCC',
+            'cc.id as billingCCId',
+            'sl.name as locationName',
+            'sl.id as locationId',
+            'sls.name as LocationSchedule',
+            'sls.id as LocationScheduleId',
+            'sls.start_timestamp',
+            'sls.end_timestamp',
+            'sls.schedule_pattern',
+            'e.name as empName',
+            'e.id as empId',
+            'o.organization as orgName',
+            'o.id as orgId',
+            'os.name as siteName',
+            'os.id as siteId',
+            'pcc.name as performingCC',
+            'asr.sell_price as sellPrice',
+            'req.effective_timestamp as reqEffectiveTimestamp',
+            'req.remarks as req_remarks',
+            DB::raw('COALESCE(pi.remarks, sb.remarks, req.remarks) as Remarks')
+        ])
+        ->distinct() // Add DISTINCT to eliminate duplicates from ASR JOIN
+        ->join('patient as p', 'p.mr_code', '=', 'combined.mr_code')
+        ->join('gender as g', 'g.id', '=', 'p.gender_id')
+        ->leftJoin('province as prov', 'prov.id', '=', 'p.province_id')
+        ->join('division as div_table', 'div_table.id', '=', 'p.division_id')
+        ->join('district as dist', 'dist.id', '=', 'p.district_id')
+        ->leftJoin('service_booking as sb', function($join) {
+            $join->on('sb.mr_code', '=', 'combined.mr_code')
+                ->on('sb.service_id', '=', 'combined.service_id')
+                ->on('sb.service_mode_id', '=', 'combined.service_mode_id')
+                ->on('sb.billing_cc', '=', 'combined.billing_cc')
+                ->on('sb.emp_id', '=', 'combined.emp_id');
+        })
+        ->leftJoin('patient_inout as pi', function($join) {
+            $join->on('pi.mr_code', '=', 'combined.mr_code')
+                ->on('pi.service_id', '=', 'combined.service_id')
+                ->on('pi.service_mode_id', '=', 'combined.service_mode_id')
+                ->on('pi.billing_cc', '=', 'combined.billing_cc')
+                ->on('pi.emp_id', '=', 'combined.emp_id');
+        })
+        ->leftJoin('req_epi as req', function($join) {
+            $join->on('req.mr_code', '=', 'combined.mr_code')
+                ->on('req.service_id', '=', 'combined.service_id')
+                ->on('req.service_mode_id', '=', 'combined.service_mode_id')
+                ->on('req.billing_cc', '=', 'combined.billing_cc')
+                ->whereRaw('(req.emp_id = combined.emp_id OR (req.emp_id IS NULL AND combined.emp_id = 0))');
+        })
+        ->join('services as s', 's.id', '=', 'combined.service_id')
+        ->join('service_mode as sm', 'sm.id', '=', 'combined.service_mode_id')
+        ->join('costcenter as cc', 'cc.id', '=', 'combined.billing_cc')
+        ->leftJoin('employee as e', function($join) {
+            $join->on('e.id', '=', 'combined.emp_id')
+                ->where('combined.emp_id', '!=', 0);
+        })
+        ->leftJoin('organization as o', 'o.id', '=', DB::raw('COALESCE(sb.org_id, pi.org_id, req.org_id)'))
+        ->leftJoin('org_site as os', 'os.id', '=', DB::raw('COALESCE(sb.site_id, pi.site_id, req.site_id)'))
+        ->leftJoin('service_location as sl', 'sl.id', '=', 'sb.service_location_id')
+        ->leftJoin('service_location_scheduling as sls', 'sls.id', '=', 'sb.schedule_id')
+        ->leftJoin('costcenter as pcc', 'pcc.id', '=', 'e.cc_id')
+        ->leftJoin('activated_service as as1', function($join) {
+            $join->on('as1.service_id', '=', 'combined.service_id')
+                ->on('as1.site_id', '=', DB::raw('COALESCE(sb.site_id, pi.site_id, req.site_id)'))
+                ->where('as1.status', '=', 1);
+        })
+        ->leftJoin('activated_service_rate as asr', function($join) {
+            $join->on('asr.activated_service_id', '=', 'as1.id')
+                ->on('asr.service_mode_id', '=', 'combined.service_mode_id');
+        })
+        ->where('p.status', 1)
+        ->orderBy('combined.mr_code', 'desc');
+    
+        // Apply additional filters
+        if($sessionOrg != '0') {
+            $query->where('p.org_id', $sessionOrg);
         }
         if ($request->has('site_id') && $request->site_id != '' && $request->site_id != 'Loading...') {
-            $ServiceBookings->where('patient.site_id', $request->site_id);
+            $query->where('p.site_id', $request->site_id);
         }
         if ($request->has('mr_no') && $request->mr_no != '' && $request->mr_no != 'Loading...') {
-            $ServiceBookings->where('patient.mr_code', $request->mr_no);
+            $query->where('p.mr_code', $request->mr_no);
         }
 
-        $ServiceBookings = $ServiceBookings
-        ->get();
-        return DataTables::of($ServiceBookings)
-        // return DataTables::eloquent($ServiceBookings)
+        // Check if site or MR is selected
+        $siteSelected = $request->has('site_id') && $request->site_id != '' && $request->site_id != 'Loading...';
+        $mrSelected = $request->has('mr_no') && $request->mr_no != '' && $request->mr_no != 'Loading...';
+        
+        // Apply date filtering if a specific date filter is chosen (regardless of site/MR selection)
+        if ($request->has('date_filter') && $request->date_filter != '') {
+            $dateFilter = $request->date_filter;
+            
+            \Log::info('=== DATE FILTER DEBUG START ===');
+        
+            $today = Carbon::today()->setTimezone('Asia/Karachi');
+            
+            switch ($dateFilter) {
+                case 'today':
+                    $startDate = Carbon::today()->setTimezone('Asia/Karachi')->startOfDay()->timestamp;
+                    $endDate = Carbon::today()->setTimezone('Asia/Karachi')->endOfDay()->timestamp;
+                    \Log::info('Today Filter:');
+                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    break;
+                case 'yesterday':
+                    $startDate = Carbon::today()->setTimezone('Asia/Karachi')->subDay()->startOfDay()->timestamp;
+                    $endDate = Carbon::today()->setTimezone('Asia/Karachi')->subDay()->endOfDay()->timestamp;
+                    \Log::info('Yesterday Filter:');
+                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    break;
+                case 'this_week':
+                    $startDate = Carbon::today()->setTimezone('Asia/Karachi')->startOfWeek()->startOfDay()->timestamp;
+                    $endDate = Carbon::today()->setTimezone('Asia/Karachi')->endOfWeek()->endOfDay()->timestamp;
+                    \Log::info('This Week Filter:');
+                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    break;
+                case 'last_week':
+                    $startDate = Carbon::today()->setTimezone('Asia/Karachi')->subWeek()->startOfWeek()->startOfDay()->timestamp;
+                    $endDate = Carbon::today()->setTimezone('Asia/Karachi')->subWeek()->endOfWeek()->endOfDay()->timestamp;
+                    \Log::info('Last Week Filter:');
+                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    break;
+                case 'this_month':
+                    $startDate = Carbon::today()->setTimezone('Asia/Karachi')->startOfMonth()->startOfDay()->timestamp;
+                    $endDate = Carbon::today()->setTimezone('Asia/Karachi')->endOfMonth()->endOfDay()->timestamp;
+                    \Log::info('This Month Filter:');
+                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    break;
+                case 'last_month':
+                    // Alternative approach: Use specific month calculation with Asia/Karachi timezone
+                    $currentYear = Carbon::now()->setTimezone('Asia/Karachi')->year;
+                    $currentMonth = Carbon::now()->setTimezone('Asia/Karachi')->month;
+                    $lastMonthYear = $currentMonth == 1 ? $currentYear - 1 : $currentYear;
+                    $lastMonth = $currentMonth == 1 ? 12 : $currentMonth - 1;
+                    
+                    $startDate = Carbon::create($lastMonthYear, $lastMonth, 1, 0, 0, 0, 'Asia/Karachi')->timestamp;
+                    $endDate = Carbon::create($lastMonthYear, $lastMonth, 1, 0, 0, 0, 'Asia/Karachi')->endOfMonth()->timestamp;
+                    
+                    \Log::info('Last Month Filter (Asia/Karachi):');
+                    \Log::info('  Current Year: ' . $currentYear . ', Current Month: ' . $currentMonth);
+                    \Log::info('  Last Month Year: ' . $lastMonthYear . ', Last Month: ' . $lastMonth);
+                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    \Log::info('  Start Timestamp: ' . $startDate);
+                    \Log::info('  End Timestamp: ' . $endDate);
+                    break;
+                case 'this_year':
+                    $currentYear = Carbon::today()->setTimezone('Asia/Karachi')->year;
+                    $startDate = Carbon::create($currentYear, 1, 1, 0, 0, 0, 'Asia/Karachi')->startOfYear()->timestamp;
+                    $endDate = Carbon::create($currentYear, 12, 31, 23, 59, 59, 'Asia/Karachi')->endOfYear()->timestamp;
+                    
+                    \Log::info('This Year Filter (Asia/Karachi):');
+                    \Log::info('  Current Year: ' . $currentYear);
+                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    break;
+                case 'last_year':
+                    $currentYear = Carbon::today()->setTimezone('Asia/Karachi')->year;
+                    $lastYear = $currentYear - 1;
+                    $startDate = Carbon::create($lastYear, 1, 1, 0, 0, 0, 'Asia/Karachi')->startOfYear()->timestamp;
+                    $endDate = Carbon::create($lastYear, 12, 31, 23, 59, 59, 'Asia/Karachi')->endOfYear()->timestamp;
+                    
+                    \Log::info('Last Year Filter (Asia/Karachi):');
+                    \Log::info('  Current Year: ' . $currentYear . ', Last Year: ' . $lastYear);
+                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    break;
+                default:
+                    // Default to today
+                    $startDate = Carbon::today()->setTimezone('Asia/Karachi')->startOfDay()->timestamp;
+                    $endDate = Carbon::today()->setTimezone('Asia/Karachi')->endOfDay()->timestamp;
+                    \Log::info('Default Filter (Today):');
+                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+                    break;
+            }
+            
+            // Apply date conditions - check each table's timestamp field (date only)
+            $query->where(function($q) use ($startDate, $endDate) {
+                $q->where(function($subQ) use ($startDate, $endDate) {
+                    // Filter by patient_inout.service_start_time (date only)
+                    $subQ->whereNotNull('pi.id')
+                         ->whereRaw('DATE(FROM_UNIXTIME(pi.service_start_time)) BETWEEN DATE(FROM_UNIXTIME(?)) AND DATE(FROM_UNIXTIME(?))', [$startDate, $endDate]);
+                })->orWhere(function($subQ) use ($startDate, $endDate) {
+                    // Filter by service_booking.service_starttime (date only) - ONLY if no patient_inout record exists
+                    $subQ->whereNotNull('sb.id')
+                         ->whereNull('pi.id')
+                         ->whereRaw('DATE(FROM_UNIXTIME(sb.service_starttime)) BETWEEN DATE(FROM_UNIXTIME(?)) AND DATE(FROM_UNIXTIME(?))', [$startDate, $endDate]);
+                })->orWhere(function($subQ) use ($startDate, $endDate) {
+                    // Filter by req_epi.effective_timestamp (date only) - ONLY if no patient_inout or service_booking record exists
+                    $subQ->whereNotNull('req.id')
+                         ->whereNull('pi.id')
+                         ->whereNull('sb.id')
+                         ->whereRaw('DATE(FROM_UNIXTIME(req.effective_timestamp)) BETWEEN DATE(FROM_UNIXTIME(?)) AND DATE(FROM_UNIXTIME(?))', [$startDate, $endDate]);
+                });
+            });
+        } elseif (!($siteSelected || $mrSelected)) {
+            // If neither site nor MR is selected, apply today's filter by default
+            $startDate = Carbon::today()->setTimezone('Asia/Karachi')->startOfDay()->timestamp;
+            $endDate = Carbon::today()->setTimezone('Asia/Karachi')->endOfDay()->timestamp;
+            \Log::info('No Date Filter Applied (Default to Today):');
+            \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+            \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
+            
+            // Apply date conditions - check each table's timestamp field (date only)
+            $query->where(function($q) use ($startDate, $endDate) {
+                $q->where(function($subQ) use ($startDate, $endDate) {
+                    $subQ->whereNotNull('pi.id')
+                         ->whereRaw('DATE(FROM_UNIXTIME(pi.service_start_time)) BETWEEN DATE(FROM_UNIXTIME(?)) AND DATE(FROM_UNIXTIME(?))', [$startDate, $endDate]);
+                })->orWhere(function($subQ) use ($startDate, $endDate) {
+                    $subQ->whereNotNull('sb.id')
+                         ->whereNull('pi.id')
+                         ->whereRaw('DATE(FROM_UNIXTIME(sb.service_starttime)) BETWEEN DATE(FROM_UNIXTIME(?)) AND DATE(FROM_UNIXTIME(?))', [$startDate, $endDate]);
+                })->orWhere(function($subQ) use ($startDate, $endDate) {
+                    $subQ->whereNotNull('req.id')
+                         ->whereNull('pi.id')
+                         ->whereNull('sb.id')
+                         ->whereRaw('DATE(FROM_UNIXTIME(req.effective_timestamp)) BETWEEN DATE(FROM_UNIXTIME(?)) AND DATE(FROM_UNIXTIME(?))', [$startDate, $endDate]);
+                });
+            });
+        } else {
+            // Site or MR is selected, no date filter applied
+            \Log::info('Site or MR selected - No date filter applied');
+        }
+
+        // Debug: Log pagination parameters
+        \Log::info('Pagination parameters: Skip ' . $start . ', Take ' . $length);
+
+        return DataTables::query($query)
             ->addColumn('id_raw', function ($ServiceBooking) {
-                return $ServiceBooking->id;  // Raw ID value
+                return $ServiceBooking->serviceBookingId ?? $ServiceBooking->patientInOutId ?? null;
             })
             ->editColumn('id', function ($ServiceBooking) {
                 $effectiveDate = $ServiceBooking->effective_timestamp
@@ -4193,7 +4368,7 @@ class ServicesController extends Controller
                     ? Carbon::createFromTimestamp($ServiceBooking->patientDOB)->format('d F Y')
                     : 'N/A';
 
-                $cnic = !empty($ServiceBooking->cnic) ? $ServiceBooking->cnic : 'N/A';
+                $cnic = !empty($ServiceBooking->patientCNIC) ? $ServiceBooking->patientCNIC : 'N/A';
                 $Email = !empty($ServiceBooking->patientEmail) ? $ServiceBooking->patientEmail : 'N/A';
                 $CellNo = $ServiceBooking->patientCellNo ?? 'N/A';
                 $Address = ucwords((string)($ServiceBooking->patientAddress ?? ''));
@@ -4220,19 +4395,20 @@ class ServicesController extends Controller
                     . '</span>';
             })
             ->editColumn('serviceBooking', function ($ServiceBooking) {
-                $BookingId = $ServiceBooking->id ?? null;
+                $BookingId = $ServiceBooking->serviceBookingId ?? null;
                 $session = auth()->user();
 
                 if ($BookingId) {
                     $StartTime = $ServiceBooking->service_starttime
-                        ? Carbon::createFromTimestamp($ServiceBooking->service_starttime)->format('l d F Y - h:i A')
-                        : 'N/A';
+                    ? Carbon::createFromTimestamp($ServiceBooking->service_starttime)->format('h:i A')
+                    : 'N/A';
 
                     $EndTime = $ServiceBooking->service_endtime
-                        ? Carbon::createFromTimestamp($ServiceBooking->service_endtime)->format('l d F Y - h:i A')
-                        : 'N/A';
+                    ? Carbon::createFromTimestamp($ServiceBooking->service_endtime)->format('h:i A')
+                    : 'N/A';
 
                     $DayTime = '<b>Start Time: </b> ' . $StartTime . ' <br> <b>End Time: </b> ' . $EndTime;
+                    
                     $empName = ucwords((string)($ServiceBooking->empName ?? ''));
                     $ServiceName = ucwords((string)($ServiceBooking->ServiceName ?? ''));
                     $Remarks = !empty($ServiceBooking->Remarks) ? ucwords((string)$ServiceBooking->Remarks) : 'N/A';
@@ -4310,7 +4486,6 @@ class ServicesController extends Controller
 
                 $Remarks = $ServiceBooking->Remarks ?? '';
 
-
                 $siteId = $ServiceBooking->siteId ?? '';
                 $siteName = ucwords((string)($ServiceBooking->siteName ?? ''));
 
@@ -4322,6 +4497,16 @@ class ServicesController extends Controller
 
                 $LocationSchedule = ucwords((string)($ServiceBooking->LocationSchedule ?? ''));
                 $LocationScheduleId = $ServiceBooking->LocationScheduleId ?? '';
+
+                $ScheduleStartTime = $ServiceBooking->start_timestamp
+                    ? Carbon::createFromTimestamp($ServiceBooking->start_timestamp)->format('h:i A')
+                    : 'N/A';
+
+                $ScheduleEndTime = $ServiceBooking->end_timestamp
+                    ? Carbon::createFromTimestamp($ServiceBooking->end_timestamp)->format('h:i A')
+                    : 'N/A';
+                    
+                $Pattern = ucwords(($ServiceBooking->schedule_pattern ?? 'N/A'));
 
                 $empName = ucwords((string)($ServiceBooking->empName ?? 'N/A'));
                 $empId = $ServiceBooking->empId ?? '';
@@ -4394,13 +4579,6 @@ class ServicesController extends Controller
                         . e($modeList)
                         . '</b>'.$message;
 
-                        // $otherServiceModeid = $otherArrivals->pluck('service_mode_id');
-                        // $ServiceModes = ServiceMode::select('name')->where('id', $otherServiceModeid)->first();
-                        // $alreadyIn = ucwords((string)($ServiceModes->name ?? 'Another Service Mode'));
-
-                        // return $ShowServiceDetails
-                        //     . '<hr class="mt-1 mb-2"><h6>Patient already arrived in "<b>' . $alreadyIn . '</b>". Please end that service first.</h6>';
-
                     } else {
                         $PatientStatusVal = $ServiceBooking->BookingPatientStatus ?? '';
                         $PatientStatus = ucwords((string)$PatientStatusVal);
@@ -4431,6 +4609,9 @@ class ServicesController extends Controller
                                 'locationid' => encrypt($locationId),
                                 'schedulename' => encrypt($LocationSchedule),
                                 'scheduleid' => encrypt($LocationScheduleId),
+                                'scheduleStartTime' => encrypt($ScheduleStartTime),
+                                'scheduleEndTime' => encrypt($ScheduleEndTime),
+                                'pattern' => encrypt($Pattern),
                                 'remarks' => encrypt($Remarks)
                             ]) . '" target="_blank">
                             <span class="text-underline" style="cursor:pointer; color: #fb3a3a;font-weight: 500;">
@@ -4440,7 +4621,7 @@ class ServicesController extends Controller
                 }
             })
             ->addColumn('action', function ($ServiceBooking) {
-                $ServiceBookingId = $ServiceBooking->id ?? null;
+                $ServiceBookingId = $ServiceBooking->serviceBookingId ?? null;
                 $logId = $ServiceBooking->logid ?? null;
                 $status = $ServiceBooking->status ?? null;
 
@@ -4477,8 +4658,8 @@ class ServicesController extends Controller
                         ? 'N/A'
                         : (
                             $ServiceBooking->status === 1
-                                ? '<span class="label label-success servicebooking cursor-pointer" data-id="' . $ServiceBooking->id . '" data-status="' . $ServiceBooking->status . '">Active</span>'
-                                : '<span class="label label-danger servicebooking cursor-pointer" data-id="' . $ServiceBooking->id . '" data-status="' . $ServiceBooking->status . '">Inactive</span>'
+                                ? '<span class="label label-success servicebooking cursor-pointer" data-id="' . $ServiceBooking->serviceBookingId . '" data-status="' . $ServiceBooking->status . '">Active</span>'
+                                : '<span class="label label-danger servicebooking cursor-pointer" data-id="' . $ServiceBooking->serviceBookingId . '" data-status="' . $ServiceBooking->status . '">Inactive</span>'
                           )
                   )
                 : (
@@ -4494,6 +4675,11 @@ class ServicesController extends Controller
             })->rawColumns(['action', 'status','serviceBooking','serviceDetails',
             'id'])
             ->make(true);
+            
+        // Debug: Log final response
+        \Log::info('=== DATATABLES RESPONSE ===');
+        \Log::info('Draw: ' . $draw . ', Server-side processing enabled');
+        \Log::info('=== END DATATABLES DEBUG ===');
     }
 
     public function UpdateServiceBookingStatus(Request $request)

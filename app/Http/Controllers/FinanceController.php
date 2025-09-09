@@ -4075,8 +4075,10 @@ class FinanceController extends Controller
         }
         $Organization = ($request->input('ir_org'));
         $Site = trim($request->input('ir_site'));
+        $GenericId = trim($request->input('ir_generic'));
         $BrandId = trim($request->input('ir_brand'));
         $Batch = trim($request->input('ir_batch'));
+        $PackSize = trim($request->input('ir_packsize'));
         $UnitCost = ($request->input('ir_unitcost'));
         $Cost = number_format($request->input('ir_unitcost'),2);
         $BilledAmount = ($request->input('ir_billedamount'));
@@ -4099,11 +4101,25 @@ class FinanceController extends Controller
         $timestamp = $this->currentDatetime;
         $logId = null;
 
+        $RateExists = ItemRates::where('org_id', $Organization)
+        ->Where('site_id', $Site)
+        ->Where('generic_id', $GenericId)
+        ->Where('brand_id', $BrandId)
+        ->Where('batch_no', $Batch)
+        ->where('status', 1)
+        ->exists();
+        
+        if ($RateExists) {
+            return response()->json(['info' => 'Item rates already exist for this combination.']);
+        }
+
         $ItemRate = new ItemRates();
         $ItemRate->org_id = $Organization;
         $ItemRate->site_id = $Site;
+        $ItemRate->generic_id = $GenericId;
         $ItemRate->brand_id = $BrandId;
         $ItemRate->batch_no = $Batch;
+        $ItemRate->pack_size = $PackSize;
         $ItemRate->unit_cost = $UnitCost;
         $ItemRate->billed_amount = $BilledAmount;
         $ItemRate->status = $status;
@@ -4140,9 +4156,11 @@ class FinanceController extends Controller
         }
         $ItemRates = ItemRates::select('item_rates.*',
         'organization.organization as orgName','org_site.name as siteName',
+        'inventory_generic.name as GenericName',
         'inventory_brand.name as BrandName')
         ->join('organization', 'organization.id', '=', 'item_rates.org_id')
         ->join('org_site', 'org_site.id', '=', 'item_rates.site_id')
+        ->join('inventory_generic', 'inventory_generic.id', '=', 'item_rates.generic_id')
         ->join('inventory_brand', 'inventory_brand.id', '=', 'item_rates.brand_id')
         ->orderBy('item_rates.id', 'desc');
         // ->get();
@@ -4169,6 +4187,7 @@ class FinanceController extends Controller
                 $session = auth()->user();
                 $sessionName = $session->name;
                 $sessionID = $session->id;
+                $GenericName = ucwords($ItemRate->GenericName);
                 $BrandName = ucwords($ItemRate->BrandName);
                 $orgName = ucwords($ItemRate->orgName);
                 $siteName = ucwords($ItemRate->siteName);
@@ -4193,8 +4212,11 @@ class FinanceController extends Controller
                     $orgName ='<b>Organization:</b> '.ucwords($ItemRate->orgName).'<br>';
                 }
 
-                return $Code.'<hr class="mt-1 mb-2">'.$BrandName
-                    . '</br>(<code>'.$ItemRate->batch_no.'</code>)<br>'
+                return $Code.'<hr class="mt-1 mb-2">'
+                    .'<b>Generic:</b> '.$GenericName.'<br>'
+                    .'<b>Brand:</b> '.$BrandName.'<br>'
+                    .'<b>Batch #:</b> '.$ItemRate->batch_no.'<br>'
+                    . '<b>Pack Size:</b> '.$ItemRate->pack_size.'<br>'
                     . '<hr class="mt-1 mb-2">'
                     .  $orgName
                     . '<b>Site</b>: '.$siteName.'<br>'
@@ -4204,10 +4226,14 @@ class FinanceController extends Controller
                     . '</span>';
             })
             ->editColumn('unit_cost', function ($ItemRate) {
-                return 'Rs '.number_format($ItemRate->unit_cost,2);
+                $totalCost = $ItemRate->unit_cost * $ItemRate->pack_size;
+                return '<b>Unit Cost:</b> Rs '.number_format($ItemRate->unit_cost,2).'<br>'.
+                       '<b>Total Unit Cost:</b> Rs '.number_format($totalCost,2).'<br>';
             })
             ->editColumn('billed_amount', function ($ItemRate) {
-                return'Rs '.number_format($ItemRate->billed_amount,2);
+                $totalBilled = $ItemRate->billed_amount * $ItemRate->pack_size;
+                return '<b>Unit Billed:</b> Rs '.number_format($ItemRate->billed_amount,2).'<br>'.
+                       '<b>Total Billed:</b> Rs '.number_format($totalBilled,2).'<br>';
             })
             ->addColumn('action', function ($ItemRate) {
                 $ItemRateId = $ItemRate->id;
@@ -4295,15 +4321,18 @@ class FinanceController extends Controller
        
         $ItemRates = ItemRates::select('item_rates.*',
         'organization.organization as orgName','org_site.name as siteName',
+        'inventory_generic.name as GenericName', 'inventory_generic.id as GenericId',
         'inventory_brand.name as BrandName')
         ->join('organization', 'organization.id', '=', 'item_rates.org_id')
         ->join('org_site', 'org_site.id', '=', 'item_rates.site_id')
+        ->join('inventory_generic', 'inventory_generic.id', '=', 'item_rates.generic_id')
         ->join('inventory_brand', 'inventory_brand.id', '=', 'item_rates.brand_id')
         ->where('item_rates.id', $id)
         ->first();
 
         $orgName = ucwords($ItemRates->orgName);
         $siteName = ucwords($ItemRates->siteName);
+        $GenericName = ucwords($ItemRates->GenericName);
         $BrandName = ucwords($ItemRates->BrandName);
         $UnitCost = ($ItemRates->unit_cost);
         $BilledAmount = ($ItemRates->billed_amount);
@@ -4317,9 +4346,12 @@ class FinanceController extends Controller
             'orgId' => $ItemRates->org_id,
             'siteName' => $siteName,
             'siteId' => $ItemRates->site_id,
+            'GenericName' => $GenericName,
+            'GenericId' => $ItemRates->GenericId,
             'BrandName' => $BrandName,
             'batch' => $ItemRates->batch_no,
             'BrandId' => $ItemRates->brand_id,
+            'packSize' => $ItemRates->pack_size,
             'BilledAmount' => $BilledAmount,
             'UnitCost' => $UnitCost,
             'effective_timestamp' => $effective_timestamp,
@@ -4342,8 +4374,10 @@ class FinanceController extends Controller
             $ItemRate->org_id = $orgID;
         }  
         $ItemRate->site_id	 = $request->input('u_ir_site');
+        $ItemRate->generic_id = $request->input('u_ir_generic');
         $ItemRate->brand_id = $request->input('u_ir_brand');
         $ItemRate->batch_no = $request->input('u_ir_batch');
+        $ItemRate->pack_size = $request->input('u_ir_packsize');
         $ItemRate->unit_cost = $request->input('u_ir_unitcost');
         $ItemRate->billed_amount = $request->input('u_ir_billedamount');
         $effective_date = $request->input('u_ir_edt');

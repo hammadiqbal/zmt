@@ -1,5 +1,8 @@
 <?php
 
+// Set PHP timezone to Asia/Karachi
+date_default_timezone_set('Asia/Karachi');
+
 /*
 |--------------------------------------------------------------------------
 | Create The Application

@@ -59,10 +59,14 @@ $(document).ready(function() {
         const locationid = urlParams.get('locationid');
         const schedulename = urlParams.get('schedulename');
         const scheduleid = urlParams.get('scheduleid');
+        const scheduleStartTime = urlParams.get('scheduleStartTime');
+        const scheduleEndTime = urlParams.get('scheduleEndTime');
+        const pattern = urlParams.get('pattern');
         const remarks = urlParams.get('remarks');
     
         return { mr, billedamount, orgid, orgname, sitename, siteid, servicemode, servicemodeId, empname, empId, service, serviceId, billingcc, billingccId, 
-            patientstatusval, patientstatus, patientpriorityval, patientpriority, locationname, locationid, schedulename, scheduleid,remarks};
+            patientstatusval, patientstatus, patientpriorityval, patientpriority, locationname, locationid, schedulename, scheduleid,scheduleStartTime,
+            scheduleEndTime,pattern,remarks};
     }
     
     const encryptedParams = getEncryptedParams();
@@ -101,6 +105,9 @@ $(document).ready(function() {
                 data.locationid,
                 data.schedulename,
                 data.scheduleid,
+                data.scheduleStartTime,
+                data.scheduleEndTime,
+                data.pattern,
                 data.remarks
             );
         })
@@ -271,16 +278,17 @@ $(document).ready(function() {
             url: '/patient/patientarrivaldeparture',
             data: function (d) {
                 d.site_id = $('#pad_site').val();  
-                d.mr_no = $('#pad_mrno').val();    
+                d.mr_no = $('#pad_mrno').val();
+                d.date_filter = $('#pad_date_filter').val();
             }
         },
         order: [[0, 'desc']],
         columns: [
-            { data: 'id_raw', name: 'id_raw', visible: false },
-            { data: 'id', name: 'id' },
-            { data: 'serviceBooking', name: 'serviceBooking' },
-            { data: 'serviceDetails', name: 'serviceDetails' },
-            { data: 'status', name: 'status' },
+            { data: 'id_raw', name: 'id_raw', visible: false, orderable: false },
+            { data: 'id', name: 'id', orderable: false },
+            { data: 'serviceBooking', name: 'serviceBooking', orderable: false },
+            { data: 'serviceDetails', name: 'serviceDetails', orderable: false },
+            { data: 'status', name: 'status', orderable: false },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
         columnDefs: [
@@ -326,27 +334,64 @@ $(document).ready(function() {
         // ]
     });
 
-     $('#pad_site, #pad_mrno').on('change', function () {
-        viewpatientArrivalDeparture.ajax.reload();  
-    });
+        // Initialize date filter state based on site and MR selection
+     function updateDateFilterState() {
+         var siteSelected = $('#pad_site').val() && $('#pad_site').val() !== '' && $('#pad_site').val() !== 'Select Site';
+         var mrSelected = $('#pad_mrno').val() && $('#pad_mrno').val() !== '' && $('#pad_mrno').val() !== 'Select MR #';
+         
+         if (siteSelected || mrSelected) {
+             // If site or MR is selected, unselect date filter but keep it enabled
+             $('#pad_date_filter').val('').prop('disabled', false);
+         } else {
+             // If neither site nor MR is selected, enable date filter and set to today
+             $('#pad_date_filter').val('today').prop('disabled', false);
+         }
+     }
 
-    $('.clearFilter').on('click', function () {
-        $('#pad_site').val($('#pad_site option:first').val()).change();
-        $('#pad_mrno').val($('#pad_mrno option:first').val()).change();
-        viewpatientArrivalDeparture.ajax.reload();   
-    });
+        // Call on page load
+        updateDateFilterState();
+
+    $('#pad_site, #pad_mrno').on('change', function () {
+          // Check if site or MR number is selected
+          var siteSelected = $('#pad_site').val() && $('#pad_site').val() !== '' && $('#pad_site').val() !== 'Select Site';
+          var mrSelected = $('#pad_mrno').val() && $('#pad_mrno').val() !== '' && $('#pad_mrno').val() !== 'Select MR #';
+          
+          if (siteSelected || mrSelected) {
+              // If site or MR is selected, unselect date filter but keep it enabled
+              $('#pad_date_filter').val('').prop('disabled', false).change();
+          } else {
+              // If neither site nor MR is selected, enable date filter and set to today
+              $('#pad_date_filter').val('today').prop('disabled', false);
+          }
+          
+          viewpatientArrivalDeparture.ajax.reload();  
+      });
+
+     // Handle date filter selection
+     $('#pad_date_filter').on('change', function() {
+         viewpatientArrivalDeparture.ajax.reload();
+     });
+
+     $('.clearFilter').on('click', function () {
+         $('#pad_site').val($('#pad_site option:first').val()).change();
+         $('#pad_mrno').val($('#pad_mrno option:first').val()).change();
+         $('#pad_date_filter').val('today').prop('disabled', false).change();
+         viewpatientArrivalDeparture.ajax.reload();   
+     });
 
     viewpatientArrivalDeparture.on('draw.dt', function() {
         $('[data-toggle="popover"]').popover({
             html: true
         });
+        $('#ajax-loader').hide();
+
     });
     viewpatientArrivalDeparture.on('preXhr.dt', function() {
         $('#ajax-loader').show();
     });
-    viewpatientArrivalDeparture.on('xhr.dt', function() {
-        $('#ajax-loader').hide();
-    });
+    // viewpatientArrivalDeparture.on('xhr.dt', function() {
+    //     $('#ajax-loader').hide();
+    // });
     // View Patient Arrival & Departure
 
     // Update Patient Arrival & Departure Status
@@ -472,11 +517,15 @@ $(document).ready(function() {
                 $('#u_pio_location').html("<option selected>" + response.locationName + "</option>").prop('disabled',true);
                 $('#u_pio_schedule').html("<option selected>" + response.locationSchedule + "</option>").prop('disabled',true);
                 $('#u_pio_emp').html("<option selected>" + response.empName + "</option>").prop('disabled',true);
-                var startFormatted = moment.unix(response.start_timestamp).format('MM/DD/YYYY h:mm A');
-                var endFormatted = moment.unix(response.end_timestamp).format('MM/DD/YYYY h:mm A');
-                $('#u_pio_scheduleDatetime').data('daterangepicker').setStartDate(startFormatted);
-                $('#u_pio_scheduleDatetime').data('daterangepicker').setEndDate(endFormatted);
-                $('#u_pio_scheduleDatetime').prop('disabled',true);
+                var startFormatted = moment.unix(response.start_timestamp).format('h:mm A');
+                var endFormatted = moment.unix(response.end_timestamp).format('h:mm A');
+                var schedulePattern = response.schedulePattern;
+                // $('#u_pio_scheduleDatetime').data('daterangepicker').setStartDate(startFormatted);
+                // $('#u_pio_scheduleDatetime').data('daterangepicker').setEndDate(endFormatted);
+                // $('#u_pio_scheduleDatetime').prop('disabled',true);
+
+                $('#u_pio_scheduleDatetime').val("(StartTime: " + startFormatted + "- EndTime: " + endFormatted + ") - " + schedulePattern).prop('disabled',true);
+
                 $('#u_pio_mr').val(response.mrNo).prop('disabled',true);
                 $('#u_pio_service').html("<option selected value="+response.serviceID+">" + response.serviceName + "</option>").prop('disabled',true);
                 $('#u_pio_serviceMode')

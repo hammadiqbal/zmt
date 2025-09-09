@@ -117,8 +117,21 @@
                                                             <div class="form-group row">
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
+                                                                        <label class="control-label">Item Generic</label>
+                                                                        <select class="form-control selecter p-0" name="ir_generic" id="ir_generic" style="color:#222d32">
+                                                                        </select>
+                                                                    </div>
+                                                                    <span class="text-danger" id="ir_generic_error"></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="form-group row">
+                                                                <div class="col-md-12">
+                                                                    <div class="form-group has-custom m-b-5">
                                                                         <label class="control-label">Item Brand</label>
-                                                                        <select class="form-control selecter p-0" name="ir_brand" id="ir_brand" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0" name="ir_brand" id="ir_brand" style="color:#222d32" disabled>
                                                                         </select>
                                                                     </div>
                                                                     <span class="text-danger" id="ir_brand_error"></span>
@@ -130,8 +143,10 @@
                                                             <div class="form-group row">
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
-                                                                        <label for="input01">Item Batch #</label>
-                                                                        <input type="number" class="form-control input-sm" placeholder="Enter Item Batch #" name="ir_batch" id="ir_batch">
+                                                                        <label for="input01">Batch Number</label>
+                                                                        <select class="form-control selecter p-0" name="ir_batch" id="ir_batch" style="color:#222d32" disabled>
+                                                                            <option selected disabled value="">Select Batch Number</option>
+                                                                        </select>
                                                                     </div>
                                                                     <span class="text-danger" id="ir_batch_error"></span>
                                                                 </div>
@@ -143,8 +158,20 @@
                                                             <div class="form-group row">
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
+                                                                        <label for="input01">Pack Size</label>
+                                                                        <input type="number" min="1" class="form-control input-sm" placeholder="Enter Pack Size" name="ir_packsize" id="ir_packsize">
+                                                                    </div>
+                                                                    <span class="text-danger" id="ir_packsize_error"></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="col-md-6">
+                                                            <div class="form-group row">
+                                                                <div class="col-md-12">
+                                                                    <div class="form-group has-custom m-b-5">
                                                                         <label for="input01">Unit Cost</label>
-                                                                        <input type="number" class="form-control input-sm" placeholder="Enter Unit Cost" name="ir_unitcost" id="ir_unitcost">
+                                                                        <input type="number" step="0.01" class="form-control input-sm" placeholder="Enter Unit Cost" name="ir_unitcost" id="ir_unitcost">
                                                                     </div>
                                                                     <span class="text-danger" id="ir_unitcost_error"></span>
                                                                 </div>
@@ -156,7 +183,7 @@
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                         <label for="input01">Billed Amount</label>
-                                                                        <input type="number" class="form-control input-sm" placeholder="Enter Billed Amount" name="ir_billedamount" id="ir_billedamount">
+                                                                        <input type="number" step="0.01" class="form-control input-sm" placeholder="Enter Billed Amount" name="ir_billedamount" id="ir_billedamount">
                                                                     </div>
                                                                     <span class="text-danger" id="ir_billedamount_error"></span>
                                                                 </div>
@@ -260,6 +287,18 @@
                                                     <div class="form-group row">
                                                         <div class="col-md-12">
                                                             <div class="form-group has-custom m-b-5">
+                                                                <label class="control-label">Update Item Generic</label>
+                                                                <select class="form-control selecter p-0" required name="u_ir_generic" id="u_ir_generic" style="color:#222d32">
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <div class="form-group row">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group has-custom m-b-5">
                                                                 <label class="control-label">Update Item Brand</label>
                                                                 <select class="form-control selecter p-0" required name="u_ir_brand" id="u_ir_brand" style="color:#222d32">
                                                                 </select>
@@ -272,8 +311,10 @@
                                                     <div class="form-group row">
                                                         <div class="col-md-12">
                                                             <div class="form-group has-custom m-b-5">
-                                                                <label for="input01">Update Item Batch #</label>
-                                                                <input type="text" class="form-control input-sm" required placeholder="Update Item Batch #" name="u_ir_batch" id="u_ir_batch">
+                                                                <label for="input01">Update Batch Number</label>
+                                                                <select class="form-control selecter p-0" required name="u_ir_batch" id="u_ir_batch" style="color:#222d32">
+                                                                    <option selected disabled value="">Select Batch Number</option>
+                                                                </select>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -285,8 +326,19 @@
                                                     <div class="form-group row">
                                                         <div class="col-md-12">
                                                             <div class="form-group has-custom m-b-5">
+                                                                <label for="input01">Update Pack Size</label>
+                                                                <input type="number" min="1" required class="form-control input-sm" name="u_ir_packsize" id="u_ir_packsize">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-6">
+                                                    <div class="form-group row">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group has-custom m-b-5">
                                                                 <label for="input01">Update Cost Amount</label>
-                                                                <input type="number" required class="form-control input-sm" name="u_ir_unitcost" id="u_ir_unitcost">
+                                                                <input type="number" step="0.01" required class="form-control input-sm" name="u_ir_unitcost" id="u_ir_unitcost">
                                                             </div>
                                                         </div>
                                                     </div>

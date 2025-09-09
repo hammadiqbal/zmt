@@ -1,13 +1,13 @@
 $(document).ready(function() {
-    //Open Other Transaction Modal
-    $(document).on('click', '.add-othertransaction', function() {
+    //Open Material Transfer Modal
+    $(document).on('click', '.add-materialtransfer', function() {
         $('.od_d,.od_s,.brand_details').hide();
-        $('input[name="ot_reference_document"]').val('').prop('disabled', false);
+        $('input[name="mt_reference_document"]').val('').prop('disabled', false);
         $('.req_only').show();
         $('#transaction-info-row').empty();
-        $('.ot_brand').off('change.BrandChangeBatch');
-        $('.ot_qty').attr('max', 0);
-        $('.ot_qty').attr('placeholder', 'Transaction Qty..');
+        $('.mt_brand').off('change.BrandChangeBatch');
+        $('.mt_qty').attr('max', 0);
+        $('.mt_qty').attr('placeholder', 'Transaction Qty..');
         batchCheckInProgress = false;
 
         if ($('#source_type').length) {
@@ -18,66 +18,64 @@ $(document).ready(function() {
                 name: 'source_type',
                 id: 'source_type',
                 value: 'material'
-            }).appendTo('#add_othertransaction');
+            }).appendTo('#add_materialtransfer');
         }
    
-        var orgId = $('#ot_org').val();
+        var orgId = $('#mt_org').val();
         if(orgId)
         {
-            fetchOrganizationSites(orgId, '#ot_source_site', function(data) {
-                $('#ot_source_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',false);
+            fetchOrganizationSites(orgId, '#mt_source_site', function(data) {
+            $('#mt_source_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',false);
                 $.each(data, function(key, value) {
-                    $('#ot_source_site').append('<option value="' + value.id + '">' + value.name + '</option>');
+                $('#mt_source_site').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
 
-            fetchOrganizationSites(orgId, '#ot_destination_site', function(data) {
-                $('#ot_destination_site').html("<option selected disabled value=''>Select Destination Site</option>").prop('disabled', false);
+            fetchOrganizationSites(orgId, '#mt_destination_site', function(data) {
+                            $('#mt_destination_site').html("<option selected disabled value=''>Select Destination Site</option>").prop('disabled', false);
                 $.each(data, function(key, value) {
-                    $('#ot_destination_site').append('<option value="' + value.id + '">' + value.name + '</option>');
+                $('#mt_destination_site').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
 
-            $('.ot_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', false);
-            fetchOrganizationItemGeneric(orgId, '.ot_generic', function(data) {
+            $('.mt_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', false);
+            fetchOrganizationItemGeneric(orgId, '.mt_generic', function(data) {
                 $.each(data, function(key, value) {
-                    $('.ot_generic').append('<option value="' + value.id + '">' + value.name + '</option>');
+                    $('.mt_generic').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
 
-            $('#ot_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',false);
-            fetchMaterialManagementTransactionTypes(orgId, '#ot_transactiontype','other_transaction','y', function(data) {
+            $('#mt_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',false);
+            fetchMaterialManagementTransactionTypes(orgId, '#mt_transactiontype','material_transfer','y', function(data) {
                 $.each(data, function(key, value) {
-                    $('#ot_transactiontype').append('<option value="' + value.id + '">' + value.name + '</option>');
+                    $('#mt_transactiontype').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
             });
         }
         else{
-            $('#ot_org').html("<option selected disabled value=''>Select Organization</option>").prop('disabled',false);
-            fetchOrganizations('null', '','#ot_org', function(data) {
-                $('#ot_org').find('option:contains("Loading...")').remove();
+            $('#mt_org').html("<option selected disabled value=''>Select Organization</option>").prop('disabled',false);
+            fetchOrganizations('null', '','#mt_org', function(data) {
+                $('#mt_org').find('option:contains("Loading...")').remove();
                 $.each(data, function(key, value) {
-                    $('#ot_org').append('<option value="' + value.id + '">' + value.organization + '</option>');
+                    $('#mt_org').append('<option value="' + value.id + '">' + value.organization + '</option>');
                 });
             });
 
-            $('#ot_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
-            SiteChangeMaterialManagementTransactionTypes('#ot_org','#ot_org', '#ot_transactiontype', '#add_othertransaction','other_transaction','n');
+            $('#mt_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled',true);
+            SiteChangeMaterialManagementTransactionTypes('#mt_org','#mt_org', '#mt_transactiontype', '#add-materialtransfer','material_transfer','n');
             
-            $('#ot_source_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',true);
-            OrgChangeSites('#ot_org', '#ot_source_site', '#add_othertransaction' ,'otSourceSite');
+            $('#mt_source_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',true);
+            OrgChangeSites('#mt_org', '#mt_source_site', '#add-materialtransfer' ,'mtSourceSite');
 
-            $('#ot_destination_site').html("<option selected disabled value=''>Select Destination Site</option>").prop('disabled',true);
-            OrgChangeSites('#ot_org', '#ot_destination_site', '#add_othertransaction', 'otDestinationSite');
+            $('#mt_destination_site').html("<option selected disabled value=''>Select Destination Site</option>").prop('disabled',true);
+            OrgChangeSites('#mt_org', '#mt_destination_site', '#add-materialtransfer', 'mtDestinationSite');
         
-            $('.ot_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
-            OrgChangeInventoryGeneric('#ot_org', '.ot_generic', '#add_othertransaction');
+            $('.mt_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
+            OrgChangeInventoryGeneric('#mt_org', '.mt_generic', '#add-materialtransfer');
         }
        
-        $(document).off('change', '#ot_transactiontype').on('change', '#ot_transactiontype', function() {
+        $(document).off('change', '#mt_transactiontype').on('change', '#mt_transactiontype', function() {
             let transactionTypeID = $(this).val();
-            // let siteId = $('#ot_source_site').val();  
-            let siteId = null;
 
             $('#mr-optional').show();
             // if (!siteId) {
@@ -98,12 +96,13 @@ $(document).ready(function() {
             //     showConfirmButton: false
             // });
         
+            // First call without site to learn Source/Destination types; we'll fetch lists per site change below
             $.ajax({
                 url: 'inventory/gettransactiontypeim',
                 type: 'GET',
                 data: {
                     transactionTypeId: transactionTypeID,
-                    siteId: siteId
+                    siteId: null
                 },
                 success: function(resp) {
                     Swal.close();
@@ -115,7 +114,7 @@ $(document).ready(function() {
                             confirmButtonText: 'OK'
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                $('#add-othertransaction').modal('hide');
+                                $('#add-materialtransfer').modal('hide');
                             }
                         });
                     }
@@ -150,66 +149,100 @@ $(document).ready(function() {
                     $('#transaction-info-row')
                     .append(infoHtml)
                     .show();
+
+                    // Persist actions for later decisions (e.g., which site to check batches against)
+                    $('#add-materialtransfer')
+                        .data('sourceAction', (resp.source_action || '').toLowerCase())
+                        .data('destinationAction', (resp.destination_action || '').toLowerCase());
         
                     let sourceType = (resp.Source || '').toLowerCase();
                     if (sourceType.includes('location')) {
                         $('.od_s').show();
-                        // $('.od_s label').text('Inventory Source Location');
                         $('#source_applicable').val('1');
-                        if (resp.sourceData && resp.sourceData.length > 0) {
-                            $('#ot_source_location')
+                        // Wait for source site selection to fetch location list
+                        $('#mt_source_location')
                             .empty()
-                            .append('<option selected disabled value="">Select Source</option>').prop('disabled', false);
-                            resp.sourceData.forEach(function(item) {
-                                let displayText = item.name || item.person_name || item.patient_name || 'Unnamed';
-                                $('#ot_source_location').append(
-                                    '<option value="' + item.id + '">' + displayText + '</option>'
-                                );
-                            });
-                        } else {
-                            $('#ot_source_location')
-                            .empty()
-                            .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
-                        }
-                    }
-                    else {
+                            .append('<option selected disabled value="">Select Source</option>')
+                            .prop('disabled', true);
+                    } else {
                         $('.od_s').hide();
                         $('#source_applicable').val('0');
-                        $('#ot_source_location')
+                        $('#mt_source_location')
                             .empty()
-                            .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
+                            .append('<option selected disabled value="">No Data Found</option>')
+                            .prop('disabled', true);
                     }
         
         
                     let destType = (resp.Destination || '').toLowerCase();
                     if (destType.includes('location')) {
                         $('.od_d').show();
-                        // $('.od_d label').text('Inventory Destination Location');
                         $('#destination_applicable').val('1');
-                        if (resp.destinationData && resp.destinationData.length > 0) {
-                            $('#ot_destination_location')
-                                .empty()
-                                .append('<option selected disabled value="">Select Destination</option>').prop('disabled', false);
-
-                                resp.destinationData.forEach(function(item) {
-                                    let displayText = item.name || item.person_name || item.patient_name ||'Unnamed';
-                                    $('#ot_destination_location').append(
-                                        '<option value="' + item.id + '">' + displayText + '</option>'
-                                    );
-                                });
-                        } else {
-                                $('#ot_destination_location')
-                                .empty()
-                                .append('<option selected disabled value="">Select Destination</option>').prop('disabled', true);
-                        }
-                    }
-                    else {
+                        // Wait for destination site selection to fetch location list
+                        $('#mt_destination_location')
+                            .empty()
+                            .append('<option selected disabled value="">Select Destination</option>')
+                            .prop('disabled', true);
+                    } else {
                         $('.od_d').hide();
                         $('#destination_applicable').val('0');
-                        $('#ot_destination_location')
-                        .empty()
-                        .append('<option selected disabled value="">Select Destination</option>').prop('disabled', true);
+                        $('#mt_destination_location')
+                            .empty()
+                            .append('<option selected disabled value="">Select Destination</option>')
+                            .prop('disabled', true);
                     }
+
+                    // When source site changes, fetch locations constrained to that site
+                    $(document).off('change.mtSourceSite').on('change.mtSourceSite', '#mt_source_site', function() {
+                        if (!sourceType.includes('location')) { return; }
+                        let selectedSiteId = $(this).val();
+                        if (!selectedSiteId) { return; }
+                        $.ajax({
+                            url: 'inventory/gettransactiontypeim',
+                            type: 'GET',
+                            data: { transactionTypeId: transactionTypeID, siteId: selectedSiteId },
+                            success: function(r) {
+                                $('#mt_source_location')
+                                    .empty()
+                                    .append('<option selected disabled value="">Select Source</option>');
+                                if (r.sourceData && r.sourceData.length > 0) {
+                                    r.sourceData.forEach(function(item) {
+                                        let displayText = item.name || item.person_name || item.patient_name || 'Unnamed';
+                                        $('#mt_source_location').append('<option value="' + item.id + '">' + displayText + '</option>');
+                                    });
+                                    $('#mt_source_location').prop('disabled', false);
+                                } else {
+                                    $('#mt_source_location').append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
+                                }
+                            }
+                        });
+                    });
+
+                    // When destination site changes, fetch locations constrained to that site
+                    $(document).off('change.mtDestinationSite').on('change.mtDestinationSite', '#mt_destination_site', function() {
+                        if (!destType.includes('location')) { return; }
+                        let selectedSiteId = $(this).val();
+                        if (!selectedSiteId) { return; }
+                        $.ajax({
+                            url: 'inventory/gettransactiontypeim',
+                            type: 'GET',
+                            data: { transactionTypeId: transactionTypeID, siteId: selectedSiteId },
+                            success: function(r) {
+                                $('#mt_destination_location')
+                                    .empty()
+                                    .append('<option selected disabled value="">Select Destination</option>');
+                                if (r.destinationData && r.destinationData.length > 0) {
+                                    r.destinationData.forEach(function(item) {
+                                        let displayText = item.name || item.person_name || item.patient_name || 'Unnamed';
+                                        $('#mt_destination_location').append('<option value="' + value.id + '">' + displayText + '</option>');
+                                    });
+                                    $('#mt_destination_location').prop('disabled', false);
+                                } else {
+                                    $('#mt_destination_location').append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
+                                }
+                            }
+                        });
+                    });
                  
                    
                 },
@@ -220,15 +253,23 @@ $(document).ready(function() {
             });
         });
 
-        $('.ot_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
+        $('.mt_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
 
-        $(document).off('change.newIssueBrand').on('change.newIssueBrand', '.ot_brand', function(e) {
+        $(document).off('change.newIssueBrand').on('change.newIssueBrand', '.mt_brand', function(e) {
             e.stopPropagation();
-            
             const currentRow = $(this).closest('.duplicate');
-            const orgId = $('#ot_org').val();
-            const siteId = $('#ot_source_site').val();
-            const genericId = currentRow.find('.ot_generic').val();
+            const orgId = $('#mt_org').val();
+            // Decide site based on which side performs subtraction ('s' or 'r')
+            const sourceAction = ($('#add-materialtransfer').data('sourceAction') || '').toString().toLowerCase();
+            const destinationAction = ($('#add-materialtransfer').data('destinationAction') || '').toString().toLowerCase();
+            let siteId = $('#mt_source_site').val();
+            if (['s','r'].includes(sourceAction)) {
+                siteId = $('#mt_source_site').val();
+            } else if (['s','r'].includes(destinationAction)) {
+                siteId = $('#mt_destination_site').val();
+            }
+            console.log('siteId', siteId);
+            const genericId = currentRow.find('.mt_generic').val();
             const brandId = $(this).val();
             const $brand = $(this);
 
@@ -245,16 +286,16 @@ $(document).ready(function() {
                     .val('');
                 return;
             }
-            handleBatchNumberCheck(orgId, siteId, genericId, brandId, currentRow, 'newOtherTransaction', '#add-othertransaction', {batchSelector: '.ot_batch',brandSelector: '.ot_brand', qtySelector: '.ot_qty', expirySelector: '.ot_expiry'});
+            handleBatchNumberCheck(orgId, siteId, genericId, brandId, currentRow, 'newMaterialTransfer', '#add-materialtransfer', {batchSelector: '.mt_batch',brandSelector: '.mt_brand', qtySelector: '.mt_qty', expirySelector: '.mt_expiry'});
         });
 
-        $('#add-othertransaction').modal('show');
+        $('#add-materialtransfer').modal('show');
     });
   
-    $(document).off('change', '.ot_generic').on('change', '.ot_generic', function() {
+    $(document).off('change', '.mt_generic').on('change', '.mt_generic', function() {
         var genericId = $(this).val();
         var currentRow = $(this).closest('.duplicate'); 
-        var currentRowBrandSelect = currentRow.find('.ot_brand'); 
+        var currentRowBrandSelect = currentRow.find('.mt_brand'); 
     
         if (genericId) {
             fetchGenericItemBrand(genericId, currentRowBrandSelect, function(data) {
@@ -277,7 +318,7 @@ $(document).ready(function() {
                             currentRowBrandSelect.empty();
                             currentRow.find('.brand_details').hide();
                             currentRowBrandSelect.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
-                            var $qty = currentRowBrandSelect.closest('.duplicate').find('.ot_qty');
+                            var $qty = currentRowBrandSelect.closest('.duplicate').find('.mt_qty');
                             if ($qty.length) {
                                 $qty.removeAttr('max');
                                 $qty.attr('placeholder', 'Transaction Qty...');
@@ -295,11 +336,11 @@ $(document).ready(function() {
         }
     });
 
-    // View Other Transaction
-    var viewIssueDispense =  $('#view-othertransaction').DataTable({
+    // View Material Transfer
+    var viewMaterialTransfer =  $('#view-materialtransfer').DataTable({
         processing: true,
         serverSide: true,
-        ajax: '/inventory/othertransaction',
+        ajax: '/inventory/materialtransfer',
         order: [[0, 'desc']],
         columns: [
             { data: 'id_raw', name: 'id_raw', visible: false },
@@ -322,33 +363,33 @@ $(document).ready(function() {
         ]
     });
 
-    viewIssueDispense.on('draw.dt', function() {
+    viewMaterialTransfer.on('draw.dt', function() {
         $('[data-toggle="popover"]').popover({
             html: true
         });
     });
-    viewIssueDispense.on('preXhr.dt', function() {
+    viewMaterialTransfer.on('preXhr.dt', function() {
         $('#ajax-loader').show();
     });
-    viewIssueDispense.on('xhr.dt', function() {
+    viewMaterialTransfer.on('xhr.dt', function() {
         $('#ajax-loader').hide();
     });
     // View Other Transaction
 
-    $(document).off('input', '.ot_qty').on('input', '.ot_qty', function() {
+    $(document).off('input', '.mt_qty').on('input', '.mt_qty', function() {
         const currentRow = $(this).closest('.duplicate');
-        const batchNo = currentRow.find('.ot_batch').val();
+        const batchNo = currentRow.find('.mt_batch').val();
         
         if (batchNo) {
             // Find all other rows with the same batch number
             $('.duplicate').not(currentRow).each(function() {
                 const $row = $(this);
-                if ($row.find('.ot_batch').val() === batchNo) {
-                    const $qty = $row.find('.ot_qty');
-                    const orgId = $('#ot_org').val();
-                    const siteId = $('#ot_source_site').val();
-                    const genericId = $row.find('.ot_generic').val();
-                    const brandId = $row.find('.ot_brand').val();
+                if ($row.find('.mt_batch').val() === batchNo) {
+                    const $qty = $row.find('.mt_qty');
+                    const orgId = $('#mt_org').val();
+                    const siteId = $('#mt_source_site').val();
+                    const genericId = $row.find('.mt_generic').val();
+                    const brandId = $row.find('.mt_brand').val();
                     
                     // Refresh the max quantity for this row
                     $.getJSON('inventory/getbatchno', { orgId, siteId, genericId, brandId })
@@ -367,7 +408,7 @@ $(document).ready(function() {
     });
 
     // Event listener for respond button
-    $('#view-othertransaction').on('click', '.respond-btn', function() {
+    $('#view-materialtransfer').on('click', '.respond-btn', function() {
          $('#ajax-loader').show();
         //  $('.text-danger').text('');  
         //  $('.requirefield').removeClass('requirefield');  
@@ -375,7 +416,7 @@ $(document).ready(function() {
         const txId     = $(this).data('id');
         const genId    = $(this).data('generic-id');
         
-        $.getJSON('inventory/respond-othertransaction', {
+        $.getJSON('inventory/respond-materialtransfer', {
             id:        txId,
             genericId: genId
         })
@@ -385,11 +426,11 @@ $(document).ready(function() {
             Swal.fire('Error', 'Records Not Found', 'error');
         })
         .done(data => {
-            console.log(data);
+            // console.log(data);
             // $('#mrService,.mr-dependent').show();
             // if (data.source === 'material' && !data.mr_code) {
             $('.od_s, .od_d').hide();
-            $('#add_othertransaction')[0].reset();
+            $('#add_materialtransfer')[0].reset();
             let approvedSiteId = '';
 
             // if ($('#source_type').length) {
@@ -400,46 +441,46 @@ $(document).ready(function() {
             //         name: 'source_type',
             //         id: 'source_type',
             //         value: data.source
-            //     }).appendTo('#add_othertransaction');
+            //     }).appendTo('#add_materialtransfer');
             // }
 
             $('#addMoreBtn, #removeBtn').hide();
 
-            $('#ot_org')
+            $('#mt_org')
                 .html(`<option selected value="${data.org_id}">${data.org_name}</option>`)
                 .prop('disabled', true);
 
-            $('#ot_source_site')
+            $('#mt_source_site')
                 .html(`<option selected value="${data.source_site}">${data.sourceSiteName}</option>`)
                 .prop('disabled', true);
 
-            $('#ot_source_location')
+            $('#mt_source_location')
                 .html(`<option selected value="${data.source_location}">${data.sourceLocationName}</option>`)
                 .prop('disabled', true);
 
-            $('#ot_destination_site')
+            $('#mt_destination_site')
                 .html(`<option selected value="${data.destination_site}">${data.destinationSiteName}</option>`)
                 .prop('disabled', true);
 
-            $('#ot_destination_location')
+            $('#mt_destination_location')
                 .html(`<option selected value="${data.destination_location}">${data.destinationLocationName}</option>`)
                 .prop('disabled', true);
 
             
-            // $('#ot_transactiontype').html(`<option selected value="${data.transaction_type_id}">${data.transaction_type_name}</option>`).prop('disabled', true).trigger('change');
-            $('#ot_transactiontype')
+            // $('#mt_transactiontype').html(`<option selected value="${data.transaction_type_id}">${data.transaction_type_name}</option>`).prop('disabled', true).trigger('change');
+            $('#mt_transactiontype')
                 .html(`<option selected value="${data.transaction_type_id}">${data.transaction_type_name}</option>`)
                 .prop('disabled', true);
             
             // Trigger change event after a short delay
             setTimeout(() => {
-                $('#ot_transactiontype').trigger('change');
+                $('#mt_transactiontype').trigger('change');
             }, 50);
 
 
-            $(document).off('change', '#ot_transactiontype').on('change', '#ot_transactiontype', function() {
+            $(document).off('change', '#mt_transactiontype').on('change', '#mt_transactiontype', function() {
                 let transactionTypeID = $(this).val();
-                let siteId = $('#ot_source_site').val();  // you must already have a selected site
+                let siteId = $('#mt_source_site').val();  // you must already have a selected site
 
                 $('#mr-optional').show();
                 if (!siteId) {
@@ -465,7 +506,7 @@ $(document).ready(function() {
                                 confirmButtonText: 'OK'
                             }).then((result) => {
                                 if (result.isConfirmed) {
-                                    $('#add-othertransaction').modal('hide');
+                                $('#add-materialtransfer').modal('hide');
                                 }
                             });
                         }
@@ -538,7 +579,7 @@ $(document).ready(function() {
                         else {
                             $('.od_s').hide();
                             $('#source_applicable').val('0');
-                            $('#ot_source_site,#ot_source_location').empty();
+                            $('#mt_source_site,#mt_source_location').empty();
                         }
             
                         let destType = (resp.Destination || '').toLowerCase();
@@ -549,7 +590,7 @@ $(document).ready(function() {
                         else {
                             $('.od_d').hide();
                             $('#destination_applicable').val('0');
-                            $('#ot_destination_site,#ot_destination_location').empty();
+                            $('#mt_destination_site,#mt_destination_location').empty();
                         }
                     },
                     error: function(xhr, status, error) {
@@ -559,14 +600,14 @@ $(document).ready(function() {
                 });
             });
            
-            $('textarea[name="ot_remarks"]').val(data.remarks).prop('disabled', false);
-            $('input[name="ot_reference_document"]').val(data.code).prop('disabled', true);
+            $('textarea[name="mt_remarks"]').val(data.remarks).prop('disabled', false);
+            $('input[name="mt_reference_document"]').val(data.code).prop('disabled', true);
 
             $('.duplicate').not(':first').remove();
             let $row = $('.duplicate').first();
 
-            $row.find('.ot_generic').html(`<option selected value="${data.generic_id}">${data.generic_name}</option>`).prop('disabled', true);
-            var currentBrandField = $row.find('.ot_brand');
+            $row.find('.mt_generic').html(`<option selected value="${data.generic_id}">${data.generic_name}</option>`).prop('disabled', true);
+            var currentBrandField = $row.find('.mt_brand');
             fetchGenericItemBrand(data.generic_id, currentBrandField, function(data) {
                 if (data.length > 0) {
                     currentBrandField.empty();
@@ -587,7 +628,7 @@ $(document).ready(function() {
                         if (result.isConfirmed) {
                             currentBrandField.empty();
                             currentBrandField.html("<option selected disabled value=''>Select Brand</option>").prop('disabled', true);
-                            $('#add-othertransaction').modal('hide');
+                            $('#add-materialtransfer').modal('hide');
 
                         }
                     });
@@ -597,17 +638,17 @@ $(document).ready(function() {
             });
 
              // Add this to clean up when modal closes
-            $('#add-othertransaction').one('hidden.bs.modal', function() {
-                $('.ot_brand').off('change.BrandChangeBatch');
+            $('#add-materialtransfer').one('hidden.bs.modal', function() {
+                $('.mt_brand').off('change.BrandChangeBatch');
                 batchCheckInProgress = false;
             });
              
             const maxQty = parseFloat(data.max_qty);
-            const $qtyInput = $row.find('.ot_qty');
-            var respond = 'respondROT'; 
+            const $qtyInput = $row.find('.mt_qty');
+            var respond = 'respondMT'; 
             const demandQty = parseFloat(data.demand_qty);
 
-            $row.find('.ot_demand_qty').val(data.demand_qty).prop('disabled', true);
+            $row.find('.mt_demand_qty').val(data.demand_qty).prop('disabled', true);
             $qtyInput.val('').prop('disabled', false);
         
             if (demandQty < maxQty) {
@@ -622,29 +663,31 @@ $(document).ready(function() {
             const destHasSR = ['s', 'r'].includes(data.destination_action);
 
             if (sourceHasSR && destHasSR) {
-                approvedSiteId = '#ot_source_site';
+                approvedSiteId = '#mt_source_site';
             } else if (sourceHasSR) {
-                approvedSiteId = '#ot_source_site';
+                approvedSiteId = '#mt_source_site';
             } else if (destHasSR) {
-                approvedSiteId = '#ot_destination_site';
+                approvedSiteId = '#mt_destination_site';
             } else {
-                approvedSiteId = '#ot_source_site';
+                approvedSiteId = '#mt_source_site';
             }
 
+            console.log('approvedSiteId', approvedSiteId);
+
             BrandChangeBatchAndExpiry(
-                '#ot_org',  
+                '#mt_org',  
                 approvedSiteId,  
-                $row.find('.ot_generic'),
-                $row.find('.ot_brand'),
-                $row.find('.ot_batch'),
-                $row.find('.ot_qty'),
-                $row.find('.ot_expiry'),
+                $row.find('.mt_generic'),
+                $row.find('.mt_brand'),
+                $row.find('.mt_batch'),
+                $row.find('.mt_qty'),
+                $row.find('.mt_expiry'),
                 respond,
-                {batchSelector: '.ot_batch',brandSelector: '.ot_brand', qtySelector: '.ot_qty', expirySelector: '.ot_expiry'},
-                '#add-othertransaction'
+                {batchSelector: '.mt_batch',brandSelector: '.mt_brand', qtySelector: '.mt_qty', expirySelector: '.mt_expiry'},
+                '#add-materialtransfer'
             );
             
-            $('#add-othertransaction').modal('show');
+            $('#add-materialtransfer').modal('show');
             setTimeout(function(){
                 $('#ajax-loader').hide();
                 }, 1000);        
@@ -652,35 +695,35 @@ $(document).ready(function() {
     });
     // Event listener for respond button
 
-    // whenever the Add Other Transaction modal closes, reset everything back to New‐Issue state
-    $('#add-othertransaction').on('hidden.bs.modal', function() {
+    // whenever the Add Material Transfer modal closes, reset everything back to New‐Issue state
+    $('#add-materialtransfer').on('hidden.bs.modal', function() {
         $('#addMoreBtn, #removeBtn').show();
         $('.duplicate').not(':first').remove();
 
-        $('#ot_source_site')
+        $('#mt_source_site')
             .prop('disabled', true)
             .html('<option selected disabled value="">Select Site</option>');
 
-        $('#ot_transactiontype')
+        $('#mt_transactiontype')
             .prop('disabled', true)
             .html('<option selected disabled value="">Select Transaction Type</option>');
 
-        $('.ot_generic')
+        $('.mt_generic')
             .prop('disabled', true)
             .html('<option selected disabled value="">Select Item Generic</option>');
-        $('.ot_brand')
+        $('.mt_brand')
             .prop('disabled', true)
             .html('<option selected disabled value="">Select Item Brand</option>');
 
-        $('.ot_batch').val('').prop('disabled', false);
-        $('.ot_expiry').val('').prop('disabled', false);
-        $('.ot_demand_qty').val('').prop('disabled', false);
+        $('.mt_batch').val('').prop('disabled', false);
+        $('.mt_expiry').val('').prop('disabled', false);
+        $('.mt_demand_qty').val('').prop('disabled', false);
 
         $('.od_d, .od_s').hide();
         $('#transaction-info-row').empty();
     });
 
-    $('#add_othertransaction').submit(function(e) {
+    $('#add_materialtransfer').submit(function(e) {
         e.preventDefault();
         var data = SerializeForm(this);
         var resp = true;
@@ -696,7 +739,7 @@ $(document).ready(function() {
         //   const fieldsToValidate = 
         //     (!isMRRequired && !mrSelected)
         //     ? 'input:not(.mr-dependent input), textarea:not(.mr-dependent textarea), select:not(.mr-dependent select)'
-        //     : 'input:not([name="ot_demand_qty[]"]), textarea, select';
+        //     : 'input:not([name="mt_demand_qty[]"]), textarea, select';
 
             // row.find(fieldsToValidate).each(function() {
             row.find('input, textarea, select').each(function() {
@@ -713,7 +756,7 @@ $(document).ready(function() {
                 //             return true;
                 //         }
                 //     } else {
-                //         if (['ot_demand_qty'].includes(fieldName)) {
+                //         if (['mt_demand_qty'].includes(fieldName)) {
                 //             return true;
                 //         }
                 //     }
@@ -725,7 +768,7 @@ $(document).ready(function() {
                 //     }
                 //     else{
                 //         if (!isMRRequired && !mrSelected && 
-                //             ['ot_demand_qty'].includes(fieldName)) {
+                //             ['mt_demand_qty'].includes(fieldName)) {
                 //             return true;
                 //         }
 
@@ -759,15 +802,15 @@ $(document).ready(function() {
             });
         });
 
-        var excludedFields = ['ot_reference_document', 'ot_remarks'];
+        var excludedFields = ['mt_reference_document', 'mt_remarks'];
 
         if ($('.od_d').is(':hidden')) {
-            excludedFields.push('ot_destination_site');
-            excludedFields.push('ot_destination_location');
+            excludedFields.push('mt_destination_site');
+            excludedFields.push('mt_destination_location');
         }
         if ($('.od_s').is(':hidden')) {
-            excludedFields.push('ot_source_location');
-            excludedFields.push('ot_source_site');
+            excludedFields.push('mt_source_location');
+            excludedFields.push('mt_source_site');
         }
     
         // if (hasSourceType) {
@@ -783,7 +826,7 @@ $(document).ready(function() {
         //     } else {
         //         // For medication source, exclude material-related fields
         //         excludedFields = excludedFields.concat([
-        //             'ot_demand_qty'
+        //             'mt_demand_qty'
         //         ]);
         //     }
         // }
@@ -843,7 +886,7 @@ $(document).ready(function() {
         // If validation passes, submit the form
         if (resp) {
             $.ajax({
-                url: "/inventory/addothertransaction",
+                url: "/inventory/addmaterialtransfer",
                 method: "POST",
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -874,9 +917,9 @@ $(document).ready(function() {
                             confirmButtonText: 'OK'
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                $('#add-othertransaction').modal('hide');
-                                $('#view-othertransaction').DataTable().ajax.reload();
-                                $('#add_othertransaction')[0].reset();
+                                $('#add-materialtransfer').modal('hide');
+                                $('#view-materialtransfer').DataTable().ajax.reload();
+                                $('#add_materialtransfer')[0].reset();
                                 $('.text-danger').hide();
                             }
                         });
@@ -887,9 +930,9 @@ $(document).ready(function() {
                             confirmButtonText: 'OK'
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                $('#add-othertransaction').modal('hide');
-                                $('#view-othertransaction').DataTable().ajax.reload();
-                                $('#add_othertransaction')[0].reset();
+                                $('#add-materialtransfer').modal('hide');
+                                $('#view-materialtransfer').DataTable().ajax.reload();
+                                $('#add_materialtransfer')[0].reset();
                             }
                         });
                     }

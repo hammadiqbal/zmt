@@ -13,6 +13,7 @@ $(document).ready(function() {
             $('#username_error').show();
             $('input[name="username"]').val('').attr('readonly', false);
             $('#useremail_error').show();
+            $('#userEmp').html("<option selected  value='0'>Select Employee</option>").prop('disabled', true);
             $('input[name="useremail"]').val('').attr('readonly', false);
             $('#empStatus').val('off');
         }
@@ -81,9 +82,9 @@ $(document).ready(function() {
             $.each(data, function(key, value) {
                 $('#userDetails').show();
                 $('#nameLabel').hide();
-                $('input[name="username"]').val(value.name).attr('readonly', true);
+                $('input[name="username"]').val(value.name).attr('readonly', true).removeAttr('placeholder');;
                 $('#emailLabel').hide();
-                $('input[name="useremail"]').val(value.email).attr('readonly', true);
+                $('input[name="useremail"]').val(value.email).attr('readonly', true).removeAttr('placeholder');;
             });
     
         }, function(error) {
@@ -99,8 +100,9 @@ $(document).ready(function() {
             if ((field.value == '') || (field.value == null))
             {
                 var FieldName = field.name;
-                if((FieldName != 'userEmp') && (FieldName != 'username') && (FieldName != 'useremail'))
-                {
+                console.log(FieldName);
+                // if((FieldName != 'userEmp') && (FieldName != 'username') && (FieldName != 'useremail'))
+                // {
                     var FieldID = '#'+FieldName + "_error";
                     $(FieldID).text("This field is required");
                     $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
@@ -114,10 +116,9 @@ $(document).ready(function() {
                         $(this).next('.select2-container').find('.select2-selection').removeClass("requirefield");
                     });
                     resp = false;
-                }
+                // }
 
             }
-
         });
 
         if(resp != false)
@@ -224,13 +225,13 @@ $(document).ready(function() {
             { data: 'rolename', name: 'rolename',render: function(data, type, row) {
                 return data.charAt(0).toUpperCase() + data.slice(1);
             }},
-            { data: 'empname', name: 'empname',render: function(data, type, row) {
-                if (data === null) {
-                    return "N/A";
-                } else {
-                    return data.charAt(0).toUpperCase() + data.slice(1);
-                }
-            }},
+            // { data: 'empname', name: 'empname',render: function(data, type, row) {
+            //     if (data === null) {
+            //         return "N/A";
+            //     } else {
+            //         return data.charAt(0).toUpperCase() + data.slice(1);
+            //     }
+            // }},
             { data: 'status', name: 'status' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
@@ -243,7 +244,7 @@ $(document).ready(function() {
                 width: "300px"
             },
             {
-                targets: 7,
+                targets: 6,
                 width: "300px"
             }
         ]

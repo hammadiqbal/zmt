@@ -39,7 +39,7 @@
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">Home</li>
                 <li class="breadcrumb-item">Settings</li>
-                <li class="breadcrumb-item active">Requisition For Other Transactions</li>
+                <li class="breadcrumb-item active">Requisition For Material Transfers</li>
             </ol>
         </div>
     </div>
@@ -48,33 +48,33 @@
         <div class="card-body">
             <div class="row">
                 <div class="col">
-                    <h4 class="card-title">All Requisition For Other Transactions</h4>
+                    <h4 class="card-title">All Requisition For Material Transfers</h4>
                 </div>
                 @php
-                $Requisition_for_other_transaction = explode(',', $rights->requisition_for_other_transaction);
-                $add = $Requisition_for_other_transaction[0];
-                $view = $Requisition_for_other_transaction[1];
-                $edit = $Requisition_for_other_transaction[2];
-                $updateStatus = $Requisition_for_other_transaction[3];
+                $Requisition_for_material_transfer = explode(',', $rights->requisition_for_material_transfer);
+                $add = $Requisition_for_material_transfer[0];
+                $view = $Requisition_for_material_transfer[1];
+                $edit = $Requisition_for_material_transfer[2];
+                $updateStatus = $Requisition_for_material_transfer[3];
                 @endphp
                 @if ($add == 1)
                 <div class="col-auto">
-                    <button type="button" class="btn btn-primary p-2 add-reqothertransaction">
-                        <i class="mdi mdi-clipboard-account"></i> Add Requisition For Other Transactions
+                    <button type="button" class="btn btn-primary p-2 add-reqmaterialtransfer">
+                        <i class="mdi mdi-clipboard-account"></i> Add Requisition For Material Transfer
                     </button>
                 </div>
                 @endif
             </div>
 
             @if ($add == 1)
-            <div class="modal fade bs-example-modal-lg" id="add-reqothertransaction" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+            <div class="modal fade bs-example-modal-lg" id="add-reqmaterialtransfer" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h4 class="modal-title" id="myLargeModalLabel">Add Requisition For Other Transactions</h4>
+                            <h4 class="modal-title" id="myLargeModalLabel">Add Requisition For Material Transfers</h4>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         </div>
-                        <form id="add_reqothertransaction" method="post" enctype="multipart/form-data">
+                        <form id="add_reqmaterialtransfer" method="post" enctype="multipart/form-data">
                             @csrf
                             <input type="hidden" id="source_applicable" name="source_applicable" value="1">
                             <input type="hidden" id="destination_applicable" name="destination_applicable" value="1">
@@ -87,7 +87,7 @@
                                                 <div class="row">
                                                     @if($user->org_id != 0)
                                                     <div class="userOrganization">
-                                                        <select class="form-contro selecter p-0" id="rot_org" name="rot_org">
+                                                        <select class="form-contro selecter p-0" id="rmt_org" name="rmt_org">
                                                             <option selected value='{{ $user->org_id }}'>{{ $user->orgName }}</option>
                                                         </select>
                                                     </div>
@@ -97,11 +97,10 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Organization</label>
-                                                                    <select class="form-control selecter p-0" name="rot_org" id="rot_org" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="rmt_org" id="rmt_org" style="color:#222d32">
                                                                     </select>
-                                                                    <span class="bar"></span>
                                                                 </div>
-                                                                <span class="text-danger" id="rot_org_error"></span>
+                                                                <span class="text-danger" id="rmt_org_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -112,11 +111,11 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Transaction Type</label>
-                                                                    <select class="form-control selecter p-0" name="rot_transactiontype" id="rot_transactiontype" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="rmt_transactiontype" id="rmt_transactiontype" style="color:#222d32">
                                                                     </select>
                                                                     <span class="bar"></span>
                                                                 </div>
-                                                                <span class="text-danger" id="rot_transactiontype_error"></span>
+                                                                <span class="text-danger" id="rmt_transactiontype_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -126,11 +125,11 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Source Site</label>
-                                                                    <select class="form-control selecter p-0" name="rot_source_site" id="rot_source_site" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="rmt_source_site" id="rmt_source_site" style="color:#222d32">
                                                                     </select>
                                                                     <span class="bar"></span>
                                                                 </div>
-                                                                <span class="text-danger" id="rot_source_site_error"></span>
+                                                                <span class="text-danger" id="rmt_source_site_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -140,10 +139,10 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Select Source Location </label>
-                                                                    <select class="form-control selecter p-0" name="rot_source_location" id="rot_source_location" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="rmt_source_location" id="rmt_source_location" style="color:#222d32">
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="rot_source_location_error"></span>
+                                                                <span class="text-danger" id="rmt_source_location_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -153,11 +152,11 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Destination Site</label>
-                                                                    <select class="form-control selecter p-0" name="rot_destination_site" id="rot_destination_site" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="rmt_destination_site" id="rmt_destination_site" style="color:#222d32">
                                                                     </select>
                                                                     <span class="bar"></span>
                                                                 </div>
-                                                                <span class="text-danger" id="rot_destination_site_error"></span>
+                                                                <span class="text-danger" id="rmt_destination_site_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -167,10 +166,10 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Select Destination Location </label>
-                                                                    <select class="form-control selecter p-0" name="rot_destination_location" id="rot_destination_location" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="rmt_destination_location" id="rmt_destination_location" style="color:#222d32">
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="rot_destination_location_error"></span>
+                                                                <span class="text-danger" id="rmt_destination_location_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -180,8 +179,8 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label for="rot_remarks">Enter Remarks <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                                    <textarea class="form-control" rows="1" placeholder="Enter Remarks" name="rot_remarks" id="rot_remarks"></textarea>
+                                                                    <label for="rmt_remarks">Enter Remarks <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                                    <textarea class="form-control" rows="1" placeholder="Enter Remarks" name="rmt_remarks" id="rmt_remarks"></textarea>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -196,10 +195,10 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Select Item Generic</label>
-                                                                    <select class="form-control selecter p-0 rot_itemgeneric" name="rot_itemgeneric[]" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0 rmt_itemgeneric" name="rmt_itemgeneric[]" style="color:#222d32">
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger rot_itemgeneric_error"></span>
+                                                                <span class="text-danger rmt_itemgeneric_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -209,9 +208,9 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Enter Demand Qty</label>
-                                                                    <input type="number" class="form-control input-sm" placeholder="Demand Qty.." name="rot_qty[]">
+                                                                    <input type="number" class="form-control input-sm" placeholder="Demand Qty.." name="rmt_qty[]">
                                                                 </div>
-                                                                <span class="text-danger rot_qty_error"></span>
+                                                                <span class="text-danger rmt_qty_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -239,7 +238,7 @@
 
             @if ($view == 1)
             <div class="table-responsive m-t-40">
-                <table id="view-reqothertransaction" class="table table-bordered table-striped">
+                <table id="view-reqmaterialtransfer" class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th></th>
@@ -256,17 +255,17 @@
     </div>
 
     @if ($edit == 1)
-    <div class="modal fade bs-example-modal-lg" id="edit-reqothertransaction" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal fade bs-example-modal-lg" id="edit-reqmaterialtransfer" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title" id="myLargeModalLabel">Update Requisition for Other Transactions</h4>
+                    <h4 class="modal-title" id="myLargeModalLabel">Update Requisition for Material Transfers</h4>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
-                <form id="update_reqothertransaction" method="post" enctype="multipart/form-data">
+                <form id="update_reqmaterialtransfer" method="post" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">
-                        <input type="hidden" class="form-control u_rot-id" name="u_rot-id">
+                        <input type="hidden" class="form-control u_rmt-id" name="u_rmt-id">
                         <div class="row">
                             <div class="col-lg-12">
                                 <div class="card-body">
@@ -279,7 +278,7 @@
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
                                                             <label class="control-label">Update Organization</label>
-                                                            <select class="form-control selecter p-0" name="u_rot_org" required id="u_rot_org" style="color:#222d32">
+                                                            <select class="form-control selecter p-0" name="u_rmt_org" required id="u_rmt_org" style="color:#222d32">
                                                             </select>
                                                         </div>
                                                     </div>
@@ -291,61 +290,63 @@
                                                 <div class="form-group row m-b-5">
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
-                                                            <label class="control-label">Update Source Site</label>
-                                                            <select class="form-control selecter p-0" name="u_rot_source_site" required id="u_rot_source_site" style="color:#222d32">
+                                                            <label class="control-label">Update Transaction type</label>
+                                                            <select class="form-control selecter p-0" name="u_rmt_transactiontype" required id="u_rmt_transactiontype" style="color:#222d32">
                                                             </select>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-6">
+                                            <div class="col-md-6 u_rmt_source">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Source Site</label>
+                                                            <select class="form-control selecter p-0" name="u_rmt_source_site" required id="u_rmt_source_site" style="color:#222d32">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6 u_rmt_source">
                                                 <div class="form-group row m-b-5">
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
                                                             <label class="control-label">Update Source Location</label>
-                                                            <select class="form-control selecter p-0" name="u_rot_source_location" required id="u_rot_source_location" style="color:#222d32">
+                                                            <select class="form-control selecter p-0" name="u_rmt_source_location" required id="u_rmt_source_location" style="color:#222d32">
                                                             </select>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-6">
+                                            <div class="col-md-6 u_rmt_destination">
                                                 <div class="form-group row m-b-5">
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
                                                             <label class="control-label">Update Destination Site</label>
-                                                            <select class="form-control selecter p-0" name="u_rot_destination_site" required id="u_rot_destination_site" style="color:#222d32">
+                                                            <select class="form-control selecter p-0" name="u_rmt_destination_site" required id="u_rmt_destination_site" style="color:#222d32">
                                                             </select>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-6">
+                                            <div class="col-md-6 u_rmt_destination">
                                                 <div class="form-group row m-b-5">
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
                                                             <label class="control-label">Update Destination Location</label>
-                                                            <select class="form-control selecter p-0" name="u_rot_destination_location" required id="u_rot_destination_location" style="color:#222d32">
+                                                            <select class="form-control selecter p-0" name="u_rmt_destination_location" required id="u_rmt_destination_location" style="color:#222d32">
                                                             </select>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-6">
-                                                <div class="form-group row m-b-5">
-                                                    <div class="col-md-12">
-                                                        <div class="form-group m-b-5">
-                                                            <label class="control-label">Update Transaction type</label>
-                                                            <select class="form-control selecter p-0" name="u_rot_transactiontype" required id="u_rot_transactiontype" style="color:#222d32">
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                          
 
 
 
@@ -354,7 +355,7 @@
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
                                                             <label class="control-label">Update Remarks <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                            <textarea class="form-control" rows="1" id="u_rot_remarks" name="u_rot_remarks" spellcheck="false"></textarea>
+                                                            <textarea class="form-control" rows="1" id="u_rmt_remarks" name="u_rmt_remarks" spellcheck="false"></textarea>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -366,10 +367,10 @@
                                         </div>
 
                                         <div class="d-flex justify-content-center pt-3">
-                                            <button type="button" id="urot_addmore" class="btn btn-success mr-2">
+                                            <button type="button" id="urmt_addmore" class="btn btn-success mr-2">
                                             <i class="mdi mdi-plus"></i> Add More</button>
 
-                                            <button type="button" id="urot_remove" class="btn btn-danger mr-2">
+                                            <button type="button" id="urmt_remove" class="btn btn-danger mr-2">
                                             <i class="mdi mdi-minus"></i> Remove</button>
                                         </div>
                                     </div>
@@ -405,4 +406,4 @@
             minDate: new Date()
         });
     </script>
-    <script src="{{ asset('assets/custom/req_other_transaction.js') }}"></script>
+    <script src="{{ asset('assets/custom/req_material_transfer.js') }}"></script>

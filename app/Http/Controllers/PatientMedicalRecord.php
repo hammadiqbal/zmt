@@ -500,8 +500,8 @@ class PatientMedicalRecord extends Controller
         $mr = trim($mr);
         $user = auth()->user();
         $UserorgId = $user->org_id;
-        // $EmployeeStatus = $user->is_employee;
-        // $empId = $user->emp_id;
+        $EmployeeStatus = $user->is_employee;
+        $UserempId = $user->emp_id;
         $orgCode = Organization::where('id', $UserorgId)->value('code');
         $mr = strpos($mr, '-') === false ? ($orgCode ? $orgCode : 'ZMTP') . '-' . $mr : $mr;
 
@@ -535,8 +535,7 @@ class PatientMedicalRecord extends Controller
             'gender.name as genderName',
             'patient.dob as patientDOB',
             'billingCC.name as billingCCName',
-            'performingCC.name as performingCCName',
-            'performingCC.id as performingCCId',
+            'billingCC.id as billingCCId',
             'employee.name as empName',
             'employee.id as empID',
             'service_mode.name as serviceMode',
@@ -546,8 +545,8 @@ class PatientMedicalRecord extends Controller
             'services.name as serviceName',
             'services.id as serviceId',
             'service_mode.id as serviceModeId',
-            'billingCC.id as billingCCId',
             'org_site.name as siteName',
+            'org_site.id as siteId',
             'patient_inout.status as patientInOutStatus',
             'patient_inout.remarks as patientInOutRemarks',
         )
@@ -555,7 +554,6 @@ class PatientMedicalRecord extends Controller
         ->join('gender', 'gender.id', '=', 'patient.gender_id')
         ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'patient_inout.billing_cc')
         ->leftJoin('employee', 'employee.id', '=', 'patient_inout.emp_id')
-        ->leftJoin('costcenter as performingCC', 'performingCC.id', '=', 'employee.cc_id')
         ->leftJoin('org_site', 'org_site.id', '=', 'patient_inout.site_id')
         ->leftJoin('service_mode', 'service_mode.id', '=', 'patient_inout.service_mode_id')
         ->leftJoin('services', 'services.id', '=', 'patient_inout.service_id')
@@ -616,6 +614,70 @@ class PatientMedicalRecord extends Controller
             // }
             // dd($EncounterProcedurePatientDetails);
 
+            // Get performing cost centers for the logged-in user from emp_cc table
+            $siteId = $EncounterProcedurePatientDetails->siteId;
+            $performingCostCenters = DB::table('emp_cc')
+                ->join('costcenter', function($join) {
+                    $join->on(DB::raw('FIND_IN_SET(costcenter.id, emp_cc.cc_id)'), '>', DB::raw('0'));
+                })
+                ->join('cc_type', 'cc_type.id', '=', 'costcenter.cc_type')
+                ->select('costcenter.id', 'costcenter.name')
+                ->where('emp_cc.emp_id', $UserempId)
+                ->where('emp_cc.status', 1)
+                ->where('costcenter.status', 1)
+                ->where('cc_type.performing', 1)
+                ->whereRaw('FIND_IN_SET(?, emp_cc.site_id) > 0', [$siteId])
+                ->orderBy('costcenter.name')
+                ->get();
+
+            // Filter cost centers based on sequential mapping of site_id and cc_id
+            if ($performingCostCenters->isNotEmpty()) {
+                $filteredCostCenters = collect();
+                
+                foreach ($performingCostCenters as $costCenter) {
+                    // Get the emp_cc record for this cost center
+                    $empCCRecord = DB::table('emp_cc')
+                        ->where('emp_id', $UserempId)
+                        ->where('status', 1)
+                        ->whereRaw('FIND_IN_SET(?, cc_id) > 0', [$costCenter->id])
+                        ->first();
+                    
+                    if ($empCCRecord) {
+                        $siteIds = explode(',', $empCCRecord->site_id);
+                        $ccIds = explode(',', $empCCRecord->cc_id);
+                        
+                        // Check if the current site_id matches the corresponding cc_id position
+                        foreach ($siteIds as $index => $siteIdFromEmp) {
+                            $siteIdFromEmp = trim($siteIdFromEmp);
+                            if ($siteIdFromEmp == $siteId && isset($ccIds[$index]) && $ccIds[$index] == $costCenter->id) {
+                                $filteredCostCenters->push($costCenter);
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                $performingCostCenters = $filteredCostCenters;
+            }
+
+            // Add performing cost centers to the response
+            $EncounterProcedurePatientDetails->performingCostCenters = $performingCostCenters;
+
+            // Get service-based performing cost centers from activated_service table
+            $serviceId = $EncounterProcedurePatientDetails->serviceId;
+            $servicePerformingCCs = DB::table('activated_service')
+                ->select('performing_cc_ids')
+                ->where('service_id', $serviceId)
+                ->where('site_id', $siteId) // Add site_id condition
+                ->where('status', 1)
+                ->first();
+
+            if ($servicePerformingCCs && $servicePerformingCCs->performing_cc_ids) {
+                $EncounterProcedurePatientDetails->servicePerformingCCs = $servicePerformingCCs->performing_cc_ids;
+            } else {
+                $EncounterProcedurePatientDetails->servicePerformingCCs = '';
+            }
+
             return response()->json($EncounterProcedurePatientDetails);
             // return response()->json([
             //     'selectService' => false,
@@ -661,6 +723,14 @@ class PatientMedicalRecord extends Controller
         $BillingCCID = trim($request->input('billingcc_id'));
         $ServiceModeId = trim($request->input('servicemode_id'));
         $ServiceId = trim($request->input('sevice_id'));
+
+        // Handle null values for patients under 16
+        $isUnder16 = $PatientAge && $PatientAge < 16;
+        if ($isUnder16) {
+            $SBP = $SBP ?: null;
+            $DBP = $DBP ?: null;
+            $Score = $Score ?: null;
+        }
 
         $HeightInMeters = $Height / 100;
         $BMI = null;
@@ -817,11 +887,11 @@ class PatientMedicalRecord extends Controller
             })
             ->editColumn('sbp', function ($VitalSign) {
                 $SBP = $VitalSign->sbp;
-                return $SBP.' (mmhg)';
+                return !empty($SBP) ? $SBP.' (mmhg)' : 'N/A';
             })
             ->editColumn('dbp', function ($VitalSign) {
                 $DBP = $VitalSign->dbp;
-                return $DBP.' (mmhg)';
+                return !empty($DBP) ? $DBP.' (mmhg)' : 'N/A';
             })
             ->editColumn('pulse', function ($VitalSign) {
                 $pulse = $VitalSign->pulse;
@@ -839,7 +909,10 @@ class PatientMedicalRecord extends Controller
                 $height = $VitalSign->height;
                 return $height.' cm';
             })
-
+            ->editColumn('score', function ($VitalSign) {
+                $score = $VitalSign->score;
+                return !empty($score) ? $score : 'N/A';
+            })
             ->editColumn('o2_saturation', function ($VitalSign) {
                 $o2Saturation = $VitalSign->o2_saturation;
                 return $o2Saturation.' %';
@@ -979,6 +1052,10 @@ class PatientMedicalRecord extends Controller
         }
         $VitalSigns = VitalSign::findOrFail($id);
 
+        // Handle null values for patients under 16
+        $patientAge = $VitalSigns->patient_age;
+        $isUnder16 = $patientAge && $patientAge < 16;
+        
         $VitalSigns->sbp = $request->input('uvs_sbp');
         $VitalSigns->dbp = $request->input('uvs_dbp');
         $VitalSigns->pulse = $request->input('uvs_pulse');
@@ -989,6 +1066,13 @@ class PatientMedicalRecord extends Controller
         $VitalSigns->score = $request->input('uvs_score');
         $VitalSigns->nursing_notes = $request->input('uvs_nursingnotes');
         $VitalSigns->o2_saturation = $request->input('uvs_o2saturation');
+        
+        // Set null values for patients under 16 if fields are empty
+        if ($isUnder16) {
+            $VitalSigns->sbp = $VitalSigns->sbp ?: null;
+            $VitalSigns->dbp = $VitalSigns->dbp ?: null;
+            $VitalSigns->score = $VitalSigns->score ?: null;
+        }
 
         $Weight = floatval($request->input('uvs_weight'));
         $Height = floatval($request->input('uvs_height'));
@@ -2446,13 +2530,31 @@ class PatientMedicalRecord extends Controller
         $Site = trim($request->input('repi_site'));
         $MR = trim($request->input('patientmr'));
         $billingCC = trim($request->input('billingcc_id'));
-        $ServiceModeID = trim($request->input('servicemode_id'));
-        $SeviceId = trim($request->input('sevice_id'));
+        $ServiceModeIDs = $request->input('servicemode_id', []);
+        $ServiceIds = $request->input('sevice_id', []);
         $Age = trim($request->input('patient_age'));
         $Physician = trim($request->input('physician'));
         $Physician = $Physician !== '' ? $Physician : null;
         $Action = trim($request->input('action'));
         $Remarks = trim($request->input('repi_remarks'));
+
+        // Ensure arrays are properly formatted
+        if (!is_array($ServiceModeIDs)) {
+            $ServiceModeIDs = [$ServiceModeIDs];
+        }
+        if (!is_array($ServiceIds)) {
+            $ServiceIds = [$ServiceIds];
+        }
+
+        // Validate that we have the same number of services and service modes
+        if (count($ServiceIds) !== count($ServiceModeIDs)) {
+            return response()->json(['error' => 'Number of services and service modes must match.']);
+        }
+
+        // Validate that all arrays have values
+        if (empty($ServiceIds) || empty($ServiceModeIDs)) {
+            return response()->json(['error' => 'At least one service and service mode must be selected.']);
+        }
 
         // $Edt = $request->input('repi_edt');
         // $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
@@ -2483,41 +2585,47 @@ class PatientMedicalRecord extends Controller
             $act = 'Investigation';
         }
 
-        $common = [
-            ['emp_id',         $Physician],
-            ['mr_code',        $MR],
-            ['service_id',     $SeviceId],
-            ['service_mode_id',$ServiceModeID],
-            ['billing_cc',     $billingCC],
-        ];
+        // Check for existing requisitions for each service/service mode combination
+        foreach ($ServiceIds as $index => $serviceId) {
+            $serviceModeId = $ServiceModeIDs[$index];
+            
+            $common = [
+                ['site_id',        $Site],
+                ['emp_id',         $Physician],
+                ['mr_code',        $MR],
+                ['service_id',     $serviceId],
+                ['service_mode_id',$serviceModeId],
+                ['billing_cc',     $billingCC],
+            ];
 
-        $existsInArrival = PatientArrivalDeparture::where($common)
-        ->where('status', 1)
-        ->exists();
+            $existsInArrival = PatientArrivalDeparture::where($common)
+            ->where('status', 1)
+            ->exists();
 
-        $existsInBooking = ServiceBooking::where($common)
-        ->where('status', 1)
-        ->exists();
+            $existsInBooking = ServiceBooking::where($common)
+            ->where('status', 1)
+            ->exists();
 
-        $existsInRequisition = RequisitionForEPI::where($common)
-        ->where('status', 1)
-        ->where('action', $Action)
-        ->exists();
+            $existsInRequisition = RequisitionForEPI::where($common)
+            ->where('status', 1)
+            ->where('action', $Action)
+            ->exists();
 
-        if ($existsInBooking || $existsInArrival || $existsInRequisition) {
-            if ($existsInArrival) {
-                $msg = 'Arrival already recorded for this MR#, service, service mode, billing CC & physician';
+            if ($existsInBooking || $existsInArrival || $existsInRequisition) {
+                if ($existsInArrival) {
+                    $msg = 'Arrival already recorded for this MR#, service, service mode, billing CC & physician';
+                }
+                elseif ($existsInBooking) {
+                    $msg = 'Service Booking already exists for this MR#, service, service mode, billing CC & physician';
+                }
+                else {
+                    $msg  = "Requisition for $act already exist with these details.";
+                }
+
+                return response()->json([
+                    'info' => $msg
+                ]);
             }
-            elseif ($existsInBooking) {
-                $msg = 'Service Booking already exists for this MR#, service, service mode, billing CC & physician';
-            }
-            else {
-                $msg  = "Requisition for ' . $act . ' already exist with these details.'";
-            }
-
-            return response()->json([
-                'info' => $msg
-            ]);
         }
         // $ReqisitionExist = RequisitionForEPI::where('emp_id', $Physician)
         // ->where('mr_code', $MR)
@@ -2531,44 +2639,64 @@ class PatientMedicalRecord extends Controller
         // if ($ReqisitionExist) {
         //     return response()->json(['info' => 'Requisition for ' . $act . ' already exist with these details.']);
         // }
-        else{
-            $RquEPI = new RequisitionForEPI();
-            $RquEPI->org_id = $Org;
-            $RquEPI->site_id = $Site;
-            $RquEPI->mr_code = $MR;
-            $RquEPI->service_id = $SeviceId;
-            $RquEPI->service_mode_id = $ServiceModeID;
-            $RquEPI->billing_cc = $billingCC;
-            $RquEPI->patient_age = $Age;
-            $RquEPI->emp_id = $Physician;
-            $RquEPI->action = $Action;
-            $RquEPI->remarks = $Remarks;
-            $RquEPI->status = $status;
-            $RquEPI->user_id = $sessionId;
-            $RquEPI->last_updated = $last_updated;
-            $RquEPI->timestamp = $timestamp;
-            $RquEPI->effective_timestamp = $Edt;
+        // else{
+            // Insert multiple requisitions
+            $successCount = 0;
+            $totalCount = count($ServiceIds);
+            
+            foreach ($ServiceIds as $index => $serviceId) {
+                $serviceModeId = $ServiceModeIDs[$index];
+                $RquEPI = new RequisitionForEPI();
+                $RquEPI->org_id = $Org;
+                $RquEPI->site_id = $Site;
+                $RquEPI->mr_code = $MR;
+                $RquEPI->service_id = $serviceId;
+                $RquEPI->service_mode_id = $serviceModeId;
+                $RquEPI->billing_cc = $billingCC;
+                $RquEPI->patient_age = $Age;
+                $RquEPI->emp_id = $Physician;
+                $RquEPI->action = $Action;
+                $RquEPI->remarks = $Remarks;
+                $RquEPI->status = $status;
+                $RquEPI->user_id = $sessionId;
+                $RquEPI->last_updated = $last_updated;
+                $RquEPI->timestamp = $timestamp;
+                $RquEPI->effective_timestamp = $Edt;
 
+                $RquEPI->save();
 
-            $RquEPI->save();
-
-            if (empty($RquEPI->id)) {
-                return response()->json(['error' => "Failed to add Requisition for $act."]);
+                if (!empty($RquEPI->id)) {
+                    $successCount++;
+                    
+                    $logs = Logs::create([
+                        'module' => 'patient_medical_record',
+                        'content' => "Requisition For $act has been added by '{$sessionName}'",
+                        'event' => 'add',
+                        'timestamp' => $timestamp,
+                    ]);
+                    $logId = $logs->id;
+                    $RquEPI->logid = $logs->id;
+                    $RquEPI->save();
+                }
             }
 
-            $logs = Logs::create([
-                'module' => 'patient_medical_record',
-                'content' => "Requisition For $act has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $RquEPI->logid = $logs->id;
-            $RquEPI->save();
-            return response()->json(['success' => "Requisition for $act added successfully"]);
-        }
-
-
+            if($Action == 'e')
+            {
+                return response()->json(['success' => "Requisition for Encounter added successfully"]);
+            }
+            else if($Action == 'p')
+            {
+                return response()->json(['success' => "Requisition for Procedure added successfully"]);
+            }
+            else if($Action == 'i')
+            {
+                if ($successCount === $totalCount) {
+                    return response()->json(['success' => "All $totalCount requisitions for $act added successfully"]);
+                } 
+                else {
+                    return response()->json(['error' => "Failed to add some requisitions for $act. Only $successCount out of $totalCount were added."]);
+                }
+            }
     }
 
     public function GetRequisitionEPI(Request $request)
@@ -2947,7 +3075,8 @@ class PatientMedicalRecord extends Controller
 
 
         $InvTransactionType = trim($request->input('rmc_transaction_type'));
-        $InvLocation = trim($request->input('rmc_inv_location'));
+        $SourceLocation = ($request->input('rmc_source_location'));
+        $DestinationLocation = ($request->input('rmc_destination_location'));
 
         $InvGeneric =  implode(',',($request->input('rmc_inv_generic')));
         $Dose =  implode(',',($request->input('rmc_dose')));
@@ -2964,7 +3093,7 @@ class PatientMedicalRecord extends Controller
         $timestamp = $this->currentDatetime;
 
         $ReqMedicationConsumption = RequisitionForMedicationConsumption::create([
-            'transaction_type_id' => $InvTransactionType, 'inv_location_id' => $InvLocation, 'mr_code' => $MR,
+            'transaction_type_id' => $InvTransactionType, 'source_location_id' => $SourceLocation, 'destination_location_id' => $DestinationLocation, 'mr_code' => $MR,
             'gender_id' => $Gender, 'age' => $Age, 'service_id' => $Service, 'org_id' => $Org, 'site_id' => $Site,
             'service_mode_id' => $ServiceModeId, 'service_type_id' => $ServiceTypeId, 'service_group_id' => $ServiceGroupId,
             'responsible_physician' => $ResponsiblePhysician, 'billing_cc' => $BillingCC,
@@ -3013,7 +3142,8 @@ class PatientMedicalRecord extends Controller
             'employee.name as Physician',
             'organization.organization as OrgName', 'org_site.name as SiteName', 'services.name as serviceName',
             'service_mode.name as serviceMode', 'billingCC.name as billingCC', 'service_group.name as serviceGroup',
-            'service_type.name as serviceType','inventory_transaction_type.name as TransactionType','service_location.name as ServiceLocationName'
+            'service_type.name as serviceType','inventory_transaction_type.name as TransactionType',
+            'source_location.name as SourceLocationName','destination_location.name as DestinationLocationName'
         )
         ->join('gender', 'gender.id', '=', 'req_medication_consumption.gender_id')
         ->join('costcenter as billingCC', 'billingCC.id', '=', 'req_medication_consumption.billing_cc')
@@ -3025,7 +3155,8 @@ class PatientMedicalRecord extends Controller
         ->join('service_group', 'service_group.id', '=', 'req_medication_consumption.service_group_id')
         ->join('service_type', 'service_type.id', '=', 'req_medication_consumption.service_type_id')
         ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'req_medication_consumption.transaction_type_id')
-        ->join('service_location', 'service_location.id', '=', 'req_medication_consumption.inv_location_id')
+        ->leftJoin('service_location as source_location', 'source_location.id', '=', 'req_medication_consumption.source_location_id')
+        ->leftJoin('service_location as destination_location', 'destination_location.id', '=', 'req_medication_consumption.destination_location_id')
         ->join('patient', 'patient.mr_code', '=', 'req_medication_consumption.mr_code')
         ->where('req_medication_consumption.mr_code', $mr)
         ->get();
@@ -3072,7 +3203,6 @@ class PatientMedicalRecord extends Controller
                 $session = auth()->user();
                 $sessionName = $session->name;
                 $TransactionType = $RMCDetail->TransactionType;
-                $ServiceLocationName = $RMCDetail->ServiceLocationName;
                 $SiteName = $RMCDetail->SiteName;
                 $serviceType = $RMCDetail->serviceType;
                 $Remarks = !empty($RMCDetail->remarks) ? $RMCDetail->remarks : 'N/A';
@@ -3080,12 +3210,21 @@ class PatientMedicalRecord extends Controller
                 $effectiveDate = Carbon::createFromTimestamp($RMCDetail->effective_timestamp)->format('l d F Y - h:i A');
                 $timestamp = Carbon::createFromTimestamp($RMCDetail->timestamp)->format('l d F Y - h:i A');
 
+                // Build location information
+                $locationInfo = '';
+                if (!empty($RMCDetail->SourceLocationName)) {
+                    $locationInfo .= '<br><b>Source Location: </b>' . ucwords($RMCDetail->SourceLocationName);
+                }
+                if (!empty($RMCDetail->DestinationLocationName)) {
+                    $locationInfo .= '<br><b>Destination Location: </b>' . ucwords($RMCDetail->DestinationLocationName);
+                }
+
                 $RequisitionCode = $RMCDetail->code;
                 return $RequisitionCode
                     . '<hr class="mt-1 mb-2">'
-                    .'<b>Request For</b>: '.$TransactionType.'<br>'
-                    .'<b>Requesting Location</b>: '.$ServiceLocationName.'<br>'
-                    .'<b>Site</b>: '.$SiteName.'<br>'
+                    .'<b>Request For</b>: '.$TransactionType
+                    .$locationInfo
+                    .'<br><b>Site</b>: '.$SiteName.'<br>'
                     .'<b>Request Date: </b>: '.$timestamp.'<br>'
                     .'<b>Effective Date: </b>: '.$effectiveDate.'<br>'
                     .'<b>Remarks</b>: '.$Remarks;
@@ -3244,12 +3383,14 @@ class PatientMedicalRecord extends Controller
             abort(403, 'Forbidden');
         }
         $ReqMC = RequisitionForMedicationConsumption::select('req_medication_consumption.*',
-        'inventory_transaction_type.name as TransactionTypeName','service_location.name as ServiceLocationName'
+        'inventory_transaction_type.name as TransactionTypeName',
+        'source_location.name as SourceLocationName','destination_location.name as DestinationLocationName'
         // 'inventory_generic.name as Generic',
         // 'medication_routes.name as RouteName','medication_frequency.name as FrequencyName',
         )
         ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'req_medication_consumption.transaction_type_id')
-        ->join('service_location', 'service_location.id', '=', 'req_medication_consumption.inv_location_id')
+        ->leftJoin('service_location as source_location', 'source_location.id', '=', 'req_medication_consumption.source_location_id')
+        ->leftJoin('service_location as destination_location', 'destination_location.id', '=', 'req_medication_consumption.destination_location_id')
         // ->join('inventory_generic', 'inventory_generic.id', '=', 'req_medication_consumption.inv_generic_id')
         // ->join('medication_routes', 'medication_routes.id', '=', 'req_medication_consumption.route')
         // ->join('medication_frequency', 'medication_frequency.id', '=', 'req_medication_consumption.frequency')
@@ -3298,8 +3439,10 @@ class PatientMedicalRecord extends Controller
             'Remarks' => ucwords($ReqMC->remarks),
             'TransactionTypeId' => $ReqMC->transaction_type_id,
             'TransactionType' => ucwords($ReqMC->TransactionTypeName),
-            'ServiceLocationId' => $ReqMC->inv_location_id,
-            'ServiceLocation' => ucwords($ReqMC->ServiceLocationName),
+            'SourceLocationId' => $ReqMC->source_location_id,
+            'SourceLocationName' => ucwords($ReqMC->SourceLocationName),
+            'DestinationLocationId' => $ReqMC->destination_location_id,
+            'DestinationLocationName' => ucwords($ReqMC->DestinationLocationName),
             'genericIds' => $ReqMC->inv_generic_ids,
             'genericNames' => ucwords($ReqMC->genericNames),
             'routeIds' => $ReqMC->route_ids,
@@ -3323,7 +3466,8 @@ class PatientMedicalRecord extends Controller
         $ReqMC = RequisitionForMedicationConsumption::findOrFail($id);
 
         $ReqMC->transaction_type_id = $request->input('u_rmc_transaction_type');
-        $ReqMC->inv_location_id = $request->input('u_rmc_inv_location');
+        $ReqMC->source_location_id = $request->input('u_rmc_source_location');
+        $ReqMC->destination_location_id = $request->input('u_rmc_destination_location');
         $ReqMC->remarks = $request->input('u_rmc_remarks');
 
         $ReqMC->inv_generic_ids = implode(',',($request->input('u_rmc_inv_generic')));
@@ -3371,54 +3515,54 @@ class PatientMedicalRecord extends Controller
         $mr = strpos($mr, '-') === false ? ($orgCode ? $orgCode : 'ZMTP') . '-' . $mr : $mr;
 
         $ServiceLocations = ServiceLocation::select('id', 'name')->where('status', 1)->get();
-        // $PatientDetails = PatientRegistration::select(
-        //     'patient.name as patientName', 'gender.name as gender','organization.organization as orgName',
-        //     'organization.id as orgId',
-        //     'org_site.name as siteName','patient.dob as patientDOB','patient.mr_code as patientMR',
-        //     'employee.name as responsiblePhysician','billingCC.name as billingCCName',
-        //     'patient_inout.status as patientInOutStatus'
-        // )
-        // ->join('gender', 'gender.id', '=', 'patient.gender_id')
-        // ->join('organization', 'organization.id', '=', 'patient.org_id')
-        // ->join('org_site', 'org_site.id', '=', 'patient.site_id')
-        // ->leftjoin('patient_inout', 'patient_inout.mr_code', '=', 'patient.mr_code')
-        // ->leftjoin('employee', 'employee.id', '=', 'patient_inout.emp_id')
-        // ->leftjoin('costcenter as billingCC', 'billingCC.id', '=', 'patient_inout.billing_cc')
-        // ->where('patient.status', 1)
-        // ->when(
-        //     PatientArrivalDeparture::where([
-        //         ['mr_code', '=', $mr],
-        //         ['status', '=', 1]
-        //     ])->exists(),
-        //     function ($query) {
-        //         $query->where('patient_inout.status', 1);
-        //     }
-        // )
-        // ->where('patient.mr_code', $mr)
-        // ->first();
-        // $canAdd = $PatientDetails && $PatientDetails->patientInOutStatus == 1;
+        $PatientDetails = PatientRegistration::select(
+            'patient.name as patientName', 'gender.name as gender','organization.organization as orgName',
+            'organization.id as orgId',
+            'org_site.name as siteName','patient.dob as patientDOB','patient.mr_code as patientMR',
+            'employee.name as responsiblePhysician','billingCC.name as billingCCName',
+            'patient_inout.status as patientInOutStatus'
+        )
+        ->join('gender', 'gender.id', '=', 'patient.gender_id')
+        ->join('organization', 'organization.id', '=', 'patient.org_id')
+        ->join('org_site', 'org_site.id', '=', 'patient.site_id')
+        ->leftjoin('patient_inout', 'patient_inout.mr_code', '=', 'patient.mr_code')
+        ->leftjoin('employee', 'employee.id', '=', 'patient_inout.emp_id')
+        ->leftjoin('costcenter as billingCC', 'billingCC.id', '=', 'patient_inout.billing_cc')
+        ->where('patient.status', 1)
+        ->when(
+            PatientArrivalDeparture::where([
+                ['mr_code', '=', $mr],
+                ['status', '=', 1]
+            ])->exists(),
+            function ($query) {
+                $query->where('patient_inout.status', 1);
+            }
+        )
+        ->where('patient.mr_code', $mr)
+        ->first();
+        $canAdd = $PatientDetails && $PatientDetails->patientInOutStatus == 1;
 
-        // $dob = Carbon::createFromTimestamp($PatientDetails->patientDOB);
-        // $now = Carbon::now();
-        // $diff = $dob->diff($now);
+        $dob = Carbon::createFromTimestamp($PatientDetails->patientDOB);
+        $now = Carbon::now();
+        $diff = $dob->diff($now);
 
-        // $years = $diff->y;
-        // $months = $diff->m;
-        // $days = $diff->d;
+        $years = $diff->y;
+        $months = $diff->m;
+        $days = $diff->d;
 
-        // $ageString = "";
-        // if ($years > 0) {
-        //     $ageString .= $years . " " . ($years == 1 ? "year" : "years");
-        // }
-        // if ($months > 0) {
-        //     $ageString .= " " . $months . " " . ($months == 1 ? "month" : "months");
-        // }
-        // if ($days > 0) {
-        //     $ageString .= " " . $days . " " . ($days == 1 ? "day" : "days");
-        // }
+        $ageString = "";
+        if ($years > 0) {
+            $ageString .= $years . " " . ($years == 1 ? "year" : "years");
+        }
+        if ($months > 0) {
+            $ageString .= " " . $months . " " . ($months == 1 ? "month" : "months");
+        }
+        if ($days > 0) {
+            $ageString .= " " . $days . " " . ($days == 1 ? "day" : "days");
+        }
 
-        // return view('dashboard.investigation-tracking', compact('user','PatientDetails','ageString','ServiceLocations','canAdd'));
-        return view('dashboard.investigation-tracking', compact('user','ServiceLocations'));
+        return view('dashboard.investigation-tracking', compact('user','PatientDetails','ageString','ServiceLocations','canAdd'));
+        // return view('dashboard.investigation-tracking', compact('user','ServiceLocations'));
     }
 
     public function ConfirmSampleReport(SampleTrackingRequest $request)
@@ -4445,6 +4589,29 @@ class PatientMedicalRecord extends Controller
 
             ->rawColumns(['id_raw','mr','description','physician','date','attachments'])
             ->make(true);
+    }
+
+    /**
+     * Get patients for sidebar investigation tracking
+     */
+    public function GetPatientsForSidebar()
+    {
+        try {
+            $patients = PatientRegistration::select('mr_code', 'name', 'cell_no')
+                ->where('status', 1)
+                ->orderBy('name', 'asc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'patients' => $patients
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
 

@@ -26,6 +26,7 @@ $(document).ready(function() {
             });
             $('.et_generic').html("<option selected disabled value=''>Select Item Generic</option>");
             fetchOrganizationItemGeneric(orgId, '.et_generic', function(data) {
+                    console.log(data);
                 $.each(data, function(key, value) {
                     $('.et_generic').append('<option value="' + value.id + '">' + value.name + '</option>');
                 });
@@ -163,40 +164,63 @@ $(document).ready(function() {
                     else {
                         $('#et_dl').hide();
                     }
-        
+
                     if (resp.sourceData && resp.sourceData.length > 0) {
-                         $('#et_source')
+                        $('#et_source')
                             .empty()
                             .append('<option selected disabled value="">Select Source</option>');
                         resp.sourceData.forEach(function(item) {
-                            let displayText = item.name || item.person_name || 'Unnamed';
+                            let displayText = '';
+
+                            if (item.person_name) {
+                                displayText = (item.prefix ? item.prefix + ' ' : '') + item.person_name;
+                            } else {
+                                displayText = item.name || 'Unnamed';
+                            }
+                            if (item.corporate_name) {
+                                displayText += ' - ' + item.corporate_name;
+                            }
                             $('#et_source').append(
                                 '<option value="' + item.id + '">' + displayText + '</option>'
                             );
                         });
+
                         $('#et_source').prop('disabled', false);
                     } else {
                         $('#et_source')
-                        .empty()
-                        .append('<option selected disabled value="">No Data Available</option>').prop('disabled', true);
+                            .empty()
+                            .append('<option selected disabled value="">No Data Available</option>')
+                            .prop('disabled', true);
                     }
-        
+
                     if (resp.destinationData && resp.destinationData.length > 0) {
                         $('#et_destination')
-                        .empty()
-                        .append('<option selected disabled value="">Select Destination</option>');
+                            .empty()
+                            .append('<option selected disabled value="">Select Destination</option>');
+
                         resp.destinationData.forEach(function(item) {
-                            let displayText = item.name || item.person_name || 'Unnamed';
+                            let displayText = '';
+                            if (item.person_name) {
+                                displayText = (item.prefix ? item.prefix + ' ' : '') + item.person_name;
+                            } else {
+                                displayText = item.name || 'Unnamed';
+                            }
+                            if (item.corporate_name) {
+                                displayText += ' - ' + item.corporate_name;
+                            }
                             $('#et_destination').append(
                                 '<option value="' + item.id + '">' + displayText + '</option>'
                             );
                         });
+
                         $('#et_destination').prop('disabled', false);
                     } else {
                         $('#et_destination')
-                        .empty()
-                        .append('<option selected disabled value="">No Data Available</option>').prop('disabled', true);
+                            .empty()
+                            .append('<option selected disabled value="">No Data Available</option>')
+                            .prop('disabled', true);
                     }
+
                 },
                 error: function(xhr, status, error) {
                     Swal.close();
@@ -276,6 +300,9 @@ $(document).ready(function() {
         e.preventDefault();
         var data = SerializeForm(this);
         var resp = true;
+        var requireSource = $('#et_sl').is(':visible');
+        var requireDestination = $('#et_dl').is(':visible');
+
         $(".duplicate").each(function() {
             var row = $(this);
             row.find('input, textarea, select').each(function() {
@@ -313,15 +340,19 @@ $(document).ready(function() {
 
         var excludedFields = ['et_reference_document', 'et_remarks'];
         $(data).each(function(i, field){
+            var FieldName = field.name;
+
             var originalFieldName = field.name;
             var sanitizedFieldName = originalFieldName.replace(/\[\]/g, '');
             if (excludedFields.indexOf(sanitizedFieldName) !== -1) {
                 return true; 
             }
+            if ((FieldName === 'et_source' && !requireSource) || (FieldName === 'et_destination' && !requireDestination)) {
+                return true;
+            }
             if ((field.value == '') || (field.value == null))
             {
-                var FieldName = field.name;
-                var FieldID = '#'+FieldName + "_error";
+                var FieldID = '#'+sanitizedFieldName + "_error";
               
                 $(FieldID).text("This field is required");
                 $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
@@ -457,722 +488,5 @@ $(document).ready(function() {
         $('#ajax-loader').hide();
     });
     // View External Transaction
-
-    
-
-    // //Update Inventory Management Modal
-    // $(document).on('click', '.edit-externaltransactions', function() {
-    //     var inventoryId = $(this).data('externaltransactions-id');
-    //     var url = '/inventory/updateinvmanagement/' + inventoryId;
-    //     $('#ajax-loader').show();
-    //     $.ajax({
-    //         url: url,
-    //         type: 'GET',
-    //         dataType: 'json',
-    //         success: function(response) {
-    //             $('#u_im_brand').empty();
-    //             $('#u_et_site').empty();
-    //             $('#ajax-loader').hide();
-    //             var formattedDateTime = moment(response.effective_timestamp, 'dddd DD MMMM YYYY - hh:mm A').format('dddd DD MMMM YYYY - hh:mm A');
-    //             $('.uedt').each(function() {
-    //                 var edtElement = $(this);
-    //                 edtElement.val(formattedDateTime);
-    //             });
-    //             $('.u_im-id').val(response.id);
-    //             var transactionType =  response.TransactionType;
-
-    //             $('#u_im_qty').prop('disabled',false);
-
-    //             var orgId = $('#u_et_org').val();
-    //             if(!orgId)
-    //             {
-    //                 $('#u_et_org').html("<option selected value="+ response.orgId +">" + response.orgName + "</option>");
-    //                 fetchOrganizations('null', '','#u_et_org', function(data) {
-    //                     $('#u_et_org').find('option:contains("Loading...")').remove();
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.orgId)
-    //                         {
-    //                             $('#u_et_org').append('<option value="' + value.id + '">' + value.organization + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 OrgChangeSites('#u_et_org', '#u_et_site', '#add_externaltransactions');
-    //                 OrgChangeBrand('#u_et_org', '#u_im_brand', '#add_externaltransactions');
-
-    //             }
-    //             $('#u_et_site').html("<option selected value='"+response.siteId+"'>" + response.siteName + "</option>");
-    //             fetchSites(response.orgId, '#u_et_site', function(data) {
-    //                 if (data.length > 0) {
-    //                     $.each(data, function(key, value) {
-    //                         $('#u_et_site').append('<option value="' + value.id + '">' + value.name + '</option>');
-    //                     });
-    //                 }
-    //                 else {
-    //                     Swal.fire({
-    //                         text: 'Sites are not available for selected Organization',
-    //                         icon: 'error',
-    //                         confirmButtonText: 'OK'
-    //                     }).then((result) => {
-    //                         if (result.isConfirmed) {
-    //                             $('#edit-materialconsumption').modal('hide');
-    //                         }
-    //                     });
-    //                 }
-    //             }, function(error) {
-    //                 console.log(error);
-    //             },response.siteId);
-
-    //             $('#u_im_brand').html("<option selected value='"+response.brandId+"'>" + response.brandName + "</option>");
-    //             fetchOrganizationBrand(response.orgId,'#u_im_brand', function(data) {
-    //                 $('#u_im_brand').find('option:contains("Loading...")').remove();
-    //                 $.each(data, function(key, value) {
-    //                     if(value.id != response.brandId)
-    //                     {
-    //                         $('#u_im_brand').append('<option value="' + value.id + '">' + value.name + '</option>');
-    //                     }
-    //                 });
-    //             });
-    //             $('#u_et_transactiontype').html("<option selected  data-type="+ transactionType +" value="+response.transactionTypeId+">"+response.TransactionTypeName+"</option>").prop('disabled',true);
-                
-    //             if(transactionType == 'opening balance')
-    //             {
-    //                 $('#u_reference_document_section, #u_from_section, #u_to_section').hide();
-    //                 var referenceDocument = 'null';
-    //                 var From = 'null';
-    //                 var To = 'null';
-    //                 $('#u_selectoption').hide();
-    //                 $('#u_selectoption select').removeAttr('name id');
-    //                 $('#u_opentext').show();
-    //                 $('#u_opentext input').attr({
-    //                     'name': 'u_im_reference_document',
-    //                     'id': 'u_im_reference_document'
-    //                 });
-    //                 $('#u_im_reference_document').val(response.document_no);
-
-    //                 $('#u_select_batch select').select2('destroy');
-    //                 $('#u_select_batch').find('label, select').remove();
-    //                 $('#u_enter_batch').show();
-    //                 $('#u_enter_batch').html('<label for="im_reference_document">Update Batch #</label><input type="text" class="form-control input-sm">');
-    //                 $('#u_enter_batch input').attr({
-    //                     'name': 'u_im_batch_no',
-    //                     'id': 'u_im_batch_no'
-    //                 });
-    //                 $('#u_im_batch_no').val(response.batchNo);
-
-    //             }
-    //             else if(transactionType == 'addition')
-    //             {
-    //                 $('#u_reference_document_section, #u_from_section, #u_to_section').show();
-    //                 var referenceDocument = 'Open Text';
-    //                 if(!orgId)
-    //                 {
-    //                     OrgChangeVendor('#u_et_org', '#u_im_origin', '#update_externaltransactions');
-    //                     OrgChangeSites('#u_et_org', '#u_im_destination', '#update_externaltransactions');
-    //                 }
-    //                 $('#u_im_origin').attr({'required': 'required'});
-    //                 $('#u_im_origin').html("<option selected value="+response.OriginId+">"+response.OriginName+"</option>").prop('disabled', false);
-    //                 fetchOrganizationVendor(response.orgId, '#u_im_origin', function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.OriginId)
-    //                         {
-    //                             $('#u_im_origin').append('<option value="' + value.id + '">' + value.person_name + '</option>');
-    //                         }
-    //                     });
-    //                 });
-
-    //                 $('#u_im_destination').attr({'required': 'required'});
-    //                 $('#u_im_destination').html("<option selected value="+response.DestinationId+">"+response.DestinationName+"</option>").prop('disabled', false);
-    //                 fetchOrganizationSites(response.orgId, '#u_im_destination', function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.DestinationId)
-    //                         {
-    //                             $('#u_im_destination').append('<option value="' + value.id + '">' + value.name + '</option>');
-    //                         }
-    //                     });
-    //                 });
-                    
-    //                 $('#u_selectoption').hide();
-    //                 $('#u_selectoption select').removeAttr('name id');
-    //                 $('#u_opentext').show();
-    //                 $('#u_opentext input').attr({
-    //                     'name': 'u_im_reference_document',
-    //                     'id': 'u_im_reference_document',
-    //                     'required': 'required'
-    //                 });
-    //                 $('#u_im_reference_document').val('');
-    //                 $('#u_im_reference_document').val(response.document);
-
-    //                 $('#u_select_batch select').select2('destroy');
-    //                 $('#u_select_batch').find('label, select').remove();
-    //                 $('#u_enter_batch').show();
-    //                 $('#u_enter_batch').html('<label for="im_reference_document">Update Batch #</label><input type="text" class="form-control input-sm">');
-    //                 $('#u_enter_batch input').attr({
-    //                     'name': 'u_im_batch_no',
-    //                     'id': 'u_im_batch_no'
-    //                 });
-    //                 $('#u_im_batch_no').val(response.batchNo);
-
-    //             }
-    //             else if(transactionType == 'reduction')
-    //             {
-    //                 $('#u_opentext').hide();
-    //                 $('#u_im_expirydate,#u_im_rate').prop('disabled',true);
-    //                 $('#u_opentext input').removeAttr('name id');
-    //                 $('#u_selectoption').show();
-    //                 $('#u_selectoption select').attr({
-    //                     'id': 'u_im_reference_document',
-    //                     'name': 'u_im_reference_document',
-    //                     'required': 'required'
-    //                 });
-    //                 $('#u_im_reference_document').empty();
-    //                 $('#u_im_reference_document').html("<option selected value="+response.documentId+">"+response.document+"</option>").prop('disabled', false);
-    //                 if(!orgId)
-    //                 {
-    //                     OrgChangeSites('#u_et_org', '#u_im_origin', '#update_externaltransactions');
-    //                     OrgChangeVendor('#u_et_org', '#u_im_destination', '#update_externaltransactions');
-
-    //                 }
-                    
-    //                 fetchBrandInventory(response.brandId, '#u_im_reference_document', function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.documentId)
-    //                         {
-    //                             $('#u_im_reference_document').append('<option value="' + value.id + '">' + value.code+'-00000'+value.id + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 BrandChangeInventory('#u_im_brand', '#u_im_reference_document', '#update_externaltransactions');
-
-    //                 $('#u_im_origin').attr({'required': 'required'});
-    //                 $('#u_im_origin').html("<option selected value="+response.OriginId+">"+response.OriginName+"</option>").prop('disabled', false);
-    //                 fetchOrganizationSites(response.orgId, '#u_im_origin', function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.DestinationId)
-    //                         {
-    //                             $('#u_im_origin').append('<option value="' + value.id + '">' + value.name + '</option>');
-    //                         }
-    //                     });
-    //                 });
-
-
-    //                 $('#u_im_destination').attr({'required': 'required'});
-    //                 $('#u_im_destination').html("<option selected value="+response.DestinationId+">"+response.DestinationName+"</option>").prop('disabled', false);
-    //                 fetchOrganizationVendor(response.orgId, '#u_im_destination', function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.DestinationId)
-    //                         {
-    //                             $('#u_im_destination').append('<option value="' + value.id + '">' + value.person_name + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 $('#u_reference_document_section, #u_from_section, #u_to_section').show();
-
-    //                 $('#u_select_batch').show();
-    //                 $('#u_select_batch').html('<label class="control-label">Update Batch  #</label> <select class="form-control selecter p-0" style="color:#222d32"></select>');
-    //                 $('#u_enter_batch').hide();
-    //                 $('#u_enter_batch').find('label, input').remove();
-    //                 $('#u_select_batch select').attr({
-    //                     'id': 'u_im_batch_no',
-    //                     'name': 'u_im_batch_no'
-    //                 }).select2();
-    //                 $('#u_im_batch_no').html("<option selected value='"+response.id+"'>" + response.batchNo + "</option>");
-    //                 fetchBrandBatch(response.brandId,'#u_im_batch_no', function(data) {
-    //                     $('#u_im_batch_no').find('option:contains("Loading...")').remove();
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.id)
-    //                         {
-    //                             $('#u_im_batch_no').append('<option data-id= "' + value.id + '" value="' + value.batch_no + '">' + value.batch_no + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 BrandChangeBatch('#u_im_brand', '#u_im_batch_no', '#add_externaltransactions');
-    //                 BatchChangeExpiryRate('update','#u_im_batch_no', '#u_itemexpiry', '#u_itemrate', 'reduction');
-    //             }
-    //             else if(transactionType == 'transfer')
-    //             {
-    //                 $('#u_reference_document_section').hide();
-    //                 $('#u_im_expirydate,#u_im_rate').prop('disabled',true);
-    //                 $('#u_from_section, #u_to_section').show();
-    //                 $('#u_selectoption').hide();
-    //                 $('#u_selectoption select').removeAttr('name id');
-    //                 $('#u_opentext').show();
-    //                 $('#u_opentext input').attr({
-    //                     'name': 'u_im_reference_document',
-    //                     'id': 'u_im_reference_document',
-    //                     'required': 'required'
-    //                 });
-
-    //                 if(!orgId)
-    //                 {
-    //                     OrgChangeSites('#u_et_org', '#u_im_origin', '#update_externaltransactions');
-    //                     OrgChangeSites('#u_et_org', '#u_im_destination', '#update_externaltransactions');
-    //                 }
-
-    //                 $('#u_im_origin').attr({'required': 'required'});
-    //                 $('#u_im_origin').html("<option selected value="+response.OriginId+">"+response.OriginName+"</option>").prop('disabled', false);
-    //                 fetchOrganizationSites(response.orgId, '#u_im_origin', function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.OriginId)
-    //                         {
-    //                             $('#u_im_origin').append('<option value="' + value.id + '">' + value.name + '</option>');
-    //                         }
-    //                     });
-    //                 });
-
-    //                 $('#u_im_destination').attr({'required': 'required'});
-    //                 $('#u_im_destination').html("<option selected value="+response.DestinationId+">"+response.DestinationName+"</option>").prop('disabled', false);
-    //                 fetchOrganizationSites(response.orgId, '#u_im_destination', function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.DestinationId)
-    //                         {
-    //                             $('#u_im_destination').append('<option value="' + value.id + '">' + value.name + '</option>');
-    //                         }
-    //                     });
-    //                 });
-
-    //                 $('#u_select_batch').show();
-    //                 $('#u_select_batch').html('<label class="control-label">Update Batch  #</label> <select class="form-control selecter p-0" style="color:#222d32"></select>');
-    //                 $('#u_enter_batch').hide();
-    //                 $('#u_enter_batch').find('label, input').remove();
-    //                 $('#u_select_batch select').attr({
-    //                     'id': 'u_im_batch_no',
-    //                     'name': 'u_im_batch_no'
-    //                 }).select2();
-    //                 $('#u_im_batch_no').html("<option selected value='"+response.id+"'>" + response.batchNo + "</option>");
-    //                 fetchBrandBatch(response.brandId,'#u_im_batch_no', function(data) {
-    //                     $('#u_im_batch_no').find('option:contains("Loading...")').remove();
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.id)
-    //                         {
-    //                             $('#u_im_batch_no').append('<option data-id= "' + value.id + '" value="' + value.batch_no + '">' + value.batch_no + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 BrandChangeBatch('#u_im_brand', '#u_im_batch_no', '#add_externaltransactions');
-    //                 BatchChangeExpiryRate('update','#u_im_batch_no', '#u_itemexpiry', '#u_itemrate', 'transfer');
-    //             }
-    //             else if(transactionType == 'general consumption')
-    //             {
-    //                 $('#u_im_expirydate,#u_im_rate').prop('disabled',true);
-    //                 $('#u_to_section').hide();
-    //                 $('#u_reference_document_section, #u_from_section').show();
-
-    //                 $('#u_im_origin').attr({'required': 'required'});
-    //                 $('#u_im_origin').html("<option selected value="+response.OriginId+">"+response.OriginName+"</option>").prop('disabled', false);
-    //                 fetchOrganizationSites(response.orgId, '#u_im_origin', function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.DestinationId)
-    //                         {
-    //                             $('#u_im_origin').append('<option value="' + value.id + '">' + value.name + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 if(!orgId)
-    //                 {
-    //                     OrgChangeSites('#u_et_org', '#u_im_origin', '#update_externaltransactions');
-    //                 }
-
-    //                 $('#u_opentext').hide();
-    //                 $('#u_opentext input').removeAttr('name id');
-    //                 $('#u_selectoption').show();
-    //                 $('#u_selectoption select').attr({
-    //                     'id': 'u_im_reference_document',
-    //                     'name': 'u_im_reference_document',
-    //                     'required': 'required'
-    //                 });
-    //                 $('#u_im_reference_document').html("<option selected value="+response.documentId+">"+response.document+"</option>").prop('disabled', false);
-    //                 fetchSiteRequisition(response.siteId, response.transactionTypeId, '#u_im_reference_document', function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.documentId)
-    //                         {
-    //                             $('#u_im_reference_document').append('<option value="' + value.id + '">' + value.remarks + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 SiteChangeRequisition('#u_et_site', '#u_et_transactiontype', '#u_im_reference_document', '#update_externaltransactions');
-                    
-    //                 $('#u_select_batch').show();
-    //                 $('#u_select_batch').html('<label class="control-label">Update Batch  #</label> <select class="form-control selecter p-0" style="color:#222d32"></select>');
-    //                 $('#u_enter_batch').hide();
-    //                 $('#u_enter_batch').find('label, input').remove();
-    //                 $('#u_select_batch select').attr({
-    //                     'id': 'u_im_batch_no',
-    //                     'name': 'u_im_batch_no'
-    //                 }).select2();
-    //                 $('#u_im_batch_no').html("<option selected value='"+response.id+"'>" + response.batchNo + "</option>");
-    //                 fetchBrandBatch(response.brandId,'#u_im_batch_no', function(data) {
-    //                     $('#u_im_batch_no').find('option:contains("Loading...")').remove();
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.id)
-    //                         {
-    //                             $('#u_im_batch_no').append('<option data-id= "' + value.id + '" value="' + value.batch_no + '">' + value.batch_no + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 BrandChangeBatch('#u_im_brand', '#u_im_batch_no', '#add_externaltransactions');
-    //                 BatchChangeExpiryRate('update','#u_im_batch_no', '#u_itemexpiry', '#u_itemrate', 'general_consumption');
-    //             }
-    //             else if(transactionType == 'patient consumption')
-    //             {
-    //                 $('#u_im_expirydate,#u_im_rate').prop('disabled',true);
-    //                 $('#u_reference_document_section, #u_from_section, #u_to_section').show();
-
-    //                 $('#u_im_origin').attr({'required': 'required'});
-    //                 $('#u_im_origin').html("<option selected value="+response.OriginId+">"+response.OriginName+"</option>").prop('disabled', false);
-    //                 fetchOrganizationVendor(response.orgId, '#u_im_origin', function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.OriginId)
-    //                         {
-    //                             $('#u_im_origin').append('<option value="' + value.id + '">' + value.person_name + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 if(!orgId)
-    //                 {
-    //                     OrgChangeVendor('#u_et_org', '#u_im_origin', '#update_externaltransactions');
-    //                 }
-    //                 $('#u_im_destination').attr({'required': 'required'});
-    //                 $('#u_im_destination').html("<option selected value="+response.DestinationId+">"+response.DestinationName+"</option>").prop('disabled', false);
-    //                 fetchPatientMR(response.siteId, '#u_im_destination', null, function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.mr_code != response.DestinationId)
-    //                         {
-    //                             $('#u_im_destination').append('<option value="' + value.mr_code + '">' + value.mr_code + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 SiteChangeMRCode('#u_et_site', '#u_im_destination', '#update_externaltransactions', null);
-    //                 $('#u_opentext').hide();
-    //                 $('#u_opentext input').removeAttr('name id');
-    //                 $('#u_selectoption').show();
-    //                 $('#u_selectoption select').attr({
-    //                     'id': 'u_im_reference_document',
-    //                     'name': 'u_im_reference_document',
-    //                     'required': 'required'
-    //                 });
-    //                 $('#u_im_reference_document').html("<option selected disabled value="+response.documentId+">"+response.document+"</option>").prop('disabled', false);
-    //                 fetchSiteRequisition(response.siteId, response.transactionTypeId, '#u_im_reference_document', function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.documentId)
-    //                         {
-    //                             $('#u_im_reference_document').append('<option value="' + value.id + '">' + value.remarks + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 SiteChangeRequisition('#u_et_site', '#u_et_transactiontype', '#u_im_reference_document', '#update_externaltransactions');
-                    
-    //                 $('#u_select_batch').show();
-    //                 $('#u_select_batch').html('<label class="control-label">Update Batch  #</label> <select class="form-control selecter p-0" style="color:#222d32"></select>');
-    //                 $('#u_enter_batch').hide();
-    //                 $('#u_enter_batch').find('label, input').remove();
-    //                 $('#u_select_batch select').attr({
-    //                     'id': 'u_im_batch_no',
-    //                     'name': 'u_im_batch_no'
-    //                 }).select2();
-    //                 $('#u_im_batch_no').html("<option selected value='"+response.id+"'>" + response.batchNo + "</option>");
-    //                 fetchBrandBatch(response.brandId,'#u_im_batch_no', function(data) {
-    //                     $('#u_im_batch_no').find('option:contains("Loading...")').remove();
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.id)
-    //                         {
-    //                             $('#u_im_batch_no').append('<option data-id= "' + value.id + '" value="' + value.batch_no + '">' + value.batch_no + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 BrandChangeBatch('#u_im_brand', '#u_im_batch_no', '#add_externaltransactions');
-    //                 BatchChangeExpiryRate('update','#u_im_batch_no', '#u_itemexpiry', '#u_itemrate', 'patient_consumption');
-    //             }
-    //             else if(transactionType == 'reversal')
-    //             {
-    //                 $('#u_im_expirydate,#u_im_rate,#u_im_qty').prop('disabled',true);
-    //                 $('#u_opentext').hide();
-    //                 $('#u_opentext input').removeAttr('name id');
-    //                 $('#u_selectoption').show();
-    //                 $('#u_selectoption select').attr({
-    //                     'id': 'u_im_reference_document',
-    //                     'name': 'u_im_reference_document',
-    //                     'required': 'required'
-    //                 });
-    //                 $('#u_im_reference_document').empty();
-    //                 $('#u_im_reference_document').html("<option selected value="+response.documentId+">"+response.document+"</option>").prop('disabled', false);
-    //                 fetchBrandInventory(response.brandId, '#u_im_reference_document', function(data) {
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.documentId)
-    //                         {
-    //                             $('#u_im_reference_document').append('<option value="' + value.id + '">' + value.code+'-00000'+value.id + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 BrandChangeInventory('#u_im_brand', '#u_im_reference_document', '#update_externaltransactions');
-    //                 $('#u_reference_document_section').show();
-    //                 $('#u_from_section, #u_to_section').hide();
-
-    //                 $('#u_select_batch').show();
-    //                 $('#u_select_batch').html('<label class="control-label">Update Batch  #</label> <select class="form-control selecter p-0" style="color:#222d32"></select>');
-    //                 $('#u_enter_batch').hide();
-    //                 $('#u_enter_batch').find('label, input').remove();
-    //                 $('#u_select_batch select').attr({
-    //                     'id': 'u_im_batch_no',
-    //                     'name': 'u_im_batch_no'
-    //                 }).select2();
-    //                 $('#u_im_batch_no').html("<option selected value='"+response.id+"'>" + response.batchNo + "</option>");
-    //                 fetchBrandBatch(response.brandId,'#u_im_batch_no', function(data) {
-    //                     $('#u_im_batch_no').find('option:contains("Loading...")').remove();
-    //                     $.each(data, function(key, value) {
-    //                         if(value.id != response.id)
-    //                         {
-    //                             $('#u_im_batch_no').append('<option data-id= "' + value.id + '" value="' + value.batch_no + '">' + value.batch_no + '</option>');
-    //                         }
-    //                     });
-    //                 });
-    //                 BrandChangeBatch('#u_im_brand', '#u_im_batch_no', '#add_externaltransactions');
-    //                 BatchChangeExpiryRate('update','#u_im_batch_no', '#u_itemexpiry', '#u_itemrate', 'reversal');
-    //             }
-
-               
-    //             var formattedExpiryDate = moment(response.expiryDate).format('YYYY-MM-DD');
-    //             $('#u_im_expirydate').each(function() {
-    //                 var expiryDateElement = $(this);
-    //                 expiryDateElement.val(formattedExpiryDate);
-    //             });
-    //             $('#u_im_rate').val(response.rate);
-    //             $('#u_im_qty').val(response.qty);
-    //             var documentType = response.document_type;
-                
-    //             // fetchTransactionTypeOrganizations(TransactionTypeID,'#u_et_org', function(data) {
-    //             //     $('#u_et_org').empty();
-    //             //     $('#u_et_org').html("<option selected disabled value=''>Select Organization</option>");
-    //             //     $('#u_et_org').find('option:contains("Loading...")').remove();
-    //             //     $.each(data, function(key, value) {
-    //             //         $('#u_et_org').append('<option value="' + value.id + '">' + value.organization + '</option>');
-    //             //     });
-    //             // });
-    //             // fetchTransactionTypes('null', '#u_et_transactiontype', false, function(data) {
-    //             //     if (data && data.length > 0) {
-    //             //         $.each(data, function(key, value) {
-    //             //             if(value.id != response.transactionTypeId)
-    //             //             {
-    //             //                 $('#u_et_transactiontype').append('<option data-type="' + value.transaction_type + '" value="' + value.id + '">' + value.name + '</option>');
-    //             //             }
-    //             //         });
-    //             //     } else {
-    //             //         Swal.fire({
-    //             //             text: 'Transaction Types are not currently available.',
-    //             //             icon: 'error',
-    //             //             confirmButtonText: 'OK'
-    //             //         }).then((result) => {
-    //             //             if (result.isConfirmed) {
-    //             //                 $('#edit-externaltransactions').modal('hide');
-    //             //             }
-    //             //         });
-
-    //             //     }
-    //             // });
-
-                
-    //             // $(document).off('change', '#u_et_transactiontype').on('change', '#u_et_transactiontype', function() {
-    //             // // $(document).on('change', '#u_et_transactiontype', function() {
-    //             //     $('#u_et_org').val($(this).find('option:first').val()).trigger('change');
-    //             //     $('#u_et_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',true);
-    //             //     $('#u_im_brand').html("<option selected disabled value=''>Select Brand</option>").prop('disabled',true);
-    //             //     OrgChangeBrand('#u_et_org', '#u_im_brand', '#add_externaltransactions');
-
-    //             //     var TransactionTypeID = $(this).val();
-    //             //     var dataType = $(this).find('option:selected').data('type'); 
-    //             //     $('#u_inv-management-section').show();
-    //             //     var referenceDocument = '';
-    //             //     var From = '';
-    //             //     var To = '';
-
-    //             //     if(dataType == 'opening balance')
-    //             //     {
-    //             //         $('#u_reference_document_section, #u_from_section, #u_to_section').hide();
-    //             //         var referenceDocument = 'null';
-    //             //         var From = 'null';
-    //             //         var To = 'null';
-    //             //         $('#u_selectoption').hide();
-    //             //         $('#u_selectoption select').removeAttr('name id');
-    //             //         $('#u_opentext').show();
-    //             //         $('#u_opentext input').attr({
-    //             //             'name': 'u_im_reference_document',
-    //             //             'id': 'u_im_reference_document'
-    //             //         });
-    //             //     }
-    //             //     else if(dataType == 'addition')
-    //             //     {
-    //             //         $('#u_reference_document_section, #u_from_section, #u_to_section').show();
-    //             //         var referenceDocument = 'Open Text';
-    //             //         $('#u_im_origin').html("<option selected disabled value=''>Select Origin</option>").prop('disabled',true);
-    //             //         OrgChangeVendor('#u_et_org', '#u_im_origin', '#update_externaltransactions');
-    //             //         $('#u_im_destination').html("<option selected disabled value=''>Select Destination</option>").prop('disabled',true);
-    //             //         OrgChangeSites('#u_et_org', '#u_im_destination', '#update_externaltransactions');
-    //             //         $('#u_selectoption').hide();
-    //             //         $('#u_selectoption select').removeAttr('name id');
-    //             //         $('#u_opentext').show();
-    //             //         $('#u_opentext input').attr({
-    //             //             'name': 'u_im_reference_document',
-    //             //             'id': 'u_im_reference_document'
-    //             //         });
-    //             //     }
-    //             //     else if(dataType == 'reduction')
-    //             //     {
-    //             //         $('#u_opentext').hide();
-    //             //         $('#u_opentext input').removeAttr('name id');
-    //             //         $('#u_selectoption').show();
-    //             //         $('#u_selectoption select').attr({
-    //             //             'id': 'u_im_reference_document',
-    //             //             'name': 'u_im_reference_document'
-    //             //         });
-    //             //         $('#u_im_reference_document').empty();
-    //             //         $('#u_im_reference_document').html("<option selected disabled value=''>Select Previous Inventory Transaction</option>");
-    //             //         BrandChangeInventory('#u_im_brand', '#u_im_reference_document', '#update_externaltransactions');
-    //             //         $('#u_reference_document_section, #u_from_section, #u_to_section').show();
-    //             //         $('#u_im_origin').html("<option selected disabled value=''>Select Origin</option>").prop('disabled',true);
-    //             //         OrgChangeSites('#u_et_org', '#u_im_origin', '#update_externaltransactions');
-    //             //         $('#u_im_destination').html("<option selected disabled value=''>Select Destination</option>").prop('disabled',true);
-    //             //         OrgChangeVendor('#u_et_org', '#u_im_destination', '#update_externaltransactions');
-                        
-    //             //     }
-    //             //     else if(dataType == 'transfer')
-    //             //     {
-    //             //         $('#u_reference_document_section').hide();
-    //             //         $('#u_from_section, #u_to_section').show();
-    //             //         $('#u_selectoption').hide();
-    //             //         $('#u_selectoption select').removeAttr('name id');
-    //             //         $('#u_opentext').show();
-    //             //         $('#u_opentext input').attr({
-    //             //             'name': 'u_im_reference_document',
-    //             //             'id': 'u_im_reference_document'
-    //             //         });
-    //             //         $('#u_im_origin').html("<option selected disabled value=''>Select Origin</option>").prop('disabled',true);
-    //             //         OrgChangeSites('#u_et_org', '#u_im_origin', '#update_externaltransactions');
-    //             //         $('#u_im_destination').html("<option selected disabled value=''>Select Destination</option>").prop('disabled',true);
-    //             //         OrgChangeSites('#u_et_org', '#u_im_destination', '#update_externaltransactions');
-    //             //     }
-    //             //     else if(dataType == 'general consumption')
-    //             //     {
-    //             //         $('#u_to_section').hide();
-    //             //         $('#u_reference_document_section, #u_from_section').show();
-    //             //         $('#u_im_origin').html("<option selected disabled value=''>Select Origin</option>").prop('disabled',true);
-    //             //         OrgChangeSites('#u_et_org', '#u_im_origin', '#update_externaltransactions');
-    //             //         $('#u_opentext').hide();
-    //             //         $('#u_opentext input').removeAttr('name id');
-    //             //         $('#u_selectoption').show();
-    //             //         $('#u_selectoption select').attr({
-    //             //             'id': 'u_im_reference_document',
-    //             //             'name': 'u_im_reference_document'
-    //             //         });
-    //             //         $('#u_im_reference_document').html("<option selected disabled value=''>Select Requisition</option>").prop('disabled',true);
-    //             //         SiteChangeRequisition('#u_et_site', '#u_et_transactiontype', '#u_im_reference_document', '#update_externaltransactions');
-    //             //     }
-    //             //     else if(dataType == 'patient consumption')
-    //             //     {
-    //             //         $('#u_reference_document_section, #u_from_section, #u_to_section').show();
-    //             //         $('#u_im_origin').html("<option selected disabled value=''>Select Origin</option>").prop('disabled',true);
-    //             //         OrgChangeVendor('#u_et_org', '#u_im_origin', '#update_externaltransactions');
-    //             //         $('#u_im_destination').html("<option selected disabled value=''>Select MR#</option>").prop('disabled',true);
-    //             //         SiteChangeMRCode('#u_et_site', '#u_im_destination', '#update_externaltransactions', null);
-    //             //         $('#u_opentext').hide();
-    //             //         $('#u_opentext input').removeAttr('name id');
-    //             //         $('#u_selectoption').show();
-    //             //         $('#u_selectoption select').attr({
-    //             //             'id': 'u_im_reference_document',
-    //             //             'name': 'u_im_reference_document'
-    //             //         });
-    //             //         $('#u_im_reference_document').html("<option selected disabled value=''>Select Requisition</option>").prop('disabled',true);
-    //             //         SiteChangeRequisition('#u_et_site', '#u_et_transactiontype', '#u_im_reference_document', '#update_externaltransactions');
-        
-    //             //     }
-    //             //     else if(dataType == 'reversal')
-    //             //     {
-    //             //         $('#u_opentext').hide();
-    //             //         $('#u_opentext input').removeAttr('name id');
-    //             //         $('#u_selectoption').show();
-    //             //         $('#u_selectoption select').attr({
-    //             //             'id': 'u_im_reference_document',
-    //             //             'name': 'u_im_reference_document'
-    //             //         });
-    //             //         $('#u_im_reference_document').empty();
-    //             //         $('#u_im_reference_document').html("<option selected disabled value=''>Select Previous Inventory Transaction</option>");
-                       
-    //             //         BrandChangeInventory('#u_im_brand', '#u_im_reference_document', '#update_externaltransactions');
-    //             //         $('#u_reference_document_section').show();
-    //             //         $('#u_from_section, #u_to_section').hide();
-    //             //     }
-    //             // });
-    //             $('#edit-externaltransactions').modal('show');
-    //         },
-    //         error: function(jqXHR, textStatus, errorThrown) {
-    //             $('#ajax-loader').hide();
-    //             console.log(textStatus, errorThrown);
-    //         }
-    //     });
-    // });
-    // //Update Inventory Management Modal
-
-    // //Update Inventory Management
-    // $('#update_externaltransactions').on('submit', function (event) {
-    //     event.preventDefault();
-    //     var formData = SerializeForm(this);
-    //     var inventoryManagementId;
-    //     for (var i = 0; i < formData.length; i++) {
-    //         if (formData[i].name === 'u_im-id') {
-    //             inventoryManagementId = formData[i].value;
-    //             break;
-    //         }
-    //     }
-    //     var url = 'inventory/update-invmanagement/' + inventoryManagementId;
-    //     $.ajax({
-    //         url: url,
-    //         method: 'POST',
-    //         headers: {
-    //             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-    //         },
-    //         data: formData,
-    //         beforeSend: function() {
-    //             Swal.fire({
-    //                 title: "Processing",
-    //                 allowOutsideClick: false,
-    //                 willOpen: () => {
-    //                     Swal.showLoading();
-    //                 },
-    //                 showConfirmButton: false
-    //             });
-    //         },
-    //         success: function (response) {
-    //             for (var fieldName in response) {
-    //                 var fieldErrors = response[fieldName];
-    //                 var fieldName = fieldName;
-    //             }
-    //             if (fieldName == 'error')
-    //             {
-    //                 Swal.fire({
-    //                     text: fieldErrors,
-    //                     icon: fieldName,
-    //                     confirmButtonText: 'OK'
-    //                 })
-    //             }
-    //             else if (fieldName == 'success')
-    //             {
-    //                 Swal.fire({
-    //                     text: fieldErrors,
-    //                     icon: fieldName,
-    //                     allowOutsideClick: false,
-    //                     confirmButtonText: 'OK'
-    //                 }).then((result) => {
-    //                     if (result.isConfirmed) {
-    //                         $('#edit-externaltransactions').modal('hide');
-    //                         $('#view-externaltransactions').DataTable().ajax.reload(); // Refresh DataTable
-    //                         $('.text-danger').hide();
-    //                     }
-    //                 });
-    //             }
-    //         },
-    //         error: function (xhr, status, error) {
-    //             console.log(xhr.responseText);
-    //         }
-    //     });
-    // });
-    // //Update Inventory Management
 
 });

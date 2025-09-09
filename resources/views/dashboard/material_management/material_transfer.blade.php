@@ -41,7 +41,7 @@ border: 1px solid rgba(0,0,0,.15);
             <ol class="breadcrumb">
                 <li class="breadcrumb-item">Home</li>
                 <li class="breadcrumb-item">Material Management</li>
-                <li class="breadcrumb-item active">Other Transactions</li>
+                <li class="breadcrumb-item active">Material Transfer</li>
             </ol>
         </div>
     </div>
@@ -49,7 +49,7 @@ border: 1px solid rgba(0,0,0,.15);
         <div class="card-body">
             <div class="row">
                 <div class="col">
-                    <h4 class="card-title">All Other Transactions</h4>
+                    <h4 class="card-title">All Material Transfers</h4>
                 </div>
                 @php
                 $IssueAndDispense = explode(',', $rights->issue_and_dispense);
@@ -61,8 +61,8 @@ border: 1px solid rgba(0,0,0,.15);
                 @if ($RequisitionNonMandatory)
                     @if ($add == 1)
                     <div class="col-auto">
-                        <button type="button" class="btn btn-primary p-2 add-othertransaction">
-                            <i class="mdi mdi-clipboard-account"></i> New Transaction
+                        <button type="button" class="btn btn-primary p-2 add-materialtransfer">
+                            <i class="mdi mdi-clipboard-account"></i> New Material Transfer
                         </button>
                     </div>
                     @endif
@@ -70,16 +70,16 @@ border: 1px solid rgba(0,0,0,.15);
             </div>
             
             @if ($add == 1 || $respond == 1)
-            <div class="modal fade bs-example-modal-lg" id="add-othertransaction" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+            <div class="modal fade bs-example-modal-lg" id="add-materialtransfer" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h4 class="modal-title" id="myLargeModalLabel">Add Other Transactions Details</h4>
+                            <h4 class="modal-title" id="myLargeModalLabel">Add Material Transfer Details</h4>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         </div>
                         <div class="row" id="transaction-info-row" style="width:98%;display:none;font-size:13px;border:1px solid black;margin: 0 auto;"></div>
 
-                        <form id="add_othertransaction" method="post" enctype="multipart/form-data">
+                        <form id="add_materialtransfer" method="post" enctype="multipart/form-data">
                             @csrf
                             <input type="hidden" id="source_applicable" name="source_applicable" value="1">
                             <input type="hidden" id="destination_applicable" name="destination_applicable" value="1">
@@ -92,7 +92,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                 <div class="row">
                                                     @if($user->org_id != 0)
                                                     <div class="userOrganization">
-                                                        <select class="form-contro selecter p-0" id="ot_org" name="ot_org">
+                                                        <select class="form-contro selecter p-0" id="mt_org" name="mt_org">
                                                             <option selected value='{{ $user->org_id }}'>{{ $user->orgName }}</option>
                                                         </select>
                                                     </div>
@@ -102,10 +102,10 @@ border: 1px solid rgba(0,0,0,.15);
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                 <label class="control-label">Organization</label>
-                                                                    <select class="form-control selecter p-0" name="ot_org" id="ot_org" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="mt_org" id="mt_org" style="color:#222d32">
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="ot_org_error"></span>
+                                                                <span class="text-danger" id="mt_org_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -116,10 +116,10 @@ border: 1px solid rgba(0,0,0,.15);
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                 <label class="control-label">Requested Transaction</label>
-                                                                    <select class="form-control selecter p-0" name="ot_transactiontype" id="ot_transactiontype" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="mt_transactiontype" id="mt_transactiontype" style="color:#222d32">
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="ot_transactiontype_error"></span>
+                                                                <span class="text-danger" id="mt_transactiontype_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -129,10 +129,10 @@ border: 1px solid rgba(0,0,0,.15);
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                 <label class="control-label">Source Site</label>
-                                                                    <select class="form-control selecter p-0" name="ot_source_site" id="ot_source_site" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="mt_source_site" id="mt_source_site" style="color:#222d32">
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="ot_source_site_error"></span>
+                                                                <span class="text-danger" id="mt_source_site_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -142,10 +142,10 @@ border: 1px solid rgba(0,0,0,.15);
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                 <label class="control-label">Source Location</label>
-                                                                    <select class="form-control selecter p-0" name="ot_source_location" id="ot_source_location" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="mt_source_location" id="mt_source_location" style="color:#222d32">
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="ot_source_location_error"></span>
+                                                                <span class="text-danger" id="mt_source_location_error"></span>
 
                                                             </div>
                                                         </div>
@@ -156,10 +156,10 @@ border: 1px solid rgba(0,0,0,.15);
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                 <label class="control-label">Destination Site</label>
-                                                                    <select class="form-control selecter p-0" name="ot_destination_site" id="ot_destination_site" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="mt_destination_site" id="mt_destination_site" style="color:#222d32">
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="ot_destination_site_error"></span>
+                                                                <span class="text-danger" id="mt_destination_site_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -169,10 +169,10 @@ border: 1px solid rgba(0,0,0,.15);
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                 <label class="control-label">Destination Location</label>
-                                                                    <select class="form-control selecter p-0" name="ot_destination_location" id="ot_destination_location" style="color:#222d32">
+                                                                    <select class="form-control selecter p-0" name="mt_destination_location" id="mt_destination_location" style="color:#222d32">
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="ot_destination_location_error"></span>
+                                                                <span class="text-danger" id="mt_destination_location_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -184,22 +184,22 @@ border: 1px solid rgba(0,0,0,.15);
                                                                     <div class="col-md-12">
                                                                         <div class="form-group has-custom m-b-5">
                                                                             <label class="control-label">Performing CC</label>
-                                                                            <select class="form-control selecter p-0" id="ot_performing_cc" name="ot_performing_cc" style="color:#222d32">
+                                                                            <select class="form-control selecter p-0" id="mt_performing_cc" name="mt_performing_cc" style="color:#222d32">
                                                                                 <option selected disabled value="">Select Performing CC</option>
                                                                                 @foreach($costcenters as $cc)
                                                                                     <option value="{{ $cc->id }}">{{ $cc->name }}</option>
                                                                                 @endforeach
                                                                             </select>
-                                                                            <span class="text-danger" id="ot_performing_cc_error"></span>
+                                                                            <span class="text-danger" id="mt_performing_cc_error"></span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                             @elseif($costcenters->count() == 1)
-                                                            <input type="text" class="form-control input-sm" readonly name="ot_performing_cc" value="{{ $costcenters->first()->id }}">
+                                                            <input type="text" class="form-control input-sm" readonly name="mt_performing_cc" value="{{ $costcenters->first()->id }}">
                                                             @endif
                                                         @else
-                                                            <input type="hidden" name="ot_performing_cc" value="0">
+                                                            <input type="hidden" name="mt_performing_cc" value="0">
                                                     @endif
 
 
@@ -208,7 +208,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Enter Reference Document# <small class="text-danger" style="font-size:11px;">(Optional)</small> </label>
-                                                                    <input type="text" placeholder="Enter Reference Document#"  name="ot_reference_document" class="form-control input-sm">
+                                                                    <input type="text" placeholder="Enter Reference Document#"  name="mt_reference_document" class="form-control input-sm">
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -219,7 +219,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-10">
                                                                     <label class="control-label">Enter Remarks <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                                    <textarea class="form-control" placeholder="Enter Remarks" rows="2" name="ot_remarks" spellcheck="false"></textarea>
+                                                                    <textarea class="form-control" placeholder="Enter Remarks" rows="2" name="mt_remarks" spellcheck="false"></textarea>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -231,10 +231,10 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                         <label class="control-label">Select Item Generic</label>
-                                                                        <select class="form-control selecter p-0 ot_generic" name="ot_generic[]" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0 mt_generic" name="mt_generic[]" style="color:#222d32">
                                                                         </select>
                                                                     </div>
-                                                                    <span class="text-danger ot_generic_error"></span>
+                                                                    <span class="text-danger mt_generic_error"></span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -244,10 +244,10 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                         <label class="control-label">Select Brand</label>
-                                                                        <select class="form-control selecter p-0 ot_brand" name="ot_brand[]" style="color:#222d32">
+                                                                        <select class="form-control selecter p-0 mt_brand" name="mt_brand[]" style="color:#222d32">
                                                                         </select>
                                                                     </div>
-                                                                    <span class="text-danger ot_brand_error"></span>
+                                                                    <span class="text-danger mt_brand_error"></span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -257,9 +257,9 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                         <label class="control-label">Demand Qty</label>
-                                                                        <input type="number" class="form-control input-sm ot_demand_qty" placeholder="Demand Qty..." name="ot_demand_qty[]">
+                                                                        <input type="number" class="form-control input-sm mt_demand_qty" placeholder="Demand Qty..." name="mt_demand_qty[]">
                                                                     </div>
-                                                                    <span class="text-danger ot_demand_qty_error" ></span>
+                                                                    <span class="text-danger mt_demand_qty_error" ></span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -270,9 +270,9 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                         <label class="control-label">Batch #</label>
-                                                                        <input type="text" class="form-control input-sm ot_batch" placeholder="Batch #.." name="ot_batch[]">
+                                                                        <input type="text" class="form-control input-sm mt_batch" placeholder="Batch #.." name="mt_batch[]">
                                                                     </div>
-                                                                    <span class="text-danger ot_batch_error"></span>
+                                                                    <span class="text-danger mt_batch_error"></span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -283,9 +283,9 @@ border: 1px solid rgba(0,0,0,.15);
                                                                     <div class="form-group has-custom m-b-5">
                                                                         <label class="control-label">Expiry Date</label>
     
-                                                                        <input type="text" name="ot_expiry[]" class="form-control input06 qd ot_expiry" placeholder="Select Expiry Date">
+                                                                        <input type="text" name="mt_expiry[]" class="form-control input06 qd mt_expiry" placeholder="Select Expiry Date">
                                                                     </div>
-                                                                    <span class="text-danger ot_expiry_error"></span>
+                                                                    <span class="text-danger mt_expiry_error"></span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -296,9 +296,9 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                         <label class="control-label">Enter Transaction Qty</label>
-                                                                        <input type="number" class="form-control input-sm ot_qty" placeholder="Transaction Qty..." name="ot_qty[]">
+                                                                        <input type="number" class="form-control input-sm mt_qty" placeholder="Transaction Qty..." name="mt_qty[]">
                                                                     </div>
-                                                                    <span class="text-danger ot_qty_error" ></span>
+                                                                    <span class="text-danger mt_qty_error" ></span>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -330,7 +330,7 @@ border: 1px solid rgba(0,0,0,.15);
 
             @if ($view == 1)
             <div class="table-responsive m-t-40">
-                <table id="view-othertransaction" class="table table-bordered table-striped">
+                <table id="view-materialtransfer" class="table table-bordered table-striped">
                     <thead>
                         <tr>
                             <th></th>
@@ -567,4 +567,4 @@ border: 1px solid rgba(0,0,0,.15);
         $('#u_et_expirydate').bootstrapMaterialDatePicker({ weekStart : 0, time: false });
         $('.selectpicker').selectpicker();
     </script>
-    <script src="{{ asset('assets/custom/other_transactions.js') }}"></script>
+    <script src="{{ asset('assets/custom/material_transfer.js') }}"></script>

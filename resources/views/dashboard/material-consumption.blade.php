@@ -74,6 +74,8 @@
                             <h4 class="modal-title" id="myLargeModalLabel">Add Requisition For Material Consumption</h4>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                         </div>
+                        <div class="row" id="transaction-info-row" style="width:98%;display:none;font-size:13px;border:1px solid black;margin: 0 auto;"></div>
+
                         <form id="add_materialconsumption" method="post" enctype="multipart/form-data">
                             @csrf
                             <div class="modal-body">
@@ -133,19 +135,30 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-6 mc_inv_location">
+                                                    <div class="col-md-6 mc_source_location" style="display: none;">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Select Inventory Locations </label>
-                                                                    <select class="form-control selecter p-0" name="mc_inv_location" id="mc_inv_location" style="color:#222d32">
-                                                                        {{-- <option selected disabled >Select Inventory Location</option>
-                                                                        @foreach ($ServiceLocations as $ServiceLocation)
-                                                                            <option value="{{ $ServiceLocation['id'] }}">{{ $ServiceLocation['name'] }}</option>
-                                                                        @endforeach--}}
+                                                                    <label class="control-label">Source Location</label>
+                                                                    <select class="form-control selecter p-0" name="mc_source_location" id="mc_source_location" style="color:#222d32">
+                                                                        <option selected disabled value="">Select Source Location</option>
                                                                     </select> 
                                                                 </div>
-                                                                <span class="text-danger" id="mc_inv_location_error"></span>
+                                                                <span class="text-danger" id="mc_source_location_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6 mc_destination_location" style="display: none;">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Destination Location</label>
+                                                                    <select class="form-control selecter p-0" name="mc_destination_location" id="mc_destination_location" style="color:#222d32">
+                                                                        <option selected disabled value="">Select Destination Location</option>
+                                                                    </select> 
+                                                                </div>
+                                                                <span class="text-danger" id="mc_destination_location_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -312,15 +325,26 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-md-6">
+                                            <div class="col-md-6 u_mc_source_location" style="display: none;">
                                                 <div class="form-group row m-b-5">
                                                     <div class="col-md-12">
                                                         <div class="form-group m-b-5">
-                                                            <label class="control-label">Update Inventory Location</label>
-                                                            <select class="form-control selecter p-0" name="u_mc_inv_location" id="u_mc_inv_location" style="color:#222d32">
-                                                                {{-- @foreach ($ServiceLocations as $ServiceLocation)
-                                                                    <option value="{{ $ServiceLocation['id'] }}">{{ $ServiceLocation['name'] }}</option>
-                                                                @endforeach --}}
+                                                            <label class="control-label">Update Source Location</label>
+                                                            <select class="form-control selecter p-0" name="u_mc_source_location" id="u_mc_source_location" style="color:#222d32">
+                                                                <option selected disabled value="">Select Source Location</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6 u_mc_destination_location" style="display: none;">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Destination Location</label>
+                                                            <select class="form-control selecter p-0" name="u_mc_destination_location" id="u_mc_destination_location" style="color:#222d32">
+                                                                <option selected disabled value="">Select Destination Location</option>
                                                             </select>
                                                         </div>
                                                     </div>

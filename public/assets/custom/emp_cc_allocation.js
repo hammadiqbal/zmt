@@ -83,7 +83,7 @@ $(document).ready(function() {
                     currentRowCCSelect.prop('disabled', false);
                 } else {
                     Swal.fire({
-                        text: 'Cost Centers are not activated for the selected Head Count Site',
+                        text: 'Cost Centers are not activated for the selected Site',
                         icon: 'error',
                         confirmButtonText: 'OK',
                         allowOutsideClick: false
@@ -237,8 +237,8 @@ $(document).ready(function() {
     $('#add_empCC').submit(function(e) {
         e.preventDefault(); // Prevent the form from submitting normally
         var data = SerializeForm(this);
-
         var resp = true;
+
         $(".duplicate").each(function() {
             var row = $(this);
             row.find('input, textarea, select').each(function() {
@@ -273,27 +273,35 @@ $(document).ready(function() {
                 }
             });
         });
+     
         $(data).each(function(i, field){
             if ((field.value == '') || (field.value == null))
             {
                 var FieldName = field.name;
-                var FieldID = '#'+FieldName + "_error";
-              
-                $(FieldID).text("This field is required");
-                $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
-                $( 'input[name= "' +FieldName +'"' ).focus(function() {
-                    $(FieldID).text("");
-                    $('input[name= "' +FieldName +'"' ).removeClass("requirefield");
-                })
+                // Check if FieldName exists before using replace
+                if (FieldName && typeof FieldName === 'string') {
+                    var FieldName = FieldName.replace('[]', '');
 
-                $('select[name= "' +FieldName +'"' ).next('.select2-container').find('.select2-selection').addClass('requirefield');
-                $('select[name= "' +FieldName +'"' ).on('select2:open', function() {
-                    $(FieldID).text("");
-                    $(this).next('.select2-container').find('.select2-selection').removeClass("requirefield");
-                });
+                    var FieldID = '#'+FieldName + "_error";
+                  
+                    $(FieldID).text("This field is required");
+                    $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
+                    $( 'input[name= "' +FieldName +'"' ).focus(function() {
+                        $(FieldID).text("");
+                        $('input[name= "' +FieldName +'"' ).removeClass("requirefield");
+                    })
+
+                    $('select[name= "' +FieldName +'"' ).next('.select2-container').find('.select2-selection').addClass('requirefield');
+                    $('select[name= "' +FieldName +'"' ).on('select2:open', function() {
+                        $(FieldID).text("");
+                        $(this).next('.select2-container').find('.select2-selection').removeClass("requirefield");
+                    });
+                } 
                 resp = false;
             }
         });
+
+
 
        
 
@@ -380,6 +388,7 @@ $(document).ready(function() {
     //View Employee CC
     $('#viewempCC').on('change', function() {
         var EmployeeId = $(this).val();
+        console.log(EmployeeId);
         LoadEmployeeCostCenter(EmployeeId);
     });
     //View Employee CC

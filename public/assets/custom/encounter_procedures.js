@@ -110,7 +110,9 @@ $(document).ready(function() {
                                     $('.ep_age').val('');
                                     $('#ep_emp').val('');
                                     $('#ep_bcc').val('');
-                                    $('#ep_pcc').val('');
+                                    $('#ep_pcc').html('<option selected disabled value="">Select Performing Cost Center</option>').prop('disabled', true);
+                                    // Clear global service performing CCs
+                                    window.currentServicePerformingCCs = null;
                                     $('#ep_sbp').val('');
                                     $('#ep_dbp').val('');
                                     $('#ep_pulse').val('');
@@ -123,7 +125,7 @@ $(document).ready(function() {
                                     $('.add_complain').removeAttr('data-serviceid');
                                     $('.load-more').removeAttr('data-serviceid');
                                     $('#icd-search').removeAttr('data-serviceid');
-                                    $('#sp_head').text('Medical Codes');
+                                    $('.sp_head').text('Medical Codes');
                                     $('.billingcc_id').val('');
                                     $('.servicemode_id').val('');
                                     $('#icdIDs').val('');
@@ -139,35 +141,50 @@ $(document).ready(function() {
                             $('#ep_details, #billing_details_section').hide();
                             $('#ep_table, #ep_history').show();
 
-                            $('.encounterModal, .procedureModal, .investigationModal').each(function () {
-                                $(this)
-                                    .prop('disabled', true)
-                                    .css({
-                                        'cursor': 'not-allowed',
-                                        'opacity': '0.65'
-                                    })
-                                    .attr('title', 'Disabled');
-                            });
+                            // $('.encounterModal, .procedureModal, .investigationModal').each(function () {
+                            //     $(this)
+                            //         .prop('disabled', true)
+                            //         .css({
+                            //             'cursor': 'not-allowed',
+                            //             'opacity': '0.65'
+                            //         })
+                            //         .attr('title', 'Disabled');
+                            // });
 
-                            $('#order-medication-link button')
-                            .prop('disabled', true)
-                            .css({
-                                'cursor': 'not-allowed',
-                                'opacity': '0.65'          
-                            })
-                            .attr('title', 'Disabled');
+                            // $('#order-medication-link button')
+                            // .prop('disabled', true)
+                            // .css({
+                            //     'cursor': 'not-allowed',
+                            //     'opacity': '0.65'          
+                            // })
+                            // .attr('title', 'Disabled');
+
+                            // $('.encounterModal, .procedureModal, .investigationModal, #order-medication-link button')
+                            //         .prop('disabled', false)
+                            //         .css({
+                            //             'cursor': 'pointer',
+                            //             'opacity': ''
+                            //         })
+                            //         .removeAttr('title');
+
+                            //     $('#order-medication-link').css({
+                            //         'pointer-events': 'auto',
+                            //         'cursor': ''
+                            //     }).removeAttr('title');
 
                             $('.sevice_id').val('');
                             $('.add_complain').removeAttr('data-serviceid');
                             $('.load-more').removeAttr('data-serviceid');
                             $('#icd-search').removeAttr('data-serviceid');
-                            $('#sp_head').text('Medical Codes');
+                            $('.sp_head').text('Medical Codes');
                             $('.billingcc_id').val('');
                             $('.servicemode_id').val('');
                             $('#ep_emp').val('');
                             // $('#ep_user').val('');
                             $('#ep_bcc').val('');
-                            $('#ep_pcc').val('');
+                            $('#ep_pcc').html('<option selected disabled value="">Select Performing Cost Center</option>').prop('disabled', true);
+                            // Clear global service performing CCs
+                            window.currentServicePerformingCCs = null;
                             $('#ep_site').html('');
                             $('#ep_smt').html('');
                             $('#ep_sgb').html('');
@@ -178,7 +195,6 @@ $(document).ready(function() {
                             $('.ep_age').val(response.patientDOB);
 
                             $('.encounterModal, .investigationModal, .procedureModal').attr('data-mr', mrNumber);
-
 
                             fetchLatestVitalSignRecord(mrNumber);
                             fetchMedicalHistory(mrNumber);
@@ -206,35 +222,52 @@ $(document).ready(function() {
                         else{
                             $('.addep').show();
                             $('#ep_details, #ep_table, #ep_history,#billing_details_section').show();
-                            if (response.billingCCId && response.performingCCId && response.billingCCId === response.performingCCId) {
-                                // Enable buttons
-                                $('.encounterModal, .procedureModal, .investigationModal, #order-medication-link button')
-                                    .prop('disabled', false)
-                                    .css({
-                                        'cursor': '',
-                                        'opacity': ''
-                                    })
-                                    .removeAttr('title');
+                            if((response.performingCostCenters.length) == 0)
+                            {
+                                $('#ajax-loader').hide();
+                                $('#ep_details, #ep_table, #ep_history,#billing_details_section,.addep').hide();
+                                 Swal.fire({
+                                    title: 'No Performing Cost Centers Assigned',
+                                    text: 'No performing cost centers are assigned to you yet. Please contact your administrator.',
+                                    icon: 'warning',
+                                    confirmButtonText: 'OK'
+                                });
+                                return;
+                            }
 
-                                $('#order-medication-link').css({
-                                    'pointer-events': 'auto',
-                                    'cursor': ''
-                                }).removeAttr('title');
+                            var performingCCId = response.performingCostCenters[0].id;
+                            if (response.billingCCId && performingCCId && response.billingCCId === performingCCId) {
+                                // $('.addep').show();
+                                  $('#add_reqe,#add_reqp,#add_reqi').show();
+                                // $('.encounterModal, .procedureModal, .investigationModal, #order-medication-link button')
+                                //     .prop('disabled', false)
+                                //     .css({
+                                //         'cursor': '',
+                                //         'opacity': ''
+                                //     })
+                                //     .removeAttr('title');
+
+                                // $('#order-medication-link').css({
+                                //     'pointer-events': 'auto',
+                                //     'cursor': ''
+                                // }).removeAttr('title');
                             } else {
+                                // $('.addep').hide();
                                 // Disable buttons visually and functionally
-                                $('.encounterModal, .procedureModal, .investigationModal, #order-medication-link button')
-                                    .prop('disabled', true)
-                                    .css({
-                                        'cursor': 'not-allowed',
-                                        'opacity': '0.65'
-                                    })
-                                    .attr('title', 'Disabled');
+                                  $('#add_reqe,#add_reqp,#add_reqi').hide();
+                                // $('.encounterModal, .procedureModal, .investigationModal, #order-medication-link button')
+                                //     .prop('disabled', true)
+                                //     .css({
+                                //         'cursor': 'not-allowed',
+                                //         'opacity': '0.65'
+                                //     })
+                                //     .attr('title', 'Disabled');
 
-                                $('#order-medication-link').css({
-                                    'pointer-events': 'none',
-                                    'cursor': 'not-allowed'
-                                }).attr('title', 'Disabled');
-}
+                                // $('#order-medication-link').css({
+                                //     'pointer-events': 'none',
+                                //     'cursor': 'not-allowed'
+                                // }).attr('title', 'Disabled');
+                            }
 
                             var siteName = response.siteName;
                             var serviceMode = response.serviceMode;
@@ -242,11 +275,11 @@ $(document).ready(function() {
                             var serviceType = response.serviceType;
                             var serviceTypeCode = response.serviceTypeCode;
                             if (serviceTypeCode === 'p') {
-                                $('#sp_head').text('Procedures');
+                                $('.sp_head').text('Procedures');
                             } else if (serviceTypeCode === 'e') {
-                                $('#sp_head').text('Symptoms');
+                                $('.sp_head').text('Symptoms');
                             } else {
-                                $('#sp_head').text('Medical Codes');
+                                $('.sp_head').text('Medical Codes');
                             }
                             var serviceGroup = response.serviceGroup;
                             $('#ep_details').addClass('d-flex flex-column justify-content-end align-items-end');
@@ -276,15 +309,46 @@ $(document).ready(function() {
                             // response.billingCCId
                             // response.empID
                             // response.empName
-                            console.log(response);
                             $('#ep_bcc').val(response.billingCCName);
-                            $('#ep_pcc').val(response.performingCCName);
+                            
+                            // Handle performing cost centers
+                            populatePerformingCostCenters(response.performingCostCenters);
+                            
+                            // Check if selected performing cost center matches service's allowed performing cost centers
+                            if (response.servicePerformingCCs) {
+                                // Store service performing CCs globally for the change event handler
+                                window.currentServicePerformingCCs = response.servicePerformingCCs.split(',');
+                                
+                                var selectedPerformingCC = $('#ep_pcc').val();
+                                
+                                // Check if selected performing CC is in the service's allowed list
+                                var isPerformingCCAllowed = window.currentServicePerformingCCs.includes(selectedPerformingCC);
+                                
+                                if (!isPerformingCCAllowed) {
+                                    // Disable the visit based save button if performing CC doesn't match
+                                    $('.vbd').prop('disabled', true)
+                                        .css({
+                                            'cursor': 'not-allowed',
+                                            'opacity': '0.65'
+                                        })
+                                        .attr('title', 'Selected performing cost center is not allowed for this service');
+                                } else {
+                                    // Enable the button if performing CC matches
+                                    $('.vbd').prop('disabled', false)
+                                        .css({
+                                            'cursor': '',
+                                            'opacity': ''
+                                        })
+                                        .removeAttr('title');
+                                }
+                            }
                             $('.sevice_id').val(response.serviceId);
                             $('.add_complain').attr('data-serviceid', response.serviceId);
                             $('.load-more').attr('data-serviceid', response.serviceId);
                             $('#icd-search').attr('data-serviceid', response.serviceId);
 
                             $('.billingcc_id').val(response.billingCCId);
+                            $('#service_type').val(response.serviceTypeCode);
                             $('.servicemode_id').val(response.serviceModeId);
                             $('.empid').val(response.empID);
                             $('.patientmr').val(mrNumber);
@@ -349,6 +413,108 @@ $(document).ready(function() {
         $('#ajax-loader').hide();
     });
     // Open Tracking Visit
+
+    // Handle performing cost center dropdown change
+    $(document).on('change', '#ep_pcc', function() {
+        $('#ajax-loader').show();
+        var selectedCCId = $(this).val();
+        
+        // Check if the selected performing CC is allowed for the current service
+        var servicePerformingCCs = window.currentServicePerformingCCs; // We'll store this globally
+        
+        if (servicePerformingCCs && selectedCCId) {
+            var isPerformingCCAllowed = servicePerformingCCs.includes(selectedCCId);
+            
+            if (!isPerformingCCAllowed) {
+                // Disable the visit based save button if performing CC doesn't match
+                $('.vbd').prop('disabled', true)
+                    .css({
+                        'cursor': 'not-allowed',
+                        'opacity': '0.65'
+                    })
+                    .attr('title', 'Selected performing cost center is not allowed for this service');
+            } else {
+                // Enable the button if performing CC matches
+                $('.vbd').prop('disabled', false)
+                    .css({
+                        'cursor': '',
+                        'opacity': ''
+                    })
+                    .removeAttr('title');
+            }
+        }
+        
+        // Check if billing CC and performing CC are the same to enable/disable buttons
+        var billingCCId = $('#reqp_billingcc').val() || $('#reqi_billingcc').val();
+        if (billingCCId && selectedCCId && billingCCId === selectedCCId) {
+            $('#add_reqe,#add_reqp,#add_reqi').show();
+            // Enable buttons
+            // $('.encounterModal, .procedureModal, .investigationModal, #order-medication-link button')
+            //     .prop('disabled', false)
+            //     .css({
+            //         'cursor': '',
+            //         'opacity': ''
+            //     })
+            //     .removeAttr('title');
+
+            // $('#order-medication-link').css({
+            //     'pointer-events': 'auto',
+            //     'cursor': ''
+            // }).removeAttr('title');
+        } else {
+            // $('.addep').hide();
+            $('#add_reqe,#add_reqp,#add_reqi').hide();
+
+            // Disable buttons visually and functionally
+            // $('.encounterModal, .procedureModal, .investigationModal, #order-medication-link button')
+            //     .prop('disabled', true)
+            //     .css({
+            //         'cursor': 'not-allowed',
+            //         'opacity': '0.65'
+            //     })
+            //     .attr('title', 'Disabled');
+
+            // $('#order-medication-link').css({
+            //     'pointer-events': 'none',
+            //     'cursor': 'not-allowed'
+            // }).attr('title', 'Disabled');
+        }
+        
+        setTimeout(function() {
+            $('#ajax-loader').hide();
+        }, 300);
+
+    });
+
+    // Function to populate performing cost centers dropdown
+    function populatePerformingCostCenters(costCenters) {
+        var $dropdown = $('#ep_pcc');
+        $dropdown.find('option:not(:first)').remove(); // Remove existing options except first
+        
+        if (costCenters && costCenters.length > 0) {
+            costCenters.forEach(function(cc) {
+                $dropdown.append('<option value="' + cc.id + '">' + cc.name + '</option>');
+            });
+            
+            // Select the first cost center by default
+            var firstCCId = costCenters[0].id;
+            $dropdown.val(firstCCId);
+            $dropdown.prop('disabled', false);
+        } else {
+            // No cost centers found - show SweetAlert message
+            Swal.fire({
+                title: 'No Performing Cost Centers Assigned',
+                text: 'No performing cost centers are assigned to you yet. Please contact your administrator.',
+                icon: 'warning',
+                confirmButtonText: 'OK'
+            });
+             $('#ep_details, #ep_table, #ep_history, #billing_details_section').hide();
+
+            
+            // Clear the dropdown
+            $dropdown.html('<option selected disabled value="">No Cost Centers Available</option>');
+        }
+    }
 
     // Open Medical Diagnosis History Modal
     $(document).on('click', '.add_diagnosehistory', function() {
@@ -1054,7 +1220,6 @@ $(document).ready(function() {
 
 
     $(document).on('change', '#add-complain input[type="checkbox"]', function () {
-        console.log('click');
         const icdId = $(this).data('id');
         if ($(this).is(':checked')) {
             selectedICDIds.add(icdId);
@@ -1127,9 +1292,22 @@ $(document).ready(function() {
             if (field.name == 'Complaints[]'){
                 if(field.value == '')
                 {
-                    alert('Please select at least one complaint.');
+                    const servic_Type = ($('[name="service_type"]').val() || '').trim().toLowerCase();
+                    console.log(servic_Type);
+                    // choose the right message
+                    let msg;
+                    if (servic_Type === 'p') {
+                    msg = 'Please select at least one procedure.';
+                    } else if (servic_Type === 'e') {
+                    msg = 'Please select at least one symptom.';
+                    } else {
+                    msg = 'Please select at least one complaint.';
+                    }
+                    alert(msg);     
+                    // alert('Please select at least one complaint.');
                     resp = false;
                 }
+                   
             }
         });
         if(resp != false)
@@ -1445,11 +1623,16 @@ $(document).ready(function() {
             OrgChangeSites('#reqi_org', '#reqi_site', '#add_reqi');
         }
 
-        $('#reqi_sevice').html("<option selected disabled value=''>Select Service</option>").prop('disabled', true);
-        SiteChangeServiceEPI('#reqi_site', '#reqi_sevice', 'i', '#add_reqi');
+        // Clear the first dynamic row
+        var firstRow = $('.duplicate').first();
+        firstRow.find('.reqi_service').html("<option selected disabled value=''>Select Service</option>").prop('disabled', true);
+        firstRow.find('.reqi_servicemode').html("<option selected disabled value=''>Select Service Mode</option>").prop('disabled', true);
 
-        $('#reqi_servicemode').html("<option selected disabled value=''>Select Service Mode</option>").prop('disabled', true);
-        ServiceChangeServiceModes('#reqi_site', '#reqi_sevice', '#reqi_servicemode', '#add_reqi');
+        // Clear any existing rows that might have pre-selected values
+        clearServiceModeDropdowns();
+        
+        // Update remove button visibility
+        updateRemoveButtonVisibility();
 
         let physicianVal = $('#reqi_physician').find(':selected').val();
         if (!physicianVal || physicianVal === null) {
@@ -1474,6 +1657,216 @@ $(document).ready(function() {
         handleRequisitionEPISubmission('#add_reqi','#add-reqi');
     });
     //Add Requisition For Investigation
+
+    // Handle Service change in dynamic rows
+    $(document).on('change', '.reqi_service', function() {
+        var serviceId = $(this).val();
+        var currentRow = $(this).closest('.duplicate');
+        var currentRowServiceModeSelect = currentRow.find('.reqi_servicemode');
+        if (serviceId) {
+            var siteId = $('#reqi_site').val();
+            fetchSiteServiceMode(siteId, serviceId, currentRowServiceModeSelect, function(data) {
+                if (data && data.length > 0) {
+                    currentRowServiceModeSelect.empty();
+                    // currentRowServiceModeSelect.append('<option selected disabled value="">Select Service Mode</option>');
+                    // Add service modes with prices
+                    data.forEach(function(item) {
+                        const formattedPrice = item.sell_price ? Number(item.sell_price).toLocaleString() : '0';
+                        currentRowServiceModeSelect.append('<option value="' + item.id + '">' + item.name + ' - (Rs ' + formattedPrice + ')</option>');
+                    });
+                    
+                    currentRowServiceModeSelect.find('option:contains("Loading...")').remove();
+                    currentRowServiceModeSelect.prop('disabled', false);
+                } else {
+                    currentRowServiceModeSelect.empty();
+                    currentRowServiceModeSelect.html("<option selected disabled value=''>No Service Modes Available</option>").prop('disabled', true);
+                }
+            }, function(error) {
+                console.log('Error fetching service modes:', error);
+            });
+        } else {
+            currentRowServiceModeSelect.empty();
+            currentRowServiceModeSelect.html("<option selected disabled value=''>Select Service Mode</option>").prop('disabled', true);
+        }
+    });
+
+    // Initialize first row when site changes
+    $(document).on('change', '#reqi_site', function() {
+        var siteId = $(this).val();
+        
+        // Remove all duplicate rows except the first one
+        $('.duplicate').not(':first').remove();
+        
+        if (siteId) {
+            // Populate services in the first row
+            var firstRowServiceSelect = $('.duplicate').first().find('.reqi_service');
+            var firstRowServiceModeSelect = $('.duplicate').first().find('.reqi_servicemode');
+            
+            // Clear service modes first
+            firstRowServiceModeSelect.empty();
+            firstRowServiceModeSelect.html("<option selected disabled value=''>Select Service Mode</option>").prop('disabled', true);
+            
+            fetchSiteServicesEPI(siteId, firstRowServiceSelect, 'i', function(data) {
+                if (data && data.length > 0) {
+                    firstRowServiceSelect.empty();
+                    firstRowServiceSelect.append('<option selected disabled value="">Select Service</option>');
+                    $.each(data, function(key, value) {
+                        firstRowServiceSelect.append('<option value="' + value.id + '">' + value.name + '</option>');
+                    });
+                    firstRowServiceSelect.find('option:contains("Loading...")').remove();
+                    firstRowServiceSelect.prop('disabled', false);
+                } else {
+                    firstRowServiceSelect.empty();
+                    firstRowServiceSelect.html("<option selected disabled value=''>No Services Available</option>").prop('disabled', true);
+                }
+            }, function(error) {
+                console.log(error);
+            });
+        } else {
+            // Clear both service and service mode dropdowns if no site is selected
+            var firstRowServiceSelect = $('.duplicate').first().find('.reqi_service');
+            var firstRowServiceModeSelect = $('.duplicate').first().find('.reqi_servicemode');
+            
+            firstRowServiceSelect.empty();
+            firstRowServiceSelect.html("<option selected disabled value=''>Select Service</option>").prop('disabled', true);
+            
+            firstRowServiceModeSelect.empty();
+            firstRowServiceModeSelect.html("<option selected disabled value=''>Select Service Mode</option>").prop('disabled', true);
+        }
+    });
+
+    // Remove button handler for investigation form
+    $(document).on('click', '#removeReqi', function(e) {
+        
+        // Check if we're in the investigation modal
+        if ($('#add-reqi').length && $('#add-reqi').is(':visible')) {
+            e.preventDefault(); // Prevent default behavior
+            e.stopPropagation(); // Stop event propagation
+            
+            // Count total duplicate rows
+            var totalRows = $('.duplicate').length;
+            
+            // Don't remove if only one row remains
+            if (totalRows <= 1) {
+                return false;
+            }
+            
+            // Remove the last duplicate row
+            var lastRow = $('.duplicate').last();
+            
+            // Destroy select2 on the row being removed
+            lastRow.find('select.selecter').each(function() {
+                if ($(this).data('select2')) {
+                    $(this).select2('destroy');
+                }
+            });
+            
+            // Remove the row
+            lastRow.remove();
+            
+            // Reinitialize select2 on the remaining last row
+            $('.duplicate').last().find('select.selecter').select2();
+            
+            // Update remove button visibility after removing row
+            updateRemoveButtonVisibility();
+            
+            
+            return false;
+        } 
+    });
+
+    // Function to update remove button visibility
+    function updateRemoveButtonVisibility() {
+        var totalRows = $('.duplicate').length;
+        
+        $('.duplicate').each(function(index) {
+            var $row = $(this);
+            var $removeBtn = $row.find('#removeReqi');
+            
+            // Hide remove button on first row (index 0), show on others
+            if (index === 0) {
+                $removeBtn.hide();
+            } else {
+                $removeBtn.show();
+            }
+        });
+    }
+
+    // Function to clear service mode dropdowns in all rows except the first
+    function clearServiceModeDropdowns() {
+        $('.duplicate').not(':first').each(function() {
+            var $row = $(this);
+            var $serviceModeSelect = $row.find('.reqi_servicemode');
+            var $serviceSelect = $row.find('.reqi_service');
+            
+            // If no service is selected, clear and disable service mode dropdown
+            if (!$serviceSelect.val()) {
+                $serviceModeSelect.empty().html("<option selected disabled value=''>Select Service Mode</option>").prop('disabled', true);
+            }
+        });
+    }
+
+    // Custom Add More button handler for investigation form - Higher priority
+    $(document).off('click.addMoreInvestigation').on('click.addMoreInvestigation', '#addMoreReqi', function(e) {
+        
+        // Check if we're in the investigation modal
+        if ($('#add-reqi').length && $('#add-reqi').is(':visible')) {
+            e.preventDefault(); // Prevent default behavior
+            e.stopPropagation(); // Stop event propagation
+            
+            var isFilled = true;
+            
+            // Check if all fields in existing rows are filled
+            $('.duplicate').each(function() {
+                const $row = $(this);
+                $row.find('select').each(function() {
+                    const $f = $(this);
+                    const name = $f.attr('name');
+                    if (!$f.val()) {
+                        isFilled = false;
+                        if ($f.is('select')) {
+                            $f.next('.select2-container').find('.select2-selection').addClass('requirefield');
+                            $f.off('select2:open.requirefield').on('select2:open.requirefield', function () {
+                                $(this).next('.select2-container').find('.select2-selection').removeClass("requirefield");
+                            });
+                        }
+                    }
+                });
+            });
+
+            if (isFilled) {
+                
+                // Destroy select2 on the last row
+                $('.duplicate').last().find('select.selecter').each(function() {
+                    if ($(this).data('select2')) {
+                        $(this).select2('destroy');
+                    }
+                });
+
+                var clonedRow = $('.duplicate').last().clone();
+                
+                // Clear all values
+                clonedRow.find('input').val('');
+                clonedRow.find('textarea').val('');
+                clonedRow.find('select').prop('selectedIndex', 0).trigger('change');
+                
+                // Specifically clear and disable service mode dropdown
+                clonedRow.find('.reqi_servicemode').empty().html("<option selected disabled value=''>Select Service Mode</option>").prop('disabled', true);
+                
+
+                $('.duplicate').last().after(clonedRow);
+                
+                // Reinitialize select2 on the new row
+                $('.duplicate').last().find('select.selecter').select2();
+                $('.duplicate').last().prev().find('select.selecter').select2();
+                
+                // Update remove button visibility after adding new row
+                updateRemoveButtonVisibility();
+                
+            } 
+            return false;
+        } 
+    });
 
     // Update Requisition For EPI Status
     $(document).on('click', '.reqepi', function() {
@@ -1580,7 +1973,7 @@ $(document).ready(function() {
                     }).then((result) => {
                         if (result.isConfirmed) {
                             $('#edit-reqi').modal('hide');
-                            $('.view-reqepi').DataTable().ajax.reload(); // Refresh DataTable
+                            $('.view-reqi').DataTable().ajax.reload(); // Refresh DataTable
                             $('.text-danger').hide();
                         }
                     });

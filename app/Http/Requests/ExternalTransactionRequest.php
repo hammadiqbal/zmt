@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
 
 class ExternalTransactionRequest extends FormRequest
 {
@@ -21,12 +22,32 @@ class ExternalTransactionRequest extends FormRequest
      */
     public function rules(): array
     {
+        $transactionTypeId = $this->get('et_transactiontype');
+        $requireSource = false;
+        $requireDestination = false;
+
+        if (!empty($transactionTypeId)) {
+            $tt = DB::table('inventory_transaction_type as itt')
+                ->leftJoin('inventory_source_destination_type as src', 'src.id', '=', 'itt.source_location_type')
+                ->leftJoin('inventory_source_destination_type as dst', 'dst.id', '=', 'itt.destination_location_type')
+                ->where('itt.id', $transactionTypeId)
+                ->select('src.name as Source', 'dst.name as Destination')
+                ->first();
+
+            if ($tt) {
+                $src = strtolower($tt->Source ?? '');
+                $dst = strtolower($tt->Destination ?? '');
+                $requireSource = ($src && (str_contains($src, 'location') || $src === 'vendor' || $src === 'donor' || $src === 'patient'));
+                $requireDestination = ($dst && (str_contains($dst, 'location') || $dst === 'vendor' || $dst === 'donor' || $dst === 'patient'));
+            }
+        }
+
         return [
             'et_org' => 'required',
             'et_site' => 'required',
             'et_transactiontype' => 'required',
-            'et_source' => 'required',
-            'et_destination' => 'required',
+            'et_source' => $requireSource ? 'required' : 'nullable',
+            'et_destination' => $requireDestination ? 'required' : 'nullable',
             'et_performing_cc' => 'required',
             'et_generic.*' => 'required',
             'et_brand.*' => 'required',

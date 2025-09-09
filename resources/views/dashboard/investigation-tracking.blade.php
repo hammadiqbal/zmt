@@ -46,11 +46,11 @@
                     <h4 class="card-title">All Investigation Trackings</h4>
                 </div>
                 @php
-                $EPISetup = explode(',', $rights->encounters_and_procedures);
-                $add = $EPISetup[0];
-                $view = $EPISetup[1];
-                $edit = $EPISetup[2];
-                $updateStatus = $EPISetup[3];
+                $InvestigationTracking = explode(',', $rights->investigation_tracking);
+                $add = $InvestigationTracking[0];
+                $view = $InvestigationTracking[1];
+                $edit = $InvestigationTracking[2];
+                // $updateStatus = $InvestigationTracking[3];
                 @endphp
 
                 {{-- @if ($add == 1 && $canAdd) --}}
@@ -63,13 +63,12 @@
                 </div>
                 @endif --}}
             </div>
-            <br>
            
-            {{-- <div class="mt-3">
-                <div class="row justify-content-center">
+            <div class="mt-1">
+                <div class="row justify-content-center" style="width:98%; margin: 0 auto;">
                     <div class="col-12 col-md-12">
-                        <div class="border p-4 rounded shadow-sm" style="font-weight:bolder;">
-                            <div class="row mb-3">
+                        <div class="border p-3 rounded shadow-sm" style="font-weight:bolder;font-size:13px;">
+                            <div class="row mb-2">
                                 @if(!empty($PatientDetails->orgName))
                                     <div class="col">
                                         <div class="form-group">
@@ -114,7 +113,7 @@
                                     </div>
                                 @endif
                             </div>
-                            <div class="row mb-3">
+                            <div class="row mb-1">
                                 @if(!empty($ageString))
                                     <div class="col">
                                         <div class="form-group">
@@ -162,7 +161,7 @@
                         </div>
                     </div>
                 </div>
-            </div> --}}
+            </div>
 
             @if ($add == 1)
             <div class="modal fade bs-example-modal-lg" id="confirm-sample" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">

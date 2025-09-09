@@ -173,7 +173,7 @@
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                         <label class="control-label">Enter Full Name</label>
-                                                                        <input type="text" class="form-control input-sm" placeholder="Full Name..." name="username" id="input01"><span class="bar"></span>
+                                                                        <input type="text" class="form-control input-sm" placeholder="Full Name..." name="username">
                                                                     </div>
                                                                     <span class="text-danger" id="username_error"></span>
                                                                 </div>
@@ -185,7 +185,7 @@
                                                                 <div class="col-md-12">
                                                                     <div class="form-group has-custom m-b-5">
                                                                         <label class="control-label">Enter Email</label>
-                                                                        <input type="email" class="form-control input-sm" placeholder="abcd@gmail.com" id="input02" name="useremail"><span class="bar"></span>
+                                                                        <input type="email" class="form-control input-sm" placeholder="abcd@gmail.com" name="useremail">
                                                                     </div>
                                                                     <span class="text-danger" id="useremail_error"></span>
                                                                 </div>
@@ -218,7 +218,7 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Role</th>
-                            <th>Employee Name</th>
+                            {{-- <th>Employee Name</th> --}}
                             <th>Status</th>
                             <th>Action</th>
                         </tr>

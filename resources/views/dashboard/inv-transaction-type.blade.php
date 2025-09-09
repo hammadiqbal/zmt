@@ -145,18 +145,20 @@
                                                         </div>
                                                     </div>
 
-                                                    <div class="col-md-6">
+
+                                                      <div class="col-md-6">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Requesting Location Mandatory Status</label>
-                                                                    <select class="form-control selecter p-0" name="request_location_mandatory" id="request_location_mandatory" style="color:#222d32">
-                                                                        <option selected disabled >Select Request Location Mandatory Status</option>
-                                                                        <option value="y">Yes</option>
-                                                                        <option value="n">No</option>
+                                                                    <label class="control-label">Employee Location Check (Requesting)</label>
+                                                                    <select class="form-control selecter p-0" name="request_emp_location" id="request_emp_location" style="color:#222d32">
+                                                                        <option selected disabled >Select Employee Location Status</option>
+                                                                        <option value="s">Source</option>
+                                                                        <option value="d">Destination</option>
+                                                                        <option value="n">Not Applicable</option>
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="request_location_mandatory_error"></span>
+                                                                <span class="text-danger" id="request_emp_location_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -246,11 +248,11 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Controlled / Alloted Inventory Locations </label>
+                                                                    <label class="control-label">Controlled / Alloted Source Locations</label>
                                                                     <input type="text" class="form-control cursor-pointer" data-toggle="modal" 
-                                                                    data-target="#invLocationModal" readonly placeholder="Select Alloted Inventory Locations" id="inventory_location_value" name="inventory_location_value">
-                                                                    <span class="text-danger" id="inventory_location_value_error"></span>
-                                                                    <input type="hidden" name="inventory_location[]">
+                                                                    data-target="#invLocationModal" readonly placeholder="Select Source Locations" id="source_locations_value" name="source_locations_value">
+                                                                    <span class="text-danger" id="source_locations_value_error"></span>
+                                                                    <input type="hidden" name="source_locations[]">
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -260,15 +262,29 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Applicable Location</label>
-                                                                    <select class="form-control selecter p-0" name="applicable_location" id="applicable_location" style="color:#222d32">
+                                                                    <label class="control-label">Controlled / Alloted Destination Locations</label>
+                                                                    <input type="text" class="form-control cursor-pointer" data-toggle="modal" 
+                                                                    data-target="#invLocationModal" readonly placeholder="Select Destination Locations" id="destination_locations_value" name="destination_locations_value">
+                                                                    <span class="text-danger" id="destination_locations_value_error"></span>
+                                                                    <input type="hidden" name="destination_locations[]">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Employee Location Check (Source/Destination)</label>
+                                                                    <select class="form-control selecter p-0" name="emp_location_check" id="emp_location_check" style="color:#222d32">
                                                                         <option selected disabled >Select Applicable Location</option>
-                                                                        <option value="source">Source</option>
-                                                                        <option value="destination">Destination</option>
-                                                                        <option value="not applicable">Not Applicable</option>
+                                                                        <option value="s">Source</option>
+                                                                        <option value="d">Destination</option>
+                                                                        <option value="n">Not Applicable</option>
                                                                     </select>
                                                                 </div>
-                                                                <span class="text-danger" id="applicable_location_error"></span>
+                                                                <span class="text-danger" id="emp_location_check_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -417,10 +433,11 @@
 
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label class="control-label">Update Request Location Mandatory Status</label>
-                                                    <select class="form-control selecter p-0" name="u_request_location_mandatory" required id="u_request_location_mandatory" style="color:#222d32">
-                                                        <option value="y">Yes</option>
-                                                        <option value="n">No</option>
+                                                    <label class="control-label">Update Employee Location Check (Requesting)</label>
+                                                    <select class="form-control selecter p-0" name="u_request_emp_location" required id="u_request_emp_location" style="color:#222d32">
+                                                        <option value="s">Source</option>
+                                                        <option value="d">Destination</option>
+                                                        <option value="n">Not Applicable</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -464,34 +481,35 @@
                                                 </div>
                                             </div>
 
-                                            {{-- <div class="col-md-6">
-                                                <div class="form-group">
-                                                    <label class="control-label">Update Controlled / Alloted Inventory Locations</label>
-                                                    <select class="form-control selecter p-0" name="u_inventory_location" required id="u_inventory_location" style="color:#222d32">
-                                                        @foreach ($ServiceLocations as $ServiceLocation)
-                                                            <option value="{{ $ServiceLocation['id'] }}">{{ $ServiceLocation['name'] }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-                                            </div> --}}
 
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label class="control-label">Update Controlled / Alloted Inventory Locations</label>
+                                                    <label class="control-label">Update Controlled / Alloted Source Locations</label>
                                                     <input type="text" class="form-control cursor-pointer" data-toggle="modal" 
-                                                    data-target="#uinvserviceLocationModal" required name="u_inventorylocation_value">
-                                                    <input type="hidden" name="u_inventory_location[]">
+                                                    data-target="#uinvsourceLocationModal" required name="u_source_locations_value">
+                                                    <input type="hidden" name="u_source_locations[]">
                                                 </div>
                                             </div>
 
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label class="control-label">Update Applicable Location</label>
-                                                    <select class="form-control selecter p-0" name="u_applicable_location" required id="u_applicable_location" style="color:#222d32">
+                                                    <label class="control-label">Update Controlled / Alloted Destination Locations</label>
+                                                    <input type="text" class="form-control cursor-pointer" data-toggle="modal" 
+                                                    data-target="#uinvdestinationLocationModal" required name="u_destination_locations_value">
+                                                    <input type="hidden" name="u_destination_locations[]">
+                                                </div>
+                                            </div>
+
+                                            
+
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label class="control-label">Update Employee Location Check</label>
+                                                    <select class="form-control selecter p-0" name="u_emp_location_check" required id="u_emp_location_check" style="color:#222d32">
                                                         <option selected disabled >Select Applicable Location</option>
-                                                        <option value="source">Source</option>
-                                                        <option value="destination">Destination</option>
-                                                        <option value="not applicable">Not Applicable</option>
+                                                        <option value="s">Source</option>
+                                                        <option value="d">Destination</option>
+                                                        <option value="n">Not Applicable</option>
                                                     </select>
                                                 </div>
                                             </div>
@@ -528,12 +546,12 @@
             </div>
         </div>
     </div>
-       <!-- Update Performing CC Modal -->
-       <div class="modal fade" id="uinvserviceLocationModal" tabindex="-1" role="dialog" aria-labelledby="uinvserviceLocationModalLabel" aria-hidden="true">
+    <!-- Update Source Location Modal -->
+    <div class="modal fade" id="uinvsourceLocationModal" tabindex="-1" role="dialog" aria-labelledby="uinvsourceLocationModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="uinvserviceLocationModalLabel">Update Controlled / Alloted Inventory Locations</h5>
+                    <h5 class="modal-title" id="uinvsourceLocationModalLabel">Update Controlled / Alloted Source Locations</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -550,7 +568,31 @@
             </div>
         </div>
     </div>
-    <!-- Update Performing CC Modal -->
+    <!-- Update Source Location Modal -->
+
+    <!-- Update Destination Location Modal -->
+    <div class="modal fade" id="uinvdestinationLocationModal" tabindex="-1" role="dialog" aria-labelledby="uinvdestinationLocationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uinvdestinationLocationModalLabel">Update Controlled / Alloted Destination Locations</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <div class="row">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-dismiss="modal">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Update Destination Location Modal -->
 
     @endif
 

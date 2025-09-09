@@ -14,10 +14,13 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('status:checker')->everyMinute();
-        $schedule->command('service:scheduling')->everyMinute();
-        $schedule->command('service:bookingstatus')->everyMinute();
-        $schedule->command('service:end')->everyMinute();
+        // $schedule->command('service:scheduling')->everyMinute();
+        // $schedule->command('service:bookingstatus')->everyMinute();
+        // $schedule->command('service:end')->everyMinute();
         $schedule->command('brand:brand-expiration')->everyMinute();
+        
+        // Stock monitoring alerts - run once daily
+        $schedule->command('stock:monitor')->daily();
     }
     
 

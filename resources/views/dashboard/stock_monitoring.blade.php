@@ -136,7 +136,7 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Item Brand <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                                    <label class="control-label">Item Brand</label>
                                                                     <select class="form-control selecter p-0" name="sm_brand" id="sm_brand" style="color:#222d32">
                                                                     </select>
                                                                 </div>
@@ -149,7 +149,7 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Service Location</label>
+                                                                    <label class="control-label">Inventory Location</label>
                                                                     <select class="form-control selecter p-0" name="sm_location" id="sm_location" style="color:#222d32">
                                                                     </select>
                                                                 </div>
@@ -407,7 +407,8 @@
 
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label class="control-label">Update Item Brand</label>
+                                                    {{-- <small class="text-danger" style="font-size:11px;">(Optional)</small> --}}
+                                                    <label class="control-label">Update Item Brand </label>
                                                     <select class="form-control selecter p-0" id="u_sm_brand" required name="u_sm_brand" style="color:#222d32">
                                                     </select>
                                                 </div>
@@ -415,7 +416,7 @@
 
                                             <div class="col-md-6">
                                                 <div class="form-group">
-                                                    <label class="control-label">Update Service Location</label>
+                                                    <label class="control-label">Update Inventory Location</label>
                                                     <select class="form-control selecter p-0" id="u_sm_servicelocation" required name="u_sm_servicelocation" style="color:#222d32">
                                                     </select>
                                                 </div>

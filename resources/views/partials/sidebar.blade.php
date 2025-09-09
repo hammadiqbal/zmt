@@ -527,6 +527,12 @@
                     $hideMedicalCoding = true;
                     $hideVitalSign = true;
                     $hideEncounterProcedure = true;
+                    $hideInvestigationTracking = true;
+
+                    $hideInvestigationTrackingValues = explode(',', $rights->investigation_tracking);
+                    if (in_array('1', $hideInvestigationTrackingValues)) {
+                        $hideInvestigationTracking = false;
+                    }
 
                     // $hidePysicalAssesmetValues = explode(',', $rights->physician_assessment);
                     // if (in_array('1', $hidePysicalAssesmetValues)) {
@@ -583,8 +589,13 @@
                         $hideEncounterProcedure = false;
                     }
 
+                    // $hideInvestigationTracking = explode(',', $rights->investigation_tracking);
+                    // if (in_array('1', $hideInvestigationTrackingValues)) {
+                    //     $hideInvestigationTracking = false;
+                    // }
+
                     @endphp
-                    @if (!$hideVitalSign || !$hideEncounterProcedure || !$hideMedicalCoding)
+                    @if (!$hideVitalSign || !$hideEncounterProcedure || !$hideMedicalCoding || !$hideInvestigationTracking)
                         <li> <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false"><i class="mdi mdi-medical-bag"></i><span class="hide-menu">Patient Medical Record</span></a>
                             <ul aria-expanded="false" class="collapse">
                                 @if (!$hideMedicalCoding)
@@ -597,6 +608,10 @@
 
                                 @if (!$hideEncounterProcedure)
                                 <li><a href="{{ route('encounters-procedures') }}">Encounter & Procedures</a></li>
+                                @endif
+
+                                @if (!$hideInvestigationTracking)
+                                <li><a href="#" class="sidebar-investigation-tracking">Investigation Order</a></li>
                                 @endif
 
                                 {{-- @if (!$hidePysicalAssesmet)
@@ -649,12 +664,12 @@
                     $hideIssueDispense = true;
                     $hideConsumption = true;
                     $hideInventoryReturn = true;
-                    $hideOtherTransaction = true;
+                    $hideMaterialTransfer = true;
                     $hideReversalTransaction = true;
                     $hideMedicationRoutes = true;
                     $hideMedicationFrequency = true;
                     $hideRequisitionMaterialConsumption = true;
-                    $hideRequisitionOtherTransaction = true;
+                    $hideRequisitionMaterialTransfer = true;
                     $hideThirdPartyRegistration = true;
                     $hideConsumptionGroup = true;
                     $hideConsumptionMethod = true;
@@ -714,9 +729,9 @@
                     if (in_array('1', $hideInventoryReturnValues)) {
                         $hideInventoryReturn = false;
                     }
-                    $hideOtherTransactionValues = explode(',', $rights->other_transactions);
-                    if (in_array('1', $hideOtherTransactionValues)) {
-                        $hideOtherTransaction = false;
+                    $hideMaterialTransferValues = explode(',', $rights->material_transfer);
+                    if (in_array('1', $hideMaterialTransferValues)) {
+                        $hideMaterialTransfer = false;
                     }
                     $hideReversalTransactionValues = explode(',', $rights->reversal_of_transactions);
                     if (in_array('1', $hideReversalTransactionValues)) {
@@ -730,13 +745,13 @@
                     if (in_array('1', $hideMedicationFrequencyValues)) {
                         $hideMedicationFrequency = false;
                     }
-                    $hideRequisitionMaterialConsumptionValues = explode(',', $rights->requisition_for_other_transaction);
+                    $hideRequisitionMaterialConsumptionValues = explode(',', $rights->requisition_for_material_consumption);
                     if (in_array('1', $hideRequisitionMaterialConsumptionValues)) {
                         $hideRequisitionMaterialConsumption = false;
                     }
-                    $hideRequisitionOtherTransactionValues = explode(',', $rights->requisition_for_other_transaction);
-                    if (in_array('1', $hideRequisitionOtherTransactionValues)) {
-                        $hideRequisitionOtherTransaction = false;
+                    $hideRequisitionMaterialTransferValues = explode(',', $rights->requisition_for_material_transfer);
+                    if (in_array('1', $hideRequisitionMaterialTransferValues)) {
+                        $hideRequisitionMaterialTransfer = false;
                     }
                     $hideThirdPartyRegistrationValues = explode(',', $rights->third_party_registration);
                     if (in_array('1', $hideThirdPartyRegistrationValues)) {
@@ -765,7 +780,7 @@
 
 
                     @endphp
-                    @if (!$hideItemCat || !$hideItemSubCat || !$hideItemType || !$hideItemGenericSetup || !$hideItemBrand || !$hideTransactionType || !$hidePurchaseOrder || !$hideWorkOrder || !$hideMedicationRoutes || !$hideMedicationFrequency || !$hideRequisitionMaterialConsumption || !$hideRequisitionOtherTransaction)
+                    @if (!$hideItemCat || !$hideItemSubCat || !$hideItemType || !$hideItemGenericSetup || !$hideItemBrand || !$hideTransactionType || !$hidePurchaseOrder || !$hideWorkOrder || !$hideMedicationRoutes || !$hideMedicationFrequency || !$hideRequisitionMaterialConsumption || !$hideRequisitionMaterialTransfer)
                          <li> <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false"><i class="mdi mdi-database"></i><span class="hide-menu">Material Management</span></a>
                             <ul aria-expanded="false" class="collapse">
                                 @if (!$hideItemCat || !$hideItemSubCat || !$hideItemType || !$hideItemGenericSetup || !$hideItemBrand)
@@ -869,8 +884,8 @@
                                         @endif
                                     </ul>
                                     <ul aria-expanded="false" class="collapse">
-                                        @if (!$hideOtherTransaction)
-                                            <li><a href="{{ route('other-transactions') }}">Other Transactions</a></li>
+                                        @if (!$hideMaterialTransfer)
+                                            <li><a href="{{ route('material-transfer') }}">Material Transfer</a></li>
                                         @endif
                                     </ul>
                                     <ul aria-expanded="false" class="collapse">
@@ -909,8 +924,8 @@
                                 @if (!$hideRequisitionMaterialConsumption)
                                     <li><a href="{{ route('material-consumption') }}">Requisition For Material Consumption</a></li>
                                 @endif
-                                 @if (!$hideRequisitionOtherTransaction)
-                                    <li><a href="{{ route('req-other-transaction') }}">Requisition For Other Transactions</a></li>
+                                 @if (!$hideRequisitionMaterialTransfer)
+                                    <li><a href="{{ route('req-material-transfer') }}">Requisition For Material Transfer</a></li>
                                 @endif
                             </ul>
                         </li>
@@ -1102,3 +1117,58 @@
         <!-- End Left Sidebar - style you can find in sidebar.scss  -->
         <!-- ============================================================== -->
         <!-- ============================================================== -->
+
+        <!-- Custom styles for MR Selection Modal -->
+        <style>
+            #mr-selection-modal {
+                z-index: 1050 !important;
+                display: none;
+            }
+            #mr-selection-modal.show {
+                display: block !important;
+            }
+            #mr-selection-modal .modal-dialog {
+                z-index: 1051 !important;
+                margin: 30px auto;
+            }
+            #mr-selection-modal .modal-content {
+                z-index: 1052 !important;
+                position: relative;
+            }
+            .modal-backdrop.show {
+                z-index: 1040 !important;
+            }
+            /* Force modal to be visible when shown */
+            #mr-selection-modal.modal.show {
+                display: block !important;
+                background-color: rgba(0, 0, 0, 0.5);
+            }
+        </style>
+
+        <!-- MR Selection Modal for Investigation Tracking -->
+        <div class="modal fade" id="mr-selection-modal" tabindex="-1" role="dialog" aria-labelledby="mrSelectionModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="mrSelectionModalLabel">Select Patient MR Number</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="sidebar-mr-select">Patient MR Number</label>
+                            <select class="form-control selecter p-0" id="sidebar-mr-select" name="sidebar_mr_select" style="color:#222d32">
+                                <option selected disabled>Select MR #</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="proceed-investigation-tracking">Proceed</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        

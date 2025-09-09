@@ -77,7 +77,7 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <h4 class="modal-title" id="myLargeModalLabel">Employee Service Allocation</h4>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span >&times;</span></button>
                         </div>
                         <div class="row" id="emp-info-row" style="width:98%;display:none;font-size:13px;border:1px solid black;margin: 0 auto;"></div>
                         <form id="emp_serviceallocation" method="post">
@@ -181,13 +181,13 @@
             </div>
 
             <!-- Services Modal -->
-            <div class="modal fade" id="serviceAllocationModal" tabindex="-1" role="dialog" aria-labelledby="serviceAllocationModalLabel" aria-hidden="true">
+            <div class="modal fade" id="serviceAllocationModal" tabindex="-1" role="dialog" aria-labelledby="serviceAllocationModalLabel" >
                 <div class="modal-dialog modal-fullscreen" role="document">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="costCenterModalLabel">Select Services</h5>
                             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
+                                <span >&times;</span>
                             </button>
                         </div>
                         <div class="modal-body">
@@ -257,7 +257,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h4 class="modal-title" id="myLargeModalLabel">Update Cost Center Type Details</h4>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span >&times;</span></button>
                     </div>
                     <div class="modal-body">
                         <!-- Row -->
@@ -313,13 +313,13 @@
     </div>
 
     <!-- Update Services Modal -->
-    <div class="modal fade" id="uservicesModal" tabindex="-1" role="dialog" aria-labelledby="uservicesModalLabel" aria-hidden="true">
+    <div class="modal fade" id="uservicesModal" tabindex="-1" role="dialog" aria-labelledby="uservicesModalLabel" >
         <div class="modal-dialog modal-fullscreen" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="uservicesModalLabel">Update Services</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
+                        <span >&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">

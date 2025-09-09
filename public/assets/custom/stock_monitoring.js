@@ -34,8 +34,8 @@ $(document).ready(function() {
             $('#sm_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
             OrgChangeInventoryGeneric('#sm_org', '#sm_generic', '#add_stockmonitoring');
         }
-        $('#sm_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', true);
-        SiteChangeActivatedServiceLocation('#sm_site','#sm_location', '#add_stockmonitoring',false, true);
+        $('#sm_location').html("<option selected disabled value=''>Select Inventory Location</option>").prop('disabled', true);
+        SiteChangeActivatedServiceLocation('#sm_site','#sm_location', '#add_stockmonitoring',true, false);
 
         $('#sm_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
         GenericChangeBrand('#sm_generic', '#sm_brand', '#add_stockmonitoring');
@@ -50,7 +50,7 @@ $(document).ready(function() {
         var data = SerializeForm(this);
         var resp = true;
         $(data).each(function(i, field){
-            if (((field.value == '') || (field.value == null)) && (field.name != 'sm_brand'))
+            if (((field.value == '') || (field.value == null)))
             {
                 var FieldName = field.name;
                 var FieldID = '#'+FieldName + "_error";
@@ -260,6 +260,7 @@ $(document).ready(function() {
             type: 'GET',
             dataType: 'json',
             success: function(response) {
+                console.log(response);
                 var formattedDateTime = moment(response.effective_timestamp, 'dddd DD MMMM YYYY - hh:mm A').format('dddd DD MMMM YYYY - hh:mm A');
                 $('.uedt').each(function() {
                     var edtElement = $(this);
@@ -297,8 +298,12 @@ $(document).ready(function() {
                     });
                 });
                 OrgChangeInventoryGeneric('#u_sm_org', '#u_sm_generic', '#u_stockmonitoring');
-
-                $('#u_sm_brand').html("<option selected value="+ response.brandId +">" + response.brandName + "</option>");
+                if(response.brandId){
+                    $('#u_sm_brand').html("<option selected value="+ response.brandId +">" + response.brandName + "</option>");
+                }
+                else{
+                    $('#u_sm_brand').html("<option selected disabled value=''>Select Brand</option>");
+                }
                 fetchGenericItemBrand(response.genericId, '#u_sm_brand', function(data) {
                     $.each(data, function(key, value) {
                         if(response.brandId != value.id)
@@ -310,7 +315,7 @@ $(document).ready(function() {
                 GenericChangeBrand('#u_sm_generic', '#u_sm_brand', '#u_stockmonitoring');
 
                 $('#u_sm_servicelocation').html("<option selected value="+ response.serviceLocationId +">" + response.serviceLocation + "</option>");
-                fetchActiveSL(response.siteId, '#u_sm_servicelocation',false, true, function(data) {
+                fetchActiveSL(response.siteId, '#u_sm_servicelocation',true, false, function(data) {
                     $.each(data, function(key, value) {
                         if(value.location_id != response.serviceLocationId)
                         {
@@ -320,7 +325,7 @@ $(document).ready(function() {
                     });
                 });
 
-                SiteChangeActivatedServiceLocation('#u_sm_site','#u_sm_servicelocation', '#u_stockmonitoring',false, true);
+                SiteChangeActivatedServiceLocation('#u_sm_site','#u_sm_servicelocation', '#u_stockmonitoring',true, false);
 
 
                 $('#u_sm_min_stock').val(response.minStock);

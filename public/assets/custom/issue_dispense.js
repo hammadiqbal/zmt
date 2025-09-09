@@ -194,6 +194,7 @@ $(document).ready(function() {
                     siteId: siteId
                 },
                 success: function(resp) {
+
                     Swal.close();
 
                     if (resp.success === false) {
@@ -275,9 +276,6 @@ $(document).ready(function() {
                         $('#destination_applicable').val('0');
 
                     }
-                    
-                   
-        
                     if (resp.sourceData && resp.sourceData.length > 0) {
                          $('#id_source')
                         .empty()
@@ -772,47 +770,49 @@ $(document).ready(function() {
                         .show();
             
 
-                        
-                        if (resp.sourceData && resp.sourceData.length > 0) {
-                             $('#id_source')
-                            .empty()
-                            .append('<option selected disabled value="">Select Source</option>').prop('disabled', false);
-                            resp.sourceData.forEach(function(item) {
-                                let displayText = item.name || item.person_name || item.patient_name || 'Unnamed';
-                                $('#id_source').append(
-                                    '<option value="' + item.id + '">' + displayText + '</option>'
-                                );
-                            });
+                        // if (resp.sourceData && resp.sourceData.length > 0) {
+                        //      $('#id_source')
+                        //     .empty()
+                        //     .append('<option selected disabled value="">Select Source</option>').prop('disabled', false);
+                        //     resp.sourceData.forEach(function(item) {
+                        //         let displayText = item.name || item.person_name || item.patient_name || 'Unnamed';
+                        //         $('#id_source').append(
+                        //             '<option value="' + item.id + '">' + displayText + '</option>'
+                        //         );
+                        //     });
                             
-                        } else {
-                            $('#id_source')
-                            .empty()
-                            .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
-                        }
+                        // } else {
+                        //     $('#id_source')
+                        //     .empty()
+                        //     .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
+                        // }
             
 
             
-                        if (resp.destinationData && resp.destinationData.length > 0) {
-                            resp.destinationData.forEach(function(item) {
-                                $('#id_destination')
-                                .empty()
-                                .append('<option selected disabled value="">Select Destination</option>').prop('disabled', false);
-                                let displayText = item.name || item.person_name || item.patient_name ||'Unnamed';
-                                $('#id_destination').append(
-                                    '<option value="' + item.id + '">' + displayText + '</option>'
-                                );
-                            });
-                
-                        } else {
-                            $('#id_destination')
-                            .empty()
-                            .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
-                        }
+                        // if (resp.destinationData && resp.destinationData.length > 0) {
+                        //     resp.destinationData.forEach(function(item) {
+                        //         $('#id_destination')
+                        //         .empty()
+                        //         .append('<option selected disabled value="">Select Destination</option>').prop('disabled', false);
+                        //         let displayText = item.name || item.person_name || item.patient_name ||'Unnamed';
+                        //         $('#id_destination').append(
+                        //             '<option value="' + item.id + '">' + displayText + '</option>'
+                        //         );
+                        //     });
+                        // } else {
+                        //     $('#id_destination')
+                        //     .empty()
+                        //     .append('<option selected disabled value="">No Data Found</option>').prop('disabled', true);
+                        // }
 
                         let sourceType = (resp.Source || '').toLowerCase();
                         if (sourceType.includes('location')) {
                             $('#id_sl').show();
                             $('#id_sl label').text('Inventory Source Location');
+                            $('#id_source')
+                            .empty()
+                            .append(`<option selected value="${data.source_location_id}">${data.source_location_name}</option>`)
+                            .prop('disabled', true);
                             $('#source_applicable').val('1');
 
                         }
@@ -832,7 +832,7 @@ $(document).ready(function() {
                             $('#id_dl label').text('Inventory Destination Location');
                             $('#id_destination')
                             .empty()
-                            .append(`<option selected value="${data.inv_location_id}">${data.location_name}</option>`)
+                            .append(`<option selected value="${data.destination_location_id}">${data.destination_location_name}</option>`)
                             .prop('disabled', true);
                             $('#destination_applicable').val('1');
 

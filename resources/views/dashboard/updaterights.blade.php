@@ -164,14 +164,14 @@
                                                                 <input type="checkbox" name="{{ $moduleName }}[]" class="check view" id="minimal-checkbox-{{ $moduleName }}-{{ $key+2 }}" {{ $viewChecked }}>
                                                                 <label for="minimal-checkbox-{{ $moduleName }}-{{ $key+2 }}">View</label>
                                                             </li>
-                                                            @if($moduleName != 'modules' && $moduleName != 'external_transaction' && $moduleName != 'issue_and_dispense' && $moduleName != 'consumption' && $moduleName != 'inventory_return' && $moduleName != 'other_transactions' && $moduleName != 'reversal_of_transactions')
+                                                            @if($moduleName != 'modules' && $moduleName != 'external_transaction' && $moduleName != 'issue_and_dispense' && $moduleName != 'consumption' && $moduleName != 'inventory_return' && $moduleName != 'material_transfer' && $moduleName != 'reversal_of_transactions')
                                                                 <li>
                                                                     <input type="checkbox" name="{{ $moduleName }}[]" class="check edit" id="minimal-checkbox-{{ $moduleName }}-{{ $key+3 }}" {{ $editChecked }}>
                                                                     <label for="minimal-checkbox-{{ $moduleName }}-{{ $key+3 }}">Edit</label>
                                                                 </li>
                                                             @endif
 
-                                                            @if($moduleName != 'modules' && $moduleName != 'employee_qualification_setup' && $moduleName != 'service_rates' && $moduleName != 'employee_medical_license_setup' && $moduleName != 'employee_cost_center_allocation' && $moduleName != 'external_transaction' && $moduleName != 'issue_and_dispense' && $moduleName != 'consumption' && $moduleName != 'inventory_return' && $moduleName != 'other_transactions' && $moduleName != 'reversal_of_transactions')
+                                                            @if($moduleName != 'modules' && $moduleName != 'employee_qualification_setup' && $moduleName != 'service_rates' && $moduleName != 'employee_medical_license_setup' && $moduleName != 'employee_cost_center_allocation' && $moduleName != 'external_transaction' && $moduleName != 'issue_and_dispense' && $moduleName != 'consumption' && $moduleName != 'inventory_return' && $moduleName != 'material_transfer' && $moduleName != 'reversal_of_transactions')
                                                                 <li>
                                                                     <input type="checkbox" name="{{ $moduleName }}[]" class="check update_status" id="minimal-checkbox-{{ $moduleName }}-{{ $key+4 }}" {{$statusChecked}}>
                                                                     <label for="minimal-checkbox-{{ $moduleName }}-{{ $key+4 }}">Update Status</label>
@@ -210,7 +210,7 @@
                                                             </li>
                                                             @endif
 
-                                                            @if($moduleName == 'issue_and_dispense' OR $moduleName == 'other_transactions')
+                                                            @if($moduleName == 'issue_and_dispense' OR $moduleName == 'material_transfer')
                                                             <li>
                                                                 <input type="checkbox" name="{{ $moduleName }}[]" class="check update_status" id="minimal-checkbox-{{ $moduleName }}-{{ $key+3 }}" {{$editChecked}}>
                                                                 <label for="minimal-checkbox-{{ $moduleName }}-{{ $key+3 }}">Respond</label>

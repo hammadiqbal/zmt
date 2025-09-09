@@ -10,7 +10,7 @@ class ItemRates extends Model
     use HasFactory;
     protected $table = 'item_rates';
     public $timestamps = false;
-    protected $fillable = ['org_id', 'site_id', 'brand_id','batch_no', 'unit_cost', 'billed_amount',
+    protected $fillable = ['org_id', 'site_id', 'generic_id', 'brand_id','batch_no', 'pack_size', 'unit_cost', 'billed_amount',
     'status', 'user_id', 'logid',
     'effective_timestamp', 'last_updated','timestamp'];
 }

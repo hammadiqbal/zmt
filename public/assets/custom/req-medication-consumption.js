@@ -2,9 +2,9 @@ $(document).ready(function() {
     //Open Requisition Medication Consumption
     $(document).on('click', '.add-reqmc', function() {
         $('.duplicate:not(:first)').remove();
-        $('#rmc_transaction_type').html("<option selected disabled value=''>Select Transaction Type</option>");
         var orgId = $('#rmc_orgid').val();
         var siteId = $('#rmc_siteid').val();
+        $('#transaction-info-row').hide();
         // fetchTransactionTypes(orgId, '#rmc_transaction_type', true, function(data) {
         //     if (data && data.length > 0) {
         //         $.each(data, function(key, value) {
@@ -12,27 +12,158 @@ $(document).ready(function() {
         //         });
         //     }
         // });
+        $('#rmc_transaction_type').html("<option selected disabled value=''>Select Transaction Type</option>");
+        // fetchMaterialManagementTransactionTypes(orgId, '#rmc_transaction_type','issue_dispense','y', function(data) {
+        //     $.each(data, function(key, value) {
+        //         $('#rmc_transaction_type').append('<option value="' + value.id + '">' + value.name + '</option>');
+        //     });
+        // });
+         fetchMaterialManagementTransactionTypes(orgId, '#rmc_transaction_type','issue_dispense','y', function(data) {
+                    $.each(data, function(key, value) {
+                            $('#rmc_transaction_type').append('<option value="' + value.id + '">' + value.name + '</option>');
+                    });
+                });
 
-        fetchMaterialManagementTransactionTypes(orgId, '#rmc_transaction_type','issue_dispense','y', function(data) {
-            $.each(data, function(key, value) {
-                $('#rmc_transaction_type').append('<option value="' + value.id + '">' + value.name + '</option>');
-            });
-        });
 
 
-        fetchActiveSL(siteId, '#rmc_inv_location', true, true, function(data) {
-            $.each(data, function(key, value) {
-                $('#rmc_inv_location').append('<option value="' + value.location_id + '">' + value.name + '</option>');
-            });
-        });
-
-        // $('#rmc_inv_location').html("<option selected disabled value=''>Select Inventory Location</option>").prop('disabled', true);
-        // SiteChangeActivatedServiceLocation(siteId,'#rmc_inv_location', '#add_reqmc',true );
+        // Initialize source and destination location dropdowns
+        $('#rmc_source_location').html("<option selected disabled value=''>Select Source Location</option>").prop('disabled', true);
+        $('#rmc_destination_location').html("<option selected disabled value=''>Select Destination Location</option>").prop('disabled', true);
+        
+        // Hide source/destination sections initially
+        // $('.rmc_source_location, .rmc_destination_location').hide();
 
 
         $(".rmc_inv_generic, .rmc_route, .rmc_frequency").each(function() {
             $(this).val($(this).find("option:first").val()).change();
         });
+        
+        // Handle transaction type change for source and destination locations
+        // $('#rmc_transaction_type').off('change').on('change', function() {
+        $(document).off('change', '#rmc_transaction_type').on('change', '#rmc_transaction_type', function() {
+            let transactionTypeID = $(this).val();
+            let siteId = $('#rmc_siteid').val();
+            
+            if (!siteId) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Site Required',
+                    text: 'Please select a site before choosing the transaction type.'
+                });
+                $('#rmc_transaction_type')
+                    .prop('disabled', false)
+                    .children('option[value=""]').remove().end()
+                    .prepend('<option value="" disabled>Select Transaction Type</option>')
+                    .val('');
+                return;
+            }
+
+            Swal.fire({
+                title: "Processing",
+                allowOutsideClick: false,
+                willOpen: () => {
+                    Swal.showLoading();
+                },
+                showConfirmButton: false
+            });
+
+            $.ajax({
+                url: '/inventory/gettransactiontypeim',
+                type: 'GET',
+                data: {
+                    transactionTypeId: transactionTypeID,
+                    siteId: siteId,
+                    transactionType: 'requisition'
+                },
+                success: function(resp) {
+                    Swal.close();
+                    
+                    // Show transaction info
+                    let infoHtml = `
+                        <div class="col-12 mt-1 mb-1 transaction-block">
+                            <div class="card shadow-sm border mb-0">
+                                <div class="card-body py-2 px-3">
+                                    <div class="row align-items-center text-center">
+                                        <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                            <small class="text-muted">Source:</small><br>
+                                            <strong class="text-primary source">${resp.Source || '-'}</strong>
+                                        </div>
+                                        <div class="col-md-6 col-12 mb-2 mb-md-0">
+                                            <small class="text-muted">Destination:</small><br>
+                                            <strong class="text-primary destination">${resp.Destination || '-'}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Remove existing transaction info and add new one
+                    $('#transaction-info-row').find('.transaction-block').remove();
+                    $('#transaction-info-row')
+                        .append(infoHtml)
+                        .show();
+
+                    let sourceType = (resp.Source || '').toLowerCase();
+                    let destType = (resp.Destination || '').toLowerCase();
+                    
+                    // Handle source location
+                    if (sourceType.includes('location')) {
+                        $('.rmc_source_location').show();
+                        $('#rmc_source_location').prop('required', true);
+                        $('#rmc_source_location').prop('disabled', false);
+                        
+                        // Populate source locations
+                        $('#rmc_source_location').empty().append('<option selected disabled value="">Select Source Location</option>');
+                        if (resp.sourceData && resp.sourceData.length > 0) {
+                            resp.sourceData.forEach(function(item) {
+                                $('#rmc_source_location').append('<option value="' + item.id + '">' + item.name + '</option>');
+                            });
+                        } else {
+                            $('#rmc_source_location')
+                                .empty()
+                                .append('<option selected disabled value="">No Data Found</option>')
+                                .prop('disabled', true)
+                                .prop('required', false);
+                        }
+                    } else {
+                        $('.rmc_source_location').hide();
+                        $('#rmc_source_location').prop('required', false);
+                        $('#rmc_source_location').val('').prop('disabled', true);
+                    }
+                    
+                    // Handle destination location
+                    if (destType.includes('location')) {
+                        $('.rmc_destination_location').show();
+                        $('#rmc_destination_location').prop('required', true);
+                        $('#rmc_destination_location').prop('disabled', false);
+                        
+                        // Populate destination locations
+                        $('#rmc_destination_location').empty().append('<option selected disabled value="">Select Destination Location</option>');
+                        if (resp.destinationData && resp.destinationData.length > 0) {
+                            resp.destinationData.forEach(function(item) {
+                                $('#rmc_destination_location').append('<option value="' + item.id + '">' + item.name + '</option>');
+                            });
+                        } else {
+                            $('#rmc_destination_location')
+                                .empty()
+                                .append('<option selected disabled value="">No Data Found</option>')
+                                .prop('disabled', true)
+                                .prop('required', false);
+                        }
+                    } else {
+                        $('.rmc_destination_location').hide();
+                        $('#rmc_destination_location').prop('required', false);
+                        $('#rmc_destination_location').val('').prop('disabled', true);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    Swal.close();
+                    console.log(error);
+                }
+            });
+        });
+        
         $('#add-reqmc').modal('show');
     });
     //Open Requisition Medication Consumption
@@ -47,6 +178,17 @@ $(document).ready(function() {
             if ((field.value == '' || field.value == null) && field.name != 'rmc_remarks')
             {
                 var FieldName = field.name;
+
+                // Skip validation if the field is hidden or disabled (e.g., source/destination when not inventory)
+                var $form = $('#add_reqmc');
+                var $fieldEls = $form.find('[name="' + FieldName + '"]');
+                if ($fieldEls.length > 0) {
+                    var isHidden = $fieldEls.is(':hidden');
+                    var isDisabled = $fieldEls.is(':disabled');
+                    if (isHidden || isDisabled) {
+                        return true; // continue to next field
+                    }
+                }
 
                 $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
                 $( 'input[name= "' +FieldName +'"' ).focus(function() {
@@ -157,11 +299,11 @@ $(document).ready(function() {
         columnDefs: [
             {
                 targets: 1,
-                width: "300px"
+                width: "400px"
             },
             {
                 targets: 2,
-                width: "300px"
+                width: "250px"
             },
             {
                 targets: 3,
@@ -243,15 +385,120 @@ $(document).ready(function() {
                             $('#u_rmc_transaction_type').append('<option value="' + value.id + '">' + value.name + '</option>');
                         }
                     });
+                    // Ensure currently selected shows even with select2
+                    $('#u_rmc_transaction_type').val(response.TransactionTypeId).trigger('change.select2');
                 });
 
-                // $('#u_rmc_inv_location').val(response.ServiceLocationId).change();
-                $('#u_rmc_inv_location').html("<option selected value="+ response.ServiceLocationId +">" + response.ServiceLocation + "</option>");
-                fetchActiveSL(response.siteId, '#u_rmc_inv_location', true, true, function(data) {
-                    $.each(data, function(key, value) {
-                        if(value.location_id != response.ServiceLocationId)
-                        {
-                            $('#u_rmc_inv_location').append('<option value="' + value.location_id + '">' + value.name + '</option>');
+                // Initialize source and destination location dropdowns for update modal
+                if (response.SourceLocationId && response.SourceLocationName) {
+                    $('.u_rmc_source_location').show();
+                    $('#u_rmc_source_location').html("<option selected value='" + response.SourceLocationId + "'>" + response.SourceLocationName + "</option>");
+                } else {
+                    $('.u_rmc_source_location').hide();
+                    $('#u_rmc_source_location').html("<option selected disabled value=''>Select Source Location</option>");
+                }
+
+                if (response.DestinationLocationId && response.DestinationLocationName) {
+                    $('.u_rmc_destination_location').show();
+                    $('#u_rmc_destination_location').html("<option selected value='" + response.DestinationLocationId + "'>" + response.DestinationLocationName + "</option>");
+                } else {
+                    $('.u_rmc_destination_location').hide();
+                    $('#u_rmc_destination_location').html("<option selected disabled value=''>Select Destination Location</option>");
+                }
+                
+                // Hydrate lists based on current transaction type
+                $.ajax({
+                    url: '/inventory/gettransactiontypeim',
+                    type: 'GET',
+                    data: { 
+                        transactionTypeId: response.TransactionTypeId, 
+                        siteId: response.siteId,
+                        transactionType: 'requisition'
+                    },
+                    success: function(resp) {
+                        var sourceType = (resp.Source || '').toLowerCase();
+                        var destType = (resp.Destination || '').toLowerCase();
+
+                        if (sourceType.includes('location')) {
+                            $('.u_rmc_source_location').show();
+                            $('#u_rmc_source_location').prop('required', true).prop('disabled', false);
+                            if (resp.sourceData && resp.sourceData.length > 0) {
+                                resp.sourceData.forEach(function(item){
+                                    if (item.id != response.SourceLocationId) {
+                                        $('#u_rmc_source_location').append('<option value="' + item.id + '">' + (item.name || '') + '</option>');
+                                    }
+                                });
+                            }
+                        } else {
+                            $('.u_rmc_source_location').hide();
+                            $('#u_rmc_source_location').prop('required', false).val('').prop('disabled', true);
+                        }
+
+                        // Only show destination when it is inventory location
+                        if (destType.includes('location')) {
+                            $('.u_rmc_destination_location').show();
+                            $('#u_rmc_destination_location').prop('required', true).prop('disabled', false);
+                            if (resp.destinationData && resp.destinationData.length > 0) {
+                                resp.destinationData.forEach(function(item){
+                                    if (item.id != response.DestinationLocationId) {
+                                        $('#u_rmc_destination_location').append('<option value="' + item.id + '">' + (item.name || '') + '</option>');
+                                    }
+                                });
+                            }
+                        } else {
+                            $('.u_rmc_destination_location').hide();
+                            $('#u_rmc_destination_location').prop('required', false).val('').prop('disabled', true);
+                        }
+                    }
+                });
+                
+                // Handle transaction type change for source and destination locations in update modal
+                $(document).off('change', '#u_rmc_transaction_type').on('change', '#u_rmc_transaction_type', function() {
+                    var transactionTypeId = $(this).val();
+                    if (!transactionTypeId) { return; }
+                    $.ajax({
+                        url: '/inventory/gettransactiontypeim',
+                        type: 'GET',
+                        data: { 
+                            transactionTypeId: transactionTypeId, 
+                            siteId: response.siteId,
+                            transactionType: 'requisition'
+                        },
+                        success: function(resp) {
+                            var sourceType = (resp.Source || '').toLowerCase();
+                            var destType = (resp.Destination || '').toLowerCase();
+
+                            // Reset
+                            $('#u_rmc_source_location').empty().append('<option selected disabled value="">Select Source Location</option>');
+                            $('#u_rmc_destination_location').empty().append('<option selected disabled value="">Select Destination Location</option>');
+
+                            // Update source list
+                            if (sourceType.includes('location')) {
+                                $('.u_rmc_source_location').show();
+                                $('#u_rmc_source_location').prop('required', true).prop('disabled', false);
+                                if (resp.sourceData && resp.sourceData.length > 0) {
+                                    resp.sourceData.forEach(function(item){
+                                        $('#u_rmc_source_location').append('<option value="' + item.id + '">' + (item.name || '') + '</option>');
+                                    });
+                                }
+                            } else {
+                                $('.u_rmc_source_location').hide();
+                                $('#u_rmc_source_location').prop('required', false).val('').prop('disabled', true);
+                            }
+
+                            // Update destination list (only inventory location)
+                            if (destType.includes('location')) {
+                                $('.u_rmc_destination_location').show();
+                                $('#u_rmc_destination_location').prop('required', true).prop('disabled', false);
+                                if (resp.destinationData && resp.destinationData.length > 0) {
+                                    resp.destinationData.forEach(function(item){
+                                        $('#u_rmc_destination_location').append('<option value="' + item.id + '">' + (item.name || '') + '</option>');
+                                    });
+                                }
+                            } else {
+                                $('.u_rmc_destination_location').hide();
+                                $('#u_rmc_destination_location').prop('required', false).val('').prop('disabled', true);
+                            }
                         }
                     });
                 });
@@ -337,7 +584,6 @@ $(document).ready(function() {
                             }
                         });
                     })(i);
-                    console.log(genericIds[i], dose[i], days[i], routeIds[i], frequencyIds[i]);
 
                     var doseField = '<div class="col-md-6">' +
                         '<div class="form-group row">' +

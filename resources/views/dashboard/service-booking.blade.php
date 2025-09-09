@@ -335,7 +335,7 @@
                                 </div>
                                 @endif
 
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <div class="form-group row">
                                         <div class="col-md-12">
                                             <div class="form-group has-custom m-b-5">
@@ -347,7 +347,7 @@
                                     </div>
                                 </div>
 
-                                <div class="col-md-5">
+                                <div class="col-md-4">
                                     <div class="form-group row">
                                         <div class="col-md-12">
                                             <div class="form-group has-custom m-b-5">
@@ -358,6 +358,30 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                
+                                <div class="col-md-3">
+                                    <div class="form-group row">
+                                        <div class="col-md-12">
+                                            <div class="form-group has-custom m-b-5">
+                                                {{-- <label class="control-label">Date Filter</label> --}}
+                                                <select class="form-control selecter p-0" id="fb_date_filter" name="fb_date_filter" style="color:#222d32">
+                                                    <option selected disabled value="">Select Date Filter</option>
+                                                    <option value="today" selected>Today</option>
+                                                    <option value="yesterday">Yesterday</option>
+                                                    <option value="this_week">This Week</option>
+                                                    <option value="last_week">Last Week</option>
+                                                    <option value="this_month">This Month</option>
+                                                    <option value="last_month">Last Month</option>
+                                                    <option value="this_year">This Year</option>
+                                                    <option value="last_year">Last Year</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+
                             </div>
                         </div>
                     </div>

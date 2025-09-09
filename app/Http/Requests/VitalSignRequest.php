@@ -21,20 +21,33 @@ class VitalSignRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $patientAge = $this->input('vs_age');
+        $isUnder16 = $patientAge && $patientAge < 16;
+        
+        $rules = [
             'vs_mr' => 'required',
             'vs_age' => 'required',
-            'vs_sbp' => 'required',
-            'vs_dbp' => 'required',
             'vs_pulse' => 'required',
             'vs_temp' => 'required',
             'vs_rrate' => 'required',
             'vs_weight' => 'required',
             'vs_height' => 'required',
-            'vs_score' => 'required|integer|between:1,10',
             'vs_o2saturation' => 'required|integer|between:0,100',
             'vs_edt' => 'required',
         ];
+        
+        // Make SBP, DBP, and Pain Score optional for patients under 16
+        if ($isUnder16) {
+            $rules['vs_sbp'] = 'nullable|integer|min:0|max:300';
+            $rules['vs_dbp'] = 'nullable|integer|min:0|max:200';
+            $rules['vs_score'] = 'nullable|integer|between:1,10';
+        } else {
+            $rules['vs_sbp'] = 'required|integer|min:0|max:300';
+            $rules['vs_dbp'] = 'required|integer|min:0|max:200';
+            $rules['vs_score'] = 'required|integer|between:1,10';
+        }
+        
+        return $rules;
     }
 
     public function messages()

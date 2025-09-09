@@ -21,7 +21,7 @@ use App\Http\Requests\InventoryGenericRequest;
 use App\Http\Requests\InventoryTransactionTypeRequest;
 use App\Http\Requests\MedicationRoutesRegistration;
 use App\Http\Requests\MedicationFrequencyRequest;
-use App\Http\Requests\RequisitionForOtherTransactionRequest;
+use App\Http\Requests\RequisitionForMaterialTransferRequest;
 // use App\Http\Requests\VendorRegistrationRequest;
 use App\Http\Requests\ThirdPartyRegistrationRequest;
 use App\Http\Requests\ConsumptionGroupRequest;
@@ -35,7 +35,7 @@ use App\Http\Requests\InventorySourceDestinationTypeRequest;
 use App\Http\Requests\InventoryTransactionActivityRequest;
 use App\Http\Requests\ExternalTransactionRequest;
 use App\Http\Requests\IssueDispenseRequest;
-use App\Http\Requests\OtherTransactionRequest;
+use App\Http\Requests\MaterialTransferRequest;
 use App\Http\Requests\ConsumptionRequest;
 use App\Http\Requests\ReturnRequest;
 use App\Models\InventoryCategory;
@@ -58,7 +58,7 @@ use App\Models\InventoryTransactionActivity;
 use App\Models\MedicationRoutes;
 use App\Models\MedicationFrequency;
 use App\Models\MaterialConsumptionRequisition;
-use App\Models\RequisitionForOtherTransaction;
+use App\Models\RequisitionForMaterialTransfer;
 use App\Models\PurchaseOrder;
 use App\Models\WorkOrder;
 use App\Models\ServiceLocation;
@@ -1524,6 +1524,9 @@ class InventoryController extends Controller
         else if($condition == 'medication'){
             $InventoryGenerics->where('inventory_category.name', 'like', 'Medicine%');
         }
+        else if ($condition == 'material_medicine') {
+            $InventoryGenerics->where('inventory_generic.patient_mandatory', '=', 'y');
+        }
         $InventoryGenerics = $InventoryGenerics->get();
         return response()->json($InventoryGenerics);
     }
@@ -1933,14 +1936,15 @@ class InventoryController extends Controller
         $InventoryTransactionType = trim($request->input('description'));
         $ActivityType = $request->input('activity_type');
         $requestMandatoryStatus = $request->input('request_mandatory');
-        $requestLocationMandatoryStatus = $request->input('request_location_mandatory');
+        // $requestLocationMandatoryStatus = $request->input('request_location_mandatory');
+        $RequisitionEmpLocationCheck = $request->input('request_emp_location');
         $sourceLocationType = $request->input('source_location_type');
         $sourceAction = $request->input('source_action');
         $destinationLocationType = $request->input('destination_location_type');
         $destinationAction = $request->input('destination_action');
-        $inventoryLocation =  implode(',', $request->input('inventory_location'));
-
-        $ApplicableLocation = $request->input('applicable_location');
+        $sourceLocations =  implode(',', $request->input('source_locations'));
+        $destinationLocations =  implode(',', $request->input('destination_locations'));
+        $empLocationCheck = $request->input('emp_location_check');
         $TransactionExpiredStatus = $request->input('transaction_expired_status');
         $Edt = $request->input('itt_edt');
         $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
@@ -1973,13 +1977,15 @@ class InventoryController extends Controller
             $InventoryTransactionTypes->name = $InventoryTransactionType;
             $InventoryTransactionTypes->activity_type = $ActivityType;
             $InventoryTransactionTypes->request_mandatory = $requestMandatoryStatus;
-            $InventoryTransactionTypes->request_location_mandatory = $requestLocationMandatoryStatus;
+            // $InventoryTransactionTypes->request_location_mandatory = $requestLocationMandatoryStatus;
+            $InventoryTransactionTypes->emp_location_mandatory_request = $RequisitionEmpLocationCheck;
             $InventoryTransactionTypes->source_location_type = $sourceLocationType;
             $InventoryTransactionTypes->source_action = $sourceAction;
             $InventoryTransactionTypes->destination_location_type = $destinationLocationType;
             $InventoryTransactionTypes->destination_action = $destinationAction;
-            $InventoryTransactionTypes->service_location_id = $inventoryLocation;
-            $InventoryTransactionTypes->applicable_location_to = $ApplicableLocation;
+            $InventoryTransactionTypes->source_location = $sourceLocations;
+            $InventoryTransactionTypes->destination_location = $destinationLocations;
+            $InventoryTransactionTypes->emp_location_source_destination = $empLocationCheck;
             $InventoryTransactionTypes->transaction_expired_status = $TransactionExpiredStatus;
             $InventoryTransactionTypes->org_id = $Org;
             $InventoryTransactionTypes->status = $status;
@@ -1988,6 +1994,8 @@ class InventoryController extends Controller
             $InventoryTransactionTypes->timestamp = $timestamp;
             $InventoryTransactionTypes->effective_timestamp = $Edt;
             $InventoryTransactionTypes->save();
+
+
 
             if (empty($InventoryTransactionTypes->id)) {
                 return response()->json(['error' => 'Failed to create Inventory Transaction Type.']);
@@ -2085,7 +2093,11 @@ class InventoryController extends Controller
                 }
 
                 $requestMandatory = $InventoryTransactionType->request_mandatory === 'y' ? "Yes" : "No";
-                $requestLocationMandatory = $InventoryTransactionType->request_location_mandatory === 'y' ? "Yes" : "No";
+                // $requestLocationMandatory = $InventoryTransactionType->request_location_mandatory === 'y' ? "Yes" : "No";
+
+                $requestEmpLocationMandatory = $InventoryTransactionType->emp_location_mandatory_request === 's' ? 'Source' : ($InventoryTransactionType->emp_location_mandatory_request === 'd' ? 'Destination' : 'Not Applicable');
+                // $empLocationMandatory = $InventoryTransactionType->emp_location_source_destination === 's' ? 'Source' : ($InventoryTransactionType->emp_location_source_destination === 'd' ? 'Destination' : 'Not Applicable');
+
                 $transactionExpiredStatus = $InventoryTransactionType->transaction_expired_status === 'y' ? "Yes" : "No";
 
                 return $Code.'<hr class="mt-1 mb-2">'.ucwords($InventoryTransactionTypeName)
@@ -2093,7 +2105,8 @@ class InventoryController extends Controller
                     .  $orgName
                     .'<b>Activity Type: </b>'.ucwords($InventoryTransactionType->transactionActivity).'<br>'
                     .'<b>Request Mandatory: </b>'.$requestMandatory.'<br>'
-                    .'<b>Request Location Mandatory: </b>'.$requestLocationMandatory.'<br>'
+                    // .'<b>Request Location Mandatory: </b>'.$requestLocationMandatory.'<br>'
+                    .'<b>Emp Location Check (Requisition): </b>'.$requestEmpLocationMandatory.'<br>'
                     .'<b>Transaction Expired Status: </b>'.$transactionExpiredStatus.'<br>'
                     . '<span class="mt-2 label label-info popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $createdInfo .'">'
                     . '<i class="fa fa-toggle-right"></i> View Details'
@@ -2116,21 +2129,31 @@ class InventoryController extends Controller
                     'n' => 'Not Applicable'
                 ][$InventoryTransactionType->destination_action] ?? $InventoryTransactionType->destination_action;
 
-                return '<b>Source Location Type: </b>'.ucwords($sourceLocationType).'<br>'
+                return '<b>Source Type: </b>'.ucwords($sourceLocationType).'<br>'
                     .'<b>Source Action: </b>'.$sourceAction.'<br>'
-                    .'<b>Destination Location Type: </b>'.$destinationLocationType.'<br>'
+                    .'<b>Destination Type: </b>'.$destinationLocationType.'<br>'
                     .'<b>Destination Action: </b>'.$destinationAction.'<br>';
             })
             ->addColumn('locationDetails', function ($InventoryTransactionType) {
-                $serviceLocationIds = explode(',', $InventoryTransactionType->service_location_id);
-                $serviceLocationNames = ServiceLocation::whereIn('id', $serviceLocationIds)
+                $source_locationIds = explode(',', $InventoryTransactionType->source_location);
+                $sourceLocationNames = ServiceLocation::whereIn('id', $source_locationIds)
                 ->pluck('name')
                 ->toArray();
-                $serviceLocationNames = implode(', ', $serviceLocationNames);
+                $sourceLocationNames = implode(', ', $sourceLocationNames);
+
+                $destination_locationIds = explode(',', $InventoryTransactionType->destination_location);
+                $destinationLocationNames = ServiceLocation::whereIn('id', $destination_locationIds)
+                ->pluck('name')
+                ->toArray();
+                $destinationLocationNames = implode(', ', $destinationLocationNames);
+
+                $empLocationMandatory = $InventoryTransactionType->emp_location_source_destination === 's' ? 'Source' : ($InventoryTransactionType->emp_location_source_destination === 'd' ? 'Destination' : 'Not Applicable');
+
 
                 // $AllocatedInventoryLocation = $InventoryTransactionType->serviceLocation;
-                return '<b>Allocated Inventory Location: </b>'.ucwords($serviceLocationNames).'<br>'
-                .'<b>Applicable Location Action: </b>'.ucwords($InventoryTransactionType->applicable_location_to);
+                return '<b>Source Locations: </b>'.ucwords($sourceLocationNames).'<hr class="mt-1 mb-2">'
+                .'<b>Destination Locations: </b>'.ucwords($destinationLocationNames).'<hr class="mt-1 mb-2">'
+                .'<b>Applicable Emp Location: </b>'.ucwords($empLocationMandatory);
             })
             ->addColumn('action', function ($InventoryTransactionType) {
                     $InventoryTransactionTypeId = $InventoryTransactionType->id;
@@ -2231,12 +2254,20 @@ class InventoryController extends Controller
         ->where('inventory_transaction_type.id', '=', $id)
         ->first();
 
-        $serviceLocationIds = explode(',', $InventoryTransactionTypes->service_location_id);
-        $serviceLocationNames = DB::table('service_location')
-            ->whereIn('id', $serviceLocationIds)
+        $sourceLocationIds = explode(',', $InventoryTransactionTypes->source_location);
+        $sourceLocationNames = DB::table('service_location')
+            ->whereIn('id', $sourceLocationIds)
             ->pluck('name')
             ->toArray();
-        $serviceLocationNames = implode(', ', $serviceLocationNames);
+        $sourceLocationNames = implode(', ', $sourceLocationNames);
+
+        $destinationLocationIds = explode(',', $InventoryTransactionTypes->destination_location);
+        $destinationLocationNames = DB::table('service_location')
+            ->whereIn('id', $destinationLocationIds)
+            ->pluck('name')
+            ->toArray();
+        $destinationLocationNames = implode(', ', $destinationLocationNames);
+
 
         $InventoryTransactionType = ucwords($InventoryTransactionTypes->name);
         $effective_timestamp = $InventoryTransactionTypes->effective_timestamp;
@@ -2251,16 +2282,18 @@ class InventoryController extends Controller
             'activitytypeId' => $InventoryTransactionTypes->activity_type,
             'activitytype' => $InventoryTransactionTypes->transactionActivity,
             'requestMandatory' => $InventoryTransactionTypes->request_mandatory,
-            'requestLocationMandatory' => ($InventoryTransactionTypes->request_location_mandatory),
+            'requisitionEmpCheck' => ($InventoryTransactionTypes->emp_location_mandatory_request),
             'sourceLocationTypeId' => $InventoryTransactionTypes->source_location_type,
             'sourceLocationType' => ucwords($InventoryTransactionTypes->sourceLocationType),
             'sourceAction' => ($InventoryTransactionTypes->source_action),
             'destinationLocationTypeId' => $InventoryTransactionTypes->destination_location_type,
             'destinationLocationType' => ucwords($InventoryTransactionTypes->destinationLocationType),
             'destinationAction' => ($InventoryTransactionTypes->destination_action),
-            'serviceLocationId' => $InventoryTransactionTypes->service_location_id,
-            'serviceLocation' => ucwords($serviceLocationNames),
-            'ApplicableLocation' => ($InventoryTransactionTypes->applicable_location_to),
+            'sourcelocationId' => $InventoryTransactionTypes->source_location,
+            'sourceLocations' => ucwords($sourceLocationNames),
+            'destinationlocationId' => $InventoryTransactionTypes->destination_location,
+            'destinationLocations' => ucwords($destinationLocationNames),
+            'empCheckSourceDestination' => $InventoryTransactionTypes->emp_location_source_destination,
             'TransactionExpiredStatus' => ($InventoryTransactionTypes->transaction_expired_status),
             'effective_timestamp' => $effective_timestamp,
         ];
@@ -2284,14 +2317,15 @@ class InventoryController extends Controller
         $InventoryTransactionTypes->name = $request->input('u_description');
         $InventoryTransactionTypes->activity_type = $request->input('u_activity_type');
         $InventoryTransactionTypes->request_mandatory = $request->input('u_request_mandatory');
-        $InventoryTransactionTypes->request_location_mandatory = $request->input('u_request_location_mandatory');
+        $InventoryTransactionTypes->emp_location_mandatory_request = $request->input('u_request_emp_location');
         $InventoryTransactionTypes->source_location_type = $request->input('u_source_location_type');
         $InventoryTransactionTypes->source_action = $request->input('u_source_action');
         $InventoryTransactionTypes->destination_location_type = $request->input('u_destination_location_type');
         $InventoryTransactionTypes->destination_action = $request->input('u_destination_action');
         // $InventoryTransactionTypes->service_location_id = $request->input('u_inventory_location');
-        $InventoryTransactionTypes->service_location_id = implode(',', $request->input('u_inventory_location'));
-        $InventoryTransactionTypes->applicable_location_to = $request->input('u_applicable_location');
+        $InventoryTransactionTypes->source_location = implode(',', $request->input('u_source_locations'));
+        $InventoryTransactionTypes->destination_location = implode(',', $request->input('u_destination_locations'));
+        $InventoryTransactionTypes->emp_location_source_destination = $request->input('u_emp_location_check');
         $InventoryTransactionTypes->transaction_expired_status = $request->input('u_transaction_expired_status');
 
         $effective_date = $request->input('u_itt_edt');
@@ -3955,7 +3989,7 @@ class InventoryController extends Controller
             })
             ->editColumn('contact_details', function ($StockMonitoring) {
                 return
-                '<b>Primary Email:</b> '.($StockMonitoring->primary_email).'<br>'
+                '<b>Primary Email:</b> <br>'.($StockMonitoring->primary_email).'<hr class="mt-1 mb-2">'
                 .'<b>Secondary Email:</b> '.($StockMonitoring->secondary_email);
             })
             ->addColumn('action', function ($StockMonitoring) {
@@ -4048,7 +4082,7 @@ class InventoryController extends Controller
         ->join('organization', 'organization.id', '=', 'stock_monitoring.org_id')
         ->join('org_site', 'org_site.id', '=', 'stock_monitoring.site_id')
         ->join('inventory_generic', 'inventory_generic.id', '=', 'stock_monitoring.item_generic_id')
-        ->join('inventory_brand', 'inventory_brand.id', '=', 'stock_monitoring.item_brand_id')
+        ->leftJoin('inventory_brand', 'inventory_brand.id', '=', 'stock_monitoring.item_brand_id')
         ->join('service_location', 'service_location.id', '=', 'stock_monitoring.service_location_id')
         ->where('stock_monitoring.id', '=', $id)
         ->first();
@@ -4096,6 +4130,7 @@ class InventoryController extends Controller
         }
         $StockMonitoring->site_id = $request->input('u_sm_site');
         $StockMonitoring->item_generic_id = $request->input('u_sm_generic');
+
         $StockMonitoring->item_brand_id = $request->input('u_sm_brand');
         $StockMonitoring->service_location_id = $request->input('u_sm_servicelocation');
 
@@ -5374,21 +5409,7 @@ class InventoryController extends Controller
         return response()->json(['success' => 'Medication Frequency Details updated successfully']);
     }
 
-    public function InventoryMaterialConsumption()
-    {
-        $colName = 'requisition_for_material_consumption';
-        if (PermissionDenied($colName)) {
-            abort(403);
-        }
-        $user = auth()->user();
-        $ServiceLocations = ServiceLocation::select('id', 'name')->where('status', 1)->get();
-        $Generics = InventoryGeneric::select('inventory_generic.id', 'inventory_generic.name')
-        ->join('inventory_category', 'inventory_category.id', '=', 'inventory_generic.cat_id')
-        ->where('inventory_generic.status', 1)
-        ->where('inventory_category.name', 'not like', 'Medicine%')
-        ->get();
-        return view('dashboard.material-consumption', compact('user','ServiceLocations','Generics'));
-    }
+
 
     public function GetTransactionTypes(Request $request)
     {
@@ -5452,14 +5473,14 @@ class InventoryController extends Controller
             )
             ->where('ita.name', 'LIKE', '%Consumption%');
         }
-        if ($condition === 'other_transaction') {
+        if ($condition === 'material_transfer') {
             $query->join(
                 'inventory_transaction_activity AS ita',
                 'ita.id',
                 '=',
                 'itt.activity_type'
             )
-            ->where('ita.name', 'LIKE', '%Other Transaction%');
+            ->where('ita.name', 'LIKE', '%material transfer%');
         }
 
         if ($condition === 'inventory_return') {
@@ -5471,17 +5492,33 @@ class InventoryController extends Controller
             )
             ->where('ita.name', 'LIKE', '%return%');
         }
-
         if ($request_mandatory === 'y') {
             $query->where('itt.request_mandatory', 'y');
         }
         elseif ($request_mandatory === 'n') {
             $query->where('itt.request_mandatory', 'n');
         }
+         $query->where('itt.status', 1);
         $query->orderBy('itt.id', 'ASC');
         $TransactionTypes = $query->get();
 
         return response()->json($TransactionTypes);
+    }
+
+    public function InventoryMaterialConsumption()
+    {
+        $colName = 'requisition_for_material_consumption';
+        if (PermissionDenied($colName)) {
+            abort(403);
+        }
+        $user = auth()->user();
+        $ServiceLocations = ServiceLocation::select('id', 'name')->where('status', 1)->get();
+        $Generics = InventoryGeneric::select('inventory_generic.id', 'inventory_generic.name')
+        ->join('inventory_category', 'inventory_category.id', '=', 'inventory_generic.cat_id')
+        ->where('inventory_generic.status', 1)
+        ->where('inventory_category.name', 'not like', 'Medicine%')
+        ->get();
+        return view('dashboard.material-consumption', compact('user','ServiceLocations','Generics'));
     }
 
 
@@ -5496,7 +5533,8 @@ class InventoryController extends Controller
         $Organization = $request->input('mc_org');
         $Site = $request->input('mc_site');
         $TransactionType = $request->input('mc_transactiontype');
-        $InvLocation = $request->input('mc_inv_location');
+        $SourceLocation = $request->input('mc_source_location');
+        $DestinationLocation = $request->input('mc_destination_location');
 
         $Remarks = trim($request->input('mc_remarks'));
 
@@ -5582,7 +5620,8 @@ class InventoryController extends Controller
         $MaterialConsumptionRequisition->org_id = $Organization;
         $MaterialConsumptionRequisition->site_id = $Site;
         $MaterialConsumptionRequisition->transaction_type_id = $TransactionType;
-        $MaterialConsumptionRequisition->inv_location_id = $InvLocation;
+        $MaterialConsumptionRequisition->source_location_id = $SourceLocation;
+        $MaterialConsumptionRequisition->destination_location_id = $DestinationLocation;
         $MaterialConsumptionRequisition->mr_code = $PatientMR;
         $MaterialConsumptionRequisition->patient_age = $Age;
         $MaterialConsumptionRequisition->patient_gender_id = $genderId;
@@ -5637,7 +5676,8 @@ class InventoryController extends Controller
         ->join('organization', 'organization.id', '=', 'material_consumption_requisition.org_id')
         ->join('org_site', 'org_site.id', '=', 'material_consumption_requisition.site_id')
         ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'material_consumption_requisition.transaction_type_id')
-        ->join('service_location', 'service_location.id', '=', 'material_consumption_requisition.inv_location_id')
+        ->leftJoin('service_location as source_location', 'source_location.id', '=', 'material_consumption_requisition.source_location_id')
+        ->leftJoin('service_location as destination_location', 'destination_location.id', '=', 'material_consumption_requisition.destination_location_id')
         ->leftJoin('patient', 'patient.mr_code', '=', 'material_consumption_requisition.mr_code')
         ->leftJoin('gender', 'gender.id', '=', 'patient.gender_id')
         ->leftJoin(DB::raw('(SELECT * FROM patient_inout WHERE status = 1 AND id IN (SELECT MAX(id) FROM patient_inout WHERE status = 1 GROUP BY mr_code)) as patient_inout'),
@@ -5653,7 +5693,8 @@ class InventoryController extends Controller
             'inventory_transaction_type.name as transactionType',
             'organization.organization as orgName',
             'org_site.name as siteName',
-            'service_location.name as locationName',
+            'source_location.name as sourceLocationName',
+            'destination_location.name as destinationLocationName',
             'gender.name as Gender',
             'patient.name as patientName',
             'patient.mr_code as mr_code',
@@ -5662,8 +5703,7 @@ class InventoryController extends Controller
             'services.name as serviceName',
             'service_mode.name as serviceModeName',
             'costcenter.name as CCName',
-            'service_group.name as serviceGroupName',
-            'service_location.name as ServiceLocationName'
+            'service_group.name as serviceGroupName'
         );
 
         $session = auth()->user();
@@ -5739,11 +5779,23 @@ class InventoryController extends Controller
                     $orgName ='<b>Organization:</b> '.ucwords($Requisition->orgName);
                 }
 
+                // Build location information
+                $locationInfo = '';
+                if (!empty($Requisition->sourceLocationName)) {
+                    $locationInfo .= '<br><b>Source Location: </b>' . ucwords($Requisition->sourceLocationName);
+                }
+                if (!empty($Requisition->destinationLocationName)) {
+                    $locationInfo .= '<br><b>Destination Location: </b>' . ucwords($Requisition->destinationLocationName);
+                }
+                if (empty($Requisition->sourceLocationName) && empty($Requisition->destinationLocationName)) {
+                    $locationInfo = '<br><b>Location: </b>N/A';
+                }
+
                 return  $RequisitionCode
                         . '<hr class="mt-1 mb-2">'
                         .'<b>Transaction Type: </b> '.ucwords($Requisition->transactionType)
-                        .'<br><b>Requesting Location: </b> '.ucwords($Requisition->locationName)
                         .'<br><b>Site: </b>'.ucwords($Requisition->siteName)
+                        .$locationInfo
                         .'<br><b>Request Date: </b>'.$timestamp
                         .'<br><b>Effective Date:</b>'.$effectiveDate
                         .'<br><b>Remarks: </b> ' . (!empty($Requisition->remarks) ? ucwords($Requisition->remarks) : 'N/A');
@@ -5830,6 +5882,7 @@ class InventoryController extends Controller
             'requisition_detail'])
             ->make(true);
     }
+    
     public function UpdateMaterialConsumptionStatus(Request $request)
     {
         $rights = $this->rights;
@@ -5885,22 +5938,27 @@ class InventoryController extends Controller
         {
             abort(403, 'Forbidden');
         }
+        
         $Requisitions = DB::table('material_consumption_requisition')
         ->join('organization', 'organization.id', '=', 'material_consumption_requisition.org_id')
         ->join('org_site', 'org_site.id', '=', 'material_consumption_requisition.site_id')
         ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'material_consumption_requisition.transaction_type_id')
         ->join('inventory_generic', 'inventory_generic.id', '=', 'material_consumption_requisition.generic_id')
-        ->join('service_location', 'service_location.id', '=', 'material_consumption_requisition.inv_location_id')
+        ->leftJoin('service_location as source_location', 'source_location.id', '=', 'material_consumption_requisition.source_location_id')
+        ->leftJoin('service_location as destination_location', 'destination_location.id', '=', 'material_consumption_requisition.destination_location_id')
         ->leftJoin('services', 'services.id', '=', 'material_consumption_requisition.service_id')
         ->select('material_consumption_requisition.*', 'inventory_transaction_type.name as transactionType',
         'organization.organization as orgName','org_site.name as siteName',
-        'service_location.name as ServiceLocationName','inventory_generic.name as invGeneric','services.name as serviceName',)
+        'source_location.name as sourceLocationName','destination_location.name as destinationLocationName',
+        'inventory_generic.name as invGeneric','services.name as serviceName',)
         ->where('material_consumption_requisition.id', '=', $id)
         ->first();
+
 
         $effective_timestamp = $Requisitions->effective_timestamp;
         $effective_timestamp = Carbon::createFromTimestamp($effective_timestamp);
         $effective_timestamp = $effective_timestamp->format('l d F Y - h:i A');
+
 
         $InvGenericIds = explode(',', $Requisitions->generic_id);
         $genericNames = [];
@@ -5924,8 +5982,10 @@ class InventoryController extends Controller
             'invGeneric' => ucwords($Requisitions->invGeneric),
             'invGenericId' => ($Requisitions->generic_id),
             'remarks' => ucwords($Requisitions->remarks),
-            'ServiceLocationId' => ($Requisitions->inv_location_id),
-            'ServiceLocationName' => ucwords($Requisitions->ServiceLocationName),
+            'sourceLocationId' => ($Requisitions->source_location_id),
+            'sourceLocationName' => ucwords($Requisitions->sourceLocationName),
+            'destinationLocationId' => ($Requisitions->destination_location_id),
+            'destinationLocationName' => ucwords($Requisitions->destinationLocationName),
             'mrCode' => ($Requisitions->mr_code),
             'serviceId' => ($Requisitions->service_id),
             'serviceName' => ucwords($Requisitions->serviceName),
@@ -5933,7 +5993,6 @@ class InventoryController extends Controller
             'genericNames' => ucwords($Requisitions->genericNames),
             'Qty' => $Requisitions->qty,
         ];
-
 
         return response()->json($data);
     }
@@ -5955,7 +6014,8 @@ class InventoryController extends Controller
         $MaterialConsumptionRequisition->transaction_type_id = $request->input('u_mc_transactionType');
         $PatientMR =  $request->input('u_mc_patient');
         $MaterialConsumptionRequisition->mr_code = $PatientMR;
-        $MaterialConsumptionRequisition->inv_location_id = $request->input('u_mc_inv_location');
+        $MaterialConsumptionRequisition->source_location_id = $request->input('u_mc_source_location');
+        $MaterialConsumptionRequisition->destination_location_id = $request->input('u_mc_destination_location');
         $MaterialConsumptionRequisition->remarks = $request->input('u_mc_remarks');
         // $MaterialConsumptionRequisition->service_id = $request->input('u_mc_service');
 
@@ -6044,9 +6104,9 @@ class InventoryController extends Controller
         return response()->json(['success' => 'Requisition For Material Consumption updated successfully']);
     }
 
-    public function RequisitionOtherTransactions()
+    public function RequisitionMaterialTransfers()
     {
-        $colName = 'requisition_for_other_transaction';
+        $colName = 'requisition_for_material_transfer';
         if (PermissionDenied($colName)) {
             abort(403);
         }
@@ -6060,26 +6120,26 @@ class InventoryController extends Controller
         ->where('inventory_generic.status', 1)
         ->where('inventory_category.name', 'not like', 'Medicine%')
         ->get();
-        return view('dashboard.req_other_transaction', compact('user','Generics'));
+        return view('dashboard.req_material_transfer', compact('user','Generics'));
     }
 
-    public function AddRequisitionOtherTransactions(RequisitionForOtherTransactionRequest $request)
+    public function AddRequisitionMaterialTransfers(RequisitionForMaterialTransferRequest $request)
     {
         $rights = $this->rights;
-        $add = explode(',', $rights->requisition_for_other_transaction)[0];
+        $add = explode(',', $rights->requisition_for_material_transfer)[0];
         if($add == 0)
         {
             abort(403, 'Forbidden');
         }
-        $Organization = $request->input('rot_org');
-        $SourceSite = trim($request->input('rot_source_site')) ?: null;
-        $SourceLocation = trim($request->input('rot_source_location')) ?: null;
-        $DestinationSite = trim($request->input('rot_destination_site')) ?: null;
-        $DestinationLocation = trim($request->input('rot_destination_location')) ?: null;
-        $TransactionType = $request->input('rot_transactiontype');
-        $Remarks = trim($request->input('rot_remarks'));
-        $itemGeneric =  implode(',',($request->input('rot_itemgeneric')));
-        $Qty =  implode(',',($request->input('rot_qty')));
+        $Organization = $request->input('rmt_org');
+        $SourceSite = trim($request->input('rmt_source_site')) ?: null;
+        $SourceLocation = trim($request->input('rmt_source_location')) ?: null;
+        $DestinationSite = trim($request->input('rmt_destination_site')) ?: null;
+        $DestinationLocation = trim($request->input('rmt_destination_location')) ?: null;
+        $TransactionType = $request->input('rmt_transactiontype');
+        $Remarks = trim($request->input('rmt_remarks'));
+        $itemGeneric =  implode(',',($request->input('rmt_itemgeneric')));
+        $Qty =  implode(',',($request->input('rmt_qty')));
 
         $status = 1;
         $session = auth()->user();
@@ -6090,7 +6150,7 @@ class InventoryController extends Controller
         $timestamp = $this->currentDatetime;
         $logId = null;
 
-        $OtherTransactionRequisition = RequisitionForOtherTransaction::create([
+        $MaterialTransferRequisition = RequisitionForMaterialTransfer::create([
             'org_id'              => $Organization,
             'source_site'         => $SourceSite,
             'source_location'     => $SourceLocation,
@@ -6107,17 +6167,21 @@ class InventoryController extends Controller
             'effective_timestamp' => $this->currentDatetime,
         ]);
 
-        if (!$OtherTransactionRequisition->id) {
-            return response()->json(['error' => 'Failed to add Requisition For Other Transaction.']);
+        if (!$MaterialTransferRequisition->id) {
+            return response()->json(['error' => 'Failed to add Requisition For Material Transfer.']);
         }
 
         $TransactionType = InventoryTransactionType::find($TransactionType);
         $TransactionTypeName = $TransactionType ? $TransactionType->name : '';
-        $idStr = str_pad($OtherTransactionRequisition->id, 5, "0", STR_PAD_LEFT);
-        $firstSiteNameLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $TransactionTypeName))));
-        $RequisitionCode = $firstSiteNameLetters.'-ROT-'.$idStr;
-        $OtherTransactionRequisition->code = $RequisitionCode;
-        $OtherTransactionRequisition->save();
+        $Site = Site::find($SourceSite);
+        $SiteName = $Site ? $Site->name : '';
+        $idStr = str_pad($MaterialTransferRequisition->id, 5, "0", STR_PAD_LEFT);
+        $firstSiteNameLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $SiteName))));
+        // $RequisitionCode = 'RMT - '.$idStr;
+        $RequisitionCode = $firstSiteNameLetters.'-RMT-'.$idStr;
+
+        $MaterialTransferRequisition->code = $RequisitionCode;
+        $MaterialTransferRequisition->save();
 
 
 
@@ -6128,15 +6192,15 @@ class InventoryController extends Controller
             'timestamp' => $timestamp,
         ]);
         $logId = $logs->id;
-        $OtherTransactionRequisition->logid = $logs->id;
-        $OtherTransactionRequisition->save();
-        return response()->json(['success' => 'Requisition For Other Transaction added successfully']);
+        $MaterialTransferRequisition->logid = $logs->id;
+        $MaterialTransferRequisition->save();
+        return response()->json(['success' => 'Requisition For Material Transfer added successfully']);
     }
 
-    public function GetRequisitionOtherTransactionsData(Request $request)
+    public function GetRequisitionMaterialTransfersData(Request $request)
     {
         $rights = $this->rights;
-        $view = explode(',', $rights->requisition_for_other_transaction)[1];
+        $view = explode(',', $rights->requisition_for_material_transfer)[1];
         if($view == 0)
         {
             abort(403, 'Forbidden');
@@ -6155,15 +6219,15 @@ class InventoryController extends Controller
         //     'service_location.name as locationName'
         // );
 
-        $Requisitions = DB::table('requisition_other_transaction')
-        ->join('organization', 'organization.id', '=', 'requisition_other_transaction.org_id')
-        ->leftJoin('org_site as source', 'source.id', '=', 'requisition_other_transaction.source_site')
-        ->leftJoin('org_site as destination', 'destination.id', '=', 'requisition_other_transaction.destination_site')
-        ->leftJoin('service_location as sourceLocation', 'sourceLocation.id', '=', 'requisition_other_transaction.source_location')
-        ->leftJoin('service_location as destinationLocation', 'destinationLocation.id', '=', 'requisition_other_transaction.destination_location')
-        ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'requisition_other_transaction.transaction_type_id')
+        $Requisitions = DB::table('requisition_material_transfer')
+        ->join('organization', 'organization.id', '=', 'requisition_material_transfer.org_id')
+        ->leftJoin('org_site as source', 'source.id', '=', 'requisition_material_transfer.source_site')
+        ->leftJoin('org_site as destination', 'destination.id', '=', 'requisition_material_transfer.destination_site')
+        ->leftJoin('service_location as sourceLocation', 'sourceLocation.id', '=', 'requisition_material_transfer.source_location')
+        ->leftJoin('service_location as destinationLocation', 'destinationLocation.id', '=', 'requisition_material_transfer.destination_location')
+        ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'requisition_material_transfer.transaction_type_id')
         ->select(
-            'requisition_other_transaction.*',
+            'requisition_material_transfer.*',
             'inventory_transaction_type.name as transactionType',
             'organization.organization as orgName',
             'source.name as sourceSiteName',
@@ -6176,7 +6240,7 @@ class InventoryController extends Controller
         $sessionOrg = $session->org_id;
         if($sessionOrg != '0')
         {
-            $Requisitions->where('requisition_other_transaction.org_id', '=', $sessionOrg);
+            $Requisitions->where('requisition_material_transfer.org_id', '=', $sessionOrg);
         }
         $Requisitions = $Requisitions
         ->get();
@@ -6271,10 +6335,10 @@ class InventoryController extends Controller
                     $RequisitionId = $Requisition->id;
                     $logId = $Requisition->logid;
                     $Rights = $this->rights;
-                    $edit = explode(',', $Rights->requisition_for_other_transaction)[2];
+                    $edit = explode(',', $Rights->requisition_for_material_transfer)[2];
                     $actionButtons = '';
                     if ($edit == 1) {
-                        $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 edit-reqothertransaction" data-rot-id="'.$RequisitionId.'">'
+                        $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 edit-reqmaterialtransfer" data-rmt-id="'.$RequisitionId.'">'
                         . '<i class="fa fa-edit"></i> Edit'
                         . '</button>';
                     }
@@ -6286,8 +6350,8 @@ class InventoryController extends Controller
             })
             ->editColumn('status', function ($Requisition) {
                 $rights = $this->rights;
-                $updateStatus = explode(',', $rights->requisition_for_other_transaction)[3];
-                return $updateStatus == 1 ? ($Requisition->status ? '<span class="label label-success rot_status cursor-pointer" data-id="'.$Requisition->id.'" data-status="'.$Requisition->status.'">Active</span>' : '<span class="label label-danger rot_status cursor-pointer" data-id="'.$Requisition->id.'" data-status="'.$Requisition->status.'">Inactive</span>') : ($Requisition->status ? '<span class="label label-success">Active</span>' : '<span class="label label-danger">Inactive</span>');
+                $updateStatus = explode(',', $rights->requisition_for_material_transfer)[3];
+                return $updateStatus == 1 ? ($Requisition->status ? '<span class="label label-success rmt_status cursor-pointer" data-id="'.$Requisition->id.'" data-status="'.$Requisition->status.'">Active</span>' : '<span class="label label-danger rmt_status cursor-pointer" data-id="'.$Requisition->id.'" data-status="'.$Requisition->status.'">Inactive</span>') : ($Requisition->status ? '<span class="label label-success">Active</span>' : '<span class="label label-danger">Inactive</span>');
 
             })
             ->rawColumns(['action', 'status','InventoryDetails',
@@ -6295,10 +6359,10 @@ class InventoryController extends Controller
             ->make(true);
     }
 
-    public function UpdateRequisitionOtherTransactionStatus(Request $request)
+    public function UpdateRequisitionMaterialTransferStatus(Request $request)
     {
         $rights = $this->rights;
-        $UpdateStatus = explode(',', $rights->requisition_for_other_transaction)[3];
+        $UpdateStatus = explode(',', $rights->requisition_for_material_transfer)[3];
         if($UpdateStatus == 0)
         {
             abort(403, 'Forbidden');
@@ -6306,21 +6370,21 @@ class InventoryController extends Controller
         $ID = $request->input('id');
         $Status = $request->input('status');
         $CurrentTimestamp = $this->currentDatetime;
-        $RequisitionOtherTransaction = RequisitionForOtherTransaction::find($ID);
+        $RequisitionMaterialTransfer = RequisitionForMaterialTransfer::find($ID);
 
         if($Status == 0)
         {
             $UpdateStatus = 1;
             $statusLog = 'Active';
-            $RequisitionOtherTransaction->effective_timestamp = $CurrentTimestamp;
+            $RequisitionMaterialTransfer->effective_timestamp = $CurrentTimestamp;
         }
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
 
         }
-        $RequisitionOtherTransaction->status = $UpdateStatus;
-        $RequisitionOtherTransaction->last_updated = $CurrentTimestamp;
+        $RequisitionMaterialTransfer->status = $UpdateStatus;
+        $RequisitionMaterialTransfer->last_updated = $CurrentTimestamp;
 
         $session = auth()->user();
         $sessionName = $session->name;
@@ -6332,20 +6396,20 @@ class InventoryController extends Controller
             'event' => 'update',
             'timestamp' => $this->currentDatetime,
         ]);
-        $RequisitionOtherTransactionLog = RequisitionForOtherTransaction::where('id', $ID)->first();
-        $logIds = $RequisitionOtherTransactionLog->logid ? explode(',', $RequisitionOtherTransactionLog->logid) : [];
+        $RequisitionMaterialTransferLog = RequisitionForMaterialTransfer::where('id', $ID)->first();
+        $logIds = $RequisitionMaterialTransferLog->logid ? explode(',', $RequisitionMaterialTransferLog->logid) : [];
         $logIds[] = $logs->id;
-        $RequisitionOtherTransactionLog->logid = implode(',', $logIds);
-        $RequisitionOtherTransactionLog->save();
+        $RequisitionMaterialTransferLog->logid = implode(',', $logIds);
+        $RequisitionMaterialTransferLog->save();
 
-        $RequisitionOtherTransaction->save();
+        $RequisitionMaterialTransfer->save();
         return response()->json(['success' => true, 200]);
     }
 
-    public function UpdateRequisitionOtherTransactionModal($id)
+    public function UpdateRequisitionMaterialTransferModal($id)
     {
         $rights = $this->rights;
-        $edit = explode(',', $rights->requisition_for_other_transaction)[2];
+        $edit = explode(',', $rights->requisition_for_material_transfer)[2];
         if($edit == 0)
         {
             abort(403, 'Forbidden');
@@ -6366,15 +6430,15 @@ class InventoryController extends Controller
         // ->where('requisition_other_transaction.id', '=', $id)
         // ->first();
 
-        $Requisitions = DB::table('requisition_other_transaction')
-        ->join('organization', 'organization.id', '=', 'requisition_other_transaction.org_id')
-        ->join('org_site as source', 'source.id', '=', 'requisition_other_transaction.source_site')
-        ->join('org_site as destination', 'destination.id', '=', 'requisition_other_transaction.destination_site')
-        ->join('service_location as sourceLocation', 'sourceLocation.id', '=', 'requisition_other_transaction.source_location')
-        ->join('service_location as destinationLocation', 'destinationLocation.id', '=', 'requisition_other_transaction.destination_location')
-        ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'requisition_other_transaction.transaction_type_id')
+        $Requisitions = DB::table('requisition_material_transfer')
+        ->join('organization', 'organization.id', '=', 'requisition_material_transfer.org_id')
+        ->join('org_site as source', 'source.id', '=', 'requisition_material_transfer.source_site')
+        ->join('org_site as destination', 'destination.id', '=', 'requisition_material_transfer.destination_site')
+        ->join('service_location as sourceLocation', 'sourceLocation.id', '=', 'requisition_material_transfer.source_location')
+        ->join('service_location as destinationLocation', 'destinationLocation.id', '=', 'requisition_material_transfer.destination_location')
+        ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'requisition_material_transfer.transaction_type_id')
         ->select(
-            'requisition_other_transaction.*',
+            'requisition_material_transfer.*',
             'inventory_transaction_type.name as transactionType',
             'organization.organization as orgName',
             'source.name as sourceSiteName',
@@ -6382,7 +6446,7 @@ class InventoryController extends Controller
             'destinationLocation.name as DestinationLocationName',
             'destination.name as destinationSiteName'
         )
-        ->where('requisition_other_transaction.id', '=', $id)
+        ->where('requisition_material_transfer.id', '=', $id)
         ->first();
 
         $effective_timestamp = $Requisitions->effective_timestamp;
@@ -6422,42 +6486,42 @@ class InventoryController extends Controller
         return response()->json($data);
     }
 
-    public function UpdateRequisitionOtherTransaction(Request $request, $id)
+    public function UpdateRequisitionMaterialTransfer(Request $request, $id)
     {
         $rights = $this->rights;
-        $edit = explode(',', $rights->requisition_for_other_transaction)[2];
+        $edit = explode(',', $rights->requisition_for_material_transfer)[2];
         if($edit == 0)
         {
             abort(403, 'Forbidden');
         }
 
-        $OtherTransactionRequisition = RequisitionForOtherTransaction::findOrFail($id);
-        $orgID = $request->input('u_rot_org');
+        $MaterialTransferRequisition = RequisitionForMaterialTransfer::findOrFail($id);
+        $orgID = $request->input('u_rmt_org');
         if (isset($orgID)) {
-            $OtherTransactionRequisition->org_id = $orgID;
+            $MaterialTransferRequisition->org_id = $orgID;
         }
-        $OtherTransactionRequisition->source_site = $request->input('u_rot_source_site');
-        $OtherTransactionRequisition->source_location = $request->input('u_rot_source_location');
+        $MaterialTransferRequisition->source_site = $request->input('u_rmt_source_site');
+        $MaterialTransferRequisition->source_location = $request->input('u_rmt_source_location');
 
-        $OtherTransactionRequisition->destination_site = $request->input('u_rot_destination_site');
-        $OtherTransactionRequisition->destination_location = $request->input('u_rot_destination_location');
+        $MaterialTransferRequisition->destination_site = $request->input('u_rmt_destination_site');
+        $MaterialTransferRequisition->destination_location = $request->input('u_rmt_destination_location');
 
-        $OtherTransactionRequisition->transaction_type_id = $request->input('u_rot_transactiontype');
-        $OtherTransactionRequisition->remarks = $request->input('u_rot_remarks');
+        $MaterialTransferRequisition->transaction_type_id = $request->input('u_rmt_transactiontype');
+        $MaterialTransferRequisition->remarks = $request->input('u_rmt_remarks');
 
-        $OtherTransactionRequisition->generic_id = implode(',',($request->input('u_rot_itemgeneric')));
-        $OtherTransactionRequisition->qty = implode(',',($request->input('u_rot_qty')));
+        $MaterialTransferRequisition->generic_id = implode(',',($request->input('u_rmt_itemgeneric')));
+        $MaterialTransferRequisition->qty = implode(',',($request->input('u_rmt_qty')));
 
-        $OtherTransactionRequisition->last_updated = $this->currentDatetime;
+        $MaterialTransferRequisition->last_updated = $this->currentDatetime;
 
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $OtherTransactionRequisition->save();
+        $MaterialTransferRequisition->save();
 
-        if (empty($OtherTransactionRequisition->id)) {
-            return response()->json(['error' => 'Failed to update Requisition For Other Transaction. Please try again']);
+        if (empty($MaterialTransferRequisition->id)) {
+            return response()->json(['error' => 'Failed to update Requisition For Material Transfer. Please try again']);
         }
         $logs = Logs::create([
             'module' => 'inventory',
@@ -6465,12 +6529,12 @@ class InventoryController extends Controller
             'event' => 'update',
             'timestamp' => $this->currentDatetime,
         ]);
-        $OtherTransactionRequisitionLog = RequisitionForOtherTransaction::where('id', $OtherTransactionRequisition->id)->first();
-        $logIds = $OtherTransactionRequisitionLog->logid ? explode(',', $OtherTransactionRequisitionLog->logid) : [];
+        $MaterialTransferRequisitionLog = RequisitionForMaterialTransfer::where('id', $MaterialTransferRequisition->id)->first();
+        $logIds = $MaterialTransferRequisitionLog->logid ? explode(',', $MaterialTransferRequisitionLog->logid) : [];
         $logIds[] = $logs->id;
-        $OtherTransactionRequisitionLog->logid = implode(',', $logIds);
-        $OtherTransactionRequisitionLog->save();
-        return response()->json(['success' => 'Requisition For Other Transaction updated successfully']);
+        $MaterialTransferRequisitionLog->logid = implode(',', $logIds);
+        $MaterialTransferRequisitionLog->save();
+        return response()->json(['success' => 'Requisition For Material Transfer updated successfully']);
     }
 
     public function PurchaseOrder()
@@ -6494,11 +6558,25 @@ class InventoryController extends Controller
         //              ->select('id', 'name')
         //              ->get();
         // }
-        $Vendors = ThirdPartyRegistration::where('org_id', $orgId)
-        ->where('status', 1)
-        ->where('type', 'v')
-        ->select('id', 'person_name')
+        // $Vendors = ThirdPartyRegistration::where('org_id', $orgId)
+        // ->where('status', 1)
+        // ->where('type', 'v')
+        // ->select('id', 'person_name')
+        // ->get();
+
+        $Vendors = DB::table('third_party as tp')
+        ->join('prefix as p', 'p.id', '=', 'tp.prefix_id')
+        ->where('tp.org_id', $orgId)
+        ->where('tp.status', 1)
+        ->where('tp.type', 'v')
+        ->select([
+            'tp.id',
+            'tp.person_name',
+            'tp.corporate_name as corporateName',
+            'p.name as prefixName',
+        ])
         ->get();
+
         return response()->json($Vendors);
     }
 
@@ -6625,6 +6703,7 @@ class InventoryController extends Controller
             ->where('purchase_order.id', '=', $id)
             ->first();
 
+
         $BrandIds = explode(',', $PO->inventory_brand_id);
         $Quantities = explode(',', $PO->demand_qty);
         $Amounts = explode(',', $PO->amount);
@@ -6685,6 +6764,7 @@ class InventoryController extends Controller
         $orgName = $PO->orgName;
         $siteName = $PO->siteName;
         $vendorName = $PO->vendorName;
+
 
         $html = view('pdf.purchase_order_template', compact('orgName','siteName','vendorName','PONo','effectiveDate', 'formattedData', 'ApproverName', 'netQty', 'netAmount', 'netDiscount', 'netPayable'))->render();
 
@@ -7016,10 +7096,12 @@ class InventoryController extends Controller
         'organization.organization as orgName',
         'org_site.name as siteName',
         'third_party.person_name as vendorName',
-        'purchase_order.inventory_brand_id as brandIds')
+        'third_party.corporate_name as corporateName',
+        'purchase_order.inventory_brand_id as brandIds','prefix.name as prefixName')
         ->join('organization', 'organization.id', '=', 'purchase_order.org_id')
         ->join('org_site', 'org_site.id', '=', 'purchase_order.site_id')
         ->join('third_party', 'third_party.id', '=', 'purchase_order.vendor_id')
+        ->join('prefix', 'prefix.id', '=', 'third_party.prefix_id')
         ->where('purchase_order.id', '=', $id)
         ->first();
 
@@ -7049,6 +7131,8 @@ class InventoryController extends Controller
             'vendorName' => ucwords($PurchaseOrders->vendorName),
             'brandId' => $PurchaseOrders->inventory_brand_id,
             'brandNames' => ucwords($PurchaseOrders->brandNames),
+            'prefixName' => ucwords($PurchaseOrders->prefixName),
+            'corporateName' => ucwords($PurchaseOrders->corporateName),
             'Quantities' => $PurchaseOrders->demand_qty,
             'Amounts' => $PurchaseOrders->amount,
             'Discounts' => $PurchaseOrders->discount,
@@ -7623,12 +7707,28 @@ class InventoryController extends Controller
         $WorkOrders = WorkOrder::select('work_order.*',
         'organization.organization as orgName',
         'org_site.name as siteName',
-        'third_party.person_name as vendorName')
+        'third_party.person_name as vendorName',
+        'third_party.corporate_name as corporateName',
+        'prefix.name as prefixName')
         ->join('organization', 'organization.id', '=', 'work_order.org_id')
         ->join('org_site', 'org_site.id', '=', 'work_order.site_id')
         ->join('third_party', 'third_party.id', '=', 'work_order.vendor_id')
+        ->join('prefix', 'prefix.id', '=', 'third_party.prefix_id')
         ->where('work_order.id', '=', $id)
         ->first();
+
+        // $PurchaseOrders = PurchaseOrder::select('purchase_order.*',
+        // 'organization.organization as orgName',
+        // 'org_site.name as siteName',
+        // 'third_party.person_name as vendorName',
+        // 'third_party.corporate_name as corporateName',
+        // 'purchase_order.inventory_brand_id as brandIds','prefix.name as prefixName')
+        // ->join('organization', 'organization.id', '=', 'purchase_order.org_id')
+        // ->join('org_site', 'org_site.id', '=', 'purchase_order.site_id')
+        // ->join('third_party', 'third_party.id', '=', 'purchase_order.vendor_id')
+        // ->join('prefix', 'prefix.id', '=', 'third_party.prefix_id')
+        // ->where('purchase_order.id', '=', $id)
+        // ->first();
 
         $effective_timestamp = $WorkOrders->effective_timestamp;
         $effective_timestamp = Carbon::createFromTimestamp($effective_timestamp);
@@ -7642,6 +7742,8 @@ class InventoryController extends Controller
             'siteName' => ucwords($WorkOrders->siteName),
             'vendorId' => $WorkOrders->vendor_id,
             'vendorName' => ucwords($WorkOrders->vendorName),
+            'corporateName' => ucwords($WorkOrders->corporateName),
+            'prefixName' => ucwords($WorkOrders->prefixName),
             'Particulars' => $WorkOrders->particulars,
             'Amounts' => $WorkOrders->amount,
             'Discounts' => $WorkOrders->discount,
@@ -7722,23 +7824,264 @@ class InventoryController extends Controller
         return response()->json(['success' => 'Work Order Details updated successfully']);
     }
 
-    public function GetTransactionTypeInventoryManagement(Request $request)
+    // public function GetTransactionTypeInventoryManagement(Request $request)
+    // {
+    //     $siteId            = $request->input('siteId');
+    //     $transactionTypeId = $request->input('transactionTypeId');
+
+    //     $user       = auth()->user();
+    //     $roleId     = $user->role_id;
+    //     $isEmployee = $user->is_employee;
+    //     $empId      = $user->emp_id;
+
+    //     $TransactionType = InventoryTransactionType::select(
+    //         'source_type.name as Source',
+    //         'destination_type.name as Destination',
+    //         'inventory_transaction_type.service_location_id',
+    //         'inventory_transaction_type.transaction_expired_status',
+    //         'inventory_transaction_type.applicable_location_to',
+    //         'inventory_transaction_type.request_location_mandatory',
+    //         'inventory_transaction_type.source_action',
+    //         'inventory_transaction_type.destination_action'
+    //     )
+    //     ->join('inventory_source_destination_type as source_type', 'source_type.id', '=', 'inventory_transaction_type.source_location_type')
+    //     ->join('inventory_source_destination_type as destination_type', 'destination_type.id', '=', 'inventory_transaction_type.destination_location_type')
+    //     ->where('inventory_transaction_type.id', '=', $transactionTypeId)
+    //     ->first();
+
+
+    //     if (! $TransactionType) {
+    //         return response()->json([
+    //             'Source'          => null,
+    //             'Destination'     => null,
+    //             'sourceData'      => [],
+    //             'destinationData' => [],
+    //         ]);
+    //     }
+
+    //     $sourceName      = strtolower($TransactionType->Source);
+    //     $destinationName = strtolower($TransactionType->Destination);
+    //     $applicableLocationTo = $TransactionType->applicable_location_to;
+
+
+    //     $serviceLocationIDs = [];
+    //     if (! empty($TransactionType->service_location_id)) {
+    //         // e.g. "1,2,3"
+    //         $serviceLocationIDs = explode(',', $TransactionType->service_location_id);
+    //         $serviceLocationIDs = array_map('trim', $serviceLocationIDs);
+    //         $serviceLocationIDs = array_filter($serviceLocationIDs);
+    //     }
+
+    //     $empServiceLocationIDs = [];
+    //     if ($roleId != 1 && $isEmployee == 1) {
+    //         // $empInv = DB::table('emp_inventory_location')
+    //         //     ->where('site_id', $siteId)
+    //         //     ->where('emp_id', $empId)
+    //         //     ->where('status', 1)
+    //         //     ->first();
+    //         $empInvQuery = DB::table('emp_inventory_location')
+    //             ->where('emp_id', $empId)
+    //             ->where('status', 1);
+
+    //         if (!empty($siteId)) {
+    //             $empInvQuery->where('site_id', $siteId);
+    //         }
+
+    //         $empInv = $empInvQuery->first();
+
+    //         if ($empInv && !empty($empInv->service_location_id)) {
+    //             $decoded = json_decode($empInv->service_location_id, true);
+    //             if (!is_array($decoded)) {
+    //                 $decoded = [];
+    //             } else {
+    //                 $flattened = [];
+    //                 array_walk_recursive($decoded, function($val) use (&$flattened) {
+    //                     $flattened[] = (string) $val;
+    //                 });
+    //                 $decoded = $flattened;
+    //             }
+    //             $empServiceLocationIDs = $decoded;
+    //         }
+    //     }
+
+    //     if (empty($serviceLocationIDs)) {
+    //         return response()->json([
+    //             'success'     => false,
+    //             'message'     => 'Currently no locations are activated for you. Please contact the administrator.',
+    //         ], 200);
+    //     }
+
+    //     // Prepare final arrays
+    //     $sourceData      = [];
+    //     $destinationData = [];
+
+    //     if (stripos($sourceName, 'location') !== false) {
+    //         $srcQuery = DB::table('service_location')
+    //             ->where('service_location.status', 1)
+    //             ->select('service_location.id', 'service_location.name')
+    //             ->orderBy('service_location.name', 'asc');
+
+    //         if ($applicableLocationTo === 'source') {
+    //             if(count($empServiceLocationIDs) > 0) {
+    //                 $srcQuery->whereIn('service_location.id', array_intersect($serviceLocationIDs, $empServiceLocationIDs));
+    //             }
+    //             else {
+    //                 $srcQuery->whereIn('service_location.id', $serviceLocationIDs);
+    //             }
+    //         }
+    //         else {
+    //             if (count($empServiceLocationIDs) > 0) {
+    //                 $srcQuery->whereIn('service_location.id', $empServiceLocationIDs);
+    //             }
+    //         }
+
+    //         $sourceData = $srcQuery->get();
+
+    //     }
+    //     elseif ($sourceName === 'vendor') {
+    //         $sourceData = DB::table('third_party')
+    //             ->select('id', 'person_name')
+    //             ->where('type', 'v')
+    //             ->orderBy('person_name', 'asc')
+    //             ->get();
+    //     }
+    //     elseif ($sourceName === 'donor') {
+    //         $sourceData = DB::table('third_party')
+    //             ->select('id', 'person_name')
+    //             ->where('type', 'd')
+    //             ->orderBy('person_name', 'asc')
+    //             ->get();
+    //     }
+    //     elseif ($sourceName === 'patient') {
+    //         // $sourceData = DB::table('patient_inout as pio')
+    //         //     ->join('patient as p', 'p.mr_code', '=', 'pio.mr_code')
+    //         //     ->select(
+    //         //         'pio.mr_code as id',
+    //         //         DB::raw("CONCAT(pio.mr_code, ' - ', p.name) as patient_name")
+    //         //     )
+    //         //     ->where('pio.status', 1)
+    //         //     ->where('pio.site_id', $siteId)
+    //         //     ->orderBy('p.name', 'asc')
+    //         //     ->get();
+
+    //         $query = DB::table('patient_inout as pio')
+    //             ->join('patient as p', 'p.mr_code', '=', 'pio.mr_code')
+    //             ->select(
+    //                 'pio.mr_code as id',
+    //                 DB::raw("CONCAT(pio.mr_code, ' - ', p.name) as patient_name")
+    //             )
+    //             ->where('pio.status', 1)
+    //             ->orderBy('p.name', 'asc');
+
+    //         if (!empty($siteId)) {
+    //             $query->where('pio.site_id', $siteId);
+    //         }
+
+    //         $sourceData = $query->get();
+
+    //     }
+
+    //     // DESTINATION
+    //     if (stripos($destinationName, 'location') !== false) {
+    //     // if ($destinationName === 'inventory location') {
+    //         $destQuery = DB::table('service_location')
+    //             ->where('service_location.status', 1)
+    //             ->select('service_location.id', 'service_location.name')
+    //             ->orderBy('service_location.name', 'asc');
+
+
+    //         if ($applicableLocationTo === 'destination') {
+    //             if(count($empServiceLocationIDs) > 0) {
+    //                 $destQuery->whereIn('service_location.id', array_intersect($serviceLocationIDs, $empServiceLocationIDs));
+    //             }
+    //             else {
+    //                 $destQuery->whereIn('service_location.id', $serviceLocationIDs);
+    //             }
+    //         }
+    //         else {
+    //             if (count($empServiceLocationIDs) > 0) {
+    //                 $destQuery->whereIn('service_location.id', $empServiceLocationIDs);
+    //             }
+    //         }
+
+
+    //         $destinationData = $destQuery->get();
+    //     }
+    //     elseif ($destinationName === 'vendor') {
+    //         $destinationData = DB::table('third_party')
+    //             ->select('id', 'person_name')
+    //             ->where('type', 'v')
+    //             ->orderBy('person_name', 'asc')
+    //             ->get();
+    //     }
+    //     elseif ($destinationName === 'donor') {
+    //         $destinationData = DB::table('third_party')
+    //             ->select('id', 'person_name')
+    //             ->where('type', 'd')
+    //             ->orderBy('person_name', 'asc')
+    //             ->get();
+    //     }
+    //     elseif ($destinationName === 'patient') {
+    //         // $destinationData = DB::table('patient_inout as pio')
+    //         //     ->join('patient as p', 'p.mr_code', '=', 'pio.mr_code')
+    //         //     ->select(
+    //         //         'pio.mr_code as id',
+    //         //         DB::raw("CONCAT(pio.mr_code, ' - ', p.name) as patient_name")
+    //         //     )
+    //         //     ->where('pio.status', 1)
+    //         //     ->where('pio.site_id', $siteId)
+    //         //     ->orderBy('p.name', 'asc')
+    //         //     ->get();
+
+    //         $query = DB::table('patient_inout as pio')
+    //             ->join('patient as p', 'p.mr_code', '=', 'pio.mr_code')
+    //             ->select(
+    //                 'pio.mr_code as id',
+    //                 DB::raw("CONCAT(pio.mr_code, ' - ', p.name) as patient_name")
+    //             )
+    //             ->where('pio.status', 1)
+    //             ->orderBy('p.name', 'asc');
+
+    //         if (!empty($siteId)) {
+    //             $query->where('pio.site_id', $siteId);
+    //         }
+
+    //         $destinationData = $query->get();
+    //     }
+    //             // dd($sourceData, $destinationData, $applicableLocationTo);
+
+    //     return response()->json([
+    //         'Source'          => $TransactionType->Source,
+    //         'Destination'     => $TransactionType->Destination,
+    //         'sourceData'      => $sourceData,
+    //         'destinationData' => $destinationData,
+    //         'LocationMandatory' => $TransactionType->request_location_mandatory,
+    //         'transaction_expired_status' => $TransactionType->transaction_expired_status,
+    //         'source_action' => $TransactionType->source_action,
+    //         'destination_action' => $TransactionType->destination_action,
+    //     ]);
+    // }
+
+     public function GetTransactionTypeInventoryManagement(Request $request)
     {
         $siteId            = $request->input('siteId');
         $transactionTypeId = $request->input('transactionTypeId');
+        $transactionType   = $request->input('transactionType'); // 'requisition', 'external', 'other'
 
         $user       = auth()->user();
         $roleId     = $user->role_id;
         $isEmployee = $user->is_employee;
         $empId      = $user->emp_id;
 
+        // Updated select: use new columns introduced in inventory_transaction_type
         $TransactionType = InventoryTransactionType::select(
             'source_type.name as Source',
             'destination_type.name as Destination',
-            'inventory_transaction_type.service_location_id',
+            'inventory_transaction_type.emp_location_mandatory_request',
+            'inventory_transaction_type.emp_location_source_destination',
+            'inventory_transaction_type.source_location',
+            'inventory_transaction_type.destination_location',
             'inventory_transaction_type.transaction_expired_status',
-            'inventory_transaction_type.applicable_location_to',
-            'inventory_transaction_type.request_location_mandatory',
             'inventory_transaction_type.source_action',
             'inventory_transaction_type.destination_action'
         )
@@ -7746,6 +8089,7 @@ class InventoryController extends Controller
         ->join('inventory_source_destination_type as destination_type', 'destination_type.id', '=', 'inventory_transaction_type.destination_location_type')
         ->where('inventory_transaction_type.id', '=', $transactionTypeId)
         ->first();
+        // dd($TransactionType,$transactionTypeId);
 
 
         if (! $TransactionType) {
@@ -7759,109 +8103,152 @@ class InventoryController extends Controller
 
         $sourceName      = strtolower($TransactionType->Source);
         $destinationName = strtolower($TransactionType->Destination);
-        $applicableLocationTo = $TransactionType->applicable_location_to;
 
-
-        $serviceLocationIDs = [];
-        if (! empty($TransactionType->service_location_id)) {
-            // e.g. "1,2,3"
-            $serviceLocationIDs = explode(',', $TransactionType->service_location_id);
-            $serviceLocationIDs = array_map('trim', $serviceLocationIDs);
-            $serviceLocationIDs = array_filter($serviceLocationIDs);
+        // Parse configured locations if provided on the transaction type
+        $configuredSourceLocationIDs = [];
+        if (!empty($TransactionType->source_location)) {
+            $configuredSourceLocationIDs = array_values(array_filter(array_map(function ($v) {
+                return (string) trim($v);
+            }, explode(',', $TransactionType->source_location))));
         }
+
+        $configuredDestinationLocationIDs = [];
+        if (!empty($TransactionType->destination_location)) {
+            $configuredDestinationLocationIDs = array_values(array_filter(array_map(function ($v) {
+                return (string) trim($v);
+            }, explode(',', $TransactionType->destination_location))));
+        }
+
+
+        // Helper to compute employee inventory locations by site using location_site mapping
+        $getEmpServiceLocationIDs = function (int $empId, $siteId) {
+            $allowed = [];
+            $rows = DB::table('emp_inventory_location')
+                ->where('emp_id', $empId)
+                ->where('status', 1)
+                ->get();
+
+            foreach ($rows as $row) {
+                $siteList = [];
+                if (!empty($row->location_site)) {
+                    $siteList = array_map('trim', explode(',', (string) $row->location_site));
+                }
+
+                $svcJson = $row->service_location_id;
+                $svcDecoded = json_decode($svcJson, true);
+                if (!is_array($svcDecoded)) {
+                    $svcDecoded = [];
+                }
+
+                // Find matching index for given site and take the corresponding group of locations
+                if (!empty($siteId)) {
+                    foreach ($siteList as $idx => $siteVal) {
+                        if ((string) $siteVal === (string) $siteId) {
+                            $group = $svcDecoded[$idx] ?? [];
+                            // $group may be scalar, array, or nested arrays; normalize to flat strings
+                            $flat = [];
+                            $walker = function ($arr) use (&$flat, &$walker) {
+                                if (is_array($arr)) {
+                                    foreach ($arr as $it) { $walker($it); }
+                                } else {
+                                    $flat[] = (string) $arr;
+                                }
+                            };
+                            $walker($group);
+                            $allowed = array_merge($allowed, $flat);
+                        }
+                    }
+                }
+            }
+
+            return array_values(array_unique($allowed));
+        };
 
         $empServiceLocationIDs = [];
         if ($roleId != 1 && $isEmployee == 1) {
-            // $empInv = DB::table('emp_inventory_location')
-            //     ->where('site_id', $siteId)
-            //     ->where('emp_id', $empId)
-            //     ->where('status', 1)
-            //     ->first();
-            $empInvQuery = DB::table('emp_inventory_location')
-                ->where('emp_id', $empId)
-                ->where('status', 1);
-
-            if (!empty($siteId)) {
-                $empInvQuery->where('site_id', $siteId);
-            }
-
-            $empInv = $empInvQuery->first();
-
-            if ($empInv && !empty($empInv->service_location_id)) {
-                $decoded = json_decode($empInv->service_location_id, true);
-                if (!is_array($decoded)) {
-                    $decoded = [];
-                } else {
-                    $flattened = [];
-                    array_walk_recursive($decoded, function($val) use (&$flattened) {
-                        $flattened[] = (string) $val;
-                    });
-                    $decoded = $flattened;
-                }
-                $empServiceLocationIDs = $decoded;
-            }
+            $empServiceLocationIDs = $getEmpServiceLocationIDs((int) $empId, $siteId);
         }
 
-        if (empty($serviceLocationIDs)) {
-            return response()->json([
-                'success'     => false,
-                'message'     => 'Currently no locations are activated for you. Please contact the administrator.',
-            ], 200);
+
+        // Determine which employee location filtering to use based on transaction type
+        // For requisition transactions: use emp_location_mandatory_request
+        // For external transactions and other transactions: use emp_location_source_destination
+        $empLocSide = null;
+        
+        if ($transactionType === 'requisition') {
+
+            // For requisition transactions, use emp_location_mandatory_request
+            $empLocSide = strtolower((string) $TransactionType->emp_location_mandatory_request); // 's', 'd', 'n'
+        } else {
+
+            // For external transactions and other transactions (or when transactionType is not provided), use emp_location_source_destination
+            $empLocSide = strtolower((string) $TransactionType->emp_location_source_destination); // 's', 'd', 'n'
         }
+        // dd($empLocSide, $TransactionType->emp_location_source_destination, $TransactionType->emp_location_mandatory_request);
 
         // Prepare final arrays
         $sourceData      = [];
         $destinationData = [];
 
+        // SOURCE options
         if (stripos($sourceName, 'location') !== false) {
             $srcQuery = DB::table('service_location')
                 ->where('service_location.status', 1)
+                ->where('service_location.name', 'not like', '%Not Applicable%')
                 ->select('service_location.id', 'service_location.name')
                 ->orderBy('service_location.name', 'asc');
 
-            if ($applicableLocationTo === 'source') {
-                if(count($empServiceLocationIDs) > 0) {
-                    $srcQuery->whereIn('service_location.id', array_intersect($serviceLocationIDs, $empServiceLocationIDs));
-                }
-                else {
-                    $srcQuery->whereIn('service_location.id', $serviceLocationIDs);
-                }
+            // Restrict to locations activated for the selected site, if provided
+            if (!empty($siteId)) {
+                $srcQuery->join('activated_location as al', 'al.location_id', '=', 'service_location.id')
+                    ->where('al.status', 1)
+                    ->where('al.site_id', $siteId)
+                    ->distinct();
             }
-            else {
-                if (count($empServiceLocationIDs) > 0) {
-                    $srcQuery->whereIn('service_location.id', $empServiceLocationIDs);
+
+            // Build final filter set for source locations
+            $finalSourceIDs = null; // null means no restriction
+
+            if (!empty($configuredSourceLocationIDs)) {
+                $finalSourceIDs = $configuredSourceLocationIDs;
+            }
+
+            if ($empLocSide == 's') {
+                // dd($empLocSide);
+                $finalSourceIDs = is_null($finalSourceIDs)
+                    ? $empServiceLocationIDs
+                    : array_values(array_intersect($finalSourceIDs, $empServiceLocationIDs));
+            }
+
+            if (!is_null($finalSourceIDs)) {
+                if (empty($finalSourceIDs)) {
+                    $sourceData = collect();
+                } else {
+                    $srcQuery->whereIn('service_location.id', $finalSourceIDs);
                 }
             }
 
-            $sourceData = $srcQuery->get();
-
-        }
+            if (empty($sourceData)) {
+                $sourceData = $srcQuery->get();
+            }
+        } 
         elseif ($sourceName === 'vendor') {
             $sourceData = DB::table('third_party')
-                ->select('id', 'person_name')
-                ->where('type', 'v')
-                ->orderBy('person_name', 'asc')
+                ->join('prefix', 'prefix.id', '=', 'third_party.prefix_id')
+                ->select('third_party.id', 'third_party.person_name','third_party.corporate_name','prefix.name as prefix')
+                ->where('third_party.type', 'v')
+                ->orderBy('third_party.person_name', 'asc')
                 ->get();
-        }
+        } 
         elseif ($sourceName === 'donor') {
             $sourceData = DB::table('third_party')
-                ->select('id', 'person_name')
-                ->where('type', 'd')
-                ->orderBy('person_name', 'asc')
+                ->join('prefix', 'prefix.id', '=', 'third_party.prefix_id')
+                ->select('third_party.id', 'third_party.person_name','third_party.corporate_name','prefix.name as prefix')
+                ->where('third_party.type', 'd')
+                ->orderBy('third_party.person_name', 'asc')
                 ->get();
-        }
+        } 
         elseif ($sourceName === 'patient') {
-            // $sourceData = DB::table('patient_inout as pio')
-            //     ->join('patient as p', 'p.mr_code', '=', 'pio.mr_code')
-            //     ->select(
-            //         'pio.mr_code as id',
-            //         DB::raw("CONCAT(pio.mr_code, ' - ', p.name) as patient_name")
-            //     )
-            //     ->where('pio.status', 1)
-            //     ->where('pio.site_id', $siteId)
-            //     ->orderBy('p.name', 'asc')
-            //     ->get();
-
             $query = DB::table('patient_inout as pio')
                 ->join('patient as p', 'p.mr_code', '=', 'pio.mr_code')
                 ->select(
@@ -7876,61 +8263,66 @@ class InventoryController extends Controller
             }
 
             $sourceData = $query->get();
-
         }
 
-        // DESTINATION
+        // DESTINATION options
         if (stripos($destinationName, 'location') !== false) {
-        // if ($destinationName === 'inventory location') {
+
             $destQuery = DB::table('service_location')
                 ->where('service_location.status', 1)
+                ->where('service_location.name', 'not like', '%Not Applicable%')
                 ->select('service_location.id', 'service_location.name')
                 ->orderBy('service_location.name', 'asc');
 
-
-            if ($applicableLocationTo === 'destination') {
-                if(count($empServiceLocationIDs) > 0) {
-                    $destQuery->whereIn('service_location.id', array_intersect($serviceLocationIDs, $empServiceLocationIDs));
-                }
-                else {
-                    $destQuery->whereIn('service_location.id', $serviceLocationIDs);
-                }
-            }
-            else {
-                if (count($empServiceLocationIDs) > 0) {
-                    $destQuery->whereIn('service_location.id', $empServiceLocationIDs);
-                }
+            if (!empty($siteId)) {
+                $destQuery->join('activated_location as al', 'al.location_id', '=', 'service_location.id')
+                    ->where('al.status', 1)
+                    ->where('al.site_id', $siteId)
+                    ->distinct();
             }
 
+            $finalDestinationIDs = null; // null means no restriction
 
-            $destinationData = $destQuery->get();
-        }
+            if (!empty($configuredDestinationLocationIDs)) {
+                $finalDestinationIDs = $configuredDestinationLocationIDs;
+            }
+
+            if ($empLocSide === 'd') {
+            // if ($empLocSide === 'd' && !empty($empServiceLocationIDs)) {
+                $finalDestinationIDs = is_null($finalDestinationIDs)
+                    ? $empServiceLocationIDs
+                    : array_values(array_intersect($finalDestinationIDs, $empServiceLocationIDs));
+            }
+
+            if (!is_null($finalDestinationIDs)) {
+                if (empty($finalDestinationIDs)) {
+                    $destinationData = collect();
+                } else {
+                    $destQuery->whereIn('service_location.id', $finalDestinationIDs);
+                }
+            }
+
+            if (empty($destinationData)) {
+                $destinationData = $destQuery->get();
+            }
+        } 
         elseif ($destinationName === 'vendor') {
             $destinationData = DB::table('third_party')
-                ->select('id', 'person_name')
-                ->where('type', 'v')
-                ->orderBy('person_name', 'asc')
+                ->join('prefix', 'prefix.id', '=', 'third_party.prefix_id')
+                ->select('third_party.id', 'third_party.person_name','third_party.corporate_name','prefix.name as prefix')
+                ->where('third_party.type', 'v')
+                ->orderBy('third_party.person_name', 'asc')
                 ->get();
-        }
+        } 
         elseif ($destinationName === 'donor') {
             $destinationData = DB::table('third_party')
-                ->select('id', 'person_name')
-                ->where('type', 'd')
-                ->orderBy('person_name', 'asc')
+                ->join('prefix', 'prefix.id', '=', 'third_party.prefix_id')
+                ->select('third_party.id', 'third_party.person_name','third_party.corporate_name','prefix.name as prefix')
+                ->where('third_party.type', 'd')
+                ->orderBy('third_party.person_name', 'asc')
                 ->get();
-        }
+        } 
         elseif ($destinationName === 'patient') {
-            // $destinationData = DB::table('patient_inout as pio')
-            //     ->join('patient as p', 'p.mr_code', '=', 'pio.mr_code')
-            //     ->select(
-            //         'pio.mr_code as id',
-            //         DB::raw("CONCAT(pio.mr_code, ' - ', p.name) as patient_name")
-            //     )
-            //     ->where('pio.status', 1)
-            //     ->where('pio.site_id', $siteId)
-            //     ->orderBy('p.name', 'asc')
-            //     ->get();
-
             $query = DB::table('patient_inout as pio')
                 ->join('patient as p', 'p.mr_code', '=', 'pio.mr_code')
                 ->select(
@@ -7946,17 +8338,16 @@ class InventoryController extends Controller
 
             $destinationData = $query->get();
         }
-                // dd($sourceData, $destinationData, $applicableLocationTo);
 
         return response()->json([
-            'Source'          => $TransactionType->Source,
-            'Destination'     => $TransactionType->Destination,
-            'sourceData'      => $sourceData,
-            'destinationData' => $destinationData,
-            'LocationMandatory' => $TransactionType->request_location_mandatory,
+            'Source'                   => $TransactionType->Source,
+            'Destination'              => $TransactionType->Destination,
+            'sourceData'               => $sourceData,
+            'destinationData'          => $destinationData,
+            'LocationMandatory'        => $TransactionType->emp_location_mandatory_request,
             'transaction_expired_status' => $TransactionType->transaction_expired_status,
-            'source_action' => $TransactionType->source_action,
-            'destination_action' => $TransactionType->destination_action,
+            'source_action'            => $TransactionType->source_action,
+            'destination_action'       => $TransactionType->destination_action,
         ]);
     }
 
@@ -7999,9 +8390,6 @@ class InventoryController extends Controller
 
         // dd($costcenters);
 
-
-
-
         return view('dashboard.material_management.external_transactions', compact('user','costcenters'));
     }
 
@@ -8022,6 +8410,7 @@ class InventoryController extends Controller
         $Destination         = $request->input('et_destination');
         $ReferenceDocument   = $request->input('et_reference_document');
         $Remarks             = $request->input('et_remarks');
+       
 
         // Retrieve array inputs
         $Generics   = $request->input('et_generic');
@@ -8029,7 +8418,6 @@ class InventoryController extends Controller
         $Batches    = $request->input('et_batch');
         // $ExpireDate = $request->input('et_expiry');
         $Quantities = $request->input('et_qty');
-
         // Convert arrays to comma-separated strings for non-date fields
         $GenericsCSV   = is_array($Generics) ? implode(',', $Generics) : '';
         $BrandsCSV     = is_array($Brands) ? implode(',', $Brands) : '';
@@ -8100,13 +8488,15 @@ class InventoryController extends Controller
         // ->first();
 
         $rule = DB::table('inventory_transaction_type')
-        ->select('applicable_location_to', 'source_action', 'destination_action', 'source_location_type', 'destination_location_type')
+        ->select('source_action', 'destination_action', 'source_location_type', 'destination_location_type')
         ->where('id', $TransactionTypeID)
         ->first();
 
-        $useAction = $rule->applicable_location_to === 'source'
-        ? $rule->source_action
-        : $rule->destination_action;
+        // Decide the site/org balance action without using removed column
+        // If destination action is defined (a/s/r), prefer that; otherwise fall back to source action
+        $useAction = (isset($rule->destination_action) && in_array($rule->destination_action, ['a','s','r']))
+            ? $rule->destination_action
+            : $rule->source_action;
 
         $sourceType = DB::table('inventory_source_destination_type')->where('id', $rule->source_location_type)->value('name');
         $destinationType = DB::table('inventory_source_destination_type')->where('id', $rule->destination_location_type)->value('name');
@@ -8400,6 +8790,7 @@ class InventoryController extends Controller
                     'timestamp'        => $timestampNow,
                 ]);
             }
+
         }
         DB::commit();
         return response()->json(['success' => 'External Transaction added successfully']);
@@ -8753,7 +9144,8 @@ class InventoryController extends Controller
             DB::raw('service_group.name as serviceGroup'),
             DB::raw('service_type.name as serviceType'),
             DB::raw('inventory_transaction_type.name as TransactionType'),
-            DB::raw('COALESCE(service_location.name, "N/A") as ServiceLocationName')
+            DB::raw('COALESCE(source_location.name, "") as SourceLocationName'),
+            DB::raw('COALESCE(destination_location.name, "") as DestinationLocationName')
         ];
 
         // --- Medication Query ---
@@ -8768,7 +9160,8 @@ class InventoryController extends Controller
             ->join('service_group', 'service_group.id', '=', 'rmc.service_group_id')
             ->join('service_type', 'service_type.id', '=', 'rmc.service_type_id')
             ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'rmc.transaction_type_id')
-            ->leftJoin('service_location', 'service_location.id', '=', 'rmc.inv_location_id')
+            ->leftJoin('service_location as source_location', 'source_location.id', '=', 'rmc.source_location_id')
+            ->leftJoin('service_location as destination_location', 'destination_location.id', '=', 'rmc.destination_location_id')
             ->join('patient', 'patient.mr_code', '=', 'rmc.mr_code')
             ->select(array_merge(
                 array_map(fn($col) => "rmc.$col", $sharedFields),
@@ -8799,7 +9192,8 @@ class InventoryController extends Controller
             ->leftJoin('organization', 'organization.id', '=', 'mcr.org_id')
             ->leftJoin('org_site', 'org_site.id', '=', 'mcr.site_id')
             ->leftJoin('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'mcr.transaction_type_id')
-            ->leftJoin('service_location', 'service_location.id', '=', 'mcr.inv_location_id')
+            ->leftJoin('service_location as source_location', 'source_location.id', '=', 'mcr.source_location_id')
+            ->leftJoin('service_location as destination_location', 'destination_location.id', '=', 'mcr.destination_location_id')
             ->select(array_merge(
                 array_map(fn($col) => "mcr.$col", $sharedFields),
                 [
@@ -8827,7 +9221,8 @@ class InventoryController extends Controller
             DB::raw('service_group.name as serviceGroup'),
             DB::raw('service_type.name as serviceType'),
             DB::raw('inventory_transaction_type.name as TransactionType'),
-            DB::raw('"N/A" as ServiceLocationName')
+            DB::raw('"" as SourceLocationName'),
+            DB::raw('"" as DestinationLocationName')
         ];
 
         $directIssueDIspense = DB::table('inventory_management as im')
@@ -8891,10 +9286,18 @@ class InventoryController extends Controller
 
                 $RequisitionCode = $row->referenceNumber ?? 'N/A';
 
+                $locationInfo = '';
+                if (!empty($row->SourceLocationName)) {
+                    $locationInfo .= '<br><b>Source Location</b>: ' . ucwords($row->SourceLocationName);
+                }
+                if (!empty($row->DestinationLocationName)) {
+                    $locationInfo .= '<br><b>Destination Location</b>: ' . ucwords($row->DestinationLocationName);
+                }
+
                 return $RequisitionCode
                 . '<hr class="mt-1 mb-2">'
-                . '<b>Request For</b>: ' . ($row->TransactionType ?? 'N/A') . '<br>'
-                . '<b>Requesting Location</b>: ' . ($row->ServiceLocationName ?? 'N/A') . '<br>'
+                . '<b>Request For</b>: ' . ($row->TransactionType ?? 'N/A')
+                . $locationInfo . '<br>'
                 . '<b>Site</b>: ' . ($row->SiteName ?? 'N/A') . '<br>'
                 . '<b>Request Date </b>: ' . $timestamp . '<br>'
                 . '<b>Effective Date </b>: ' . $effectiveDate . '<br>'
@@ -9545,21 +9948,23 @@ class InventoryController extends Controller
                     's.name as site_name',
                     'p.name as patient_name',
                     'itt.name as transaction_type_name',
-                    'sl.name as location_name',
+                    'r.source_location_id',
+                    'r.destination_location_id',
+                    DB::raw('COALESCE(srcLoc.name, "") as source_location_name'),
+                    DB::raw('COALESCE(destLoc.name, "") as destination_location_name'),
                     'sm.name as service_mode_name',
                     'sv.name as service_name',
                     'e.name as physician_name',
                     'bcc.name as billing_cc_name',
                     'sg.name as service_group_name',
                     'st.name as service_type_name',
-                    // 'ib.site_balance as maxQty'
-
                 ])
                 ->join('organization as o', 'o.id', '=', 'r.org_id')
                 ->join('org_site as s', 's.id', '=', 'r.site_id')
                 ->join('patient as p', 'p.mr_code', '=', 'r.mr_code')
                 ->join('inventory_transaction_type as itt', 'itt.id', '=', 'r.transaction_type_id')
-                ->join('service_location as sl', 'sl.id', '=', 'r.inv_location_id')
+                ->leftJoin('service_location as srcLoc', 'srcLoc.id', '=', 'r.source_location_id')
+                ->leftJoin('service_location as destLoc', 'destLoc.id', '=', 'r.destination_location_id')
                 ->join('service_mode as sm', 'sm.id', '=', 'r.service_mode_id')
                 ->join('services as sv', 'sv.id', '=', 'r.service_id')
                 ->join('employee as e', 'e.id', '=', 'r.responsible_physician')
@@ -9604,8 +10009,10 @@ class InventoryController extends Controller
                 'patient_name'            => $med->patient_name,
                 'transaction_type_id'     => $med->transaction_type_id,
                 'transaction_type_name'   => $med->transaction_type_name,
-                'inv_location_id'         => $med->inv_location_id,
-                'location_name'           => $med->location_name,
+                'source_location_id'      => $med->source_location_id,
+                'source_location_name'    => $med->source_location_name,
+                'destination_location_id' => $med->destination_location_id,
+                'destination_location_name'=> $med->destination_location_name,
                 'service_id'              => $med->service_id,
                 'service_name'            => $med->service_name,
                 'service_mode_id'         => $med->service_mode_id,
@@ -9677,7 +10084,8 @@ class InventoryController extends Controller
                     'm.site_id',
                     'm.mr_code',
                     'm.transaction_type_id',
-                    'm.inv_location_id',
+                    'm.source_location_id',
+                    'm.destination_location_id',
                     'm.service_mode_id',
                     'm.service_id',
                     'm.physician_id',
@@ -9689,7 +10097,8 @@ class InventoryController extends Controller
                     's.name                        as site_name',
                     'p.name                        as patient_name',
                     'itt.name                      as transaction_type_name',
-                    'sl.name                       as location_name',
+                    DB::raw('COALESCE(srcLoc.name, "") as source_location_name'),
+                    DB::raw('COALESCE(destLoc.name, "") as destination_location_name'),
                     'sm.name                       as service_mode_name',
                     'sv.name                       as service_name',
                     'e.name                        as physician_name',
@@ -9703,7 +10112,8 @@ class InventoryController extends Controller
                 ->join('org_site                    as s',   's.id',  '=', 'm.site_id')
                 ->leftJoin('patient                   as p',   'p.mr_code', '=', 'm.mr_code')
                 ->join('inventory_transaction_type  as itt', 'itt.id',     '=', 'm.transaction_type_id')
-                ->leftJoin('service_location            as sl',   'sl.id',  '=', 'm.inv_location_id')
+                ->leftJoin('service_location as srcLoc', 'srcLoc.id', '=', 'm.source_location_id')
+                ->leftJoin('service_location as destLoc', 'destLoc.id', '=', 'm.destination_location_id')
                 ->leftJoin('service_mode                as sm',   'sm.id',  '=', 'm.service_mode_id')
                 ->leftJoin('services                    as sv',   'sv.id',  '=', 'm.service_id')
                 ->leftJoin('service_group               as sg',   'sg.id',  '=', 'sv.group_id')
@@ -9751,10 +10161,10 @@ class InventoryController extends Controller
                 ->where('m.id', $id)
                 ->groupBy([
                     'm.id', 'm.code', 'm.org_id', 'm.site_id', 'm.mr_code',
-                    'm.transaction_type_id', 'm.inv_location_id', 'm.service_mode_id',
+                    'm.transaction_type_id', 'm.source_location_id', 'm.destination_location_id', 'm.service_mode_id',
                     'm.service_id', 'm.physician_id', 'm.billing_cc', 'm.generic_id',
                     'm.qty', 'm.status',
-                    'o.organization', 's.name', 'p.name', 'itt.name', 'sl.name',
+                    'o.organization', 's.name', 'p.name', 'itt.name', 'srcLoc.name', 'destLoc.name',
                     'sm.name', 'sv.name', 'e.name', 'bcc.name', 'sg.name', 'st.name',
                     'ib.site_balance'
                 ])
@@ -9787,8 +10197,10 @@ class InventoryController extends Controller
                 'patient_name'           => $mat->patient_name,
                 'transaction_type_id'    => $mat->transaction_type_id,
                 'transaction_type_name'  => $mat->transaction_type_name,
-                'inv_location_id'        => $mat->inv_location_id,
-                'location_name'          => $mat->location_name,
+                'source_location_id'     => $mat->source_location_id,
+                'source_location_name'   => $mat->source_location_name,
+                'destination_location_id'=> $mat->destination_location_id,
+                'destination_location_name'=> $mat->destination_location_name,
                 'service_mode_id'        => $mat->service_mode_id,
                 'service_mode_name'      => $mat->service_mode_name,
                 'service_id'             => $mat->service_id,
@@ -9902,7 +10314,7 @@ class InventoryController extends Controller
         }
         // Get validated data
         $validated = $request->validated();
-        $itemCount = count($request->id_generic);
+        $itemCount = isset($validated['id_generic']) ? count($validated['id_generic']) : 0;
         $success = true;
         $message = '';
 
@@ -9989,7 +10401,7 @@ class InventoryController extends Controller
         $inventory->last_updated = now()->timestamp;
 
         $rule = DB::table('inventory_transaction_type')
-        ->select('applicable_location_to', 'source_action', 'destination_action', 'source_location_type', 'destination_location_type')
+        ->select('source_action', 'destination_action', 'source_location_type', 'destination_location_type')
         ->where('id', $validated['id_transactiontype'])
         ->first();
 
@@ -9999,9 +10411,10 @@ class InventoryController extends Controller
 
         // $isIssueOnly = Str::contains(strtolower($transactionTypeName), 'issue');
 
-        $useAction = $rule->applicable_location_to === 'source'
-        ? $rule->source_action
-        : $rule->destination_action;
+        // With applicable_location_to removed, prefer destination_action if defined, else fallback to source_action
+        $useAction = (isset($rule->destination_action) && in_array($rule->destination_action, ['a','s','r']))
+            ? $rule->destination_action
+            : $rule->source_action;
 
         $sourceType = DB::table('inventory_source_destination_type')->where('id', $rule->source_location_type)->value('name');
         $destinationType = DB::table('inventory_source_destination_type')->where('id', $rule->destination_location_type)->value('name');
@@ -10050,6 +10463,15 @@ class InventoryController extends Controller
             $message = 'Failed to save inventory record';
         }
 
+        // If no reference document was provided, generate a unique one using site initials and the new ID
+        if (empty($inventory->ref_document_no)) {
+            $siteName = DB::table('org_site')->where('id', $validated['id_site'])->value('name');
+            $siteCode = strtoupper(substr($siteName ?? 'SITE', 0, 3));
+            $idStr    = str_pad($inventory->id, 5, '0', STR_PAD_LEFT);
+            $inventory->ref_document_no = $siteCode . '-ID-' . $idStr; // ID = Issue & Dispense
+            $inventory->save();
+        }
+
         // Get transaction type rule for balance calculation
         // $rule = DB::table('inventory_transaction_type')
         //     ->select('applicable_location_to', 'source_action', 'destination_action')
@@ -10090,7 +10512,7 @@ class InventoryController extends Controller
 
             // Check if both source and destination are inventory locations
             if (strtolower($sourceType) === 'inventory location' && $validated['id_source'] && strtolower($destinationType) === 'inventory location' && $validated['id_destination']) {
-                // Internal transfer: Don't modify org_balance, only modify site_balance
+                // Material Transfer: Don't modify org_balance, only modify site_balance
                 $newOrgBalance  = $prevOrgBalance;  // No change in organization balance
                 $newSiteBalance = $prevSiteBalance; // Default to current site balance
                 // Adjust balances based on source and destination locations
@@ -10370,9 +10792,9 @@ class InventoryController extends Controller
         }
     }
 
-    public function ShowOtherTransactions()
+    public function ShowMaterialTransfer()
     {
-        $colName = 'other_transactions';
+        $colName = 'material_transfer';
         if (PermissionDenied($colName)) {
             abort(403);
         }
@@ -10409,81 +10831,94 @@ class InventoryController extends Controller
 
         $RequisitionNonMandatory = DB::table('inventory_transaction_type AS itt')
         ->join('inventory_transaction_activity AS ita', 'ita.id', '=', 'itt.activity_type')
-        ->where('ita.name', 'like', '%Other Transaction%')
+        ->where('ita.name', 'like', '%material transfer%')
         ->where('itt.request_mandatory', 'n')
         ->exists();
 
 
-        return view('dashboard.material_management.other_transactions', compact('user','RequisitionNonMandatory','costcenters'));
+        return view('dashboard.material_management.material_transfer', compact('user','RequisitionNonMandatory','costcenters'));
     }
 
-    public function GetOtherTransactionData(Request $request)
+    public function GetMaterialTransferData(Request $request)
     {
         $rights = $this->rights;
-        $view = explode(',', $rights->other_transactions)[1];
+        $view = explode(',', $rights->material_transfer)[1];
         if ($view == 0) {
             abort(403, 'Forbidden');
         }
 
         // Fetch from requisition_other_transaction
-        $requisitions = DB::table('requisition_other_transaction as rot')
-        ->join('organization', 'organization.id', '=', 'rot.org_id')
-        ->leftJoin('org_site as sourceSite', 'sourceSite.id', '=', 'rot.source_site')
-        ->leftJoin('org_site as destinationSite', 'destinationSite.id', '=', 'rot.destination_site')
-        ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'rot.transaction_type_id')
-        ->leftJoin('service_location as sourceLocation', 'sourceLocation.id', '=', 'rot.source_location')
-        ->leftJoin('service_location as destinationLocation', 'destinationLocation.id', '=', 'rot.destination_location')
-        // ->leftJoin('inventory_management', 'inventory_management.ref_document_no', '=', 'rot.code')
+        $requisitions = DB::table('requisition_material_transfer as rmt')
+        ->join('organization', 'organization.id', '=', 'rmt.org_id')
+        ->leftJoin('org_site as sourceSite', 'sourceSite.id', '=', 'rmt.source_site')
+        ->leftJoin('org_site as destinationSite', 'destinationSite.id', '=', 'rmt.destination_site')
+        ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'rmt.transaction_type_id')
+        ->leftJoin('service_location as sourceLocation', 'sourceLocation.id', '=', 'rmt.source_location')
+        ->leftJoin('service_location as destinationLocation', 'destinationLocation.id', '=', 'rmt.destination_location')
+        // ->leftJoin('inventory_management', 'inventory_management.ref_document_no', '=', 'rmt.code')
         // ->leftJoin('inventory_brand', 'inventory_brand.id', '=', 'inventory_management.brand_id')
         ->select([
-            'rot.*',
-            'rot.qty as demand_qty',
+            'rmt.*',
+            'rmt.qty as demand_qty',
             'organization.organization as orgName',
             'sourceSite.name as sourceSite',
             'destinationSite.name as destinationSite',
             'inventory_transaction_type.name as transactionType',
             'sourceLocation.name as sourceLocation',
             'destinationLocation.name as destinationLocation',
-            DB::raw("CAST(rot.code AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as referenceNumber"),
+            DB::raw("CAST(rmt.code AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as referenceNumber"),
             // DB::raw('COALESCE(inventory_brand.name, "") as brandName'), // Fetch brand name from the brand table
             // DB::raw('COALESCE(inventory_management.batch_no, "") as batch_no'),
             // DB::raw('COALESCE(inventory_management.expiry_date, "") as expiry_date'),
         ])
-        ->orderByDesc('rot.id')
+        ->orderByDesc('rmt.id')
         ->get();
 
-        $inventoryOtherTransactions = DB::table('inventory_management as im')
+        $inventoryMaterialTransfers = DB::table('inventory_management as im')
         ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
         ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'itt.activity_type')
         ->join('organization', 'organization.id', '=', 'im.org_id')
-        ->join('org_site', 'org_site.id', '=', 'im.site_id')
+        // ->join('org_site', 'org_site.id', '=', 'im.site_id')
+        ->leftJoin('org_site as sourceSite', 'sourceSite.id', '=', 'im.site_id')
+        ->leftJoin('org_site as destinationSite', 'destinationSite.id', '=', 'im.d_site_id')
+        ->leftJoin('service_location as sourceLocation', 'sourceLocation.id', '=', 'im.source')
+        ->leftJoin('service_location as destinationLocation', 'destinationLocation.id', '=', 'im.destination')
         ->join('inventory_brand', 'inventory_brand.id', '=', 'im.brand_id')
         // ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'im.billing_cc')
         // ->leftJoin('service_location', 'service_location.id', '=', 'im.source')
         ->select([
             'im.*',
+            'im.site_id as source_site',
+            'im.d_site_id as destination_site',
             'im.inv_generic_id as generic_id',
             'organization.organization as orgName',
-            'org_site.name as siteName',
+            'sourceSite.name as sourceSite',
+            'destinationSite.name as destinationSite',
+            // 'org_site.name as siteName',
+            'sourceLocation.name as sourceLocation',
+            'destinationLocation.name as destinationLocation',
             'inventory_brand.name as brandName',
             'itt.name as transactionType',
             DB::raw('"N/A" as locationName'),
             DB::raw("CAST(im.ref_document_no AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as referenceNumber"),
         ])
         ->where(function($query) {
-            $query->where('ita.name', 'like', '%other transaction%');
+            $query->where('ita.name', 'like', '%material transfer%');
         })
         ->where(function($query) {
             $query->whereNull('im.ref_document_no')
-                ->orWhere('im.ref_document_no', 'not like', '%-ROT-%');
+                ->orWhere('im.ref_document_no', 'not like', '%-RMT-%');
         })
         ->orderByDesc('im.id')
         ->get();
-        $combined = $requisitions->merge($inventoryOtherTransactions);
+        $combined = $requisitions->merge($inventoryMaterialTransfers);
+
         return DataTables::of(collect($combined))
         ->addColumn('id_raw', fn($row) => $row->id)
         ->editColumn('id', function ($row) {
             $timestamp = Carbon::createFromTimestamp($row->timestamp)->format('l d F Y - h:i A');
+            // return $row->effective_timestamp;
+
             $effectiveDate = Carbon::createFromTimestamp($row->effective_timestamp)->format('l d F Y - h:i A');
 
             $RequisitionCode = $row->referenceNumber ?? 'N/A';
@@ -10515,10 +10950,11 @@ class InventoryController extends Controller
             . '<br><b>Request Date </b>: ' . $timestamp . '<br>'
             . '<b>Effective Date </b>: ' . $effectiveDate . '<br>'
             . '<b>Remarks</b>: ' . ($row->remarks ?: 'N/A');
-        })
+          })
         ->editColumn('InventoryDetails', function ($row) {
+
             $Rights = $this->rights;
-            $respond = explode(',', $Rights->other_transactions)[2];
+            $respond = explode(',', $Rights->material_transfer)[2];
             $tableRows = '';
 
             $genericIds = explode(',', $row->generic_id);
@@ -10526,7 +10962,7 @@ class InventoryController extends Controller
 
             $isDirectEntry = false;
             if (!empty($row->referenceNumber)) {
-                if (str_contains($row->referenceNumber, '-ROT-')) {
+                if (str_contains($row->referenceNumber, '-RMT-')) {
                     $isDirectEntry = false;
                 } else {
                     $isDirectEntry = true;
@@ -10585,13 +11021,14 @@ class InventoryController extends Controller
                 }
 
                 if ($isDirectEntry) {
+                        // dd($row);
+
                     $balanceInfo = DB::table('inventory_management')
                         ->where('inv_generic_id', $currentGenericId)
                         ->select('brand_id', 'batch_no')
                         ->first();
 
                     if ($balanceInfo) {
-
                         $orgBalance = DB::table('inventory_balance')
                             ->where('org_id', $row->org_id)
                             ->where('generic_id', $currentGenericId)
@@ -10599,6 +11036,7 @@ class InventoryController extends Controller
                             ->where('batch_no', $balanceInfo->batch_no)
                             ->orderBy('id', 'desc')
                             ->value('org_balance') ?? 'N/A';
+
 
                         if($hasSourceSite)
                         {
@@ -10610,6 +11048,7 @@ class InventoryController extends Controller
                                 ->where('batch_no', $balanceInfo->batch_no)
                                 ->orderBy('id', 'desc')
                                 ->value('site_balance') ?? 'N/A';
+
 
                             $sourceLocationBalances = InventoryBalance::where('generic_id', $currentGenericId)
                                 ->where('brand_id', $balanceInfo->brand_id)
@@ -10686,6 +11125,7 @@ class InventoryController extends Controller
                         if ($hasDestinationSite && !empty($destinationLocationJson)) {
                             $balances['destinationLocBalance'] = $destinationLocationJson;
                         }
+
 
                         // $balances = [
                         //     'orgBalance' => $orgBalance,
@@ -10953,270 +11393,14 @@ class InventoryController extends Controller
                 .$tableHeader
                 .'</thead><tbody>'.$tableRows.'</tbody></table>';
         })
-        // ->editColumn('InventoryDetails', function ($row) {
-        //     $Rights = $this->rights;
-        //     $respond = explode(',', $Rights->other_transactions)[2];
-        //     $tableRows = '';
-
-        //     $genericIds = explode(',', $row->generic_id);
-        //     $genericNames = InventoryGeneric::whereIn('id', $genericIds)->pluck('name', 'id')->toArray();
-
-        //     $isDirectEntry = false;
-        //     if (!empty($row->referenceNumber)) {
-        //         if (str_contains($row->referenceNumber, '-ROT-')) {
-        //             $isDirectEntry = false;
-        //         } else {
-        //             $isDirectEntry = true;
-        //         }
-        //     } else {
-        //         $isDirectEntry = true;
-        //     }
-
-        //     $demandQty = !empty($row->demand_qty) ? explode(',', $row->demand_qty) : [];
-        //     // Transaction qty (only for inventory_management)
-        //     $transactionQty = !empty($row->transaction_qty) ? explode(',', $row->transaction_qty) : [];
-        //     // Detect if this row is from inventory_management (has transaction_qty)
-        //     $respondedQtys = [];
-        //     if (!empty($row->referenceNumber)) {
-        //         $respondedQtys = DB::table('inventory_management')
-        //         ->where('ref_document_no', $row->referenceNumber)
-        //         ->groupBy('inv_generic_id')
-        //         ->select('inv_generic_id', DB::raw('SUM(transaction_qty) as total_qty'))
-        //         ->pluck('total_qty', 'inv_generic_id')
-        //         ->toArray();
-        //     }
-
-        //     $isInventory = isset($row->transaction_qty);
-
-        //     for ($i = 0; $i < count($genericIds); $i++) {
-        //         $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
-        //         $currentGenericId = $genericIds[$i];
-        //         $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A', 'locBalance' => 'N/A'];
-
-        //         $hasSourceSite = !empty($row->site_id);
-        //         $hasDestinationSite = !empty($row->d_site_id);
-
-
-        //         if ($isDirectEntry) {
-        //             $balanceInfo = DB::table('inventory_management')
-        //                 ->where('inv_generic_id', $currentGenericId)
-        //                 ->select('brand_id', 'batch_no')
-        //                 ->first();
-
-        //             if ($balanceInfo) {
-        //                 $orgBalance = DB::table('inventory_balance')
-        //                     ->where('org_id', $row->org_id)
-        //                     ->where('generic_id', $currentGenericId)
-        //                     ->where('brand_id', $balanceInfo->brand_id)
-        //                     ->where('batch_no', $balanceInfo->batch_no)
-        //                     ->orderBy('id', 'desc')
-        //                     ->value('org_balance') ?? 'N/A';
-
-        //                 $siteBalance = DB::table('inventory_balance')
-        //                     ->where('org_id', $row->org_id)
-        //                     ->where('site_id', $row->source_site)
-        //                     ->where('generic_id', $currentGenericId)
-        //                     ->where('brand_id', $balanceInfo->brand_id)
-        //                     ->where('batch_no', $balanceInfo->batch_no)
-        //                     ->orderBy('id', 'desc')
-        //                     ->value('site_balance') ?? 'N/A';
-
-        //                 $locationBalances = InventoryBalance::where('generic_id', $currentGenericId)
-        //                     ->where('brand_id', $balanceInfo->brand_id)
-        //                     ->where('batch_no', $balanceInfo->batch_no)
-        //                     ->where('org_id', $row->org_id)
-        //                     ->where('site_id', $row->source_site)
-        //                     ->whereNotNull('location_id')
-        //                     ->orderBy('id', 'desc')
-        //                     ->get()
-        //                     ->groupBy('location_id')
-        //                     ->filter(function ($records) {
-        //                         $latest = $records->first();
-        //                         return $latest && $latest->location_balance > 0;
-        //                     })
-        //                     ->map(function ($records, $locId) {
-        //                         $latest = $records->first();
-        //                         $locName = DB::table('service_location')->where('id', $locId)->value('name') ?? 'Unknown';
-        //                         return $locName . ': ' . ($latest->location_balance ?? 0);
-        //                     })
-        //                     ->values()
-        //                     ->toArray();
-
-        //                 $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
-
-        //                 $balances = [
-        //                     'orgBalance' => $orgBalance,
-        //                     'siteBalance' => $siteBalance,
-        //                     'locBalance' => $locationJson
-
-        //                 ];
-        //             }
-        //         }
-        //         else if (!empty($row->referenceNumber) && $respondedQtys) {
-        //             $respondedEntry = DB::table('inventory_management')
-        //                 ->where('ref_document_no', $row->referenceNumber)
-        //                 ->where('inv_generic_id', $currentGenericId)
-        //                 ->select('brand_id', 'batch_no')
-        //                 ->first();
-
-        //             if ($respondedEntry) {
-        //                 $orgBalance = DB::table('inventory_balance')
-        //                     ->where('org_id', $row->org_id)
-        //                     ->where('generic_id', $currentGenericId)
-        //                     ->where('brand_id', $respondedEntry->brand_id)
-        //                     ->where('batch_no', $respondedEntry->batch_no)
-        //                     ->orderBy('id', 'desc')
-        //                     ->value('org_balance') ?? 'N/A';
-
-        //                 $siteBalance = DB::table('inventory_balance')
-        //                     ->where('org_id', $row->org_id)
-        //                     ->where('site_id', $row->source_site)
-        //                     ->where('generic_id', $currentGenericId)
-        //                     ->where('brand_id', $respondedEntry->brand_id)
-        //                     ->where('batch_no', $respondedEntry->batch_no)
-        //                     ->orderBy('id', 'desc')
-        //                     ->value('site_balance') ?? 'N/A';
-
-        //                 $locationBalances = InventoryBalance::where('generic_id', $currentGenericId)
-        //                     ->where('brand_id', $respondedEntry->brand_id)
-        //                     ->where('batch_no', $respondedEntry->batch_no)
-        //                     ->where('org_id', $row->org_id)
-        //                     ->where('site_id', $row->source_site)
-        //                     ->whereNotNull('location_id')
-        //                     ->orderBy('id', 'desc')
-        //                     ->get()
-        //                     ->groupBy('location_id')
-        //                     ->filter(function ($records) {
-        //                         $latest = $records->first();
-        //                         return $latest && $latest->location_balance > 0;
-        //                     })
-        //                     ->map(function ($records, $locId) {
-        //                         $latest = $records->first();
-        //                         $locName = DB::table('service_location')->where('id', $locId)->value('name') ?? 'Unknown';
-        //                         return $locName . ': ' . ($latest->location_balance ?? 0);
-        //                     })
-        //                     ->values()
-        //                     ->toArray();
-
-        //                 $locationJson = htmlspecialchars(json_encode($locationBalances), ENT_QUOTES, 'UTF-8');
-
-        //                 $balances = [
-        //                     'orgBalance' => $orgBalance,
-        //                     'siteBalance' => $siteBalance,
-        //                     'locBalance' => $locationJson
-
-        //                 ];
-        //             }
-        //         }
-
-        //         $currentDemandQty = isset($demandQty[$i]) ? floatval($demandQty[$i]) : 0;
-        //         $currentRespondedQty = isset($respondedQtys[$currentGenericId]) ? floatval($respondedQtys[$currentGenericId]) : 0;
-        //         $transactionQty = (!empty($row->transaction_qty)) ? explode(',', $row->transaction_qty) : null;
-
-        //         if ($currentRespondedQty > 0) {
-        //             if ($currentRespondedQty >= $currentDemandQty) {
-        //                 $status = 'Completed';
-        //                 $statusClass = 'success';
-        //                 $actionBtn = 'N/A';
-        //             } else {
-        //                 $status = 'Partially Completed';
-        //                 $statusClass = 'info';
-        //                 $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';                    }
-        //         } else {
-        //             $status = 'Pending';
-        //             $statusClass = 'warning';
-        //             $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
-        //         }
-
-        //         // Override for direct entries
-        //         if ($isDirectEntry) {
-        //             $status = 'Completed';
-        //             $statusClass = 'success';
-        //             $actionBtn = 'N/A';
-        //         }
-        //         $brandName = '';
-        //         $batchNo = '';
-        //         $expiryDate = '';
-        //         if (!$isDirectEntry && !empty($row->referenceNumber)) {
-        //             $itemData = DB::table('inventory_management')
-        //                 ->where('ref_document_no', $row->referenceNumber)
-        //                 ->where('inv_generic_id', $currentGenericId)
-        //                 ->select('brand_id', 'batch_no', 'expiry_date')
-        //                 ->first();
-
-        //             if ($itemData) {
-        //                 $brandName = DB::table('inventory_brand')->where('id', $itemData->brand_id)->value('name') ?? '';
-        //                 $batchNo = $itemData->batch_no;
-        //                 $expiryDate = is_numeric($itemData->expiry_date)
-        //                     ? Carbon::createFromTimestamp($itemData->expiry_date)->format('d-M-Y')
-        //                     : $itemData->expiry_date;
-        //             }
-        //         }
-        //         else{
-        //             $brandName = $row->brandName ?? '';
-        //             $batchNo = $row->batch_no;
-        //             $expiryDate = is_numeric($row->expiry_date)
-        //                 ? Carbon::createFromTimestamp($row->expiry_date)->format('d-M-Y')
-        //                 : $row->expiry_date;
-        //         }
-
-        //         $tableRows .= '<tr style="background-color:'.$bg.'; cursor:pointer;" class="balance-row" data-expiry="'.$expiryDate.'" data-brand="'.$brandName.'" data-batch="'.$batchNo.'" data-loc-balance="'.$balances['locBalance'].'" data-org-balance="'.$balances['orgBalance'].'" data-site-balance="'.$balances['siteBalance'].'">'
-        //             .'<td style="padding:8px;border:1px solid #ccc;">'.($genericNames[$currentGenericId] ?? 'N/A').'</td>';
-        //             // .'<td style="padding:8px;border:1px solid #ccc;">'.($currentGenericId ?? 'N/A').'</td>';
-        //         // .'<td style="padding:8px;border:1px solid #ccc;">'.($transactionQty[$i] ?? '0').'</td>'
-
-
-        //         // $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$brandName.'</td>';
-        //         // $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$batchNo.'</td>';
-        //         // $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$formattedExpiry.'</td>';
-
-        //         $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.$currentDemandQty.'</td>';
-
-        //         if ($isDirectEntry && $transactionQty !== null) {
-        //             $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($transactionQty[$i] ?? 'N/A').'</td>';
-        //         }
-
-        //         if (!$isDirectEntry && $currentRespondedQty >= 0) {
-        //             $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$currentRespondedQty.'</td>';
-        //         }
-
-
-        //         if($respond != 1)
-        //         {
-        //             $actionBtn = '<code>Unauthorized Access</code>';
-        //         }
-
-        //         $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>
-        //             <td style="padding: 5px 15px;border: 1px solid #ccc;">
-        //                 <span class="label label-'.$statusClass.'">'.$status.'</span>
-        //             </td>
-        //         </tr>';
-        //     }
-
-        //     // Build table header
-        //     $tableHeader = '<tr>'
-        //         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic </th>'
-        //         // .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Brand</th>'
-        //         // .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Batch#</th>'
-        //         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">DemandQty</th>'
-        //         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">TransactionQty</th>'
-        //         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
-        //         .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
-        //         .'</tr>';
-
-        //     return '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
-        //         .'<thead style="background-color:#e2e8f0;color:#000;">'
-        //         .$tableHeader
-        //         .'</thead><tbody>'.$tableRows.'</tbody></table>';
-        // })
         ->rawColumns(['id_raw', 'id', 'InventoryDetails'])
         ->make(true);
     }
 
-    public function RespondOtherTransaction(Request $r)
+    public function RespondMaterialTransfer(Request $r)
     {
         $rights = $this->rights;
-        $respond = explode(',', $rights->other_transactions)[2];
+        $respond = explode(',', $rights->material_transfer)[2];
         if ($respond == 0) {
             abort(403, 'Forbidden');
         }
@@ -11225,19 +11409,19 @@ class InventoryController extends Controller
         $genericId = $r->query('genericId');
 
 
-        $ROT = RequisitionForOtherTransaction::from('requisition_other_transaction as rot')
+        $RMT = RequisitionForMaterialTransfer::from('requisition_material_transfer as rmt')
         ->select([
-            'rot.id',
-            'rot.code',
-            'rot.org_id',
-            'rot.source_site',
-            'rot.source_location',
-            'rot.destination_site',
-            'rot.destination_location',
-            'rot.transaction_type_id',
-            'rot.generic_id',
-            'rot.qty',
-            'rot.status',
+            'rmt.id',
+            'rmt.code',
+            'rmt.org_id',
+            'rmt.source_site',
+            'rmt.source_location',
+            'rmt.destination_site',
+            'rmt.destination_location',
+            'rmt.transaction_type_id',
+            'rmt.generic_id',
+            'rmt.qty',
+            'rmt.status',
             'o.organization                as org_name',
             'source.name                   as sourceSiteName',
             'destination.name              as destinationSiteName',
@@ -11249,14 +11433,14 @@ class InventoryController extends Controller
             DB::raw('COALESCE(SUM(im.transaction_qty), 0) as issuedQty'),
             // 'ib.site_balance              as maxQty'
         ])
-        ->join('organization                as o',   'o.id',  '=', 'rot.org_id')
-        ->leftJoin('org_site                    as source',   'source.id',  '=', 'rot.source_site')
-        ->leftJoin('org_site                    as destination',   'destination.id',  '=', 'rot.destination_site')
-        ->leftJoin('service_location        as sourceLocation',   'sourceLocation.id',  '=', 'rot.source_location')
-        ->leftJoin('service_location        as destinationLocation',   'destinationLocation.id',  '=', 'rot.destination_location')
-        ->join('inventory_transaction_type  as itt', 'itt.id',     '=', 'rot.transaction_type_id')
+        ->join('organization                as o',   'o.id',  '=', 'rmt.org_id')
+        ->leftJoin('org_site                    as source',   'source.id',  '=', 'rmt.source_site')
+        ->leftJoin('org_site                    as destination',   'destination.id',  '=', 'rmt.destination_site')
+        ->leftJoin('service_location        as sourceLocation',   'sourceLocation.id',  '=', 'rmt.source_location')
+        ->leftJoin('service_location        as destinationLocation',   'destinationLocation.id',  '=', 'rmt.destination_location')
+        ->join('inventory_transaction_type  as itt', 'itt.id',     '=', 'rmt.transaction_type_id')
         ->leftJoin('inventory_management as im', function($join) use ($genericId) {
-            $join->on('im.ref_document_no', '=', 'rot.code')
+            $join->on('im.ref_document_no', '=', 'rmt.code')
                     ->where('im.inv_generic_id', '=', DB::raw($genericId));
         })
         ->leftJoin(DB::raw('(
@@ -11272,12 +11456,12 @@ class InventoryController extends Controller
                 ->on('ib.brand_id', '=', 'im.brand_id')
                 ->on('ib.batch_no', '=', 'im.batch_no');
         })
-        ->where('rot.id', $id)
+        ->where('rmt.id', $id)
         ->groupBy([
-            'rot.id', 'rot.code', 'rot.org_id', 'rot.source_site', 'rot.destination_site',
-            'rot.transaction_type_id', 'rot.source_location',  'rot.destination_location',
-            'rot.generic_id',
-            'rot.qty', 'rot.status',
+            'rmt.id', 'rmt.code', 'rmt.org_id', 'rmt.source_site', 'rmt.destination_site',
+            'rmt.transaction_type_id', 'rmt.source_location',  'rmt.destination_location',
+            'rmt.generic_id',
+            'rmt.qty', 'rmt.status',
             'o.organization', 'source.name', 'destination.name', 'itt.name',
             'itt.source_action', 'itt.destination_action',
             'sourceLocation.name','destinationLocation.name',
@@ -11285,37 +11469,37 @@ class InventoryController extends Controller
         ])
         ->first();
 
-        if (! $ROT) {
+        if (! $RMT) {
             return response()->json(['error'=>'Record not found'], 404);
         }
 
-        $gIds = explode(',', $ROT->generic_id);
-        $qtys = explode(',', $ROT->qty);
+        $gIds = explode(',', $RMT->generic_id);
+        $qtys = explode(',', $RMT->qty);
         $i    = array_search($genericId, $gIds);
 
         $genericName = InventoryGeneric::find($gIds[$i])->name ?? '';
         $originalQty = $qtys[$i] ?? 0;
-        $issuedQty = $ROT->issuedQty;
-        $maxQty = $ROT->maxQty;
+        $issuedQty = $RMT->issuedQty;
+        $maxQty = $RMT->maxQty;
         // dd($maxQty);
         $remainingQty = max(0, $originalQty - $issuedQty);
         // dd($originalQty,$issuedQty,$remainingQty);
         return response()->json([
-            'code'                   => $ROT->code,
-            'org_id'                 => $ROT->org_id,
-            'org_name'               => $ROT->org_name,
-            'source_action'          => $ROT->source_action,
-            'destination_action'     => $ROT->destination_action,
-            'source_site'            => $ROT->source_site,
-            'sourceSiteName'         => $ROT->sourceSiteName,
-            'destination_site'       => $ROT->destination_site,
-            'destinationSiteName'    => $ROT->destinationSiteName,
-            'transaction_type_id'    => $ROT->transaction_type_id,
-            'transaction_type_name'  => $ROT->transaction_type_name,
-            'source_location'        => $ROT->source_location,
-            'sourceLocationName'     => $ROT->sourceLocationName,
-            'destination_location'   => $ROT->destination_location,
-            'destinationLocationName'=> $ROT->destinationLocationName,
+            'code'                   => $RMT->code,
+            'org_id'                 => $RMT->org_id,
+            'org_name'               => $RMT->org_name,
+            'source_action'          => $RMT->source_action,
+            'destination_action'     => $RMT->destination_action,
+            'source_site'            => $RMT->source_site,
+            'sourceSiteName'         => $RMT->sourceSiteName,
+            'destination_site'       => $RMT->destination_site,
+            'destinationSiteName'    => $RMT->destinationSiteName,
+            'transaction_type_id'    => $RMT->transaction_type_id,
+            'transaction_type_name'  => $RMT->transaction_type_name,
+            'source_location'        => $RMT->source_location,
+            'sourceLocationName'     => $RMT->sourceLocationName,
+            'destination_location'   => $RMT->destination_location,
+            'destinationLocationName'=> $RMT->destinationLocationName,
             'generic_id'             => $gIds[$i]      ?? null,
             'generic_name'           => $genericName,
             'brand_id'               => null,
@@ -11328,55 +11512,58 @@ class InventoryController extends Controller
         return response()->json(['error'=>'Unknown source'], 400);
     }
 
-    public function AddOtherTransaction(OtherTransactionRequest $request)
+    public function AddMaterialTransfer(MaterialTransferRequest $request)
     {
         $rights = $this->rights;
-        $add = explode(',', $rights->other_transactions)[0];
+        $add = explode(',', $rights->material_transfer)[0];
         if ($add == 0) {
             abort(403, 'Forbidden');
         }
+
         // Get validated data
         $validated = $request->validated();
-        $itemCount = count($request->ot_generic);
+
+        $itemCount = count($request->mt_generic);
+
         $success = true;
         $message = '';
 
         $inventory = new InventoryManagement();
         // dd($validated);
         // Required fields
-        $inventory->transaction_type_id = $validated['ot_transactiontype'];
-        $inventory->org_id = $validated['ot_org'];
-        $inventory->site_id = $validated['ot_source_site'];
-        $inventory->source = $validated['ot_source_location'];
-        $inventory->d_site_id = $validated['ot_destination_site'];
-        $inventory->destination = $validated['ot_destination_location'];
+        $inventory->transaction_type_id = $validated['mt_transactiontype'];
+        $inventory->org_id = $validated['mt_org'];
+        $inventory->site_id = $validated['mt_source_site'];
+        $inventory->source = $validated['mt_source_location'];
+        $inventory->d_site_id = $validated['mt_destination_site'];
+        $inventory->destination = $validated['mt_destination_location'];
 
         // Optional reference document
-        $inventory->ref_document_no = $validated['ot_reference_document'] ?? null;
+        $inventory->ref_document_no = $validated['mt_reference_document'] ?? null;
 
         // Remarks field
-        $inventory->remarks = $validated['ot_remarks'] ?? null;
+        $inventory->remarks = $validated['mt_remarks'] ?? null;
 
         // Handle item specific fields based on count
         if ($itemCount > 1) {
-            $inventory->inv_generic_id = implode(',', $validated['ot_generic']);
-            $inventory->brand_id = implode(',', $validated['ot_brand']);
-            $inventory->batch_no = implode(',', $validated['ot_batch']);
-            $inventory->demand_qty = implode(',', $validated['ot_demand_qty']);
+            $inventory->inv_generic_id = implode(',', $validated['mt_generic']);
+            $inventory->brand_id = implode(',', $validated['mt_brand']);
+            $inventory->batch_no = implode(',', $validated['mt_batch']);
+            $inventory->demand_qty = implode(',', $validated['mt_demand_qty']);
 
             $formattedDates = array_map(function($date) {
                 return Carbon::createFromFormat('Y-m-d', $date)->timestamp;
-            }, $validated['ot_expiry']);
+            }, $validated['mt_expiry']);
             $inventory->expiry_date = implode(',', $formattedDates);
 
-            $inventory->transaction_qty = implode(',', $validated['ot_qty']);
+            $inventory->transaction_qty = implode(',', $validated['mt_qty']);
         } else {
-            $inventory->inv_generic_id = $validated['ot_generic'][0];
-            $inventory->brand_id = $validated['ot_brand'][0];
-            $inventory->batch_no = $validated['ot_batch'][0];
-            $inventory->expiry_date = Carbon::createFromFormat('Y-m-d', $validated['ot_expiry'][0])->timestamp;
-            $inventory->transaction_qty = $validated['ot_qty'][0];
-            $inventory->demand_qty = $validated['ot_demand_qty'][0];
+            $inventory->inv_generic_id = $validated['mt_generic'][0];
+            $inventory->brand_id = $validated['mt_brand'][0];
+            $inventory->batch_no = $validated['mt_batch'][0];
+            $inventory->expiry_date = Carbon::createFromFormat('Y-m-d', $validated['mt_expiry'][0])->timestamp;
+            $inventory->transaction_qty = $validated['mt_qty'][0];
+            $inventory->demand_qty = $validated['mt_demand_qty'][0];
         }
 
         $inventory->status = 1;
@@ -11386,31 +11573,33 @@ class InventoryController extends Controller
         $inventory->timestamp = now()->timestamp;
         $inventory->last_updated = now()->timestamp;
 
+        // Updated: remove deprecated column 'applicable_location_to'
         $rule = DB::table('inventory_transaction_type')
-        ->select('applicable_location_to', 'source_action', 'destination_action', 'source_location_type', 'destination_location_type')
-        ->where('id', $validated['ot_transactiontype'])
+        ->select('source_action', 'destination_action', 'source_location_type', 'destination_location_type')
+        ->where('id', $validated['mt_transactiontype'])
         ->first();
 
-        $useAction = $rule->applicable_location_to === 'source'
-        ? $rule->source_action
-        : $rule->destination_action;
+        // Decide action safely without the removed column
+        $useAction = (isset($rule->destination_action) && in_array($rule->destination_action, ['a','s','r']))
+            ? $rule->destination_action
+            : $rule->source_action;
 
         $sourceType = DB::table('inventory_source_destination_type')->where('id', $rule->source_location_type)->value('name');
         $destinationType = DB::table('inventory_source_destination_type')->where('id', $rule->destination_location_type)->value('name');
 
-        foreach ($validated['ot_generic'] as $i => $genId) {
-            $brandId = $validated['ot_brand'][$i];
-            $batchNo = $validated['ot_batch'][$i];
-            $qty = (int) $validated['ot_qty'][$i];
+        foreach ($validated['mt_generic'] as $i => $genId) {
+            $brandId = $validated['mt_brand'][$i];
+            $batchNo = $validated['mt_batch'][$i];
+            $qty = (int) $validated['mt_qty'][$i];
             // dd($rule->source_action, $rule->destination_action, $sourceType, $destinationType, $genId, $brandId, $batchNo, $qty);
-            // dd($sourceType, $validated['ot_source'], $validated['ot_org'], $validated['ot_site'], $genId, $brandId, $batchNo, $qty);
-            if (strtolower($sourceType) === 'inventory location' && $validated['ot_source_location'] && in_array($rule->source_action, ['s', 'r'])) {
+            // dd($sourceType, $validated['mt_source'], $validated['mt_org'], $validated['mt_site'], $genId, $brandId, $batchNo, $qty);
+            if (strtolower($sourceType) === 'inventory location' && $validated['mt_source_location'] && in_array($rule->source_action, ['s', 'r'])) {
                 $sourceLocBalance = InventoryBalance::where('generic_id', $genId)
                     ->where('brand_id', $brandId)
                     ->where('batch_no', $batchNo)
-                    ->where('org_id', $validated['ot_org'])
-                    ->where('site_id', $validated['ot_source_site'])
-                    ->where('location_id', $validated['ot_source_location'])
+                    ->where('org_id', $validated['mt_org'])
+                    ->where('site_id', $validated['mt_source_site'])
+                    ->where('location_id', $validated['mt_source_location'])
                     ->orderBy('id', 'desc')
                     ->value('location_balance') ?? 0;
 
@@ -11421,13 +11610,13 @@ class InventoryController extends Controller
                 }
             }
 
-            if (strtolower($destinationType) === 'inventory location' && $validated['ot_destination_location'] && in_array($rule->destination_action, ['s', 'r'])) {
+            if (strtolower($destinationType) === 'inventory location' && $validated['mt_destination_location'] && in_array($rule->destination_action, ['s', 'r'])) {
                 $destinationLocBalance = InventoryBalance::where('generic_id', $genId)
                     ->where('brand_id', $brandId)
                     ->where('batch_no', $batchNo)
-                    ->where('org_id', $validated['ot_org'])
-                    ->where('site_id', $validated['ot_destination_site'])
-                    ->where('location_id', $validated['ot_destination_location'])
+                    ->where('org_id', $validated['mt_org'])
+                    ->where('site_id', $validated['mt_destination_site'])
+                    ->where('location_id', $validated['mt_destination_location'])
                     ->orderBy('id', 'desc')
                     ->value('location_balance') ?? 0;
 
@@ -11446,12 +11635,12 @@ class InventoryController extends Controller
 
         // Process each item separately for inventory_balance
         for ($i = 0; $i < $itemCount; $i++) {
-            $genId = $validated['ot_generic'][$i];
-            $brandId = $validated['ot_brand'][$i];
-            $batchNo = $validated['ot_batch'][$i];
-            $qty = (int)$validated['ot_qty'][$i];
+            $genId = $validated['mt_generic'][$i];
+            $brandId = $validated['mt_brand'][$i];
+            $batchNo = $validated['mt_batch'][$i];
+            $qty = (int)$validated['mt_qty'][$i];
 
-            // $expTs = Carbon::createFromFormat('Y-m-d', $validated['ot_expiry'][$i])->timestamp;
+            // $expTs = Carbon::createFromFormat('Y-m-d', $validated['mt_expiry'][$i])->timestamp;
             if (! $genId || ! $brandId || ! $batchNo) {
                 continue;
             }
@@ -11459,7 +11648,7 @@ class InventoryController extends Controller
             $prevOrgRow = InventoryBalance::where('generic_id', $genId)
             ->where('brand_id',  $brandId)
             ->where('batch_no',  $batchNo)
-            ->where('org_id',    $validated['ot_org'])
+            ->where('org_id',    $validated['mt_org'])
             ->orderBy('id', 'desc')
             ->first();
             // $OrgBalance = $prevOrgRow->org_balance ?? 0;
@@ -11468,12 +11657,12 @@ class InventoryController extends Controller
 
             $dateTime = Carbon::createFromTimestamp(now()->timestamp)->format('d-M-Y H:i');
 
-            if (strtolower($sourceType) === 'inventory location' && $validated['ot_source_location'] && strtolower($destinationType) === 'inventory location' && $validated['ot_destination_location']) {
+            if (strtolower($sourceType) === 'inventory location' && $validated['mt_source_location'] && strtolower($destinationType) === 'inventory location' && $validated['mt_destination_location']) {
 
                 $prevOrgRow = InventoryBalance::where('generic_id', $genId)
                 ->where('brand_id',  $brandId)
                 ->where('batch_no',  $batchNo)
-                ->where('org_id',    $validated['ot_org'])
+                ->where('org_id',    $validated['mt_org'])
                 ->orderBy('id', 'desc')
                 ->first();
                 // $OrgBalance = $prevOrgRow->org_balance ?? 0;
@@ -11483,24 +11672,22 @@ class InventoryController extends Controller
                 $prevSourceSiteRow = InventoryBalance::where('generic_id', $genId)
                 ->where('brand_id',  $brandId)
                 ->where('batch_no',  $batchNo)
-                ->where('org_id',    $validated['ot_org'])
-                ->where('site_id',   $validated['ot_source_site'])
+                ->where('org_id',    $validated['mt_org'])
+                ->where('site_id',   $validated['mt_source_site'])
                 ->orderBy('id', 'desc')
                 ->first();
                 $prevSourceSiteBalance = $prevSourceSiteRow->site_balance ?? 0;
                 $newSourceSiteBalance = $prevSourceSiteBalance;
 
-
-
-                $remarkText = "Internal transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSourceSiteBalance}";
+                $remarkText = "Material Transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSourceSiteBalance}";
 
                 // Source location row
                 $prevSourceLocRow = InventoryBalance::where('generic_id', $genId)
                     ->where('brand_id',  $brandId)
                     ->where('batch_no',  $batchNo)
-                    ->where('org_id',    $validated['ot_org'])
-                    ->where('site_id',   $validated['ot_source_site'])
-                    ->where('location_id', $validated['ot_source_location'])
+                    ->where('org_id',    $validated['mt_org'])
+                    ->where('site_id',   $validated['mt_source_site'])
+                    ->where('location_id', $validated['mt_source_location'])
                     ->orderBy('id', 'desc')
                     ->first();
                 $prevSourceLocBalance = $prevSourceLocRow->location_balance ?? 0;
@@ -11535,11 +11722,11 @@ class InventoryController extends Controller
                     'generic_id'       => $genId,
                     'brand_id'         => $brandId,
                     'batch_no'         => $batchNo,
-                    'org_id'           => $validated['ot_org'],
-                    'site_id'          => $validated['ot_source_site'],
+                    'org_id'           => $validated['mt_org'],
+                    'site_id'          => $validated['mt_source_site'],
                     'org_balance'      => $newOrgBalance,
                     'site_balance'     => $newSourceSiteBalance,
-                    'location_id'      => $validated['ot_source_location'],
+                    'location_id'      => $validated['mt_source_location'],
                     'location_balance' => $newSourceLocBalance,
                     'remarks'          => $remarkText,
                     'timestamp'        => now()->timestamp,
@@ -11551,7 +11738,7 @@ class InventoryController extends Controller
                 $prevOrgRow = InventoryBalance::where('generic_id', $genId)
                 ->where('brand_id',  $brandId)
                 ->where('batch_no',  $batchNo)
-                ->where('org_id',    $validated['ot_org'])
+                ->where('org_id',    $validated['mt_org'])
                 ->orderBy('id', 'desc')
                 ->first();
                 // $OrgBalance = $prevOrgRow->org_balance ?? 0;
@@ -11561,21 +11748,21 @@ class InventoryController extends Controller
                 $prevDestinationSiteRow = InventoryBalance::where('generic_id', $genId)
                 ->where('brand_id',  $brandId)
                 ->where('batch_no',  $batchNo)
-                ->where('org_id',    $validated['ot_org'])
-                ->where('site_id',   $validated['ot_destination_site'])
+                ->where('org_id',    $validated['mt_org'])
+                ->where('site_id',   $validated['mt_destination_site'])
                 ->orderBy('id', 'desc')
                 ->first();
                 $prevDestinatonSiteBalance = $prevDestinationSiteRow->site_balance ?? 0;
                 $newDestinatioinSiteBalance = $prevDestinatonSiteBalance;
-                $remarkText = "Internal transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newDestinatioinSiteBalance}";
+                $remarkText = "Material Transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newDestinatioinSiteBalance}";
 
 
                 $prevDestLocRow = InventoryBalance::where('generic_id', $genId)
                     ->where('brand_id',  $brandId)
                     ->where('batch_no',  $batchNo)
-                    ->where('org_id',    $validated['ot_org'])
-                    ->where('site_id',   $validated['ot_destination_site'])
-                    ->where('location_id', $validated['ot_destination_location'])
+                    ->where('org_id',    $validated['mt_org'])
+                    ->where('site_id',   $validated['mt_destination_site'])
+                    ->where('location_id', $validated['mt_destination_location'])
                     ->orderBy('id', 'desc')
                     ->first();
                 $prevDestLocBalance = $prevDestLocRow->location_balance ?? 0;
@@ -11599,37 +11786,37 @@ class InventoryController extends Controller
                     'generic_id'       => $genId,
                     'brand_id'         => $brandId,
                     'batch_no'         => $batchNo,
-                    'org_id'           => $validated['ot_org'],
-                    'site_id'          => $validated['ot_destination_site'],
+                    'org_id'           => $validated['mt_org'],
+                    'site_id'          => $validated['mt_destination_site'],
                     'org_balance'      => $newOrgBalance,
                     'site_balance'     => $newDestinatioinSiteBalance,
-                    'location_id'      => $validated['ot_destination_location'],
+                    'location_id'      => $validated['mt_destination_location'],
                     'location_balance' => $newDestLocBalance,
                     'remarks'          => $remarkText,
                     'timestamp'        => now()->timestamp,
                 ]);
             }
-            elseif (strtolower($sourceType) === 'inventory location' && $validated['ot_source_location']) {
+            elseif (strtolower($sourceType) === 'inventory location' && $validated['mt_source_location']) {
 
                 $prevSourceSiteRow = InventoryBalance::where('generic_id', $genId)
                 ->where('brand_id',  $brandId)
                 ->where('batch_no',  $batchNo)
-                ->where('org_id',    $validated['ot_org'])
-                ->where('site_id',   $validated['ot_source_site'])
+                ->where('org_id',    $validated['mt_org'])
+                ->where('site_id',   $validated['mt_source_site'])
                 ->orderBy('id', 'desc')
                 ->first();
                 $prevSourceSiteBalance = $prevSourceSiteRow->site_balance ?? 0;
                 $newSourceSiteBalance = $prevSourceSiteBalance;
 
 
-                $remarkText = "Internal transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSourceSiteBalance}";
+                $remarkText = "Material Transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newSourceSiteBalance}";
 
                 $prevSourceLocRow = InventoryBalance::where('generic_id', $genId)
                     ->where('brand_id',  $brandId)
                     ->where('batch_no',  $batchNo)
-                    ->where('org_id',    $validated['ot_org'])
-                    ->where('site_id',   $validated['ot_source_site'])
-                    ->where('location_id', $validated['ot_source_location'])
+                    ->where('org_id',    $validated['mt_org'])
+                    ->where('site_id',   $validated['mt_source_site'])
+                    ->where('location_id', $validated['mt_source_location'])
                     ->orderBy('id', 'desc')
                     ->first();
                 $prevSourceLocBalance = $prevSourceLocRow->location_balance ?? 0;
@@ -11660,37 +11847,37 @@ class InventoryController extends Controller
                     'generic_id'       => $genId,
                     'brand_id'         => $brandId,
                     'batch_no'         => $batchNo,
-                    'org_id'           => $validated['ot_org'],
-                    'site_id'          => $validated['ot_source_site'],
+                    'org_id'           => $validated['mt_org'],
+                    'site_id'          => $validated['mt_source_site'],
                     'org_balance'      => $newOrgBalance,
                     'site_balance'     => $newSourceSiteBalance,
-                    'location_id'      => $validated['ot_source_location'],
+                    'location_id'      => $validated['mt_source_location'],
                     'location_balance' => $newSourceLocBalance,
                     'remarks'          => $remarkText,
                     'timestamp'        => now()->timestamp,
                 ]);
             }
-            elseif (strtolower($destinationType) === 'inventory location' && $validated['ot_destination_location']) {
+            elseif (strtolower($destinationType) === 'inventory location' && $validated['mt_destination_location']) {
 
                 $prevDestinationSiteRow = InventoryBalance::where('generic_id', $genId)
                 ->where('brand_id',  $brandId)
                 ->where('batch_no',  $batchNo)
-                ->where('org_id',    $validated['ot_org'])
-                ->where('site_id',   $validated['ot_destination_site'])
+                ->where('org_id',    $validated['mt_org'])
+                ->where('site_id',   $validated['mt_destination_site'])
                 ->orderBy('id', 'desc')
                 ->first();
                 $prevDestinationSiteBalance = $prevDestinationSiteRow->site_balance ?? 0;
                 $newDestinationSiteBalance = $prevDestinationSiteBalance;
 
-                $remarkText = "Internal transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newDestinatioinSiteBalance}";
+                $remarkText = "Material Transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$newOrgBalance} | New Site Balance: {$newDestinatioinSiteBalance}";
 
 
                 $prevDestinationLocRow = InventoryBalance::where('generic_id', $genId)
                     ->where('brand_id',  $brandId)
                     ->where('batch_no',  $batchNo)
-                    ->where('org_id',    $validated['ot_org'])
-                    ->where('site_id',   $validated['ot_destination_site'])
-                    ->where('location_id', $validated['ot_destination_location'])
+                    ->where('org_id',    $validated['mt_org'])
+                    ->where('site_id',   $validated['mt_destination_site'])
+                    ->where('location_id', $validated['mt_destination_location'])
                     ->orderBy('id', 'desc')
                     ->first();
                 $prevDestinationLocBalance = $prevDestinationLocRow->location_balance ?? 0;
@@ -11731,11 +11918,11 @@ class InventoryController extends Controller
                     'generic_id'       => $genId,
                     'brand_id'         => $brandId,
                     'batch_no'         => $batchNo,
-                    'org_id'           => $validated['ot_org'],
-                    'site_id'          => $validated['ot_destination_site'],
+                    'org_id'           => $validated['mt_org'],
+                    'site_id'          => $validated['mt_destination_site'],
                     'org_balance'      => $newOrgBalance,
-                    'site_balance'     => $DestinationSiteBalance,
-                    'location_id'      => $validated['ot_destination_location'],
+                    'site_balance'     => $newDestinationSiteBalance,
+                    'location_id'      => $validated['mt_destination_location'],
                     'location_balance' => $newDestinationLocBalance,
                     'remarks'          => $remarkText,
                     'timestamp'        => now()->timestamp,
@@ -11745,21 +11932,21 @@ class InventoryController extends Controller
                 $prevSourceSiteRow = InventoryBalance::where('generic_id', $genId)
                 ->where('brand_id',  $brandId)
                 ->where('batch_no',  $batchNo)
-                ->where('org_id',    $validated['ot_org'])
-                ->where('site_id',   $validated['ot_source_site'])
+                ->where('org_id',    $validated['mt_org'])
+                ->where('site_id',   $validated['mt_source_site'])
                 ->orderBy('id', 'desc')
                 ->first();
                 $SourceSiteBalance = $prevSourceSiteRow->site_balance ?? 0;
 
-                $remarkText = "Internal transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$OrgBalance} | New Site Balance: {$SourceSiteBalance}";
+                $remarkText = "Material Transfer initiated by " . auth()->user()->name . " on {$dateTime} | Batch: {$batchNo} | Qty: {$qty} | New Org Balance: {$OrgBalance} | New Site Balance: {$SourceSiteBalance}";
 
                 InventoryBalance::create([
                     'management_id'    => $inventory->id,
                     'generic_id'       => $genId,
                     'brand_id'         => $brandId,
                     'batch_no'         => $batchNo,
-                    'org_id'           => $validated['ot_org'],
-                    'site_id'          => $validated['ot_source_site'],
+                    'org_id'           => $validated['mt_org'],
+                    'site_id'          => $validated['mt_source_site'],
                     'org_balance'      => $newOrgBalance,
                     'site_balance'     => $SourceSiteBalance,
                     'location_id'      => null,
@@ -11773,7 +11960,7 @@ class InventoryController extends Controller
 
         if ($success) {
             return response()->json([
-                'success' => 'Internal Transfer records have been added successfully',
+                'success' => 'Material Transfer records have been added successfully',
                 'reload' => true
             ]);
         } else {
@@ -11843,7 +12030,8 @@ class InventoryController extends Controller
 
         $IssuedData = DB::table('inventory_management as im')
             ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
-            ->join('inventory_source_destination_type as isdt', 'isdt.id', '=', 'itt.destination_location_type')
+            ->join('inventory_source_destination_type as isdt_src', 'isdt_src.id', '=', 'itt.source_location_type')
+            ->join('inventory_source_destination_type as isdt_dest', 'isdt_dest.id', '=', 'itt.destination_location_type')
             ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'itt.activity_type')
             ->join('organization', 'organization.id', '=', 'im.org_id')
             ->join('org_site', 'org_site.id', '=', 'im.site_id')
@@ -11875,9 +12063,11 @@ class InventoryController extends Controller
                     DB::raw("CAST(im.batch_no AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as batch_no"),
                     DB::raw("CAST(im.expiry_date AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as expiry_date"),
                     DB::raw("CAST(im.demand_qty AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as demand_qty"),
-                    DB::raw("CAST(isdt.name AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as sourceDestinationName"),
+                    DB::raw("CAST(isdt_src.name AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as sourceTypeName"),
+                    DB::raw("CAST(isdt_dest.name AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as destinationTypeName"),
                     DB::raw("CAST(im.transaction_qty AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as transaction_qty"),
                     DB::raw("CAST(im.inv_generic_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as inv_generic_ids"),
+                    DB::raw("CAST(im.source AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as Source"),
                     DB::raw("CAST(im.destination AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as Destination"),
                     DB::raw("CAST(im.remarks AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as remarks"),
                     DB::raw("CAST('inventory' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")
@@ -11910,19 +12100,30 @@ class InventoryController extends Controller
 
                 $timestamp = Carbon::createFromTimestamp($row->timestamp)->format('l d F Y - h:i A');
                 $effectiveDate = Carbon::createFromTimestamp($row->effective_timestamp)->format('l d F Y - h:i A');
-
-                $RequisitionCode = 'Ref: '. $row->referenceNumber ?? 'N/A';
+                $RequisitionCode = empty($row->referenceNumber) ? 'Ref: N/A' : 'Ref: ' . $row->referenceNumber;
 
                 // $destinationType = DB::table('inventory_transaction_type as itt')
                 // ->join('inventory_source_destination_type as isdt', 'isdt.id', '=', 'itt.destination_location_type')
                 // ->where('itt.id', $row->transaction_type_id)
                 // ->value('isdt.name');
                 $Location = '';
-                if (str_contains(strtolower($row->sourceDestinationName), 'location')) {
-                        $destinationLocationName = DB::table('service_location')
-                            ->where('id', $row->Destination)
-                            ->value('name') ?? 'N/A';
-                        $Location = '<b>Location</b>: ' .ucwords($destinationLocationName). '<br>';
+                // Source location
+                if (!empty($row->sourceTypeName) && str_contains(strtolower($row->sourceTypeName), 'location')) {
+                    $sourceLocationName = DB::table('service_location')
+                        ->where('id', $row->Source)
+                        ->value('name');
+                    if ($sourceLocationName) {
+                        $Location .= '<b>Source Location</b>: ' . ucwords($sourceLocationName) . '<br>';
+                    }
+                }
+                // Destination location
+                if (!empty($row->destinationTypeName) && str_contains(strtolower($row->destinationTypeName), 'location')) {
+                    $destinationLocationName = DB::table('service_location')
+                        ->where('id', $row->Destination)
+                        ->value('name');
+                    if ($destinationLocationName) {
+                        $Location .= '<b>Destination Location</b>: ' . ucwords($destinationLocationName) . '<br>';
+                    }
                 }
 
                 return $RequisitionCode
@@ -12401,7 +12602,7 @@ class InventoryController extends Controller
         }
         // Get validated data
         $validated = $request->validated();
-        $itemCount = count($request->consumption_generic);
+        $itemCount = isset($validated['consumption_generic']) ? count($validated['consumption_generic']) : 0;
         $success = true;
         $message = '';
 
@@ -12479,13 +12680,14 @@ class InventoryController extends Controller
         $inventory->last_updated = now()->timestamp;
 
         $rule = DB::table('inventory_transaction_type')
-        ->select('applicable_location_to', 'source_action', 'destination_action', 'source_location_type', 'destination_location_type')
+        ->select('source_action', 'destination_action', 'source_location_type', 'destination_location_type')
         ->where('id', $validated['consumption_transactiontype'])
         ->first();
 
-        $useAction = $rule->applicable_location_to === 'source'
-        ? $rule->source_action
-        : $rule->destination_action;
+        // Prefer destination action if defined, else fallback to source action
+        $useAction = (isset($rule->destination_action) && in_array($rule->destination_action, ['a','s','r']))
+            ? $rule->destination_action
+            : $rule->source_action;
 
         $sourceType = DB::table('inventory_source_destination_type')->where('id', $rule->source_location_type)->value('name');
         $destinationType = DB::table('inventory_source_destination_type')->where('id', $rule->destination_location_type)->value('name');
@@ -13222,7 +13424,7 @@ class InventoryController extends Controller
         }
         // Get validated data
         $validated = $request->validated();
-        $itemCount = count($request->return_generic);
+        $itemCount = isset($validated['return_generic']) ? count($validated['return_generic']) : 0;
         $success = true;
         $message = '';
 
@@ -13300,13 +13502,14 @@ class InventoryController extends Controller
         $inventory->last_updated = now()->timestamp;
 
         $rule = DB::table('inventory_transaction_type')
-        ->select('applicable_location_to', 'source_action', 'destination_action', 'source_location_type', 'destination_location_type')
+        ->select('source_action', 'destination_action', 'source_location_type', 'destination_location_type')
         ->where('id', $validated['return_transactiontype'])
         ->first();
 
-        $useAction = $rule->applicable_location_to === 'source'
-        ? $rule->source_action
-        : $rule->destination_action;
+        // Prefer destination action if defined; otherwise fallback to source action
+        $useAction = (isset($rule->destination_action) && in_array($rule->destination_action, ['a','s','r']))
+            ? $rule->destination_action
+            : $rule->source_action;
 
         $sourceType = DB::table('inventory_source_destination_type')->where('id', $rule->source_location_type)->value('name');
         $destinationType = DB::table('inventory_source_destination_type')->where('id', $rule->destination_location_type)->value('name');
@@ -13353,6 +13556,15 @@ class InventoryController extends Controller
         if (!$inventory->save()) {
             $success = false;
             $message = 'Failed to save inventory record';
+        }
+
+        // Auto-generate a reference number if not provided
+        if (empty($inventory->ref_document_no)) {
+            $siteName = DB::table('org_site')->where('id', $validated['return_site'])->value('name');
+            $siteCode = strtoupper(substr($siteName ?? 'SITE', 0, 3));
+            $idStr    = str_pad($inventory->id, 5, '0', STR_PAD_LEFT);
+            $inventory->ref_document_no = $siteCode . '-RT-' . $idStr; // RT = Return
+            $inventory->save();
         }
 
         $dateTime = Carbon::createFromTimestamp(now()->timestamp)->format('d-M-Y H:i');
@@ -13910,16 +14122,31 @@ class InventoryController extends Controller
     //     return response()->json($PreviousTransactions);
     // }
 
-
-
     public function GetOrgItemGeneric(Request $request)
     {
         if ($request->has('orgId'))
         {
             $orgId = $request->input('orgId');
-            $Generics = InventoryGeneric::where('status', 1)
-            ->where('org_id', $orgId)
-            ->get();
+            $condition = $request->input('condition');
+            //   dd($condition);
+     
+            // $Generics = InventoryGeneric::where('status', 1)
+            // ->where('org_id', $orgId)
+            // ->get();
+
+            // dd($condition);
+            $Generics = InventoryGeneric::select('inventory_generic.id', 'inventory_generic.name')
+            ->join('inventory_category', 'inventory_category.id', '=', 'inventory_generic.cat_id')
+            ->where('inventory_generic.status', 1)
+            ->where('inventory_generic.org_id', $orgId);
+
+            if ($condition != null && $condition === 'material') {
+                $Generics->where('inventory_category.name', 'not like', 'Medicine%');
+            } elseif ($condition != null && $condition === 'material_medicine') {
+                $Generics->where('inventory_generic.patient_mandatory', '=', 'y');
+            }
+           $Generics = $Generics->get();    
+
         }
         return response()->json($Generics);
     }

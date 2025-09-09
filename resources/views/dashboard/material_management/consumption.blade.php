@@ -241,8 +241,8 @@ border: 1px solid rgba(0,0,0,.15);
                                                             </div>
                                                         </div>
 
-                                                        @if($user->org_id != 0)
-                                                            @if($costcenters->count() > 1)
+                                                        @if ($user->org_id != 0)
+                                                            @if ($costcenters->count() > 1)
                                                                 <div class="col-md-6">
                                                                     <div class="form-group row">
                                                                         <div class="col-md-12">
@@ -259,11 +259,13 @@ border: 1px solid rgba(0,0,0,.15);
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                @elseif($costcenters->count() == 1)
-                                                                <input type="text" class="form-control input-sm" readonly name="consumption_performing_cc" value="{{ $costcenters->first()->id }}">
-                                                                @endif
+                                                            @elseif ($costcenters->count() == 1)
+                                                                <input type="hidden" name="consumption_performing_cc" value="{{ $costcenters->first()->id }}">
                                                             @else
                                                                 <input type="hidden" name="consumption_performing_cc" value="0">
+                                                            @endif
+                                                        @else
+                                                            <input type="hidden" name="consumption_performing_cc" value="0">
                                                         @endif
 
 

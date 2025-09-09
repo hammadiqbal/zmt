@@ -328,8 +328,8 @@ border: 1px solid rgba(0,0,0,.15);
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Enter Age</label>
-                                                                    <input type="number" min="0" step="0.1" name="patient_age" id="patient_age" class="form-control input06" placeholder="Enter Patient Age">
+                                                                    <label class="control-label">Enter Age <code style="display:none;" id="age_display"></code></label>
+                                                                    <input type="number" min="0.1" step="0.01" name="patient_age" id="patient_age" class="form-control input06" placeholder="Enter Patient Age">
                                                                 </div>
                                                                 <span class="text-danger" id="patient_age_error"></span>
                                                             </div>
@@ -888,7 +888,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                     </div>
 
 
-                                                    <div class="col-md-6">
+                                                    {{-- <div class="col-md-6">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
@@ -898,7 +898,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <span class="text-danger" id="amount_received_error"></span>
                                                             </div>
                                                         </div>
-                                                    </div>
+                                                    </div> --}}
 
 
                                                     <div class="col-md-6">
@@ -907,7 +907,6 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label for="amount_received">Payment Mode</label>
                                                                     <select class="form-control selecter p-0" id="pio_payMode" name="pio_payMode" style="color:#222d32">
-                                                                        <option selected disabled>Select Payment Mode</option>
                                                                         <option>Cash</option>
                                                                         <option>Card</option>
                                                                     </select>
@@ -923,7 +922,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label for="amount_received">Service Start DateTime</label>
-                                                                    <input type="text" class="form-control input06 dt" id="pio_serviceStart" name="pio_serviceStart" placeholder="Select Service Start Date & Time">
+                                                                    <input type="text" class="form-control input06" id="pio_serviceStart" name="pio_serviceStart" placeholder="Select Service Start Date & Time">
                                                                 </div>
                                                                 <span class="text-danger" id="pio_serviceStart_error"></span>
                                                             </div>

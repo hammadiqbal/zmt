@@ -209,7 +209,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                         </div>
                                                     </div>
 
-                                                    <div class="row pt-4 pb-1 duplicate hide_init_row" style="border: 1px solid #939393;">
+                                                    <div class="row pt-4 pb-1 duplicate hide_init_row" style="margin: 10px;border: 1px solid #939393;">
                                                         <div class="col-md-6">
                                                             <div class="form-group row">
                                                                 <div class="col-md-12">

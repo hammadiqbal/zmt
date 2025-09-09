@@ -17,7 +17,7 @@ $(document).ready(function() {
             $('#wo_vendor').html("<option selected disabled value=''>Select Vendor</option>");
             fetchOrganizationVendor(orgId, '#wo_vendor', function(data) {
                 $.each(data, function(key, value) {
-                    $('#wo_vendor').append('<option value="' + value.id + '">' + value.person_name + '</option>');
+                    $('#wo_vendor').append('<option value="' + value.id + '">' + value.prefixName +" "+value.person_name +' - '+value.corporateName + '</option>');
                 });
             });
         }
@@ -343,12 +343,12 @@ $(document).ready(function() {
                 },response.siteId);
                 OrgChangeSites('#u_wo_org', '#u_wo_site', '#update_workorder');
 
-                $('#u_wo_vendor').html("<option selected value="+ response.vendorId +">" + response.vendorName + "</option>");
+                $('#u_wo_vendor').html("<option selected value="+ response.vendorId +">" + response.prefixName +" "+response.vendorName +' - '+response.corporateName + "</option>");
                 fetchOrganizationVendor(response.orgId, '#u_wo_vendor', function(data) {
                     if (data.length > 0) {
                         $.each(data, function(key, value) {
                             if (value.id !== response.vendorId) {
-                                $('#u_wo_vendor').append('<option value="' + value.id + '">' + value.person_name + '</option>');
+                                $('#u_wo_vendor').append('<option value="' + value.id + '">' + value.prefixName +" "+value.person_name +' - '+value.corporateName + '</option>');
                             }
                         });
                     }

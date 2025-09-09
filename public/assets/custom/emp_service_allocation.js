@@ -88,12 +88,26 @@ $(document).ready(function() {
 
     //Allocate Service
     $('#multiService').on('change', 'input[name="selectedServices[]"]', function() {
+        var id = $(this).data('id');
+        var name = $(this).data('name');
+
+        if ($(this).is(':checked')) {
+            preCheckedServices[id] = name;
+        } else {
+            delete preCheckedServices[id];
+        }
         updateHiddenServices();
     });
 
     $('#selectAllempServiceAllocation').on('change', function() {
         $('input[name="selectedServices[]"]').prop('checked', $(this).prop('checked'));
         updateHiddenServices();
+    });
+
+    $('#empServicetable').on('draw.dt', function () {
+        $.each(preCheckedServices, function(id, name) {
+            $('#as_' + id).prop('checked', true);
+        });
     });
 
     $('#emp_serviceallocation').submit(function(e) {
@@ -314,6 +328,7 @@ $(document).ready(function() {
     });
 
     $(document).on('click', '.edit-serviceallocation', function() {
+          upreCheckedServices = {};
         $('input[name="uselectedServices[]"]').prop('checked', false);
         $('#umultiService').empty();
         $( 'input[name= "uservice_value"' ).removeClass('requirefield');
@@ -388,12 +403,17 @@ $(document).ready(function() {
 
                         if (serviceIDs.includes(item.id.toString())) {
                             $('#uas_' + item.id).prop('checked', true);
+                            // upreCheckedServices[$(this).data('id')] = $(this).data('name');
+                            upreCheckedServices[String(item.id)] = item.name; // seed!
                         }
 
                     });
+                    updateHiddenUpdatedServices();
+
                     $('#umultiService').off('click', 'tr').on('click', 'tr', function(e) {
                         let $checkbox = $(this).find('input[type="checkbox"]');
                         $checkbox.prop('checked', !$checkbox.prop('checked')).trigger('change');
+                        // upreCheckedServices[$(this).data('id')] = $(this).data('name');
                     });
                     $('#umultiserviceTable').DataTable({
                         paging: false,
@@ -418,7 +438,20 @@ $(document).ready(function() {
 
     //Update Allocated Service
     $('#umultiService').on('change', 'input[name="uselectedServices[]"]', function() {
+        var id = $(this).data('id');
+        var name = $(this).data('name');
+        if ($(this).is(':checked')) {
+            upreCheckedServices[id] = name;
+        } else {    
+            delete upreCheckedServices[id];
+        }
         updateHiddenUpdatedServices();
+    });
+
+    $('#umultiserviceTable').on('draw.dt', function () {
+        $.each(upreCheckedServices, function(id, name) {
+            $('#uas_' + id).prop('checked', true);
+        });
     });
 
     $('#update_serviceallocation').on('submit', function (event) {

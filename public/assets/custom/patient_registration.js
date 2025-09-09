@@ -4,7 +4,7 @@ $(document).ready(function() {
     $(document).on('click', '.add-patient', function() {
         var orgId = $('#patient_org').val();
         $('#patient_province').trigger('change');
-
+        $('#age_display').hide();
         $('.text-danger').show();
         if(orgId)
         {
@@ -43,6 +43,76 @@ $(document).ready(function() {
 
     $('#patient_district').html("<option selected disabled value=''>Select District</option>").prop('disabled', true);
     DivisionChangeDistrict('#patient_division', '#patient_district', '#add_patient');
+    
+    // Age validation helper
+    $('#patient_age').on('input', function() {
+        var inputValue = $(this).val();
+        var ageDisplay = $('#age_display');
+        
+        // Clear any previous error styling
+        $(this).removeClass('requirefield');
+        
+        if (inputValue === '') {
+            ageDisplay.hide();
+            return;
+        }
+        // Custom age parsing for your specific format
+        var age = parseCustomAge(inputValue);
+        
+        if (age === null) {
+            ageDisplay.text('Invalid age format').show();
+            $(this).addClass('requirefield');
+            return;
+        }
+        
+        if (age < 0) {
+            ageDisplay.text('Age cannot be negative').show();
+            $(this).addClass('requirefield');
+        } else if (age > 140) {
+            ageDisplay.text('Age cannot exceed 140 years').show();
+            $(this).addClass('requirefield');
+        } else if (age > 0 && age < 1) {
+            var months = Math.floor(age * 12);
+            ageDisplay.text('(' + months + ' months)').show();
+        } else if (age >= 1) {
+            var years = Math.floor(age);
+            var remainingMonths = Math.round((age - years) * 12);
+            if (remainingMonths > 0) {
+                ageDisplay.text('(' + years + ' years ' + remainingMonths + ' months)').show();
+            } else {
+                ageDisplay.text('(' + years + ' years)').show();
+            }
+        } else {
+            ageDisplay.hide();
+        }
+    });
+    
+    // Custom age parsing function
+    function parseCustomAge(inputValue) {
+        // Remove any spaces
+        inputValue = inputValue.trim();
+        
+        // Handle your specific format: 0.1-0.12, then 1, then 1.1-1.12, then 2, etc.
+        if (inputValue.match(/^0\.(1[0-2]|[1-9])$/)) {
+            // Format: 0.1 to 0.12 (only these specific values)
+            // Convert to actual age: 0.1=1month, 0.2=2months, 0.10=10months, 0.11=11months, 0.12=12months
+            var decimalPart = inputValue.substring(2);
+            var months = parseInt(decimalPart);
+            return months / 12; // Convert months to years for calculation
+        } else if (inputValue.match(/^[1-9]\d*\.(1[0-2]|[1-9])$/)) {
+            // Format: 1.1 to 1.12, 2.1 to 2.12, etc.
+            var parts = inputValue.split('.');
+            var years = parseInt(parts[0]);
+            var months = parseInt(parts[1]);
+            return years + (months / 12);
+        } else if (inputValue.match(/^[1-9]\d*$/)) {
+            // Format: 1, 2, 3, etc. (whole years)
+            return parseInt(inputValue);
+        }
+        
+        return null; // Invalid format - reject anything else
+    }
+    
     // Add Patient
     $('#add_patient').submit(function(e) {
         e.preventDefault();
@@ -179,27 +249,51 @@ $(document).ready(function() {
                                 
                                 $('#pio_org').html("<option selected value='"+ response.org_id +"'>"+ response.orgName +"</option>").prop('disabled',true);
                                 $('#pio_site').html("<option selected value='"+ response.site_id +"'>"+ response.siteName +"</option>").prop('disabled',true);
-                                fetchServiceLocations(response.org_id, '#pio_serviceLocation', function(data) {
+                                // fetchServiceLocations(response.org_id, '#pio_serviceLocation', function(data) {
+                                //     const $serviceLocation = $('#pio_serviceLocation');
+                                //     if (data && data.length > 0) {
+                                //         $serviceLocation.empty()
+                                //              .append('<option selected disabled value="">Select Service Location</option>')
+                                //              .append(data.map(({id, name}) => `<option value="${id}">${name}</option>`).join(''))
+                                //              .prop('disabled', false)
+                                //              .find('option:contains("Loading...")').remove();
+                                //     } else {
+                                //         Swal.fire({
+                                //             text: 'Service Locations are not availables for selected Organization',
+                                //             icon: 'error',
+                                //             confirmButtonText: 'OK'
+                                //         }).then((result) => {
+                                //             if (result.isConfirmed) {
+                                //                 $serviceLocation.empty()
+                                //                 .append('<option selected disabled value="">Select Service Location</option>')
+                                //                 .prop('disabled', true);
+                                //             }
+                                //         });
+
+                                //     }
+                                // });
+
+                                fetchActiveSL(response.site_id, '#pio_serviceLocation', false, false, function(data) {
                                     const $serviceLocation = $('#pio_serviceLocation');
                                     if (data && data.length > 0) {
-                                        $serviceLocation.empty()
-                                             .append('<option selected disabled value="">Select Service Location</option>')
-                                             .append(data.map(({id, name}) => `<option value="${id}">${name}</option>`).join(''))
-                                             .prop('disabled', false)
-                                             .find('option:contains("Loading...")').remove();
+                                        $serviceLocation
+                                        // $serviceLocation.empty()
+                                            .append('<option selected disabled value="">Select Service Location</option>')
+                                            .append(data.map(({location_id, name}) => `<option value="${location_id}">${name}</option>`).join(''))
+                                            .prop('disabled', false)
+                                            .find('option:contains("Loading...")').remove();
                                     } else {
                                         Swal.fire({
-                                            text: 'Service Locations are not availables for selected Organization',
+                                            text: 'Service Locations are not available for selected Organization',
                                             icon: 'error',
                                             confirmButtonText: 'OK'
                                         }).then((result) => {
                                             if (result.isConfirmed) {
                                                 $serviceLocation.empty()
-                                                .append('<option selected disabled value="">Select Service Location</option>')
-                                                .prop('disabled', true);
+                                                .append('<option selected disabled value="">No Locations Found</option>')
+                                                .prop('disabled', true)
                                             }
                                         });
-
                                     }
                                 });
                                 fetchPhysicians(response.site_id, '#pio_emp', function(data) {
@@ -256,7 +350,11 @@ $(document).ready(function() {
                                 ServiceChangeServiceModes('#pio_site', '#pio_service', '#pio_serviceMode', '#add_patientinout');
                                 $('#pio_billingCC').html("<option selected disabled value=''>Select Billing Cost Center</option>").prop('disabled',true);
                                 ServiceChangeCostCenter('#pio_site', '#pio_service', '#pio_billingCC', '#add_patientinout');
-                                $('#pio_serviceStart').bootstrapMaterialDatePicker({ format : 'dddd DD MMMM YYYY - hh:mm A' });
+                                // $('#pio_serviceStart').bootstrapMaterialDatePicker({ format : 'dddd DD MMMM YYYY - hh:mm A' });
+                                $('#pio_serviceStart').bootstrapMaterialDatePicker({
+                                    format: 'dddd DD MMMM YYYY - hh:mm A',
+                                    currentDate: new Date() 
+                                });
                                 // $('input[name="booking_id"]').val('00');
                                 openPatientInOutModal(response.mr_code);
 
@@ -276,12 +374,12 @@ $(document).ready(function() {
                                 $('.pb_mr').val(response.mr_code);
                                 $('#sb_schedule').html("<option selected disabled value=''>Select Service Location Schedule</option>").prop('disabled', true);
 
-                                fetchServiceLocations(response.org_id, '#sb_location', function(data) {
+                                fetchActiveSL(response.org_id, '#sb_location', false, false, function(data) {
                                     const $serviceLocation = $('#sb_location');
                                     if (data && data.length > 0) {
                                         $serviceLocation.empty()
                                             .append('<option selected disabled value="">Select Service Location</option>')
-                                            .append(data.map(({id, name}) => `<option value="${id}">${name}</option>`).join(''))
+                                            .append(data.map(({location_id, name}) => `<option value="${location_id}">${name}</option>`).join(''))
                                             .prop('disabled', false)
                                             .find('option:contains("Loading...")').remove();
                                     } else {
@@ -289,19 +387,36 @@ $(document).ready(function() {
                                             text: 'Service Locations are not available for selected Organization',
                                             icon: 'error',
                                             confirmButtonText: 'OK'
-                                        }).then((result) => {
-                                            if (result.isConfirmed) {
-                                                $('#add-servicebooking').modal('hide');
-                                                $('#view-patient').DataTable().ajax.reload(); // Refresh DataTable
-                                                $('#add_patient').find('select').each(function(){
-                                                    $(this).val($(this).find('option:first').val()).trigger('change');
-                                                });
-                                                $('#add_patient')[0].reset();
-                                                $('.text-danger').hide();
-                                            }
                                         });
                                     }
                                 });
+
+                                // fetchServiceLocations(response.org_id, '#sb_location', function(data) {
+                                //     const $serviceLocation = $('#sb_location');
+                                //     if (data && data.length > 0) {
+                                //         $serviceLocation.empty()
+                                //             .append('<option selected disabled value="">Select Service Location</option>')
+                                //             .append(data.map(({id, name}) => `<option value="${id}">${name}</option>`).join(''))
+                                //             .prop('disabled', false)
+                                //             .find('option:contains("Loading...")').remove();
+                                //     } else {
+                                //         Swal.fire({
+                                //             text: 'Service Locations are not available for selected Organization',
+                                //             icon: 'error',
+                                //             confirmButtonText: 'OK'
+                                //         }).then((result) => {
+                                //             if (result.isConfirmed) {
+                                //                 $('#add-servicebooking').modal('hide');
+                                //                 $('#view-patient').DataTable().ajax.reload(); // Refresh DataTable
+                                //                 $('#add_patient').find('select').each(function(){
+                                //                     $(this).val($(this).find('option:first').val()).trigger('change');
+                                //                 });
+                                //                 $('#add_patient')[0].reset();
+                                //                 $('.text-danger').hide();
+                                //             }
+                                //         });
+                                //     }
+                                // });
                                 // Show Service Scheduling
                                 LocationChangeServiceScheduling('#sb_location', '#sb_site', '#sb_schedule', '#add_servicebooking');
                                 // Show Service Scheduling
@@ -906,5 +1021,265 @@ $(document).ready(function() {
         });
     });
     //Update Patient Details
+
+    //Add Patient Arrival & Departure
+    $('#add_patientinout').submit(function(e) {
+        e.preventDefault();
+        var data = SerializeForm(this);
+        var resp = true;
+        $(data).each(function(i, field){
+            if ((field.value == '' || field.value == null) && field.name != 'pio_remarks') 
+            // if (((field.value == '') || (field.value == null)))
+            {
+                var FieldName = field.name;
+                var FieldID = '#'+FieldName + "_error";
+                $(FieldID).text("This field is required");
+                $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
+                $( 'input[name= "' +FieldName +'"' ).focus(function() {
+                    $(FieldID).text("");
+                    $('input[name= "' +FieldName +'"' ).removeClass("requirefield");
+                })
+                $('select[name= "' +FieldName +'"' ).next('.select2-container').find('.select2-selection').addClass('requirefield');
+                $('select[name= "' +FieldName +'"' ).on('select2:open', function() {
+                    $(FieldID).text("");
+                    $(this).next('.select2-container').find('.select2-selection').removeClass("requirefield");
+                });
+                $( 'textarea[name= "' +FieldName +'"' ).focus(function() {
+                    $(FieldID).text("");
+                    $('textarea[name= "' +FieldName +'"' ).removeClass("requirefield");
+                })
+                $( 'textarea[name= "' +FieldName +'"' ).addClass('requirefield');
+                resp = false;
+            }
+        });
+
+        if(resp != false)
+        {
+            $.ajax({
+                url: "/patient/addpatientarrival",
+                method: "POST",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: data,
+                beforeSend: function() {
+                    Swal.fire({
+                        title: "Processing",
+                        allowOutsideClick: false,
+                        willOpen: () => {
+                            Swal.showLoading();
+                        },
+                        showConfirmButton: false
+                    });
+                },
+                success: function(response) {
+
+                    for (var fieldName in response) {
+                        var fieldErrors = response[fieldName];
+                    }
+                    if (fieldName == 'error')
+                    {
+                        Swal.fire({
+                            text: fieldErrors,
+                            icon: fieldName,
+                            confirmButtonText: 'OK'
+                        })
+                    }
+                    else if (fieldName == 'info')
+                    {
+                        Swal.fire({
+                            text: fieldErrors,
+                            icon: fieldName,
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $('#pio_location').empty();
+                                $('#pio_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', true);
+                                $('#pio_site').empty();
+                                $('#pio_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled', true);
+                                $('#add_patientinout').find('select').each(function(){
+                                    $(this).val($(this).find('option:first').val()).trigger('change');
+                                });
+                                $('#add_patientinout')[0].reset();
+                            }
+                        });
+                    }
+    
+                    else if (fieldName == 'success')
+                    {
+                        Swal.fire({
+                            text: fieldErrors,
+                            icon: fieldName,
+                            allowOutsideClick: false,
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // $('#add-patientinout').modal('hide');
+                                // $('#sb_location').empty();
+                                // $('#sb_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', true);
+                                // $('#sb_site').empty();
+                                // $('#sb_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled', true);
+                                // $('#view-patientinout').DataTable().ajax.reload();
+                                // $('#add_patientinout').find('select').each(function(){
+                                //     $(this).val($(this).find('option:first').val()).trigger('change');
+                                // });
+                                // $('#add_patientinout')[0].reset();
+                                // $('.text-danger').hide();
+                                const url = new URL(window.location);
+                                url.search = ''; // Clear all query parameters
+                                history.replaceState(null, '', url); // Update the URL without reloading
+                                // const url = new URL(window.location);
+                                // url.searchParams.delete('mr'); // Remove the 'mr' parameter
+                                // history.replaceState(null, '', url); // Update the URL without reloading
+                                location.reload();
+                            }
+                        });
+                    }
+                
+                },
+                error: function(error) {
+                    if (error.responseJSON && error.responseJSON.errors) {
+                        $('.text-danger').show();
+                        var errors = error.responseJSON.errors;
+                        for (var fieldName in errors) {
+                            var fieldErrors = errors[fieldName];
+                            for (var i = 0; i < fieldErrors.length; i++) {
+                                fieldName = '#'+fieldName + '_error';
+                                $(fieldName).text(fieldErrors[i]);
+                            }
+                        }
+                        Swal.close();
+                    }
+                }
+            });
+        }
+    });
+    //Add Patient Arrival & Departure
+    
+    //Add Service Booking
+    $('#add_servicebooking').submit(function(e) {
+        e.preventDefault();
+        var data = SerializeForm(this);
+        var resp = true;
+        const excludedFields = ['sb_remarks'];
+        // if (((field.value == '') || (field.value == null)))
+
+        $(data).each(function(i, field){
+            if (((field.value == '') || (field.value == null)) && !excludedFields.includes(field.name))
+            {
+                var FieldName = field.name;
+                var FieldID = '#'+FieldName + "_error";
+                $(FieldID).text("This field is required");
+                $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
+                $( 'input[name= "' +FieldName +'"' ).focus(function() {
+                    $(FieldID).text("");
+                    $('input[name= "' +FieldName +'"' ).removeClass("requirefield");
+                })
+                $('select[name= "' +FieldName +'"' ).next('.select2-container').find('.select2-selection').addClass('requirefield');
+                $('select[name= "' +FieldName +'"' ).on('select2:open', function() {
+                    $(FieldID).text("");
+                    $(this).next('.select2-container').find('.select2-selection').removeClass("requirefield");
+                });
+                $( 'textarea[name= "' +FieldName +'"' ).focus(function() {
+                    $(FieldID).text("");
+                    $('textarea[name= "' +FieldName +'"' ).removeClass("requirefield");
+                })
+                $( 'textarea[name= "' +FieldName +'"' ).addClass('requirefield');
+                resp = false;
+            }
+        });
+        if(resp != false)
+        {
+            $.ajax({
+                url: "/services/addservicebooking",
+                method: "POST",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: data,
+                beforeSend: function() {
+                    Swal.fire({
+                        title: "Processing",
+                        allowOutsideClick: false,
+                        willOpen: () => {
+                            Swal.showLoading();
+                        },
+                        showConfirmButton: false
+                    });
+                },
+                success: function(response) {
+                    for (var fieldName in response) {
+                        var fieldErrors = response[fieldName];
+                    }
+                    if (fieldName == 'error')
+                    {
+                        Swal.fire({
+                            text: fieldErrors,
+                            icon: fieldName,
+                            confirmButtonText: 'OK'
+                        })
+                    }
+                    else if (fieldName == 'success')
+                    {
+                        Swal.fire({
+                            text: fieldErrors,
+                            icon: fieldName,
+                            allowOutsideClick: false,
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // $('#add-servicebooking').modal('hide');
+                                // $('#sb_location').empty();
+                                // $('#sb_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', true);
+                                // $('#sb_site').empty();
+                                // $('#sb_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled', true);
+                                // $('#view-servicebooking').DataTable().ajax.reload();
+                                // $('#add_servicebooking').find('select').each(function(){
+                                //     $(this).val($(this).find('option:first').val()).trigger('change');
+                                // });
+                                // $('#add_servicebooking')[0].reset();
+                                // $('.text-danger').hide();
+                                location.reload();
+                            }
+                        });
+                    }
+                    else if (fieldName == 'info')
+                    {
+                        Swal.fire({
+                            text: fieldErrors,
+                            icon: fieldName,
+                            confirmButtonText: 'OK'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $('#sb_location').empty();
+                                $('#sb_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', true);
+                                $('#sb_site').empty();
+                                $('#sb_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled', true);
+                                $('#add_servicebooking').find('select').each(function(){
+                                    $(this).val($(this).find('option:first').val()).trigger('change');
+                                });
+                                $('#add_servicebooking')[0].reset();
+                            }
+                        });
+                    }
+                },
+                error: function(error) {
+                    if (error.responseJSON && error.responseJSON.errors) {
+                        $('.text-danger').show();
+                        var errors = error.responseJSON.errors;
+                        for (var fieldName in errors) {
+                            var fieldErrors = errors[fieldName];
+                            for (var i = 0; i < fieldErrors.length; i++) {
+                                fieldName = '#'+fieldName + '_error';
+                                $(fieldName).text(fieldErrors[i]);
+                            }
+                        }
+                        Swal.close();
+                    }
+                }
+            });
+        }
+    });
+    //Add Service Booking
 });
 //Patient Registration
