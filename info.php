@@ -50,6 +50,7 @@ services/activatesl -->
 Finalize Stock Monitioring Module
 .........................................................................
 check before upload to hosting
+add site_enabled column in users table
 <!-- set bydefault null sbp, dbp and score -->
 <!-- add generic_id,pack_size column in item_rates tables -->
 

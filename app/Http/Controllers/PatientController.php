@@ -127,6 +127,7 @@ class PatientController extends Controller
     {
         $orgId = $request->input('orgId');
 
+
         $baseQuery = PatientRegistration::select('mr_code', 'name', 'cell_no')
         ->where('status', 1)
         ->where('org_id', $orgId);
@@ -372,7 +373,8 @@ class PatientController extends Controller
             'province.name as provinceName',
             'division.name as divisionName',
             'district.name as districtName'
-        );
+        )
+        ->orderBy('patient.id', 'desc');
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
@@ -590,10 +592,12 @@ class PatientController extends Controller
         {
             $UpdateStatus = 1;
             $statusLog = 'Active';
+            $Patient->effective_timestamp = $CurrentTimestamp;
         }
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $Patient->effective_timestamp = 0;
         }
         $Patient->status = $UpdateStatus;
         $Patient->last_updated = $CurrentTimestamp;

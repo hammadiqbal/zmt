@@ -1976,7 +1976,7 @@
 
     .page-titles {
         background: #ffffff;
-        margin: 0 0px 30px;
+        /* margin: 0 0px 30px; */
         padding: 15px 10px;
         position: relative;
         z-index: 10;
@@ -1991,7 +1991,7 @@
     .page-titles .breadcrumb {
         padding: 0px;
         background: transparent;
-        font-size: 14px
+        font-size: 13px
     }
 
     .page-titles .breadcrumb li {
@@ -2258,9 +2258,9 @@
         background: linear-gradient(to right, #263238 0%, #263238 23%, #ef5350 23%, #ef5350 99%)
     }
 
-    .page-titles {
+    /* .page-titles {
         padding-bottom: 20px
-    }
+    } */
 
     .footer {
         bottom: 0;

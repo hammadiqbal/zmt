@@ -332,7 +332,7 @@ class OrgSetupController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $Organization->effective_timestamp = 0;
         }
         // Find the role by ID
         $Organization->status = $UpdateStatus;
@@ -831,7 +831,7 @@ class OrgSetupController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $ReferralSite->effective_timestamp = 0;
         }
         $ReferralSite->status = $UpdateStatus;
         $ReferralSite->last_updated = $CurrentTimestamp;

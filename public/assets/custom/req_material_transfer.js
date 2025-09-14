@@ -28,7 +28,6 @@ $(document).ready(function() {
 
         }
         else{
-            console.log(orgId);
             fetchOrganizationSites(orgId, '#rmt_source_site', function(data) {
                 $('#rmt_source_site').html("<option selected disabled value=''>Select Source Site</option>").prop('disabled', false);
                 $.each(data, function(key, value) {

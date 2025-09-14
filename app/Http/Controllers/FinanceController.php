@@ -251,6 +251,7 @@ class FinanceController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $ChartOfAccountStrategy->effective_timestamp = 0;
 
         }
         $ChartOfAccountStrategy->status = $UpdateStatus;
@@ -645,6 +646,7 @@ class FinanceController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $ChartOfAccountStrategySetup->effective_timestamp = 0;
 
         }
         $ChartOfAccountStrategySetup->status = $UpdateStatus;
@@ -1385,6 +1387,7 @@ class FinanceController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $TransactionSourceDestination->effective_timestamp = 0;
 
         }
         
@@ -1705,6 +1708,7 @@ class FinanceController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $FinancialLedgerType->effective_timestamp = 0;
 
         }
         
@@ -2017,6 +2021,7 @@ class FinanceController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $PayrollAddition->effective_timestamp = 0;
 
         }
         
@@ -2330,6 +2335,7 @@ class FinanceController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $PayrollDeduction->effective_timestamp = 0;
         }
         
         $PayrollDeduction->status = $UpdateStatus;
@@ -2689,6 +2695,7 @@ class FinanceController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $Donor->effective_timestamp = 0;
         }
         
         $Donor->status = $UpdateStatus;
@@ -3090,6 +3097,7 @@ class FinanceController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $TransactionType->effective_timestamp = 0;
         }
         
         $TransactionType->status = $UpdateStatus;
@@ -3516,6 +3524,7 @@ class FinanceController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $FinanceTransaction->effective_timestamp = 0;
         }
         
         $FinanceTransaction->status = $UpdateStatus;
@@ -3912,6 +3921,7 @@ class FinanceController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $FinanceTransaction->effective_timestamp = 0;
         }
         
         $FinanceTransaction->status = $UpdateStatus;
@@ -4285,6 +4295,7 @@ class FinanceController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $ItemRate->effective_timestamp = 0;
         }
         
         $ItemRate->status = $UpdateStatus;

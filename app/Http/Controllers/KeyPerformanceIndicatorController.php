@@ -221,7 +221,7 @@ class KeyPerformanceIndicatorController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $KPIGroup->effective_timestamp = 0;
         }
         $KPIGroup->status = $UpdateStatus;
         $KPIGroup->last_updated = $CurrentTimestamp;
@@ -493,7 +493,7 @@ class KeyPerformanceIndicatorController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $KPIDimension->effective_timestamp = 0;
         }
         $KPIDimension->status = $UpdateStatus;
         $KPIDimension->last_updated = $CurrentTimestamp;
@@ -782,7 +782,7 @@ class KeyPerformanceIndicatorController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $KPIType->effective_timestamp = 0;
         }
         $KPIType->status = $UpdateStatus;
         $KPIType->last_updated = $CurrentTimestamp;
@@ -1111,7 +1111,7 @@ class KeyPerformanceIndicatorController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $KPI->effective_timestamp = 0;
         }
         $KPI->status = $UpdateStatus;
         $KPI->last_updated = $CurrentTimestamp;
@@ -1459,7 +1459,7 @@ class KeyPerformanceIndicatorController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $ActivateKPI->effective_timestamp = 0;
         }
         // Find the role by ID
         $ActivateKPI->status = $UpdateStatus;

@@ -224,7 +224,7 @@ class CostCenterController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $CCType->effective_timestamp = 0;
         }
         // Find the role by ID
         $CCType->status = $UpdateStatus;
@@ -547,6 +547,7 @@ class CostCenterController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $CostCenter->effective_timestamp = 0;
 
         }
         // Find the role by ID
@@ -1069,7 +1070,7 @@ class CostCenterController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $ActivatedCC->effective_timestamp = 0;
         }
         // Find the role by ID
         $ActivatedCC->status = $UpdateStatus;

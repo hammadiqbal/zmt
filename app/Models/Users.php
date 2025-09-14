@@ -20,6 +20,7 @@ class Users extends Model implements Authenticatable
         'role_id',
         'org_id',
         'is_employee',
+        'site_enabled',
         'emp_id',
         'user_id',
         'logid',

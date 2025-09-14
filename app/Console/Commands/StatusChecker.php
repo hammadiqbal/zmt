@@ -102,23 +102,29 @@ class StatusChecker extends Command
                 if(Schema::hasColumn($tableName, 'effective_timestamp') && Schema::hasColumn($tableName, 'status')){
 
                     if($tableName === 'employee' && Schema::hasColumn($tableName, 'leaving_date')){
+                        // Only update entries where effective_timestamp is not 0 (manually updated entries)
                         DB::table($tableName)
                             ->where('leaving_date', 0)
                             ->where('effective_timestamp', '>', $now)
+                            ->where('effective_timestamp', '!=', 0) // Skip manually updated entries
                             ->update(['status' => 0]);
 
                         DB::table($tableName)
                             ->where('leaving_date', 0)
                             ->where('effective_timestamp', '<=', $now)
+                            ->where('effective_timestamp', '!=', 0) // Skip manually updated entries
                             ->update(['status' => 1]);
 
                     } else {
+                        // Only update entries where effective_timestamp is not 0 (manually updated entries)
                         DB::table($tableName)
                             ->where('effective_timestamp', '>', $now)
+                            ->where('effective_timestamp', '!=', 0) // Skip manually updated entries
                             ->update(['status' => 0]);
 
                         DB::table($tableName)
                             ->where('effective_timestamp', '<=', $now)
+                            ->where('effective_timestamp', '!=', 0) // Skip manually updated entries
                             ->update(['status' => 1]);
                     }
                 }

@@ -33,9 +33,9 @@
     <div class="row page-titles">
         <div class="col-md-12 d-flex justify-content-center">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item">Home</li>
-                <li class="breadcrumb-item">Settings</li>
-                <li class="breadcrumb-item active">User</li>
+                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Home</a></li>
+                <li class="breadcrumb-item">Users</li>
+                <li class="breadcrumb-item active">User Setup</li>
             </ol>
         </div>
     </div>
@@ -71,12 +71,25 @@
                         </div>
                         <form id="add_user" method="post">
                             @csrf
-                            <div class="modal-body">
+                            <div class="modal-body p-1">
                                 <!-- Row -->
                                 <div class="row">
                                     <div class="col-lg-12">
                                         <div class="card-body">
                                                 <div class="form-body">
+                                                    <div class="row" id="enable_site">
+                                                        <div class="col-md-8"></div>
+                                                        <div class="col-md-4">
+                                                            <div class="form-group text-right">
+                                                                <h4>Enable All Sites</h4>
+                                                                <div class="bt-switch">
+                                                                    <input type="checkbox" id="siteEnabled" data-on-color="primary" data-off-color="info" data-on-text="Yes" data-off-text="No" data-size="small">
+                                                                    <input type="hidden" id="siteStatus" name="siteStatus" value="off">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    
                                                     <div class="row">
                                                         @if($user->org_id != 0)
                                                         <div class="userOrganization">
@@ -239,12 +252,26 @@
                         <h4 class="modal-title" id="myLargeModalLabel">Update User Details</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body p-0">
                         <!-- Row -->
                         <div class="row">
                             <div class="col-lg-12">
                                 <div class="card-body">
                                         <div class="form-body">
+                                            <div class="row">
+                                                <div class="col-md-8"></div>
+                                                <div class="col-md-4">
+                                                    <div class="form-group text-right">
+                                                         <h4>Enable All Sites</h4>
+                                                        <div class="bt-switch">
+                                                            <input type="checkbox" id="u_siteEnabled" data-on-color="primary" data-off-color="info" data-on-text="Yes" data-off-text="No" data-size="small">
+                                                            <input type="hidden" id="u_siteStatus" name="u_siteStatus" value="off">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- End Enable All Sites Radio Buttons -->
+                                            
                                             <div class="row">
                                                 @if($user->org_id == 0)
                                                 <div class="col-md-6">

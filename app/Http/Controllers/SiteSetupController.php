@@ -389,7 +389,7 @@ class SiteSetupController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $Site->effective_timestamp = 0;
         }
         // Find the role by ID
         $Site->status = $UpdateStatus;

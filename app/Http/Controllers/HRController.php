@@ -263,6 +263,7 @@ class HRController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $Gender->effective_timestamp = 0;
 
         }
         $Gender->status = $UpdateStatus;
@@ -530,6 +531,7 @@ class HRController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $Prefix->effective_timestamp = 0;
 
         }
         $Prefix->status = $UpdateStatus;
@@ -1017,6 +1019,7 @@ class HRController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $EmpStatus->effective_timestamp = 0;
 
         }
         $EmpStatus->status = $UpdateStatus;
@@ -1312,6 +1315,7 @@ class HRController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $WorkingStatus->effective_timestamp = 0;
 
         }
         $WorkingStatus->status = $UpdateStatus;
@@ -1604,6 +1608,7 @@ class HRController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $EmployeeQualification->effective_timestamp = 0;
 
         }
         $EmployeeQualification->status = $UpdateStatus;
@@ -1907,6 +1912,7 @@ class HRController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $EmployeeCadre->effective_timestamp = 0;
 
         }
         $EmployeeCadre->status = $UpdateStatus;
@@ -2244,6 +2250,7 @@ class HRController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $EmployeePosition->effective_timestamp = 0;
 
         }
         $EmployeePosition->status = $UpdateStatus;
@@ -2914,6 +2921,7 @@ class HRController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $Employee->effective_timestamp = 0;
 
         }
         $Employee->status = $UpdateStatus;
@@ -3793,6 +3801,7 @@ class HRController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $EmployeeSalary->effective_timestamp = 0;
 
         }
         $EmployeeSalary->status = $UpdateStatus;
@@ -4490,6 +4499,7 @@ class HRController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $EmployeeDocument->effective_timestamp = 0;
 
         }
         $EmployeeDocument->status = $UpdateStatus;
@@ -5468,6 +5478,7 @@ class HRController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $EmployeeServiceAllocation->effective_timestamp = 0;
 
         }
         $EmployeeServiceAllocation->status = $UpdateStatus;

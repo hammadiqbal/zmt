@@ -237,12 +237,10 @@ class AuthController extends Controller
         if (! $token) {
             abort(404);
         }
-        $user = Users::where('password_reset_token', $token)->first();
-        if (! $user) {
+        $resetUser = Users::where('password_reset_token', $token)->first();
+        if (! $resetUser) {
             abort(404);
         }
-        return view('reset', compact('user'));
+        return view('reset', compact('resetUser'));
     }
-
-
 }

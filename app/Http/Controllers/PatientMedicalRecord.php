@@ -373,6 +373,7 @@ class PatientMedicalRecord extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $ICDCode->effective_timestamp = 0;
 
         }
         $ICDCode->status = $UpdateStatus;
@@ -971,6 +972,7 @@ class PatientMedicalRecord extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $VitalSign->effective_timestamp = 0;
 
         }
         $VitalSign->status = $UpdateStatus;
@@ -1366,8 +1368,16 @@ class PatientMedicalRecord extends Controller
     public function AddAllergiesHistory(Request $request)
     {
         $rights = $this->rights;
-        $add = explode(',', $rights->encounters_and_procedures)[0];
-        if($add == 0)
+        // $add = explode(',', $rights->encounters_and_procedures)[0];
+        // $encountersView = explode(',', $rights->encounters_and_procedures)[0];
+        // $vitalSignsView = explode(',', $rights->vital_signs)[0];
+        // if($add == 0)
+        // {
+        //     abort(403, 'Forbidden');
+        // }
+        $encountersAdd = explode(',', $rights->encounters_and_procedures)[0];
+        $vitalSignsAdd = explode(',', $rights->vital_signs)[0];
+        if ($encountersAdd == 0 && $vitalSignsAdd == 0) 
         {
             abort(403, 'Forbidden');
         }
@@ -1467,8 +1477,13 @@ class PatientMedicalRecord extends Controller
     public function GetAllergiesHistoryData($mr)
     {
         $rights = $this->rights;
-        $view = explode(',', $rights->encounters_and_procedures)[1];
-        if($view == 0)
+        // $view = explode(',', $rights->encounters_and_procedures)[1];
+        // $view = explode(',', $rights->vital_signs)[1];
+        $encountersView = explode(',', $rights->encounters_and_procedures)[1];
+        $vitalSignsView = explode(',', $rights->vital_signs)[1];
+        // dd($encountersView,$vitalSignsView);
+        // if($view == 0)
+        if ($encountersView == 0 && $vitalSignsView == 0) 
         {
             abort(403, 'Forbidden');
         }
@@ -1523,8 +1538,14 @@ class PatientMedicalRecord extends Controller
     public function AddImmunizationHistory(Request $request)
     {
         $rights = $this->rights;
-        $add = explode(',', $rights->encounters_and_procedures)[0];
-        if($add == 0)
+        // $add = explode(',', $rights->encounters_and_procedures)[0];
+        // if($add == 0)
+        // {
+        //     abort(403, 'Forbidden');
+        // }
+        $encountersAdd = explode(',', $rights->encounters_and_procedures)[0];
+        $vitalSignsAdd = explode(',', $rights->vital_signs)[0];
+        if ($encountersAdd == 0 && $vitalSignsAdd == 0) 
         {
             abort(403, 'Forbidden');
         }
@@ -1623,8 +1644,15 @@ class PatientMedicalRecord extends Controller
     public function GetImmunizationHistoryData($mr)
     {
         $rights = $this->rights;
-        $view = explode(',', $rights->encounters_and_procedures)[1];
-        if($view == 0)
+        // $view = explode(',', $rights->encounters_and_procedures)[1];
+        // if($view == 0)
+        // {
+        //     abort(403, 'Forbidden');
+        // }
+
+        $encountersView = explode(',', $rights->encounters_and_procedures)[1];
+        $vitalSignsView = explode(',', $rights->vital_signs)[1];
+        if ($encountersView == 0 && $vitalSignsView == 0) 
         {
             abort(403, 'Forbidden');
         }
@@ -1780,8 +1808,20 @@ class PatientMedicalRecord extends Controller
     public function GetDrugHistoryData($mr)
     {
         $rights = $this->rights;
-        $view = explode(',', $rights->encounters_and_procedures)[1];
-        if($view == 0)
+        // $view = explode(',', $rights->encounters_and_procedures)[1];
+        // if($view == 0)
+        // {
+        //     abort(403, 'Forbidden');
+        // }
+        // $encountersView = explode(',', $rights->encounters_and_procedures)[1];
+        // $vitalSignsView = explode(',', $rights->vital_signs)[1];
+        // if ($encountersView == 0 && $vitalSignsView == 0) 
+        // {
+        //     abort(403, 'Forbidden');
+        // }
+        $encountersAdd = explode(',', $rights->encounters_and_procedures)[0];
+        $vitalSignsAdd = explode(',', $rights->vital_signs)[0];
+        if ($encountersAdd == 0 && $vitalSignsAdd == 0) 
         {
             abort(403, 'Forbidden');
         }
@@ -1832,8 +1872,15 @@ class PatientMedicalRecord extends Controller
     public function AddPastHistory(Request $request)
     {
         $rights = $this->rights;
-        $add = explode(',', $rights->encounters_and_procedures)[0];
-        if($add == 0)
+        // $add = explode(',', $rights->encounters_and_procedures)[0];
+        // if($add == 0)
+        // {
+        //     abort(403, 'Forbidden');
+        // }
+
+        $encountersAdd = explode(',', $rights->encounters_and_procedures)[0];
+        $vitalSignsAdd = explode(',', $rights->vital_signs)[0];
+        if ($encountersAdd == 0 && $vitalSignsAdd == 0) 
         {
             abort(403, 'Forbidden');
         }
@@ -1934,8 +1981,14 @@ class PatientMedicalRecord extends Controller
     public function GetPastHistoryData($mr)
     {
         $rights = $this->rights;
-        $view = explode(',', $rights->encounters_and_procedures)[1];
-        if($view == 0)
+        // $view = explode(',', $rights->encounters_and_procedures)[1];
+        // if($view == 0)
+        // {
+        //     abort(403, 'Forbidden');
+        // }
+        $encountersView = explode(',', $rights->encounters_and_procedures)[1];
+        $vitalSignsView = explode(',', $rights->vital_signs)[1];
+        if ($encountersView == 0 && $vitalSignsView == 0) 
         {
             abort(403, 'Forbidden');
         }
@@ -1990,11 +2043,18 @@ class PatientMedicalRecord extends Controller
     public function AddObstericHistory(Request $request)
     {
         $rights = $this->rights;
-        $add = explode(',', $rights->encounters_and_procedures)[0];
-        if($add == 0)
+        // $add = explode(',', $rights->encounters_and_procedures)[0];
+        // if($add == 0)
+        // {
+        //     abort(403, 'Forbidden');
+        // }
+        $encountersAdd = explode(',', $rights->encounters_and_procedures)[0];
+        $vitalSignsAdd = explode(',', $rights->vital_signs)[0];
+        if ($encountersAdd == 0 && $vitalSignsAdd == 0) 
         {
             abort(403, 'Forbidden');
         }
+
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
@@ -2091,8 +2151,15 @@ class PatientMedicalRecord extends Controller
     public function GetObstericHistoryData($mr)
     {
         $rights = $this->rights;
-        $view = explode(',', $rights->encounters_and_procedures)[1];
-        if($view == 0)
+        // $view = explode(',', $rights->encounters_and_procedures)[1];
+        // if($view == 0)
+        // {
+        //     abort(403, 'Forbidden');
+        // }
+
+        $encountersView = explode(',', $rights->encounters_and_procedures)[1];
+        $vitalSignsView = explode(',', $rights->vital_signs)[1];
+        if ($encountersView == 0 && $vitalSignsView == 0) 
         {
             abort(403, 'Forbidden');
         }
@@ -2147,11 +2214,18 @@ class PatientMedicalRecord extends Controller
     public function AddSocialHistory(Request $request)
     {
         $rights = $this->rights;
-        $add = explode(',', $rights->encounters_and_procedures)[0];
-        if($add == 0)
+        // $add = explode(',', $rights->encounters_and_procedures)[0];
+        // if($add == 0)
+        // {
+        //     abort(403, 'Forbidden');
+        // }
+        $encountersAdd = explode(',', $rights->encounters_and_procedures)[0];
+        $vitalSignsAdd = explode(',', $rights->vital_signs)[0];
+        if ($encountersAdd == 0 && $vitalSignsAdd == 0) 
         {
             abort(403, 'Forbidden');
         }
+
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
@@ -2246,8 +2320,15 @@ class PatientMedicalRecord extends Controller
     public function GetSocialHistoryData($mr)
     {
         $rights = $this->rights;
-        $view = explode(',', $rights->encounters_and_procedures)[1];
-        if($view == 0)
+        // $view = explode(',', $rights->encounters_and_procedures)[1];
+        // if($view == 0)
+        // {
+        //     abort(403, 'Forbidden');
+        // }
+
+        $encountersView = explode(',', $rights->encounters_and_procedures)[1];
+        $vitalSignsView = explode(',', $rights->vital_signs)[1];
+        if ($encountersView == 0 && $vitalSignsView == 0) 
         {
             abort(403, 'Forbidden');
         }
@@ -2809,6 +2890,7 @@ class PatientMedicalRecord extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $RequisitionForEPI->effective_timestamp = 0;
 
         }
         $RequisitionForEPI->status = $UpdateStatus;
@@ -3349,6 +3431,7 @@ class PatientMedicalRecord extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $ReqMC->effective_timestamp = 0;
 
         }
         $ReqMC->status = $UpdateStatus;

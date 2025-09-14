@@ -309,6 +309,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $InventoryCategories->effective_timestamp = 0;
 
         }
         $InventoryCategories->status = $UpdateStatus;
@@ -631,6 +632,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $InventorySubCategories->effective_timestamp = 0;
 
         }
         $InventorySubCategories->status = $UpdateStatus;
@@ -1001,6 +1003,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $InventoryTypes->effective_timestamp = 0;
 
         }
         $InventoryTypes->status = $UpdateStatus;
@@ -1347,6 +1350,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $InventoryGenerics->effective_timestamp = 0;
 
         }
         $InventoryGenerics->status = $UpdateStatus;
@@ -1786,6 +1790,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $InventoryBrands->effective_timestamp = 0;
 
         }
         $InventoryBrands->status = $UpdateStatus;
@@ -2205,6 +2210,8 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $InventoryTransactionTypes->effective_timestamp = $CurrentTimestamp;
+
 
         }
         $InventoryTransactionTypes->status = $UpdateStatus;
@@ -3011,6 +3018,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $ThirdParty->effective_timestamp = $CurrentTimestamp;
 
         }
         $ThirdParty->status = $UpdateStatus;
@@ -3341,6 +3349,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $ConsumptionGroup->effective_timestamp = $CurrentTimestamp;
 
         }
         $ConsumptionGroup->status = $UpdateStatus;
@@ -3662,6 +3671,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $ConsumptionMethod->effective_timestamp = $CurrentTimestamp;
 
         }
         $ConsumptionMethod->status = $UpdateStatus;
@@ -4042,7 +4052,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $StockMonitoring->effective_timestamp = 0;
         }
         $StockMonitoring->status = $UpdateStatus;
         $StockMonitoring->last_updated = $CurrentTimestamp;
@@ -4399,6 +4409,7 @@ class InventoryController extends Controller
         }
         else{
             $UpdateStatus = 0;
+            $InventorySourceDestinationType->effective_timestamp = 0;
             $statusLog = 'Inactive';
 
         }
@@ -4706,7 +4717,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $InventoryTransactionActivity->effective_timestamp = 0;
         }
         $InventoryTransactionActivity->status = $UpdateStatus;
         $InventoryTransactionActivity->last_updated = $CurrentTimestamp;
@@ -5004,6 +5015,7 @@ class InventoryController extends Controller
         }
         else{
             $UpdateStatus = 0;
+            $MedicationRoute->effective_timestamp = 0;
             $statusLog = 'Inactive';
 
         }
@@ -5304,7 +5316,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $MedicationFrequency->effective_timestamp = 0;
         }
         $MedicationFrequency->status = $UpdateStatus;
         $MedicationFrequency->last_updated = $CurrentTimestamp;
@@ -5905,7 +5917,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $MaterialConsumptionRequisition->effective_timestamp = 0;
         }
         $MaterialConsumptionRequisition->status = $UpdateStatus;
         $MaterialConsumptionRequisition->last_updated = $CurrentTimestamp;
@@ -6381,7 +6393,7 @@ class InventoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $RequisitionMaterialTransfer->effective_timestamp = 0;
         }
         $RequisitionMaterialTransfer->status = $UpdateStatus;
         $RequisitionMaterialTransfer->last_updated = $CurrentTimestamp;
@@ -8176,7 +8188,6 @@ class InventoryController extends Controller
         $empLocSide = null;
         
         if ($transactionType === 'requisition') {
-
             // For requisition transactions, use emp_location_mandatory_request
             $empLocSide = strtolower((string) $TransactionType->emp_location_mandatory_request); // 's', 'd', 'n'
         } else {
@@ -8184,6 +8195,7 @@ class InventoryController extends Controller
             // For external transactions and other transactions (or when transactionType is not provided), use emp_location_source_destination
             $empLocSide = strtolower((string) $TransactionType->emp_location_source_destination); // 's', 'd', 'n'
         }
+        
         // dd($empLocSide, $TransactionType->emp_location_source_destination, $TransactionType->emp_location_mandatory_request);
 
         // Prepare final arrays

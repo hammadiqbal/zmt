@@ -266,7 +266,7 @@ class UserController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $role->effective_timestamp = 0;
         }
         // Find the role by ID
         $role->status = $UpdateStatus;
@@ -619,7 +619,8 @@ class UserController extends Controller
         ->join('role', 'role.id', '=', 'user.role_id')
         ->leftJoin('employee', 'employee.id', '=', 'user.emp_id')
         ->leftJoin('org_site', 'org_site.id', '=', 'employee.site_id')
-        ->where('role.id', '!=', '1');
+        ->where('role.id', '!=', '1')
+        ->orderBy('user.id', 'desc');
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
@@ -677,9 +678,12 @@ class UserController extends Controller
                     . $effectiveDate . " <br><b>RecordedAt:</b> " . $timestamp ." <br><b>LastUpdated:</b>
                     " . $lastUpdated;
 
+                $siteEnabled = $user->site_enabled ? '<hr class="mt-1 mb-1"><b>Sites Access:</b> <code class="p-0">Yes</code>' : '<hr class="mt-1 mb-1"><b>Sites Access:</b> <code class="p-0">No</code>';
+
                 return $UserCode.$orgName
                     . (isset($user->sitename) && !is_null($user->sitename) ? '<br> <b>Site:</b> '.ucwords($user->sitename) : '')
                     .''.$EmploymentStatus.''
+                    .''.$siteEnabled.''
                     . '<hr class="mt-1 mb-2">'
                     . '<span class="label label-info popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $createdInfo .'">'
                     . '<i class="fa fa-toggle-right"></i> View Details'
@@ -726,6 +730,7 @@ class UserController extends Controller
             abort(403, 'Forbidden');
         }
         $isEmployee = trim($request->input('isEmployee'));
+        $siteEnabled = trim($request->input('siteStatus'));
         $username = strtolower(trim($request->input('username')));
         $useremail = strtolower(trim($request->input('useremail')));
         $userRoleId = trim($request->input('userRole'));
@@ -813,6 +818,7 @@ class UserController extends Controller
         $Users->password = $password;
         $Users->role_id = $userRoleId;
         $Users->is_employee = $isEmployee;
+        $Users->site_enabled = $siteEnabled;
         $Users->org_id = $userOrgId;
         $Users->user_id = $sessionId;
         $Users->emp_id = $userEmpId;
@@ -878,7 +884,7 @@ class UserController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $user->effective_timestamp = 0;
         }
         // Find the role by ID
         $user->status = $UpdateStatus;
@@ -919,6 +925,7 @@ class UserController extends Controller
 
         $name = $user->name;
         $email = $user->email;
+        $siteEnabled = $user->site_enabled;
         $roleId = $user->role_id;
         $roleName = ucwords($user->rolename);
         $isEmployee = $user->is_employee;
@@ -942,6 +949,7 @@ class UserController extends Controller
         $data = [
             'name' => ucwords($name),
             'email' => $email,
+            'siteEnabled' => $siteEnabled,
             'rolename' => $roleName,
             'orgName' => $orgName,
             'orgId' => $orgId,
@@ -974,6 +982,8 @@ class UserController extends Controller
             $user->org_id = $userOrg;
         }       
         $user->emp_id = $request->input('user_emp');
+        $siteEnabled = $request->input('u_siteStatus');
+        $user->site_enabled = ($siteEnabled == 'on') ? 1 : 0;
         $effective_date = $request->input('user_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');

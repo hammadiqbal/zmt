@@ -9,15 +9,15 @@
                     <div class="form-group">
                         <div class="col-xs-12 text-center">
                           <div class="user-thumb text-center">
-                            <h3><b>{{ucwords($user->name)}}</b></h3>
+                            <h3><b>{{ucwords($resetUser->name)}}</b></h3>
                           </div>
                         </div>
                       </div>
                     <div class="form-group mb-1">
                         <label class="col-md-12">New Password</label>
-                        <input type="hidden" name="userId" value="{{$user->id}}">
-                        <input type="hidden" name="userEmail" value="{{$user->email}}">
-                        <input type="hidden" name="userName" value="{{$user->name}}">
+                        <input type="hidden" name="userId" value="{{$resetUser->id}}">
+                        <input type="hidden" name="userEmail" value="{{$resetUser->email}}">
+                        <input type="hidden" name="userName" value="{{$resetUser->name}}">
 
                         <div class="col-md-12 mb-1">
                             <input type="password" name="u_pwd" class="form-control showpwd form-control-line">

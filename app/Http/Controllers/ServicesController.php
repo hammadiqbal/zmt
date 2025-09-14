@@ -250,7 +250,7 @@ class ServicesController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $ServiceModes->effective_timestamp = 0;
         }
         $ServiceModes->status = $UpdateStatus;
         $ServiceModes->last_updated = $CurrentTimestamp;
@@ -533,6 +533,7 @@ class ServicesController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $ServiceTypes->effective_timestamp = 0;
 
         }
         $ServiceTypes->status = $UpdateStatus;
@@ -803,7 +804,7 @@ class ServicesController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $ServiceUnits->effective_timestamp = 0;
         }
         $ServiceUnits->status = $UpdateStatus;
         $ServiceUnits->last_updated = $CurrentTimestamp;
@@ -1093,7 +1094,7 @@ class ServicesController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $ServiceGroups->effective_timestamp = 0;
         }
         $ServiceGroups->status = $UpdateStatus;
         $ServiceGroups->last_updated = $CurrentTimestamp;
@@ -1420,7 +1421,7 @@ class ServicesController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $Services->effective_timestamp = 0;
         }
         $Services->status = $UpdateStatus;
         $Services->last_updated = $CurrentTimestamp;
@@ -1925,7 +1926,7 @@ class ServicesController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $ActivateService->effective_timestamp = 0;
         }
         // Find the role by ID
         $ActivateService->status = $UpdateStatus;
@@ -2640,7 +2641,7 @@ class ServicesController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $ServiceLocation->effective_timestamp = 0;
         }
         // Find the role by ID
         $ServiceLocation->status = $UpdateStatus;
@@ -3152,7 +3153,7 @@ class ServicesController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $ActivatedLocation->effective_timestamp = 0;
         }
         // Find the role by ID
         $ActivatedLocation->status = $UpdateStatus;
@@ -3604,7 +3605,7 @@ class ServicesController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $LocationScheduling->effective_timestamp = 0;
         }
         // Find the role by ID
         $LocationScheduling->status = $UpdateStatus;
@@ -4704,7 +4705,7 @@ class ServicesController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $ServiceBooking->effective_timestamp = 0;
         }
         $ServiceBooking->status = $UpdateStatus;
         $ServiceBooking->last_updated = $CurrentTimestamp;
@@ -5103,6 +5104,7 @@ class ServicesController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $ServiceRequisition->effective_timestamp = 0;
         }
         $ServiceRequisition->status = $UpdateStatus;
         $ServiceRequisition->last_updated = $CurrentTimestamp;

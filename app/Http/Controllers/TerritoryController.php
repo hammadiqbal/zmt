@@ -621,6 +621,7 @@ class TerritoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
+            $province->effective_timestamp = 0;
         }
         // Find the role by ID
         $province->status = $UpdateStatus;
@@ -662,13 +663,12 @@ class TerritoryController extends Controller
         {
             $UpdateStatus = 1;
             $statusLog = 'Active';
-
             $division->effective_timestamp = $CurrentTimestamp;
         }
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $division->effective_timestamp = 0;
         }
         // Find the role by ID
         $division->status = $UpdateStatus;
@@ -716,7 +716,7 @@ class TerritoryController extends Controller
         else{
             $UpdateStatus = 0;
             $statusLog = 'Inactive';
-
+            $district->effective_timestamp = 0;
         }
         // Find the role by ID
         $district->status = $UpdateStatus;
