@@ -3257,7 +3257,7 @@ class FinanceController extends Controller
         return view('dashboard.finance-transaction-receiving', compact('user','Organizations'));
     }
 
-    public function GetTransactionTypes(Request $request)
+    public function GetFinanceTransactionTypes(Request $request)
     {
         $Id = $request->input('id');
         $query = FinancialTransactionTypes::select('id', 'name', 'discount_allowed');

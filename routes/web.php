@@ -389,7 +389,7 @@ Route::post('hr/update-prefix/{id}', [App\Http\Controllers\HRController::class, 
 Route::get('employee-status', [App\Http\Controllers\HRController::class, 'EmployeeStatus'])->name('employee-status');
 Route::post('hr/addempStatus', [App\Http\Controllers\HRController::class, 'AddEmployeeStatus'])->name('hr.addempStatus');
 Route::get('hr/empStatusdata', [App\Http\Controllers\HRController::class, 'GetEmployeeStatusData'])->name('hr.empStatusdata');
-Route::get('hr/emp-status', [App\Http\Controllers\HRController::class, 'UpdateEmployeeStatus'])->name('UpdateEmployeeStatusModal');
+Route::get('hr/emp-status', [App\Http\Controllers\HRController::class, 'UpdateEmployeeStatus'])->name('UpdateEmployeeStatus');
 Route::get('hr/updateempStatus/{id}', [App\Http\Controllers\HRController::class, 'UpdateEmployeeStatusModal'])->name('UpdateEmployeeStatusModal');
 Route::post('hr/update-empStatus/{id}', [App\Http\Controllers\HRController::class, 'UpdateEmployeeStatusData'])->name('UpdateEmployeeStatusData');
 
@@ -673,7 +673,7 @@ Route::post('inventory/update-consumptiongroup/{id}', [App\Http\Controllers\Inve
 
 Route::get('consumption-method', [App\Http\Controllers\InventoryController::class, 'ViewConsumptionMethods'])->name('consumption-method');
 Route::post('inventory/addconsumptionmethod', [InventoryController::class, 'AddConsumptionMethod'])->name('AddConsumptionMethod');
-Route::get('inventory/viewconsumptionmethod', [App\Http\Controllers\InventoryController::class, 'GetConsumptionMethodData'])->name('GetConsumptionGroupData');
+Route::get('inventory/viewconsumptionmethod', [App\Http\Controllers\InventoryController::class, 'GetConsumptionMethodData'])->name('GetConsumptionMethodData');
 Route::get('inventory/cm-status', [App\Http\Controllers\InventoryController::class, 'UpdateConsumptionMethodStatus'])->name('UpdateConsumptionMethodStatus');
 Route::get('inventory/updateconsumptionmethod/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateConsumptionMethodModal'])->name('UpdateConsumptionMethodModal');
 Route::post('inventory/update-consumptionmethod/{id}', [App\Http\Controllers\InventoryController::class, 'UpdateConsumptionMethod'])->name('UpdateConsumptionMethod');
@@ -777,7 +777,7 @@ Route::get('finance/updateransactionsd/{id}', [App\Http\Controllers\FinanceContr
 Route::post('finance/update-transactionsd/{id}', [App\Http\Controllers\FinanceController::class, 'UpdateTransactionSourcesDestinations'])->name('UpdateTransactionSourcesDestinations');
 
 Route::get('finance/getsourcedestination', [FinanceController::class, 'GetTransactionSourceDestinations'])->name('GetTransactionSourceDestinations');
-Route::get('finance/gettransactiontypes', [FinanceController::class, 'GetTransactionTypes'])->name('GetTransactionTypes');
+Route::get('finance/gettransactiontypes', [FinanceController::class, 'GetFinanceTransactionTypes'])->name('GetFinanceTransactionTypes');
 
 // Transaction Sources or Destinations
 
