@@ -1,0 +1,409 @@
+
+<!-- ============================================================== -->
+<!-- Start Header  -->
+<!-- ============================================================== -->
+@include('partials/header')
+<!-- ============================================================== -->
+<!-- End Header  -->
+<!-- ============================================================== -->
+
+
+<!-- ============================================================== -->
+<!-- Start Top Bar  -->
+<!-- ============================================================== -->
+@include('partials/topbar')
+<!-- ============================================================== -->
+<!-- End Top Bar  -->
+<!-- ============================================================== -->
+
+
+<!-- ============================================================== -->
+<!-- Start Side Bar  -->
+<!-- ============================================================== -->
+@include('partials/sidebar')
+<!-- ============================================================== -->
+<!-- End Side Bar  -->
+<!-- ============================================================== -->
+<style>
+.show-tick .btn{background: none !important;padding: 7px 20px 2px 0;border-bottom: 1px solid #222d32;height: calc(2.45rem + 2px);}
+.smode button.btn.dropdown-toggle.btn-default {border: 1px solid rgba(0,0,0,.15);}
+</style>
+
+
+<!-- ============================================================== -->
+<!-- Page wrapper  -->
+<!-- ============================================================== -->
+<div class="page-wrapper">
+    <div class="row page-titles">
+        <div class="col-md-8 align-self-center">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">Home</li>
+                <li class="breadcrumb-item">Settings</li>
+                <li class="breadcrumb-item active">Requisition For Material Transfers</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col">
+                    <h4 class="card-title">All Requisition For Material Transfers</h4>
+                </div>
+                @php
+                $Requisition_for_material_transfer = explode(',', $rights->requisition_for_material_transfer);
+                $add = $Requisition_for_material_transfer[0];
+                $view = $Requisition_for_material_transfer[1];
+                $edit = $Requisition_for_material_transfer[2];
+                $updateStatus = $Requisition_for_material_transfer[3];
+                @endphp
+                @if ($add == 1)
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary p-2 add-reqmaterialtransfer">
+                        <i class="mdi mdi-clipboard-account"></i> Add Requisition For Material Transfer
+                    </button>
+                </div>
+                @endif
+            </div>
+
+            @if ($add == 1)
+            <div class="modal fade bs-example-modal-lg" id="add-reqmaterialtransfer" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title" id="myLargeModalLabel">Add Requisition For Material Transfers</h4>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        </div>
+                        <form id="add_reqmaterialtransfer" method="post" enctype="multipart/form-data">
+                            @csrf
+                            <input type="hidden" id="source_applicable" name="source_applicable" value="1">
+                            <input type="hidden" id="destination_applicable" name="destination_applicable" value="1">
+                            <div class="modal-body">
+                                <!-- Row -->
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="card-body">
+                                            <div class="form-body">
+                                                <div class="row">
+                                                    @if($user->org_id != 0)
+                                                    <div class="userOrganization">
+                                                        <select class="form-contro selecter p-0" id="rmt_org" name="rmt_org">
+                                                            <option selected value='{{ $user->org_id }}'>{{ $user->orgName }}</option>
+                                                        </select>
+                                                    </div>
+                                                    @else
+                                                    <div class="col-md-6">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Organization</label>
+                                                                    <select class="form-control selecter p-0" name="rmt_org" id="rmt_org" style="color:#222d32">
+                                                                    </select>
+                                                                </div>
+                                                                <span class="text-danger" id="rmt_org_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    @endif
+
+                                                    <div class="col-md-6">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Transaction Type</label>
+                                                                    <select class="form-control selecter p-0" name="rmt_transactiontype" id="rmt_transactiontype" style="color:#222d32">
+                                                                    </select>
+                                                                    <span class="bar"></span>
+                                                                </div>
+                                                                <span class="text-danger" id="rmt_transactiontype_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6 s_data">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Source Site</label>
+                                                                    <select class="form-control selecter p-0" name="rmt_source_site" id="rmt_source_site" style="color:#222d32">
+                                                                    </select>
+                                                                    <span class="bar"></span>
+                                                                </div>
+                                                                <span class="text-danger" id="rmt_source_site_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6 s_data">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Select Source Location </label>
+                                                                    <select class="form-control selecter p-0" name="rmt_source_location" id="rmt_source_location" style="color:#222d32">
+                                                                    </select>
+                                                                </div>
+                                                                <span class="text-danger" id="rmt_source_location_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6 d_data">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Destination Site</label>
+                                                                    <select class="form-control selecter p-0" name="rmt_destination_site" id="rmt_destination_site" style="color:#222d32">
+                                                                    </select>
+                                                                    <span class="bar"></span>
+                                                                </div>
+                                                                <span class="text-danger" id="rmt_destination_site_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6 d_data">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Select Destination Location </label>
+                                                                    <select class="form-control selecter p-0" name="rmt_destination_location" id="rmt_destination_location" style="color:#222d32">
+                                                                    </select>
+                                                                </div>
+                                                                <span class="text-danger" id="rmt_destination_location_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+
+                                                    <div class="col-md-6">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label for="rmt_remarks">Enter Remarks <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                                    <textarea class="form-control" rows="1" placeholder="Enter Remarks" name="rmt_remarks" id="rmt_remarks"></textarea>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+                                                <div class="row pt-4 pb-1 duplicate" style="border: 1px solid #939393;">
+
+                                                    <div class="col-md-6">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Select Item Generic</label>
+                                                                    <select class="form-control selecter p-0 rmt_itemgeneric" name="rmt_itemgeneric[]" style="color:#222d32">
+                                                                    </select>
+                                                                </div>
+                                                                <span class="text-danger rmt_itemgeneric_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-md-6">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Enter Demand Qty</label>
+                                                                    <input type="number" class="form-control input-sm" placeholder="Demand Qty.." name="rmt_qty[]">
+                                                                </div>
+                                                                <span class="text-danger rmt_qty_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-12 d-flex justify-content-center p-2">
+                                                    <button type="button" id="addMoreBtn" class="btn btn-success mr-2"> <i class="mdi mdi-plus"></i> Add More</button>
+                                                    <button type="button" id="removeBtn" class="btn btn-danger"> <i class="mdi mdi-minus"></i> Remove</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Row -->
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal">Exit</button>
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            @if ($view == 1)
+            <div class="table-responsive m-t-40">
+                <table id="view-reqmaterialtransfer" class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Requisition Details</th>
+                            <th>Item Details</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+            @endif
+        </div>
+    </div>
+
+    @if ($edit == 1)
+    <div class="modal fade bs-example-modal-lg" id="edit-reqmaterialtransfer" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myLargeModalLabel">Update Requisition for Material Transfers</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <form id="update_reqmaterialtransfer" method="post" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body">
+                        <input type="hidden" class="form-control u_rmt-id" name="u_rmt-id">
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="card-body">
+                                    <div class="form-body">
+                                        <div class="row">
+
+                                            @if($user->org_id == 0)
+                                            <div class="col-md-6">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Organization</label>
+                                                            <select class="form-control selecter p-0" name="u_rmt_org" required id="u_rmt_org" style="color:#222d32">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @endif
+
+                                            <div class="col-md-6">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Transaction type</label>
+                                                            <select class="form-control selecter p-0" name="u_rmt_transactiontype" required id="u_rmt_transactiontype" style="color:#222d32">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6 u_rmt_source">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Source Site</label>
+                                                            <select class="form-control selecter p-0" name="u_rmt_source_site" required id="u_rmt_source_site" style="color:#222d32">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6 u_rmt_source">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Source Location</label>
+                                                            <select class="form-control selecter p-0" name="u_rmt_source_location" required id="u_rmt_source_location" style="color:#222d32">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6 u_rmt_destination">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Destination Site</label>
+                                                            <select class="form-control selecter p-0" name="u_rmt_destination_site" required id="u_rmt_destination_site" style="color:#222d32">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6 u_rmt_destination">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Destination Location</label>
+                                                            <select class="form-control selecter p-0" name="u_rmt_destination_location" required id="u_rmt_destination_location" style="color:#222d32">
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                          
+
+
+
+                                            <div class="col-md-6">
+                                                <div class="form-group row m-b-5">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group m-b-5">
+                                                            <label class="control-label">Update Remarks <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                            <textarea class="form-control" rows="1" id="u_rmt_remarks" name="u_rmt_remarks" spellcheck="false"></textarea>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                        <div class="uduplicate">
+                                        </div>
+
+                                        <div class="d-flex justify-content-center pt-3">
+                                            <button type="button" id="urmt_addmore" class="btn btn-success mr-2">
+                                            <i class="mdi mdi-plus"></i> Add More</button>
+
+                                            <button type="button" id="urmt_remove" class="btn btn-danger mr-2">
+                                            <i class="mdi mdi-minus"></i> Remove</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Exit</button>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    <!-- ============================================================== -->
+    <!-- Start Footer  -->
+    <!-- ============================================================== -->
+    @include('partials/footer')
+    <!-- ============================================================== -->
+    <!-- End Footer  -->
+    <!-- ============================================================== -->
+    <script>
+        $('.selectpicker').selectpicker();
+        $('#date-format').bootstrapMaterialDatePicker({
+                format: 'dddd DD MMMM YYYY - hh:mm A',
+                currentDate: new Date()
+        });
+        $('#date-format1').bootstrapMaterialDatePicker({
+            format: 'dddd DD MMMM YYYY - hh:mm:ss A',
+            minDate: new Date()
+        });
+    </script>
+    <script src="{{ asset('assets/custom/req_material_transfer.js') }}"></script>
