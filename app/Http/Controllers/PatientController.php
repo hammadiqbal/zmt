@@ -1909,46 +1909,53 @@ class PatientController extends Controller
                     $endDate = $thisWeekEnd->copy()->endOfDay()->timestamp;
                     break;
                 case 'last_week':
-                    // Use last week's start date in Asia/Karachi timezone (date only, no time)
+                    // Use last week's start and end dates in Asia/Karachi timezone
                     $lastWeekStart = Carbon::now()->setTimezone('Asia/Karachi')->subWeek()->startOfWeek();
+                    $lastWeekEnd = Carbon::now()->setTimezone('Asia/Karachi')->subWeek()->endOfWeek();
                     $startDate = $lastWeekStart->copy()->startOfDay()->timestamp;
+                    $endDate = $lastWeekEnd->copy()->endOfDay()->timestamp;
                     break;
                 case 'this_month':
-                    // Use this month's start date in Asia/Karachi timezone (date only, no time)
+                    // Use this month's start and end dates in Asia/Karachi timezone
                     $thisMonthStart = Carbon::now()->setTimezone('Asia/Karachi')->startOfMonth();
+                    $thisMonthEnd = Carbon::now()->setTimezone('Asia/Karachi')->endOfMonth();
                     $startDate = $thisMonthStart->copy()->startOfDay()->timestamp;
+                    $endDate = $thisMonthEnd->copy()->endOfDay()->timestamp;
                     break;
                 case 'last_month':
-                    // Use last month's start date in Asia/Karachi timezone (date only, no time)
+                    // Use last month's start and end dates in Asia/Karachi timezone
                     $currentYear = Carbon::now()->setTimezone('Asia/Karachi')->year;
                     $currentMonth = Carbon::now()->setTimezone('Asia/Karachi')->month;
                     $lastMonthYear = $currentMonth == 1 ? $currentYear - 1 : $currentYear;
                     $lastMonth = $currentMonth == 1 ? 12 : $currentMonth - 1;
                     
                     $lastMonthStart = Carbon::create($lastMonthYear, $lastMonth, 1, 0, 0, 0, 'Asia/Karachi');
+                    $lastMonthEnd = Carbon::create($lastMonthYear, $lastMonth, 1, 0, 0, 0, 'Asia/Karachi')->endOfMonth();
                     $startDate = $lastMonthStart->copy()->startOfDay()->timestamp;
-
+                    $endDate = $lastMonthEnd->copy()->endOfDay()->timestamp;
                     break;
                 case 'this_year':
-                    // Use this year's start date in Asia/Karachi timezone (date only, no time)
+                    // Use this year's start and end dates in Asia/Karachi timezone
                     $currentYear = Carbon::now()->setTimezone('Asia/Karachi')->year;
                     $thisYearStart = Carbon::create($currentYear, 1, 1, 0, 0, 0, 'Asia/Karachi');
+                    $thisYearEnd = Carbon::create($currentYear, 12, 31, 23, 59, 59, 'Asia/Karachi');
                     $startDate = $thisYearStart->copy()->startOfDay()->timestamp;
-           
+                    $endDate = $thisYearEnd->copy()->endOfDay()->timestamp;
                     break;
                 case 'last_year':
-                    // Use last year's start date in Asia/Karachi timezone (date only, no time)
+                    // Use last year's start and end dates in Asia/Karachi timezone
                     $currentYear = Carbon::now()->setTimezone('Asia/Karachi')->year;
                     $lastYear = $currentYear - 1;
                     $lastYearStart = Carbon::create($lastYear, 1, 1, 0, 0, 0, 'Asia/Karachi');
+                    $lastYearEnd = Carbon::create($lastYear, 12, 31, 23, 59, 59, 'Asia/Karachi');
                     $startDate = $lastYearStart->copy()->startOfDay()->timestamp;
-               
+                    $endDate = $lastYearEnd->copy()->endOfDay()->timestamp;
                     break;
                 default:
-                    // Default to today - Use current date in Asia/Karachi timezone (date only, no time)
+                    // Default to today - Use current date in Asia/Karachi timezone
                     $today = Carbon::now()->setTimezone('Asia/Karachi');
                     $startDate = $today->copy()->startOfDay()->timestamp;
-        
+                    $endDate = $today->copy()->endOfDay()->timestamp;
                     break;
             }
             

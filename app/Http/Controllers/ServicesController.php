@@ -4198,7 +4198,6 @@ class ServicesController extends Controller
         if ($request->has('date_filter') && $request->date_filter != '') {
             $dateFilter = $request->date_filter;
             
-            \Log::info('=== DATE FILTER DEBUG START ===');
         
             $today = Carbon::today()->setTimezone('Asia/Karachi');
             
@@ -4206,37 +4205,22 @@ class ServicesController extends Controller
                 case 'today':
                     $startDate = Carbon::today()->setTimezone('Asia/Karachi')->startOfDay()->timestamp;
                     $endDate = Carbon::today()->setTimezone('Asia/Karachi')->endOfDay()->timestamp;
-                    \Log::info('Today Filter:');
-                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
-                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
                     break;
                 case 'yesterday':
                     $startDate = Carbon::today()->setTimezone('Asia/Karachi')->subDay()->startOfDay()->timestamp;
                     $endDate = Carbon::today()->setTimezone('Asia/Karachi')->subDay()->endOfDay()->timestamp;
-                    \Log::info('Yesterday Filter:');
-                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
-                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
                     break;
                 case 'this_week':
                     $startDate = Carbon::today()->setTimezone('Asia/Karachi')->startOfWeek()->startOfDay()->timestamp;
                     $endDate = Carbon::today()->setTimezone('Asia/Karachi')->endOfWeek()->endOfDay()->timestamp;
-                    \Log::info('This Week Filter:');
-                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
-                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
                     break;
                 case 'last_week':
                     $startDate = Carbon::today()->setTimezone('Asia/Karachi')->subWeek()->startOfWeek()->startOfDay()->timestamp;
                     $endDate = Carbon::today()->setTimezone('Asia/Karachi')->subWeek()->endOfWeek()->endOfDay()->timestamp;
-                    \Log::info('Last Week Filter:');
-                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
-                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
                     break;
                 case 'this_month':
                     $startDate = Carbon::today()->setTimezone('Asia/Karachi')->startOfMonth()->startOfDay()->timestamp;
                     $endDate = Carbon::today()->setTimezone('Asia/Karachi')->endOfMonth()->endOfDay()->timestamp;
-                    \Log::info('This Month Filter:');
-                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
-                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
                     break;
                 case 'last_month':
                     // Alternative approach: Use specific month calculation with Asia/Karachi timezone
@@ -4247,43 +4231,22 @@ class ServicesController extends Controller
                     
                     $startDate = Carbon::create($lastMonthYear, $lastMonth, 1, 0, 0, 0, 'Asia/Karachi')->timestamp;
                     $endDate = Carbon::create($lastMonthYear, $lastMonth, 1, 0, 0, 0, 'Asia/Karachi')->endOfMonth()->timestamp;
-                    
-                    \Log::info('Last Month Filter (Asia/Karachi):');
-                    \Log::info('  Current Year: ' . $currentYear . ', Current Month: ' . $currentMonth);
-                    \Log::info('  Last Month Year: ' . $lastMonthYear . ', Last Month: ' . $lastMonth);
-                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
-                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
-                    \Log::info('  Start Timestamp: ' . $startDate);
-                    \Log::info('  End Timestamp: ' . $endDate);
                     break;
                 case 'this_year':
                     $currentYear = Carbon::today()->setTimezone('Asia/Karachi')->year;
                     $startDate = Carbon::create($currentYear, 1, 1, 0, 0, 0, 'Asia/Karachi')->startOfYear()->timestamp;
                     $endDate = Carbon::create($currentYear, 12, 31, 23, 59, 59, 'Asia/Karachi')->endOfYear()->timestamp;
-                    
-                    \Log::info('This Year Filter (Asia/Karachi):');
-                    \Log::info('  Current Year: ' . $currentYear);
-                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
-                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
                     break;
                 case 'last_year':
                     $currentYear = Carbon::today()->setTimezone('Asia/Karachi')->year;
                     $lastYear = $currentYear - 1;
                     $startDate = Carbon::create($lastYear, 1, 1, 0, 0, 0, 'Asia/Karachi')->startOfYear()->timestamp;
                     $endDate = Carbon::create($lastYear, 12, 31, 23, 59, 59, 'Asia/Karachi')->endOfYear()->timestamp;
-                    
-                    \Log::info('Last Year Filter (Asia/Karachi):');
-                    \Log::info('  Current Year: ' . $currentYear . ', Last Year: ' . $lastYear);
-                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
-                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
                     break;
                 default:
                     // Default to today
                     $startDate = Carbon::today()->setTimezone('Asia/Karachi')->startOfDay()->timestamp;
                     $endDate = Carbon::today()->setTimezone('Asia/Karachi')->endOfDay()->timestamp;
-                    \Log::info('Default Filter (Today):');
-                    \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
-                    \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
                     break;
             }
             
@@ -4310,9 +4273,6 @@ class ServicesController extends Controller
             // If neither site nor MR is selected, apply today's filter by default
             $startDate = Carbon::today()->setTimezone('Asia/Karachi')->startOfDay()->timestamp;
             $endDate = Carbon::today()->setTimezone('Asia/Karachi')->endOfDay()->timestamp;
-            \Log::info('No Date Filter Applied (Default to Today):');
-            \Log::info('  Start Date: ' . Carbon::createFromTimestamp($startDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
-            \Log::info('  End Date: ' . Carbon::createFromTimestamp($endDate)->setTimezone('Asia/Karachi')->format('Y-m-d H:i:s'));
             
             // Apply date conditions - check each table's timestamp field (date only)
             $query->where(function($q) use ($startDate, $endDate) {
@@ -4330,13 +4290,8 @@ class ServicesController extends Controller
                          ->whereRaw('DATE(FROM_UNIXTIME(req.effective_timestamp)) BETWEEN DATE(FROM_UNIXTIME(?)) AND DATE(FROM_UNIXTIME(?))', [$startDate, $endDate]);
                 });
             });
-        } else {
-            // Site or MR is selected, no date filter applied
-            \Log::info('Site or MR selected - No date filter applied');
-        }
-
+        } 
         // Debug: Log pagination parameters
-        \Log::info('Pagination parameters: Skip ' . $start . ', Take ' . $length);
 
         return DataTables::query($query)
             ->addColumn('id_raw', function ($ServiceBooking) {
