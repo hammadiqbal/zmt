@@ -737,6 +737,7 @@ class UserController extends Controller
         $userOrgId = trim($request->input('userOrg'));
         $userEmpId = trim($request->input('userEmp'));
         $userEdt = $request->input('userEdt');
+        
 
         $userExists = Users::where('email', $useremail)->exists();
         if ($userExists) {

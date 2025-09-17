@@ -10321,9 +10321,13 @@ class InventoryController extends Controller
     {
         $rights = $this->rights;
         $add = explode(',', $rights->issue_and_dispense)[0];
-        if ($add == 0) {
+        $respond = explode(',', $rights->issue_and_dispense)[2];
+        if ($add != 1 && $respond != 1) {
             abort(403, 'Forbidden');
         }
+        // if ($add == 0) {
+        //     abort(403, 'Forbidden');
+        // }
         // Get validated data
         $validated = $request->validated();
         $itemCount = isset($validated['id_generic']) ? count($validated['id_generic']) : 0;
@@ -11528,7 +11532,8 @@ class InventoryController extends Controller
     {
         $rights = $this->rights;
         $add = explode(',', $rights->material_transfer)[0];
-        if ($add == 0) {
+        $respond = explode(',', $rights->material_transfer)[2];
+        if ($add != 1 && $respond != 1) {
             abort(403, 'Forbidden');
         }
 

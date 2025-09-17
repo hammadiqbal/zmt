@@ -42,8 +42,8 @@ $(document).ready(function() {
     });
     
     $(document).on('change', '#userOrg', function() {
-        console.log('change');
         var orgId = $(this).val();
+       
         fetchOrganizationEmployees(orgId, '#userEmp', function(data) {
             if (data.length > 0) {
                 $('#userEmp').empty();
@@ -72,6 +72,7 @@ $(document).ready(function() {
     //Open Add User Setup
     $(document).on('click', '.adduser', function() {
         var orgId = $('#usereOrg').val();
+          $('#siteStatus').val('0');
         $('#userEmp').html("<option selected disabled value=''>Select Employee</option>").prop('disabled', true);
         $('#add-user').modal('show');
         if (orgId) {
@@ -335,7 +336,6 @@ $(document).ready(function() {
                 $('.u_user_org').html("<option selected value='"+orgId+"'>" + orgName + "</option>");
                 $('.user-name').val(response.name).attr('readonly',true);
                 $('.user-email').val(response.email).attr('readonly',true);
-                console.log(response);
                 // Set site enabled checkbox
                 if (response.siteEnabled == 1) {
                     $('#u_siteEnabled').bootstrapSwitch('state', true);

@@ -52,11 +52,11 @@ border: 1px solid rgba(0,0,0,.15);
                     <h4 class="card-title">All Material Transfers</h4>
                 </div>
                 @php
-                $IssueAndDispense = explode(',', $rights->issue_and_dispense);
-                $add = $IssueAndDispense[0];
-                $view = $IssueAndDispense[1];
-                $respond = $IssueAndDispense[2];
-                // $updateStatus = $IssueAndDispense[3];
+                $MaterialTransfer = explode(',', $rights->material_transfer);
+                $add = $MaterialTransfer[0];
+                $view = $MaterialTransfer[1];
+                $respond = $MaterialTransfer[2];
+               
                 @endphp
                 @if ($RequisitionNonMandatory)
                     @if ($add == 1)
