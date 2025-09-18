@@ -47,9 +47,9 @@
                 </div>
                 @php
                 $InvestigationTracking = explode(',', $rights->investigation_tracking);
-                $add = $InvestigationTracking[0];
-                $view = $InvestigationTracking[1];
-                $edit = $InvestigationTracking[2];
+                $view = $InvestigationTracking[0];
+                $confirmSample = $InvestigationTracking[1];
+                $uploadReport = $InvestigationTracking[2];
                 // $updateStatus = $InvestigationTracking[3];
                 @endphp
 
@@ -72,7 +72,7 @@
                                 @if(!empty($PatientDetails->orgName))
                                     <div class="col">
                                         <div class="form-group">
-                                            <label><b>Organization</b></label>
+                                            <label><b>Organization </b></label>
                                             <div class="border p-2 rounded">
                                                 {{ ucfirst($PatientDetails->orgName) }}
                                             </div>
@@ -163,7 +163,7 @@
                 </div>
             </div>
 
-            @if ($add == 1)
+            @if ($confirmSample == 1)
             <div class="modal fade bs-example-modal-lg" id="confirm-sample" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
@@ -224,7 +224,9 @@
                     </div>
                 </div>
             </div>
+            @endif
 
+            @if ($uploadReport == 1)
             <div class="modal fade bs-example-modal-lg" id="upload-report" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
                 <div class="modal-dialog modal-lg" role="document">
                     <div class="modal-content">
@@ -303,7 +305,7 @@
         </div>
     </div>
 
-    @if ($edit == 1)
+    {{-- @if ($edit == 1) --}}
     {{-- <div class="modal fade bs-example-modal-lg" id="edit-reqmc" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
@@ -375,7 +377,7 @@
             </div>
         </div>
     </div> --}}
-    @endif
+    {{-- @endif --}}
 
 
     <!-- ============================================================== -->

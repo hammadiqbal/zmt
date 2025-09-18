@@ -581,7 +581,8 @@ class UserController extends Controller
     }
     public function viewUser()
     {
-        $session = auth()->user();
+        // $session = auth()->user();
+        $session =  $this->sessionUser;
         $sessionOrg = $session->org_id;
         $colName = 'user_setup';
         if (PermissionDenied($colName)) {
