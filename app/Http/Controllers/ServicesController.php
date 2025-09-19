@@ -46,6 +46,7 @@ class ServicesController extends Controller
     private $sessionUser;
     private $roles;
     private $rights;
+    private $assignedSites;
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
@@ -53,6 +54,7 @@ class ServicesController extends Controller
             $this->sessionUser = session('user');
             $this->roles = session('role');
             $this->rights = session('rights');
+            $this->assignedSites = session('sites');
             if (Auth::check()) {
                 return $next($request);
             } else {
@@ -1561,7 +1563,15 @@ class ServicesController extends Controller
         ->where('status', 1)
         ->get();
 
-        $Sites = Site::where('status', 1)->get();
+        $Sites = Site::where('status', 1);
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Sites->whereIn('id', $sessionSiteIds);
+            }
+        }
+        $Sites = $Sites->get();
+
         $CostCenters = CostCenter::where('status', 1)->get();
         $ServiceTypes = ServiceType::where('status', 1)->get();
         $ServiceGroups = ServiceGroup::where('status', 1)->get();
@@ -1695,6 +1705,14 @@ class ServicesController extends Controller
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $ServiceActivations->whereIn('org_site.id', $sessionSiteIds);
+            }
+        }
+
         if($sessionOrg != '0')
         {
             $ServiceActivations->where('activated_service.org_id', '=', $sessionOrg);
@@ -2765,7 +2783,14 @@ class ServicesController extends Controller
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
-        $Sites = Site::where('status', 1)->get();
+        $Sites = Site::where('status', 1);
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Sites->whereIn('id', $sessionSiteIds);
+            }
+        }
+        $Sites = $Sites->get();
 
         return view('dashboard.service-location-activation', compact('user','Organizations','Sites'));
     }
@@ -3043,6 +3068,13 @@ class ServicesController extends Controller
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $ActivatedLocations->whereIn('org_site.id', $sessionSiteIds);
+            }
+        }
         if($sessionOrg != '0')
         {
             $ActivatedLocations->where('activated_location.org_id', '=', $sessionOrg);
@@ -3285,12 +3317,19 @@ class ServicesController extends Controller
         // $Employees = Employee::where('status', 1)->get();
         $Employees = Employee::join('prefix', 'prefix.id', '=', 'employee.prefix_id')
         ->where('employee.status', 1)
-        ->whereRaw('LOWER(prefix.name) LIKE ?', ['%dr.%'])
-        ->get([
+        ->whereRaw('LOWER(prefix.name) LIKE ?', ['%dr.%']);
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Employees->whereIn('employee.site_id', $sessionSiteIds);
+            }
+        }
+        $Employees = $Employees->get([
             'employee.id',
             'employee.name',
             'prefix.name as prefix'
         ]);
+        
         return view('dashboard.service-location-scheduling', compact('Employees','user','Organizations'));
     }
 
@@ -3450,8 +3489,16 @@ class ServicesController extends Controller
         ->join('organization', 'organization.id', '=', 'service_location_scheduling.org_id')
         ->join('org_site', 'org_site.id', '=', 'service_location_scheduling.site_id')
         ->join('service_location', 'service_location.id', '=', 'service_location_scheduling.service_location_id')
-        ->leftJoin('employee', 'employee.id', '=', 'service_location_scheduling.emp_id')
-        ->orderBy('service_location_scheduling.id', 'desc');
+        ->leftJoin('employee', 'employee.id', '=', 'service_location_scheduling.emp_id');
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $LocationSchedulings->whereIn('service_location_scheduling.site_id', $sessionSiteIds);
+            }
+        }
+        $LocationSchedulings = $LocationSchedulings->orderBy('service_location_scheduling.id', 'desc');
+        
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
@@ -3861,16 +3908,16 @@ class ServicesController extends Controller
         }
         $user = auth()->user();
         $Organizations = Organization::select('id', 'organization')->where('status', 1)->get();
-        $Patients = PatientRegistration::select('patient.mr_code')
-        ->where('patient.status', 1)
-        ->leftJoin('service_booking', function($join) {
-            $join->on('patient.mr_code', '=', DB::raw('service_booking.mr_code collate utf8mb4_unicode_ci'))
-                ->where('service_booking.status', 1);
-        })
-        ->whereNull('service_booking.mr_code')
-        ->get();
+        // $Patients = PatientRegistration::select('patient.mr_code')
+        // ->where('patient.status', 1)
+        // ->leftJoin('service_booking', function($join) {
+        //     $join->on('patient.mr_code', '=', DB::raw('service_booking.mr_code collate utf8mb4_unicode_ci'))
+        //         ->where('service_booking.status', 1);
+        // })
+        // ->whereNull('service_booking.mr_code')
+        // ->get();
 
-        return view('dashboard.service-booking', compact('user','Organizations','Patients'));
+        return view('dashboard.service-booking', compact('user','Organizations'));
     }
 
     public function AddServiceBooking(ServiceBookingRequest $request)
@@ -4054,11 +4101,6 @@ class ServicesController extends Controller
         $orderDir = $request->input('order.0.dir', 'desc');
         $draw = $request->input('draw', 1);
         
-        // Debug: Log server-side parameters
-        \Log::info('=== DATATABLES SERVER-SIDE DEBUG ===');
-        \Log::info('Start: ' . $start . ', Length: ' . $length . ', Draw: ' . $draw);
-        \Log::info('Search: "' . $search . '"');
-        \Log::info('Order Column: ' . $orderColumn . ', Order Dir: ' . $orderDir);
         
         $query = DB::table(DB::raw("(
             SELECT mr_code, emp_id, billing_cc, service_id, service_mode_id
@@ -4188,6 +4230,12 @@ class ServicesController extends Controller
         }
         if ($request->has('mr_no') && $request->mr_no != '' && $request->mr_no != 'Loading...') {
             $query->where('p.mr_code', $request->mr_no);
+        }
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $query->whereIn('p.site_id', $sessionSiteIds);
+            }
         }
 
         // Check if site or MR is selected

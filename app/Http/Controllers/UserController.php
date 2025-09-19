@@ -31,6 +31,7 @@ class UserController extends Controller
     private $sessionUser;
     private $roles;
     private $rights;
+    private $assignedSites;
 
     public function __construct()
     {
@@ -40,6 +41,8 @@ class UserController extends Controller
             $this->sessionUser = session('user');
             $this->roles = session('role');
             $this->rights = session('rights');
+            $this->assignedSites = session('sites');
+            
             if (Auth::check()) {
                 return $next($request);
             } else {
@@ -629,6 +632,15 @@ class UserController extends Controller
         {
             $users->where('user.org_id', '=', $sessionOrg);
         }
+        
+        // Check if session user is employee and add site filtering
+        if($session->is_employee == 1 && $session->site_enabled == 0) {
+            $sessionSiteIds = session('sites', []);
+            if(!empty($sessionSiteIds)) {
+                $users->whereIn('employee.site_id', $sessionSiteIds);
+            }
+        }
+        
         $users = $users;
         // ->get();
         // return DataTables::of($users)
@@ -985,7 +997,8 @@ class UserController extends Controller
         }       
         $user->emp_id = $request->input('user_emp');
         $siteEnabled = $request->input('u_siteStatus');
-        $user->site_enabled = ($siteEnabled == 'on') ? 1 : 0;
+        //  ($siteEnabled == 'on') ? 1 : 0
+        $user->site_enabled =$siteEnabled;
         $effective_date = $request->input('user_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');

@@ -43,6 +43,9 @@ $(document).ready(function() {
         $('#ss_location').html("<option selected disabled value=''>Select Service Location</option>").prop('disabled', true);
         SiteChangeActivatedServiceLocation('#ss_site','#ss_location', '#add_locationscheduling',false, false );
 
+        $('#ss_emp').html("<option selected disabled value=''>Select Employee</option>").prop('disabled',true);
+        SiteChangeEmployees('#ss_site', '#ss_emp', '#add_locationscheduling');
+
             // OrgChangeServiceLocation('#ss_org', '#ss_location', '#add_locationscheduling');
         $('#add-locationscheduling').modal('show');
     });
@@ -532,6 +535,18 @@ $(document).ready(function() {
                 } else {
                     $('#u_ssemp').html('<option value="">N/A</option>');
                 }
+                fetchPhysicians(response.siteId, '#u_ssemp', function(data) {
+                    $.each(data, function(key, value) {
+                        if(response.emp != value.id)
+                        {
+                            $('#u_ssemp').append('<option value="' + value.id + '">' + value.name + '</option>');
+                        }
+                    });
+
+                }, function(error) {
+                    console.log(error);
+                });
+                SiteChangeEmployees('#u_sssite', '#u_ssemp', '#update_locationscheduling');
 
                 $('#edit-locationscheduling').modal('show');
             },
@@ -606,15 +621,15 @@ $(document).ready(function() {
     });
     //Update Service Location Scheduling
 
-    $(document).on('show.bs.modal', '.modal', function () {
-        var zIndex = 1040 + (10 * $('.modal:visible').length);
-        $(this).css('z-index', zIndex);
-        setTimeout(function() {
-            $('.modal-backdrop').not('.modal-stack')
-                .css('z-index', zIndex - 1)
-                .addClass('modal-stack');
-        }, 0);
-    });
+    // $(document).on('show.bs.modal', '.modal', function () {
+    //     var zIndex = 1040 + (10 * $('.modal:visible').length);
+    //     $(this).css('z-index', zIndex);
+    //     setTimeout(function() {
+    //         $('.modal-backdrop').not('.modal-stack')
+    //             .css('z-index', zIndex - 1)
+    //             .addClass('modal-stack');
+    //     }, 0);
+    // });
 
 
 });

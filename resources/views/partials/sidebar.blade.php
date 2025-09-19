@@ -486,7 +486,7 @@
                     }
                     @endphp
 
-                    @if (!$hideServiceLocationScheduling || !$hidePatientRegistration || !$hideServiceBookingPatient || !$hidePatientArrivalDeparture || !$hideOutsourcedServicesValues || !$hidePatientWelfare)
+                    @if (!$hideServiceLocationScheduling || !$hidePatientRegistration || !$hideServiceBookingPatient || !$hidePatientArrivalDeparture || !$hideOutsourcedServices || !$hidePatientWelfare)
                         <li> <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false"><i class="mdi mdi-crosshairs-gps"></i><span class="hide-menu">Front Desk Services</span></a>
                             <ul aria-expanded="false" class="collapse">
                             
@@ -503,7 +503,7 @@
                                 @if (!$hidePatientArrivalDeparture)
                                     <li><a href="{{ route('patient-inout') }}">Patient Arrival & Departure</a></li>
                                 @endif
-                                  @if (!$hidePatientArrivalDeparture)
+                                  @if (!$hideOutsourcedServices)
                                     <li><a href="{{ route('outsourced-services') }}">Outsourced Services</a></li>
                                 @endif
                                 @if (!$hidePatientWelfare)

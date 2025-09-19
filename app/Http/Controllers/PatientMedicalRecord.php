@@ -53,6 +53,7 @@ class PatientMedicalRecord extends Controller
     private $sessionUser;
     private $roles;
     private $rights;
+    private $assignedSites;
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
@@ -60,6 +61,7 @@ class PatientMedicalRecord extends Controller
             $this->sessionUser = session('user');
             $this->roles = session('role');
             $this->rights = session('rights');
+            $this->assignedSites = session('sites');
             if (Auth::check()) {
                 return $next($request);
             } else {
@@ -493,7 +495,14 @@ class PatientMedicalRecord extends Controller
         $user = auth()->user();
         $UserorgId = $user->org_id;
         $orgCode = Organization::where('id', $UserorgId)->value('code');
-        $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc')->get();
+        $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc');
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Patients->whereIn('site_id', $sessionSiteIds);
+            }
+        }
+        $Patients = $Patients->get();
 
         return view('dashboard.vital_sign', compact('user','orgCode','Patients'));
     }
@@ -1145,7 +1154,15 @@ class PatientMedicalRecord extends Controller
         $UserorgId = $user->org_id;
         // $orgCode = Organization::where('id', $UserorgId)->value('code');
         // $icdCodes = ICDCoding::where('status', 1)->get();
-        $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc')->get();
+        $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc');
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Patients->whereIn('site_id', $sessionSiteIds);
+            }
+        }
+        $Patients = $Patients->get();
+
         $Organizations = Organization::select('id', 'organization')->where('status', 1)->get();
 
         return view('dashboard.encounters_and_procedures', compact('user','Organizations','Patients'));
@@ -3242,8 +3259,15 @@ class PatientMedicalRecord extends Controller
         ->leftJoin('service_location as source_location', 'source_location.id', '=', 'req_medication_consumption.source_location_id')
         ->leftJoin('service_location as destination_location', 'destination_location.id', '=', 'req_medication_consumption.destination_location_id')
         ->join('patient', 'patient.mr_code', '=', 'req_medication_consumption.mr_code')
-        ->where('req_medication_consumption.mr_code', $mr)
-        ->get();
+        ->where('req_medication_consumption.mr_code', $mr);
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+                $sessionSiteIds = $this->assignedSites;
+                if(!empty($sessionSiteIds)) {
+                    $RMCDetails->whereIn('org_site.id', $sessionSiteIds);
+                }
+            }
+        $RMCDetails = $RMCDetails->get();
 
         return DataTables::of($RMCDetails)
         // return DataTables::eloquent($RMCDetails)
@@ -4684,8 +4708,15 @@ class PatientMedicalRecord extends Controller
         try {
             $patients = PatientRegistration::select('mr_code', 'name', 'cell_no')
                 ->where('status', 1)
-                ->orderBy('name', 'asc')
-                ->get();
+                ->orderBy('name', 'asc');
+
+            if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+                $sessionSiteIds = $this->assignedSites;
+                if(!empty($sessionSiteIds)) {
+                    $patients->whereIn('site_id', $sessionSiteIds);
+                }
+            }
+            $patients = $patients->get();
 
             return response()->json([
                 'success' => true,

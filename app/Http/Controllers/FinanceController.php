@@ -45,6 +45,7 @@ class FinanceController extends Controller
     private $sessionUser;
     private $roles;
     private $rights;
+    private $assignedSites;
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
@@ -52,6 +53,7 @@ class FinanceController extends Controller
             $this->sessionUser = session('user');
             $this->roles = session('role');
             $this->rights = session('rights');
+            $this->assignedSites = session('sites');
             if (Auth::check()) {
                 return $next($request);
             } else {
@@ -3365,6 +3367,13 @@ class FinanceController extends Controller
             {
                 $FinanceTransactionTypes->where('finance_transactions.org_id', '=', $sessionOrg);
             }
+
+            if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+                $sessionSiteIds = $this->assignedSites;
+                if(!empty($sessionSiteIds)) {
+                    $FinanceTransactionTypes->whereIn('finance_transactions.site_id', $sessionSiteIds);
+                }
+            }
             $FinanceTransactionTypes = $FinanceTransactionTypes;
     
             // ->get()
@@ -3765,6 +3774,13 @@ class FinanceController extends Controller
             ->join('account_level_setup', 'account_level_setup.id', '=', 'finance_transaction_type.debit_account')
             ->orderBy('finance_transactions.id', 'desc')
             ->where('credit', '1');
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $FinanceTransactionTypes->whereIn('finance_transactions.site_id', $sessionSiteIds);
+            }
+        }
             // ->get();
     
         // return DataTables::of($FinanceTransactionTypes)
@@ -4173,6 +4189,13 @@ class FinanceController extends Controller
         ->join('inventory_generic', 'inventory_generic.id', '=', 'item_rates.generic_id')
         ->join('inventory_brand', 'inventory_brand.id', '=', 'item_rates.brand_id')
         ->orderBy('item_rates.id', 'desc');
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $ItemRates->whereIn('item_rates.site_id', $sessionSiteIds);
+            }
+        }
         // ->get();
     
         // return DataTables::of($FinanceTransactionTypes)

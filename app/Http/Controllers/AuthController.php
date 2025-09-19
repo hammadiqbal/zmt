@@ -24,6 +24,7 @@ class AuthController extends Controller
     private $sessionUser;
     private $roles;
     private $rights;
+    private $assignedSites;
 
     public function __construct()
     {
@@ -73,6 +74,7 @@ class AuthController extends Controller
                 'user.role_id',
                 'user.org_id',
                 'user.is_employee',
+                'user.site_enabled',
                 'user.emp_id',
                 'user.user_id',
                 'user.image',
@@ -98,10 +100,83 @@ class AuthController extends Controller
                             ->select('rights.*')
                             ->where('rights.role_id', $user->role_id) 
                             ->first();
+                // Check if user is an employee and collect site IDs from all tables
+                $employeeSiteIds = [];
+                if ($user->is_employee == 1) {
+                    // 1. Get site_id from employee table (single value)
+                    $employeeSites = DB::table('employee')
+                        ->select('site_id')
+                        ->where('id', $user->emp_id)
+                        ->whereNotNull('site_id')
+                        ->get();
+                    
+                    foreach ($employeeSites as $site) {
+                        if (!empty($site->site_id)) {
+                            $employeeSiteIds[] = $site->site_id;
+                        }
+                    }
+                    
+                    // 2. Get site_id from emp_cc table (can be comma-separated)
+                    $empCcSites = DB::table('emp_cc')
+                        ->select('site_id')
+                        ->where('emp_id', $user->emp_id)
+                        ->whereNotNull('site_id')
+                        ->get();
+                    
+                    foreach ($empCcSites as $site) {
+                        if (!empty($site->site_id)) {
+                            // Handle comma-separated values
+                            $siteIds = explode(',', $site->site_id);
+                            foreach ($siteIds as $siteId) {
+                                $siteId = trim($siteId);
+                                if (!empty($siteId)) {
+                                    $employeeSiteIds[] = $siteId;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 3. Get site_id from emp_service_allocation table (single value)
+                    $serviceAllocationSites = DB::table('emp_service_allocation')
+                        ->select('site_id')
+                        ->where('emp_id', $user->emp_id)
+                        ->whereNotNull('site_id')
+                        ->get();
+                    
+                    foreach ($serviceAllocationSites as $site) {
+                        if (!empty($site->site_id)) {
+                            $employeeSiteIds[] = $site->site_id;
+                        }
+                    }
+                    
+                    $inventoryLocationSites = DB::table('emp_inventory_location')
+                        ->select('location_site')
+                        ->where('emp_id', $user->emp_id)
+                        ->whereNotNull('location_site')
+                        ->get();
+                    
+                    foreach ($inventoryLocationSites as $site) {
+                        if (!empty($site->location_site)) {
+                            $siteIds = explode(',', $site->location_site);
+                            foreach ($siteIds as $siteId) {
+                                $siteId = trim($siteId);
+                                if (!empty($siteId)) {
+                                    $employeeSiteIds[] = $siteId;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Remove duplicates and convert to integers
+                    $employeeSiteIds = array_unique(array_map('intval', $employeeSiteIds));
+                    $employeeSiteIds = array_values($employeeSiteIds); // Re-index array
+                }
+
                 session()->put([
                     'user' => $user,
                     'role' => $role,
                     'rights' => $rights,
+                    'sites' => $employeeSiteIds,
                 ]);
 
                 $logs = Logs::create([

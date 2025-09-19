@@ -62,6 +62,8 @@ class HRController extends Controller
     private $sessionUser;
     private $roles;
     private $rights;
+    private $assignedSites;
+
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
@@ -69,6 +71,8 @@ class HRController extends Controller
             $this->sessionUser = session('user');
             $this->roles = session('role');
             $this->rights = session('rights');
+            $this->assignedSites = session('sites');
+
             if (Auth::check()) {
                 return $next($request);
             } else {
@@ -2391,8 +2395,16 @@ class HRController extends Controller
         $orgId = $request->input('orgid');
         $Employee = Employee::where('org_id', $orgId)
                      ->where('status', 1)
-                     ->whereNotIn('id', Users::select('emp_id'))
-                     ->get();
+                     ->whereNotIn('id', Users::select('emp_id'));
+        
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Employee->whereIn('site_id', $sessionSiteIds);
+            }
+        }
+        
+        $Employee = $Employee->get();
 
         if ($Employee->isEmpty()) {
             return response()->json(null);
@@ -2711,6 +2723,13 @@ class HRController extends Controller
         if($sessionOrg != '0')
         {
             $Employees->where('employee.org_id', '=', $sessionOrg);
+        }
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Employees->whereIn('org_site.id', $sessionSiteIds);
+            }
         }
 
         $Employees = $Employees;
@@ -3613,8 +3632,15 @@ class HRController extends Controller
         'organization.organization as orgName','org_site.name as siteName')
         ->join('employee', 'employee.id', '=', 'emp_salary.emp_id')
         ->leftjoin('organization', 'organization.id', '=', 'employee.org_id')
-        ->join('org_site', 'org_site.id', '=', 'employee.site_id')
-        ->orderBy('employee.id', 'desc');
+        ->join('org_site', 'org_site.id', '=', 'employee.site_id');
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $EmployeeSalaries->whereIn('employee.site_id', $sessionSiteIds);
+            }
+        }
+        $EmployeeSalaries = $EmployeeSalaries->orderBy('employee.id', 'desc');
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
@@ -4076,8 +4102,17 @@ class HRController extends Controller
         $Employees = Employee::where('employee.status', 1)
         ->join('emp_qualification', 'employee.id', '=', 'emp_qualification.emp_id','')
         ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
-        ->distinct()
-        ->get(['employee.*','prefix.name as prefix']);
+        ->distinct();
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Employees->whereIn('employee.site_id', $sessionSiteIds);
+            }
+        }
+        // $Sites = $Sites->get();
+
+        $Employees = $Employees->get(['employee.*','prefix.name as prefix']);
 
         $EmployeeQualificationCount = EmployeeQualification::count();
         return view('dashboard.emp-qualifications', compact('user','QualificationLevels','Employees','EmployeeQualificationCount'));
@@ -4397,9 +4432,10 @@ class HRController extends Controller
                     ->where('employee.status', 1)
                     ->where('employee.site_id', $siteId)
                     ->get(['employee.*','prefix.name as prefix']);
-                    if($Employees->count() > 0) {
-                        return response()->json($Employees);
-                    }
+                    
+        if($Employees->count() > 0) {
+            return response()->json($Employees);
+        }
     }
 
     public function ViewEmployeeDocuments()
@@ -4416,8 +4452,16 @@ class HRController extends Controller
         'employee.name as empName', 'prefix.name as prefixName', 'org_site.name as siteName')
         ->join('employee', 'employee.id', '=', 'emp_documents.emp_id')
         ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
-        ->join('org_site', 'org_site.id', '=', 'employee.site_id')
-        ->orderBy('emp_documents.id', 'desc');
+        ->join('org_site', 'org_site.id', '=', 'employee.site_id');
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $EmployeeDocuments->whereIn('employee.site_id', $sessionSiteIds);
+            }
+        }
+        // $Employees = $Employees->get(['employee.*','prefix.name as prefix']);
+        $EmployeeDocuments = $EmployeeDocuments->orderBy('emp_documents.id', 'desc');
 
         return DataTables::eloquent($EmployeeDocuments)
             ->addColumn('id_raw', function ($EmployeeDocument) {
@@ -4626,9 +4670,10 @@ class HRController extends Controller
                      ->where('employee.status', 1)
                      ->where('employee.site_id', $siteId)
                      ->get(['employee.*','prefix.name as prefix']);
-                     if($Employees->count() > 0) {
-                        return response()->json($Employees);
-                    }
+                     
+        if($Employees->count() > 0) {
+            return response()->json($Employees);
+        }
     }
 
     public function EmployeeMedicalLicense()
@@ -4642,8 +4687,15 @@ class HRController extends Controller
         $Employees = Employee::where('employee.status', 1)
         ->join('emp_medical_license', 'employee.id', '=', 'emp_medical_license.emp_id','')
         ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
-        ->distinct()
-        ->get(['employee.*', 'prefix.name as prefix']);
+        ->distinct();
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Employees->whereIn('employee.site_id', $sessionSiteIds);
+            }
+        }
+        $Employees = $Employees->get(['employee.*','prefix.name as prefix']);
+        // ->get(['employee.*', 'prefix.name as prefix']);
 
         $EmployeeMedicalLicenseCount = EmployeeMedicalLicense::count();
         return view('dashboard.emp-medical-license', compact('user','Employees','EmployeeMedicalLicenseCount'));
@@ -4881,8 +4933,15 @@ class HRController extends Controller
         $Employees = Employee::join('prefix', 'prefix.id', '=', 'employee.prefix_id')
             ->join('emp_cc', 'employee.id', '=', 'emp_cc.emp_id','')
             ->distinct()
-            ->where('employee.status', 1)
-            ->get(['employee.id','employee.name','prefix.name as prefix']);
+            ->where('employee.status', 1);
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Employees->whereIn('employee.site_id', $sessionSiteIds);
+            }
+        }
+        $Employees = $Employees->get(['employee.*','prefix.name as prefix']);
 
         $EmployeeCCCount = EmployeeCC::count();
         return view('dashboard.emp-cc', compact('user','Employees','EmployeeCCCount','Organizations'));
@@ -4897,9 +4956,9 @@ class HRController extends Controller
                      ->where('employee.status', 1)
                      ->where('employee.site_id', $siteId)
                      ->get(['employee.*','prefix.name as prefix']);
-                     if($Employees->count() > 0) {
-                        return response()->json($Employees);
-                    }
+        if($Employees->count() > 0) {
+            return response()->json($Employees);
+        }
     }
 
     public function GetPhysicians(Request $request)
@@ -5331,8 +5390,15 @@ class HRController extends Controller
         ->join('employee', 'employee.id', '=', 'emp_service_allocation.emp_id')
         ->join('organization', 'organization.id', '=', 'emp_service_allocation.org_id')
         ->join('org_site', 'org_site.id', '=', 'emp_service_allocation.site_id')
-        ->join('prefix', 'prefix.id', '=', 'employee.prefix_id')
-        ->orderBy('employee.id', 'desc');
+        ->join('prefix', 'prefix.id', '=', 'employee.prefix_id');
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $EmployeeServiceAllocations->whereIn('employee.site_id', $sessionSiteIds);
+            }
+        }
+        $EmployeeServiceAllocations = $EmployeeServiceAllocations->orderBy('employee.id', 'desc');
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
@@ -5616,8 +5682,16 @@ class HRController extends Controller
         // $Services = Service::where('status', 1)->get();
         $Employees = Employee::where('employee.status', 1)
         ->join('emp_inventory_location', 'employee.id', '=', 'emp_inventory_location.emp_id','')
-        ->distinct()
-        ->get(['employee.*']);
+        ->distinct();
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Employees->whereIn('employee.site_id', $sessionSiteIds);
+            }
+        }
+        $Employees = $Employees->get(['employee.*']);
+       
         $EmployeeLocationCount = EmployeeLocationAllocation::count();
 
         return view('dashboard.emp-location-allocation', compact('user','EmployeeLocationCount','Employees'));

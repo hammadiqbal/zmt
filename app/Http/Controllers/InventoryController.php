@@ -76,6 +76,7 @@ class InventoryController extends Controller
     private $sessionUser;
     private $roles;
     private $rights;
+    private $assignedSites;
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
@@ -84,6 +85,7 @@ class InventoryController extends Controller
             $this->sessionUser = session('user');
             $this->roles = session('role');
             $this->rights = session('rights');
+            $this->assignedSites = session('sites');
             if (Auth::check()) {
                 return $next($request);
             } else {
@@ -3792,7 +3794,15 @@ class InventoryController extends Controller
         }
         $user = auth()->user();
         $Organizations = Organization::where('status', 1)->get();
-        $Sites = Site::where('status', 1)->get();
+        $Sites = Site::where('status', 1);
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Sites->whereIn('id', $sessionSiteIds);
+            }
+        }
+        $Sites = $Sites->get();
+
         $Generics = InventoryGeneric::where('status', 1)->get();
         $Brands = InventoryBrand::where('status', 1)->get();
         return view('dashboard.stock_monitoring', compact('user','Organizations','Sites','Generics','Brands'));
@@ -3913,6 +3923,13 @@ class InventoryController extends Controller
         ->leftJoin('inventory_brand', 'inventory_brand.id', '=', 'stock_monitoring.item_brand_id')
         ->join('service_location', 'service_location.id', '=', 'stock_monitoring.service_location_id')
         ->orderBy('stock_monitoring.id', 'desc');
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $StockMonitoringData->whereIn('org_site.id', $sessionSiteIds);
+            }
+        }
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
@@ -5724,8 +5741,13 @@ class InventoryController extends Controller
         {
             $Requisitions->where('material_consumption_requisition.org_id', '=', $sessionOrg);
         }
-        $Requisitions = $Requisitions
-        ->get();
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Requisitions->whereIn('org_site.id', $sessionSiteIds);
+            }
+        }
+        $Requisitions = $Requisitions->get();
         return DataTables::of($Requisitions)
         // return DataTables::eloquent($Requisitions)
             // ->filter(function ($query) use ($request) {
@@ -6254,8 +6276,17 @@ class InventoryController extends Controller
         {
             $Requisitions->where('requisition_material_transfer.org_id', '=', $sessionOrg);
         }
-        $Requisitions = $Requisitions
-        ->get();
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Requisitions->where(function($query) use ($sessionSiteIds) {
+                    $query->whereIn('requisition_material_transfer.source_site', $sessionSiteIds)
+                          ->orWhereIn('requisition_material_transfer.destination_site', $sessionSiteIds);
+                });
+            }
+        }
+        $Requisitions = $Requisitions->get();
         return DataTables::of($Requisitions)
             ->addColumn('id_raw', function ($Requisition) {
                 return $Requisition->id;
@@ -6714,6 +6745,7 @@ class InventoryController extends Controller
             ->join('third_party', 'third_party.id', '=', 'purchase_order.vendor_id')
             ->where('purchase_order.id', '=', $id)
             ->first();
+            
 
 
         $BrandIds = explode(',', $PO->inventory_brand_id);
@@ -6808,8 +6840,20 @@ class InventoryController extends Controller
         ->leftJoin('organization', 'organization.id', '=', 'purchase_order.org_id')
         ->join('org_site', 'org_site.id', '=', 'purchase_order.site_id')
         ->join('third_party', 'third_party.id', '=', 'purchase_order.vendor_id')
-        ->orderBy('purchase_order.id', 'desc')
-        ->get();
+        ->orderBy('purchase_order.id', 'desc');
+
+        if($this->sessionUser->org_id != '0')
+        {
+            $PurchaseOrders->where('purchase_order.org_id', '=', $sessionOrg);
+        }
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $PurchaseOrders->whereIn('purchase_order.site_id', $sessionSiteIds);
+            }
+        }
+        $PurchaseOrders = $PurchaseOrders->get();
         // $PurchaseOrders = PurchaseOrder::select('purchase_order.*',
         // 'organization.organization as orgName',
         // 'organization.code as orgCode',
@@ -7432,6 +7476,13 @@ class InventoryController extends Controller
         if($sessionOrg != '0')
         {
             $WorkOrders->where('work_order.org_id', '=', $sessionOrg);
+        }
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $WorkOrders->whereIn('work_order.site_id', $sessionSiteIds);
+            }
         }
         $WorkOrders = $WorkOrders;
         // ->get()
@@ -8846,8 +8897,15 @@ class InventoryController extends Controller
         ->join('org_site', 'org_site.id', '=', 'inventory_management.site_id')
         ->leftJoin('inventory_generic', 'inventory_generic.id', '=', 'inventory_management.inv_generic_id')
         ->leftJoin('inventory_brand', 'inventory_brand.id', '=', 'inventory_management.brand_id')
-        ->where('inventory_transaction_activity.name', 'external transaction')
-        ->orderBy('inventory_management.id', 'desc');
+        ->where('inventory_transaction_activity.name', 'external transaction');
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $ExternalTransactions->whereIn('org_site.id', $sessionSiteIds);
+            }
+        }
+        $ExternalTransactions = $ExternalTransactions->orderBy('inventory_management.id', 'desc');
 
         // 3) Filter by user's org if needed
         $session = auth()->user();
@@ -9189,7 +9247,15 @@ class InventoryController extends Controller
                 ],
                 $joinFields,
                 [DB::raw("CAST('medication' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")]
-            ))->get();
+            ));
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $medication->whereIn('org_site.id', $sessionSiteIds);
+            }
+        }
+        $medication = $medication->get();
 
         // --- Material Query ---
         $material = DB::table('material_consumption_requisition as mcr')
@@ -9220,7 +9286,15 @@ class InventoryController extends Controller
                 ],
                 $joinFields,
                 [DB::raw("CAST('material' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")]
-            ))->get();
+            ));
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $material->whereIn('org_site.id', $sessionSiteIds);
+            }
+        }
+        $material = $material->get();
 
         $inventoryJoinFields = [
             DB::raw('patient.name as patientName'),
@@ -9283,7 +9357,15 @@ class InventoryController extends Controller
                 ],
                 $inventoryJoinFields,
                 [DB::raw("CAST('inventory' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")]
-            ))->get();
+            ));
+
+            if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+                $sessionSiteIds = $this->assignedSites;
+                if(!empty($sessionSiteIds)) {
+                    $directIssueDIspense->whereIn('org_site.id', $sessionSiteIds);
+                }
+            }
+            $directIssueDIspense = $directIssueDIspense->get();
 
             $combined = $medication->merge($material)->merge($directIssueDIspense);
             // $combined = $medication->merge($material);
@@ -10886,9 +10968,20 @@ class InventoryController extends Controller
             // DB::raw('COALESCE(inventory_brand.name, "") as brandName'), // Fetch brand name from the brand table
             // DB::raw('COALESCE(inventory_management.batch_no, "") as batch_no'),
             // DB::raw('COALESCE(inventory_management.expiry_date, "") as expiry_date'),
-        ])
-        ->orderByDesc('rmt.id')
-        ->get();
+        ]);
+
+        // Add session site condition for requisitions
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $requisitions->where(function($query) use ($sessionSiteIds) {
+                    $query->whereIn('rmt.source_site', $sessionSiteIds)
+                          ->orWhereIn('rmt.destination_site', $sessionSiteIds);
+                });
+            }
+        }
+
+        $requisitions = $requisitions->orderByDesc('rmt.id')->get();
 
         $inventoryMaterialTransfers = DB::table('inventory_management as im')
         ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
@@ -10924,9 +11017,20 @@ class InventoryController extends Controller
         ->where(function($query) {
             $query->whereNull('im.ref_document_no')
                 ->orWhere('im.ref_document_no', 'not like', '%-RMT-%');
-        })
-        ->orderByDesc('im.id')
-        ->get();
+        });
+
+        // Add session site condition for inventory material transfers
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $inventoryMaterialTransfers->where(function($query) use ($sessionSiteIds) {
+                    $query->whereIn('im.site_id', $sessionSiteIds)
+                          ->orWhereIn('im.d_site_id', $sessionSiteIds);
+                });
+            }
+        }
+
+        $inventoryMaterialTransfers = $inventoryMaterialTransfers->orderByDesc('im.id')->get();
         $combined = $requisitions->merge($inventoryMaterialTransfers);
 
         return DataTables::of(collect($combined))
@@ -12102,8 +12206,15 @@ class InventoryController extends Controller
                     DB::raw('service_type.name as serviceType'),
                     DB::raw('itt.name as TransactionType')
                 ]
-            ))
-            ->get();
+            ));
+
+            if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+                $sessionSiteIds = $this->assignedSites;
+                if(!empty($sessionSiteIds)) {
+                    $IssuedData->whereIn('org_site.id', $sessionSiteIds);
+                }
+            }
+            $IssuedData = $IssuedData->get();
 
             $combined =($IssuedData);
 
@@ -13096,8 +13207,15 @@ class InventoryController extends Controller
                 'billingCC.name as billingCC',
                 'service_group.name as serviceGroup',
                 'service_type.name as serviceType'
-            )
-            ->get();
+            );
+
+            if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+                $sessionSiteIds = $this->assignedSites;
+                if(!empty($sessionSiteIds)) {
+                    $issuedDispensed->whereIn('org_site.id', $sessionSiteIds);
+                }
+            }
+            $issuedDispensed = $issuedDispensed->get();
 
 
         $results = [];

@@ -27,6 +27,7 @@ class OrgSetupController extends Controller
     private $sessionUser;
     private $roles;
     private $rights;
+    private $assignedSites;
 
     public function __construct()
     {
@@ -35,6 +36,7 @@ class OrgSetupController extends Controller
             $this->sessionUser = session('user');
             $this->roles = session('role');
             $this->rights = session('rights');
+            $this->assignedSites = session('sites');
             // if (Auth::check() && Auth::user()->role_id == 1) {
             if (Auth::check()) {
                 return $next($request);

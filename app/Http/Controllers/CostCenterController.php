@@ -25,6 +25,7 @@ class CostCenterController extends Controller
     private $sessionUser;
     private $roles;
     private $rights;
+    private $assignedSites;
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
@@ -32,6 +33,7 @@ class CostCenterController extends Controller
             $this->sessionUser = session('user');
             $this->roles = session('role');
             $this->rights = session('rights');
+            $this->assignedSites = session('sites');
             if (Auth::check()) {
                 return $next($request);
             } else {
@@ -792,7 +794,14 @@ class CostCenterController extends Controller
 
         $RawCostCenters = CostCenter::where('status', 1)->get();
         $CCTypes = CCType::where('status', 1)->get();
-        $Sites = Site::where('status', 1)->get();
+        $Sites = Site::where('status', 1);
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Sites->whereIn('id', $sessionSiteIds);
+            }
+        }
+        $Sites = $Sites->get();
 
         return view('dashboard.cc-activation', compact('user','Organizations','CostCenters','RawCostCenters','Sites','CCTypes'));
     }
@@ -946,6 +955,12 @@ class CostCenterController extends Controller
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $ActivatedCC->whereIn('org_site.id', $sessionSiteIds);
+            }
+        }
         if($sessionOrg != '0')
         {
             $ActivatedCC->where('activated_cc.org_id', '=', $sessionOrg);

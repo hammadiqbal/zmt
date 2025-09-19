@@ -25,6 +25,7 @@ class TerritoryController extends Controller
     private $sessionUser;
     private $roles;
     private $rights;
+    private $assignedSites;
 
     public function __construct()
     {
@@ -33,6 +34,7 @@ class TerritoryController extends Controller
             $this->sessionUser = session('user');
             $this->roles = session('role');
             $this->rights = session('rights');
+            $this->assignedSites = session('sites');
             if (Auth::check()) {
                 return $next($request);
             } else {

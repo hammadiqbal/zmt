@@ -37,6 +37,7 @@ class PatientController extends Controller
     private $sessionUser;
     private $roles;
     private $rights;
+    private $assignedSites;
     public function __construct()
     {
         $this->middleware(function ($request, $next) {
@@ -44,6 +45,7 @@ class PatientController extends Controller
             $this->sessionUser = session('user');
             $this->roles = session('role');
             $this->rights = session('rights');
+            $this->assignedSites = session('sites');
             // if (Auth::check() && Auth::user()->role_id == 1) {
             if (Auth::check()) {
                 return $next($request);
@@ -118,6 +120,13 @@ class PatientController extends Controller
                 })
                 ->whereNull('service_booking.mr_code');
         }
+
+        // if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+        //     $sessionSiteIds = $this->assignedSites;
+        //     if(!empty($sessionSiteIds)) {
+        //         $baseQuery->whereIn('employee.site_id', $sessionSiteIds);
+        //     }
+        // }
         $PatientMRCode = $baseQuery->get();
 
         return response()->json($PatientMRCode);
@@ -131,6 +140,13 @@ class PatientController extends Controller
         $baseQuery = PatientRegistration::select('mr_code', 'name', 'cell_no')
         ->where('status', 1)
         ->where('org_id', $orgId);
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $baseQuery->whereIn('site_id', $sessionSiteIds);
+            }
+        }
         // $PatientMRCode = $baseQuery
         // ->leftJoin('service_booking', function($join) {
         //     $join->on('patient.mr_code', '=', DB::raw('service_booking.mr_code'))
@@ -373,8 +389,16 @@ class PatientController extends Controller
             'province.name as provinceName',
             'division.name as divisionName',
             'district.name as districtName'
-        )
-        ->orderBy('patient.id', 'desc');
+        );
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Patients->whereIn('patient.site_id', $sessionSiteIds);
+            }
+        }
+        $Patients = $Patients->orderBy('patient.id', 'desc');
+        
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
@@ -955,8 +979,14 @@ class PatientController extends Controller
         // $UserorgId = $user->org_id;
         // $orgCode = Organization::where('id', $UserorgId)->value('code');
         $Organizations = Organization::select('id', 'organization')->where('status', 1)->get();
-        $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc')->get();
-
+        $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc');
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Patients->whereIn('site_id', $sessionSiteIds);
+            }
+        }
+        $Patients = $Patients->get();
 
         return view('dashboard.patient-inout', compact('user','Organizations','Patients'));
     }
@@ -1878,6 +1908,12 @@ class PatientController extends Controller
             $query->where('p.mr_code', $request->mr_no);
         }
 
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $query->whereIn('p.site_id', $sessionSiteIds);
+            }
+        }
                 // Check if site or MR is selected
         $siteSelected = $request->has('site_id') && $request->site_id != '' && $request->site_id != 'Loading...';
         $mrSelected = $request->has('mr_no') && $request->mr_no != '' && $request->mr_no != 'Loading...';

@@ -220,8 +220,8 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label for="input0117">Enter Total Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="total_patient" max="100" min="0" id="input0117">
+                                                                    <label>Enter Total Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="total_patient" max="100" min="0">
                                                                 </div>
                                                                 <span class="text-danger cc_percent_error"></span>
                                                             </div>
@@ -233,8 +233,8 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label for="input0117">Enter Total Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="total_patient" max="100" min="0" id="input0117">
+                                                                    <label>Enter Total Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="total_patient" max="100" min="0">
                                                                 </div>
                                                                 <span class="text-danger cc_percent_error"></span>
                                                             </div>
@@ -245,8 +245,8 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label for="input0116">Enter New Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="new_patient" max="100" min="0" id="input0116">
+                                                                    <label>Enter New Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="new_patient" max="100" min="0" >
                                                                 </div>
                                                                 <span class="text-danger cc_percent_error"></span>
                                                             </div>
@@ -257,8 +257,8 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label for="input0115">Enter Follow Up Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="followup_patient" max="100" min="0" id="input0115">
+                                                                    <label>Enter Follow Up Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="followup_patient" max="100" min="0">
                                                                 </div>
                                                                 <span class="text-danger cc_percent_error"></span>
                                                             </div>
@@ -269,8 +269,8 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label for="input0114">Enter Routine Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="routine_patient" max="100" min="0" id="input0114">
+                                                                    <label>Enter Routine Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="routine_patient" max="100" min="0" >
                                                                 </div>
                                                                 <span class="text-danger cc_percent_error"></span>
                                                             </div>
@@ -281,8 +281,8 @@
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
-                                                                    <label for="input0113">Enter Urgent Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
-                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="urgent_patient" max="100" min="0" id="input0113">
+                                                                    <label>Enter Urgent Patient Limit <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
+                                                                    <input type="number" class="form-control input-sm" placeholder="100" name="urgent_patient" max="100" min="0" >
                                                                 </div>
                                                                 <span class="text-danger cc_percent_error"></span>
                                                             </div>
@@ -295,10 +295,10 @@
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Designated Physician <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
                                                                     <select class="form-control p-0 cursor-pointer selecter" name="ss_emp" id="ss_emp">
-                                                                        <option selected disabled >Select Designated Physician</option>
+                                                                        {{-- <option selected disabled >Select Designated Physician</option>
                                                                         @foreach ($Employees as $Employee)
                                                                             <option value="{{ $Employee['id'] }}">{{ $Employee['prefix'] }} {{ $Employee['name'] }}</option>
-                                                                        @endforeach
+                                                                        @endforeach --}}
                                                                     </select>
                                                                     <span class="bar"></span>
 
@@ -517,6 +517,9 @@
                                                 <div class="form-group">
                                                     <label class="control-label">Update Designated Physician <small class="text-danger" style="font-size:11px;">(Optional)</small></label>
                                                     <select class="form-control selecter p-0" id="u_ssemp"  name="u_ssemp" style="color:#222d32">
+                                                        @foreach ($Employees as $Employee)
+                                                            <option value="{{ $Employee['id'] }}">{{ $Employee['prefix'] }} {{ $Employee['name'] }}</option>
+                                                        @endforeach
                                                     </select>
                                                 </div>
                                             </div>

@@ -27,6 +27,7 @@ class SiteSetupController extends Controller
     private $sessionUser;
     private $roles;
     private $rights;
+    private $assignedSites;
 
     public function __construct()
     {
@@ -35,6 +36,7 @@ class SiteSetupController extends Controller
             $this->sessionUser = session('user');
             $this->roles = session('role');
             $this->rights = session('rights');
+            $this->assignedSites = session('sites');
             if (Auth::check()) {
                 return $next($request);
             } else {
@@ -554,22 +556,37 @@ class SiteSetupController extends Controller
         if (isset($siteId)) {
             $Site = Site::whereNotIn('id', [$siteId])
                      ->where('org_id', $organizationId)
-                     ->where('status', 1)
-                     ->get();
+                     ->where('status', 1);
         }
         else {
             $Site = Site::where('org_id', $organizationId)
-                     ->where('status', 1)
-                     ->get();
+                     ->where('status', 1);
         }
+
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Site->whereIn('id', $sessionSiteIds);
+            }
+        }
+        $Site = $Site->get();
+
         return response()->json($Site);
     }
     public function GetSelectedSites(Request $request)
     {
         $orgId = $request->input('orgId');
         $Sites = Site::where('org_id', $orgId)
-                    ->where('status', 1)
-                    ->get();
+                    ->where('status', 1);
+         
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Sites->whereIn('id', $sessionSiteIds);
+            }
+        }
+        
+        $Sites = $Sites->get();
 
         return response()->json($Sites);
     }

@@ -196,7 +196,7 @@ border: 1px solid rgba(0,0,0,.15);
                                                                 </div>
                                                             </div>
                                                             @elseif($costcenters->count() == 1)
-                                                            <input type="text" class="form-control input-sm" readonly name="mt_performing_cc" value="{{ $costcenters->first()->id }}">
+                                                            <input type="hidden" class="form-control input-sm" readonly name="mt_performing_cc" value="{{ $costcenters->first()->id }}">
                                                             @endif
                                                         @else
                                                             <input type="hidden" name="mt_performing_cc" value="0">
