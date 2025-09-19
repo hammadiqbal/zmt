@@ -16,7 +16,7 @@
         <p>We're excited to have you on board!</p>
         <h3>Please click the login URL provided below and use the given email and password to log in:</h3>
         <ul>
-            <li><strong>URL:</strong> <a href="https://pilot.esystematic.com/"> https://pilot.esystematic.com/</a></li>
+            <li><strong>URL:</strong> <a href="https://emr.zmtclinics.org/"> https://emr.zmtclinics.org/</a></li>
             <li><strong>Email:</strong> {{ $useremail }}</li>
             <li><strong>Password:</strong> {{ $pwd }}</li>
         </ul>
@@ -39,7 +39,7 @@
 
         <p>Thank you for joining {{ config('app.name') }}!</p>
         <p>Once logged in, we kindly request you to update your password using below link for security reasons.</p>
-        <a href="https://pilot.esystematic.com/profile">https://pilot.esystematic.com/profile</a>
+        <a href="https://emr.zmtclinics.org//profile">https://emr.zmtclinics.org//profile</a>
         <hr>
         <p><em>This is an automated email. Please do not reply to this message.</em></p>
     </div>

@@ -21,7 +21,7 @@
         </ul>
         <p>
             You can now log in to your account using your new credentials at:<br>
-            <a href="https://pilot.esystematic.com/">https://pilot.esystematic.com/</a>
+            <a href="https://emr.zmtclinics.org/">https://emr.zmtclinics.org/</a>
         </p>
         <p>
             <strong>Important:</strong> For your security, you have been logged out from all devices. Please use your new credentials to log in again.
