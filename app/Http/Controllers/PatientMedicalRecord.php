@@ -711,6 +711,7 @@ class PatientMedicalRecord extends Controller
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
+        dd($request);
 
         $UserorgId = $session->org_id;
         $orgCode = Organization::where('id', $UserorgId)->value('code');
@@ -722,6 +723,7 @@ class PatientMedicalRecord extends Controller
 
         // $MR = trim($orgCode.'-'.$request->input('vs_mr'));
         $PatientAge = trim($request->input('vs_age'));
+
         $SBP = trim($request->input('vs_sbp'));
         $DBP = trim($request->input('vs_dbp'));
         $Pulse = trim($request->input('vs_pulse'));

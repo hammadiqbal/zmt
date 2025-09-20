@@ -9238,17 +9238,17 @@ class InventoryController extends Controller
             ->select(array_merge(
                 array_map(fn($col) => "rmc.$col", $sharedFields),
                 [
-                    DB::raw("CAST(rmc.code AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as referenceNumber"),
-                    DB::raw("CAST(rmc.mr_code AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as mr_code"),
-                    DB::raw("CAST(rmc.dose AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as dose"),
-                    DB::raw("CAST(rmc.route_ids AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as route_ids"),
-                    DB::raw("CAST(rmc.frequency_ids AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as frequency_ids"),
-                    DB::raw("CAST(rmc.days AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as days"),
-                    DB::raw("CAST(rmc.inv_generic_ids AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as inv_generic_ids"),
-                    DB::raw("CAST(rmc.remarks AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as remarks")
+                    DB::raw("CONVERT(rmc.code USING utf8mb4) COLLATE utf8mb4_unicode_ci as referenceNumber"),
+                    DB::raw("CONVERT(rmc.mr_code USING utf8mb4) COLLATE utf8mb4_unicode_ci as mr_code"),
+                    DB::raw("CONVERT(rmc.dose USING utf8mb4) COLLATE utf8mb4_unicode_ci as dose"),
+                    DB::raw("CONVERT(rmc.route_ids USING utf8mb4) COLLATE utf8mb4_unicode_ci as route_ids"),
+                    DB::raw("CONVERT(rmc.frequency_ids USING utf8mb4) COLLATE utf8mb4_unicode_ci as frequency_ids"),
+                    DB::raw("CONVERT(rmc.days USING utf8mb4) COLLATE utf8mb4_unicode_ci as days"),
+                    DB::raw("CONVERT(rmc.inv_generic_ids USING utf8mb4) COLLATE utf8mb4_unicode_ci as inv_generic_ids"),
+                    DB::raw("CONVERT(rmc.remarks USING utf8mb4) COLLATE utf8mb4_unicode_ci as remarks")
                 ],
                 $joinFields,
-                [DB::raw("CAST('medication' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")]
+                [DB::raw("CONVERT('medication' USING utf8mb4) COLLATE utf8mb4_unicode_ci as source")]
             ));
 
         if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
@@ -9277,17 +9277,17 @@ class InventoryController extends Controller
             ->select(array_merge(
                 array_map(fn($col) => "mcr.$col", $sharedFields),
                 [
-                    DB::raw("CAST(mcr.code AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as referenceNumber"),
-                    DB::raw("CAST(mcr.mr_code AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as mr_code"),
-                    DB::raw("CAST('' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as dose"),
-                    DB::raw("CAST('' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as route_ids"),
-                    DB::raw("CAST('' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as frequency_ids"),
-                    DB::raw("CAST(mcr.qty AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as demand_qty"),
-                    DB::raw("CAST(mcr.generic_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as inv_generic_ids"),
-                    DB::raw("CAST(mcr.remarks AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as remarks")
+                    DB::raw("CONVERT(mcr.code USING utf8mb4) COLLATE utf8mb4_unicode_ci as referenceNumber"),
+                    DB::raw("CONVERT(mcr.mr_code USING utf8mb4) COLLATE utf8mb4_unicode_ci as mr_code"),
+                    DB::raw("CONVERT('' USING utf8mb4) COLLATE utf8mb4_unicode_ci as dose"),
+                    DB::raw("CONVERT('' USING utf8mb4) COLLATE utf8mb4_unicode_ci as route_ids"),
+                    DB::raw("CONVERT('' USING utf8mb4) COLLATE utf8mb4_unicode_ci as frequency_ids"),
+                    DB::raw("CONVERT(mcr.qty USING utf8mb4) COLLATE utf8mb4_unicode_ci as demand_qty"),
+                    DB::raw("CONVERT(mcr.generic_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as inv_generic_ids"),
+                    DB::raw("CONVERT(mcr.remarks USING utf8mb4) COLLATE utf8mb4_unicode_ci as remarks")
                 ],
                 $joinFields,
-                [DB::raw("CAST('material' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")]
+                [DB::raw("CONVERT('material' USING utf8mb4) COLLATE utf8mb4_unicode_ci as source")]
             ));
 
         if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
@@ -9340,25 +9340,25 @@ class InventoryController extends Controller
                 array_map(fn($col) => "im.$col", $sharedFields),
                 [
                     // DB::raw("CAST('N/A' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as code"),
-                    DB::raw("CAST(im.dose AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as dose"),
-                    DB::raw("CAST(im.route_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as route_ids"),
-                    DB::raw("CAST(im.frequency_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as frequency_ids"),
-                    DB::raw("CAST(im.duration AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as days"),
-                    DB::raw("CAST(im.ref_document_no AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as referenceNumber"),
-                    DB::raw("CAST(im.mr_code AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as mr_code"),
-                    DB::raw("CAST(im.brand_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as brand_id"),
-                    DB::raw("CAST(im.batch_no AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as batch_no"),
-                    DB::raw("CAST(im.expiry_date AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as expiry_date"),
+                    DB::raw("CONVERT(im.dose USING utf8mb4) COLLATE utf8mb4_unicode_ci as dose"),
+                    DB::raw("CONVERT(im.route_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as route_ids"),
+                    DB::raw("CONVERT(im.frequency_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as frequency_ids"),
+                    DB::raw("CONVERT(im.duration USING utf8mb4) COLLATE utf8mb4_unicode_ci as days"),
+                    DB::raw("CONVERT(im.ref_document_no USING utf8mb4) COLLATE utf8mb4_unicode_ci as referenceNumber"),
+                    DB::raw("CONVERT(im.mr_code USING utf8mb4) COLLATE utf8mb4_unicode_ci as mr_code"),
+                    DB::raw("CONVERT(im.brand_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as brand_id"),
+                    DB::raw("CONVERT(im.batch_no USING utf8mb4) COLLATE utf8mb4_unicode_ci as batch_no"),
+                    DB::raw("CONVERT(im.expiry_date USING utf8mb4) COLLATE utf8mb4_unicode_ci as expiry_date"),
                     // DB::raw("CAST('' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as dose"),
                     // DB::raw("CAST('' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as route_ids"),
                     // DB::raw("CAST('' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as frequency_ids"),
-                    DB::raw("CAST(im.demand_qty AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as demand_qty"),
-                    DB::raw("CAST(im.transaction_qty AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as transaction_qty"),
-                    DB::raw("CAST(im.inv_generic_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as inv_generic_ids"),
-                    DB::raw("CAST(im.remarks AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as remarks")
+                    DB::raw("CONVERT(im.demand_qty USING utf8mb4) COLLATE utf8mb4_unicode_ci as demand_qty"),
+                    DB::raw("CONVERT(im.transaction_qty USING utf8mb4) COLLATE utf8mb4_unicode_ci as transaction_qty"),
+                    DB::raw("CONVERT(im.inv_generic_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as inv_generic_ids"),
+                    DB::raw("CONVERT(im.remarks USING utf8mb4) COLLATE utf8mb4_unicode_ci as remarks")
                 ],
                 $inventoryJoinFields,
-                [DB::raw("CAST('inventory' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")]
+                [DB::raw("CONVERT('inventory' USING utf8mb4) COLLATE utf8mb4_unicode_ci as source")]
             ));
 
             if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
@@ -10966,7 +10966,7 @@ class InventoryController extends Controller
             'inventory_transaction_type.name as transactionType',
             'sourceLocation.name as sourceLocation',
             'destinationLocation.name as destinationLocation',
-            DB::raw("CAST(rmt.code AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as referenceNumber"),
+            DB::raw("CONVERT(rmt.code USING utf8mb4) COLLATE utf8mb4_unicode_ci as referenceNumber"),
             // DB::raw('COALESCE(inventory_brand.name, "") as brandName'), // Fetch brand name from the brand table
             // DB::raw('COALESCE(inventory_management.batch_no, "") as batch_no'),
             // DB::raw('COALESCE(inventory_management.expiry_date, "") as expiry_date'),
@@ -11011,8 +11011,9 @@ class InventoryController extends Controller
             'inventory_brand.name as brandName',
             'itt.name as transactionType',
             DB::raw('"N/A" as locationName'),
-            DB::raw("CAST(im.ref_document_no AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as referenceNumber"),
-        ])
+            DB::raw("CONVERT(im.ref_document_no USING utf8mb4) COLLATE utf8mb4_unicode_ci as referenceNumber"),
+        
+            ])
         ->where(function($query) {
             $query->where('ita.name', 'like', '%material transfer%');
         })
@@ -12176,25 +12177,24 @@ class InventoryController extends Controller
                     'effective_timestamp', 'timestamp', 'last_updated', 'logid'
                 ]),
                 [
-                    DB::raw("CAST(im.dose AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as dose"),
-                    DB::raw("CAST(im.route_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as route_id"),
-                    DB::raw("CAST(im.frequency_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as frequency_id"),
-                    DB::raw("CAST(im.duration AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as days"),
-                    DB::raw("CAST(im.ref_document_no AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as referenceNumber"),
-                    DB::raw("CAST(im.mr_code AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as mr_code"),
-                    DB::raw("CAST(im.brand_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as brand_id"),
-                    DB::raw("CAST(im.batch_no AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as batch_no"),
-                    DB::raw("CAST(im.expiry_date AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as expiry_date"),
-                    DB::raw("CAST(im.demand_qty AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as demand_qty"),
-                    DB::raw("CAST(isdt_src.name AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as sourceTypeName"),
-                    DB::raw("CAST(isdt_dest.name AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as destinationTypeName"),
-                    DB::raw("CAST(im.transaction_qty AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as transaction_qty"),
-                    DB::raw("CAST(im.inv_generic_id AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as inv_generic_ids"),
-                    DB::raw("CAST(im.source AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as Source"),
-                    DB::raw("CAST(im.destination AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as Destination"),
-                    DB::raw("CAST(im.remarks AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as remarks"),
-                    DB::raw("CAST('inventory' AS CHAR CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci) as source")
-
+                    DB::raw("CONVERT(im.dose USING utf8mb4) COLLATE utf8mb4_unicode_ci as dose"),
+                    DB::raw("CONVERT(im.route_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as route_id"),
+                    DB::raw("CONVERT(im.frequency_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as frequency_id"),
+                    DB::raw("CONVERT(im.duration USING utf8mb4) COLLATE utf8mb4_unicode_ci as days"),
+                    DB::raw("CONVERT(im.ref_document_no USING utf8mb4) COLLATE utf8mb4_unicode_ci as referenceNumber"),
+                    DB::raw("CONVERT(im.mr_code USING utf8mb4) COLLATE utf8mb4_unicode_ci as mr_code"),
+                    DB::raw("CONVERT(im.brand_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as brand_id"),
+                    DB::raw("CONVERT(im.batch_no USING utf8mb4) COLLATE utf8mb4_unicode_ci as batch_no"),
+                    DB::raw("CONVERT(im.expiry_date USING utf8mb4) COLLATE utf8mb4_unicode_ci as expiry_date"),
+                    DB::raw("CONVERT(im.demand_qty USING utf8mb4) COLLATE utf8mb4_unicode_ci as demand_qty"),
+                    DB::raw("CONVERT(isdt_src.name USING utf8mb4) COLLATE utf8mb4_unicode_ci as sourceTypeName"),
+                    DB::raw("CONVERT(isdt_dest.name USING utf8mb4) COLLATE utf8mb4_unicode_ci as destinationTypeName"),
+                    DB::raw("CONVERT(im.transaction_qty USING utf8mb4) COLLATE utf8mb4_unicode_ci as transaction_qty"),
+                    DB::raw("CONVERT(im.inv_generic_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as inv_generic_ids"),
+                    DB::raw("CONVERT(im.source USING utf8mb4) COLLATE utf8mb4_unicode_ci as Source"),
+                    DB::raw("CONVERT(im.destination USING utf8mb4) COLLATE utf8mb4_unicode_ci as Destination"),
+                    DB::raw("CONVERT(im.remarks USING utf8mb4) COLLATE utf8mb4_unicode_ci as remarks"),
+                    DB::raw("CONVERT('inventory' USING utf8mb4) COLLATE utf8mb4_unicode_ci as source")
                 ],
                 [
                     DB::raw('patient.name as patientName'),

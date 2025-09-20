@@ -224,6 +224,7 @@ $(document).ready(function() {
         
         // Get patient age to determine validation rules
         var patientAge = parseFloat($('.vs_age').val()) || 0;
+        console.log("Patient Age: " + patientAge);
         var isUnder16 = patientAge < 16;
         
         // Define fields that are optional for patients under 16
