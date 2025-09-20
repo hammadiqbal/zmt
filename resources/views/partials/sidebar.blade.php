@@ -1009,7 +1009,7 @@
                         $hideItemRates = false;
                     }
                     @endphp
-                    @if (!$hideChartOfAccountStrategy || !$hideChartOfAccountStrategySetup || !$hideTransactionSourceDestination || !$hideFinancialLedgerType || !$hidePayrollAdditionSetup || !$hidePayrollDeductionSetup || !$hideFinanceTransactionType || !$hideFinanceReceiving || !$hideFinancePayment || !$hidePayroll || !$hideTaxation || !$hideLedger)
+                    @if (!$hideChartOfAccountStrategy || !$hideChartOfAccountStrategySetup || !$hideTransactionSourceDestination || !$hideFinancialLedgerType || !$hidePayrollAdditionSetup || !$hidePayrollDeductionSetup || !$hideFinanceTransactionType || !$hideFinanceReceiving || !$hideFinancePayment || !$hideItemRates || !$hidePayroll || !$hideTaxation || !$hideLedger)
                         <li> <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false"><i class="mdi mdi-bank"></i><span class="hide-menu">Finance</span></a>
                             <ul aria-expanded="false" class="collapse">
                                 @if (!$hideChartOfAccountStrategy)
