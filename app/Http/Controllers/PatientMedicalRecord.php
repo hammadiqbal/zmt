@@ -711,7 +711,6 @@ class PatientMedicalRecord extends Controller
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
-        dd($request);
 
         $UserorgId = $session->org_id;
         $orgCode = Organization::where('id', $UserorgId)->value('code');

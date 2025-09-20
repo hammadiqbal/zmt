@@ -224,7 +224,7 @@ $(document).ready(function() {
         
         // Get patient age to determine validation rules
         var patientAge = parseFloat($('.vs_age').val()) || 0;
-        console.log("Patient Age: " + patientAge);
+        console.log(patientAge);
         var isUnder16 = patientAge < 16;
         
         // Define fields that are optional for patients under 16
@@ -233,9 +233,13 @@ $(document).ready(function() {
         $(data).each(function(i, field){
             var isOptionalField = isUnder16 && optionalFieldsForUnder16.includes(field.name);
             
+            // Debug logging for each field
+            console.log('Field:', field.name, 'Value:', field.value, 'IsOptional:', isOptionalField);
+            
             // Skip validation for nursing notes and optional fields for under 16
             if (((field.value == '') || (field.value == null)) && (field.name != 'vs_nursingnotes') && !isOptionalField)
             {
+                console.log('Validation Error for field:', field.name);
 
                 var FieldName = field.name;
                 $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
