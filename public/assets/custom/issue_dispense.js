@@ -81,6 +81,7 @@ $(document).ready(function() {
             let MRno = $(this).val();
             toggleDuplicateFieldsBasedOnMR(MRno);
             fetchMRServices(MRno, '#id_service', function(data) {
+                console.log(data);
                 if (data && data.length > 0) {
                     $('#id_service').empty();
                     let $service = $('#id_service')
@@ -594,6 +595,7 @@ $(document).ready(function() {
             // $('#id_dl,#id_sl,.serviceDetails').show();
             // $('#mrService,.mr-dependent').show();
             // if (data.source === 'material' && !data.mr_code) {
+            console.log(data.source);
             if (data.source === 'material' && !data.mr_code) {
                 $('#id_mr').closest('.col-md-6').hide();
                 $('#id_sl, #id_dl, .serviceDetails, #mrService, .mr-dependent').hide();

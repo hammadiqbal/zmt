@@ -206,9 +206,10 @@ $(document).ready(function() {
                     } 
                     else
                     {
-                        $('#mrService,.serviceDetails').hide();
+                        // $('#mrService,.serviceDetails').hide();
+                        $('.serviceDetails').hide();
                         $('#consumption_service')
-                            .html('<option selected disabled value="">Select Service</option>')
+                            .html('<option selected disabled value="">No Data Found</option>')
                             .prop('disabled', true)
                             .prop('required', true);
                         // $('#consumption_mr').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', false);

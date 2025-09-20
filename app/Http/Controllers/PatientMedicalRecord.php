@@ -4343,7 +4343,8 @@ class PatientMedicalRecord extends Controller
         }
         $ProceduresData = ServiceActivation::select('procedure_coding.logid as logID',
         'organization.organization as orgName', 'organization.id as orgID',
-        'services.name as serviceName', 'services.id as serviceId','procedure_coding.icd_id as icd_id')
+        'services.name as serviceName', 'services.id as serviceId','procedure_coding.icd_id as icd_id',
+        'activated_service.id as activated_service_id')
         ->join('organization', 'organization.id', '=', 'activated_service.org_id')
         ->join('services', 'services.id', '=', 'activated_service.service_id')
         ->join('service_group', 'service_group.id', '=', 'services.group_id')
@@ -4352,7 +4353,7 @@ class PatientMedicalRecord extends Controller
         // ->leftJoin('icd_code', 'icd_code.id', '=', 'procedure_coding.icd_id')
         ->distinct('services.name')
         ->where('service_type.code', 'p')
-        ->orderBy('activated_service.id', 'desc');
+        ->orderBy('activated_service_id', 'desc');
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
