@@ -46,11 +46,11 @@
                         <h4 class="card-title">All Item Rates</h4>
                     </div>
                     @php
-                    $FinanceReceiving = explode(',', $rights->finance_receiving);
-                    $add = $FinanceReceiving[0];
-                    $view = $FinanceReceiving[1];
-                    $edit = $FinanceReceiving[2];
-                    $updateStatus = $FinanceReceiving[3];
+                    $Itemrates = explode(',', $rights->item_rates);
+                    $add = $Itemrates[0];
+                    $view = $Itemrates[1];
+                    $edit = $Itemrates[2];
+                    $updateStatus = $Itemrates[3];
                     @endphp
                     @if ($add == 1)
                     <div class="col-auto">
