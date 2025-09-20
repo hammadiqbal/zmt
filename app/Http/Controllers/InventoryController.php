@@ -6826,12 +6826,14 @@ class InventoryController extends Controller
 
     public function GetPurchaseOrderData(Request $request)
     {
+
         $rights = $this->rights;
         $view = explode(',', $rights->purchase_order)[1];
         if($view == 0)
         {
             abort(403, 'Forbidden');
         }
+
         $PurchaseOrders = PurchaseOrder::select('purchase_order.*',
         'organization.organization as orgName','organization.code as orgCode',
         'org_site.name as siteName',
@@ -6841,10 +6843,10 @@ class InventoryController extends Controller
         ->join('org_site', 'org_site.id', '=', 'purchase_order.site_id')
         ->join('third_party', 'third_party.id', '=', 'purchase_order.vendor_id')
         ->orderBy('purchase_order.id', 'desc');
-
+        
         if($this->sessionUser->org_id != '0')
         {
-            $PurchaseOrders->where('purchase_order.org_id', '=', $sessionOrg);
+            $PurchaseOrders->where('purchase_order.org_id', '=', $this->sessionUser->org_id);
         }
 
         if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
