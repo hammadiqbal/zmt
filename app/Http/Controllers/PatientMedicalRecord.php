@@ -730,7 +730,9 @@ class PatientMedicalRecord extends Controller
         $RespiratoryRate= trim($request->input('vs_rrate'));
         $Weight = trim($request->input('vs_weight'));
         $Height = trim($request->input('vs_height'));
+        // $Score = trim($request->input('vs_score'));
         $Score = trim($request->input('vs_score'));
+        $Score = $Score === '' ? null : $Score;
         $o2Saturation = ($request->input('vs_o2saturation'));
         $NursingNotes = trim($request->input('vs_nursingnotes'));
         $BillingCCID = trim($request->input('billingcc_id'));

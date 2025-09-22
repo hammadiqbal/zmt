@@ -1,10 +1,10 @@
 ...........................................................................
-Site Validation according to allocated site is completed in user and costcenter activation module
+Check Invenotry Management module when there is a reponder transaction with 2
+different brand with 2 entriesthen balance is not showing
 
-Finalize Stock Monitioring Module
+check this in all inventory management modules
 .........................................................................
 check before upload to hosting
-add site_enabled column in users table
 <!-- set bydefault null sbp, dbp and score -->
 <!-- add generic_id,pack_size column in item_rates tables -->
 

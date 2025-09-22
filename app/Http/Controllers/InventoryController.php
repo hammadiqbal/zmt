@@ -12769,14 +12769,12 @@ class InventoryController extends Controller
                 $inventory->demand_qty = implode(',', $validated['consumption_demand_qty']);
             }
 
-
             if (isset($validated['consumption_mr'], $validated['source_type']) && !empty($validated['consumption_mr']) && $validated['source_type'] === 'medication') {
                 $inventory->dose = implode(',', $validated['consumption_dose']);
                 $inventory->frequency_id = implode(',', $validated['consumption_frequency']);
                 $inventory->route_id = implode(',', $validated['consumption_route']);
                 $inventory->duration = implode(',', $validated['consumption_duration']);
             }
-
 
             $formattedDates = array_map(function($date) {
                 return Carbon::createFromFormat('Y-m-d', $date)->timestamp;
