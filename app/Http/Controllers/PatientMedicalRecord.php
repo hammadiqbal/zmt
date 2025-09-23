@@ -1729,11 +1729,17 @@ class PatientMedicalRecord extends Controller
     public function AddDrugHistory(Request $request)
     {
         $rights = $this->rights;
-        $add = explode(',', $rights->encounters_and_procedures)[0];
-        if($add == 0)
+        $encountersAdd = explode(',', $rights->encounters_and_procedures)[0];
+        $vitalSignsAdd = explode(',', $rights->vital_signs)[0];
+        if ($encountersAdd == 0 && $vitalSignsAdd == 0) 
         {
             abort(403, 'Forbidden');
         }
+        // $add = explode(',', $rights->encounters_and_procedures)[0];
+        // if($add == 0)
+        // {
+        //     abort(403, 'Forbidden');
+        // }
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
