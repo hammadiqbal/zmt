@@ -234,7 +234,7 @@ $(document).ready(function() {
                                 if (r.destinationData && r.destinationData.length > 0) {
                                     r.destinationData.forEach(function(item) {
                                         let displayText = item.name || item.person_name || item.patient_name || 'Unnamed';
-                                        $('#mt_destination_location').append('<option value="' + value.id + '">' + displayText + '</option>');
+                                        $('#mt_destination_location').append('<option value="' + item.id + '">' + displayText + '</option>');
                                     });
                                     $('#mt_destination_location').prop('disabled', false);
                                 } else {
@@ -268,7 +268,6 @@ $(document).ready(function() {
             } else if (['s','r'].includes(destinationAction)) {
                 siteId = $('#mt_destination_site').val();
             }
-            console.log('siteId', siteId);
             const genericId = currentRow.find('.mt_generic').val();
             const brandId = $(this).val();
             const $brand = $(this);
@@ -340,6 +339,10 @@ $(document).ready(function() {
     var viewMaterialTransfer =  $('#view-materialtransfer').DataTable({
         processing: true,
         serverSide: true,
+        deferRender: true,
+        stateSave: true,
+        // pageLength: 10|25,
+        searchDelay: 400,
         ajax: '/inventory/materialtransfer',
         order: [[0, 'desc']],
         columns: [

@@ -504,6 +504,10 @@ $(document).ready(function() {
     var viewIssueDispense =  $('#view-issuedispense').DataTable({
         processing: true,
         serverSide: true,
+        deferRender: true,
+        stateSave: true,
+        // pageLength: 10|25,
+        searchDelay: 400,
         ajax: '/inventory/issuedispense',
         order: [[0, 'desc']],
         columns: [
@@ -827,6 +831,7 @@ $(document).ready(function() {
                             $('#id_sl').hide();
                             $('#source_applicable').val('0');
                         }
+                        console.log(data);
             
                         let destType = (resp.Destination || '').toLowerCase();
                         if (destType.includes('location')) {

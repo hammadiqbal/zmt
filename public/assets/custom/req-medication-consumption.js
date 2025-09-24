@@ -145,11 +145,10 @@ $(document).ready(function() {
                                 $('#rmc_destination_location').append('<option value="' + item.id + '">' + item.name + '</option>');
                             });
                         } else {
-                            $('#rmc_destination_location')
-                                .empty()
-                                .append('<option selected disabled value="">No Data Found</option>')
-                                .prop('disabled', true)
-                                .prop('required', false);
+                            console.log('else');
+                            $('#rmc_destination_location').empty().append('<option selected disabled value="">No Data Found</option>');
+                                // .prop('disabled', true)
+                                // .prop('required', true);
                         }
                     } else {
                         $('.rmc_destination_location').hide();
