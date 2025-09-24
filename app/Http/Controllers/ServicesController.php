@@ -1620,12 +1620,13 @@ class ServicesController extends Controller
             $ServiceModeIds = implode(',', $ServiceModeArray[$serviceId]);
 
             $ActivateServiceExists = ServiceActivation::where('service_id', $serviceId)
-                ->where('ordering_cc_ids', $BillingCC)
-                ->where('performing_cc_ids', $PerformingCC)
-                ->where('servicemode_ids', $ServiceModeIds)
+                ->where('org_id', $BillingCC)
+                ->where('site_id', $PerformingCC)
                 ->exists();
 
             if ($ActivateServiceExists) {
+                return response()->json(['info' => 'Service already activated on the selected site.']);
+                // dd($ActivateService);
                 continue;
             }
 
