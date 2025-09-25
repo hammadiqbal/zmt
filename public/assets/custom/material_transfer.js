@@ -429,7 +429,6 @@ $(document).ready(function() {
             Swal.fire('Error', 'Records Not Found', 'error');
         })
         .done(data => {
-            // console.log(data);
             // $('#mrService,.mr-dependent').show();
             // if (data.source === 'material' && !data.mr_code) {
             $('.od_s, .od_d').hide();
@@ -659,8 +658,8 @@ $(document).ready(function() {
                 $qtyInput.attr('placeholder', `Max: ${demandQty} (Demand Qty)`);
             }
             else {
-                $qtyInput.attr('max', demandQty);
-                $qtyInput.attr('placeholder', `Max: ${demandQty} (Demand Qty)`);
+                $qtyInput.attr('max', maxQty);
+                $qtyInput.attr('placeholder', `Max: ${maxQty} (Available Qty)`);
             }
             const sourceHasSR = ['s', 'r'].includes(data.source_action);
             const destHasSR = ['s', 'r'].includes(data.destination_action);
@@ -674,8 +673,6 @@ $(document).ready(function() {
             } else {
                 approvedSiteId = '#mt_source_site';
             }
-
-            console.log('approvedSiteId', approvedSiteId);
 
             BrandChangeBatchAndExpiry(
                 '#mt_org',  

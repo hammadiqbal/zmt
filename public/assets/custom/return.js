@@ -4,6 +4,10 @@ $(document).ready(function() {
     var viewReturn =  $('#view-return').DataTable({
         processing: true,
         serverSide: true,
+        deferRender: true,
+        stateSave: true,
+        // pageLength: 10|25,
+        searchDelay: 400,
         ajax: '/inventory/return',
         order: [[0, 'desc']],
         columns: [
