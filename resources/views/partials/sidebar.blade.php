@@ -873,7 +873,7 @@
                                     <li><a href="{{ route('work-order') }}">Work Order</a></li>
                                 @endif
                                
-                                @if (!$hideExternalTransaction || !$hideIssueDispense )
+                                @if (!$hideExternalTransaction || !$hideIssueDispense || !$hideMaterialTransfer  || !$hideConsumption || !$hideInventoryReturn || !$hideReversalTransaction)
                                 <li>
                                     <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false">
                                         <span class="hide-menu">Inventory Management</span>

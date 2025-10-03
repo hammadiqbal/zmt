@@ -4349,19 +4349,41 @@ class PatientMedicalRecord extends Controller
         {
             abort(403, 'Forbidden');
         }
-        $ProceduresData = ServiceActivation::select('procedure_coding.logid as logID',
-        'organization.organization as orgName', 'organization.id as orgID',
-        'services.name as serviceName', 'services.id as serviceId','procedure_coding.icd_id as icd_id',
-        'activated_service.id as activated_service_id')
+        // $ProceduresData = ServiceActivation::select('procedure_coding.logid as logID',
+        // 'organization.organization as orgName', 'organization.id as orgID',
+        // 'services.name as serviceName', 'services.id as serviceId','procedure_coding.icd_id as icd_id',
+        // 'activated_service.id as activated_service_id')
+        // ->join('organization', 'organization.id', '=', 'activated_service.org_id')
+        // ->join('services', 'services.id', '=', 'activated_service.service_id')
+        // ->join('service_group', 'service_group.id', '=', 'services.group_id')
+        // ->join('service_type', 'service_type.id', '=', 'service_group.type_id')
+        // ->leftJoin('procedure_coding', 'procedure_coding.service_id', '=', 'services.id')
+        // // ->leftJoin('icd_code', 'icd_code.id', '=', 'procedure_coding.icd_id')
+        // ->distinct('services.name')
+        // ->where('service_type.code', 'p')
+        // ->orderBy('activated_service_id', 'desc');
+
+        $ProceduresData = ServiceActivation::select([
+        DB::raw('MAX(procedure_coding.logid)  as logID'),
+        'organization.organization           as orgName',
+        'organization.id                     as orgID',
+        'services.name                       as serviceName',
+        'services.id                         as serviceId',
+        DB::raw('MAX(procedure_coding.icd_id) as icd_id'),
+        DB::raw('MAX(activated_service.id)    as activated_service_id'),
+        // keep a plain "id" for your id_raw column
+        DB::raw('MAX(activated_service.id)    as id'),
+        ])
         ->join('organization', 'organization.id', '=', 'activated_service.org_id')
         ->join('services', 'services.id', '=', 'activated_service.service_id')
         ->join('service_group', 'service_group.id', '=', 'services.group_id')
         ->join('service_type', 'service_type.id', '=', 'service_group.type_id')
         ->leftJoin('procedure_coding', 'procedure_coding.service_id', '=', 'services.id')
-        // ->leftJoin('icd_code', 'icd_code.id', '=', 'procedure_coding.icd_id')
-        ->distinct('services.name')
         ->where('service_type.code', 'p')
+        // one row per (org, service) — removes duplicates coming from multiple site_id rows
+        ->groupBy('services.id', 'services.name', 'organization.id', 'organization.organization')
         ->orderBy('activated_service_id', 'desc');
+
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
