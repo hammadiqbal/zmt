@@ -292,9 +292,19 @@ class PatientController extends Controller
         $logId = null;
 
         $PatientExists = PatientRegistration::where('guardian', $GuardianName)
-        ->Where('name', $Name)
-        ->Where('cnic', $CNIC)
-        ->exists();
+        ->where('name', $Name)
+        ->where('guardian_relation', $GuardianRelation);
+
+        // Add conditional WHERE clauses only if values are not null or empty
+        if (!empty($CNIC)) {
+            $PatientExists->where('cnic', $CNIC);
+        }
+        if (!empty($Cell)) {
+            $PatientExists->where('cell_no', $Cell);
+        }
+
+        $PatientExists = $PatientExists->exists();
+
         if ($PatientExists) {
             return response()->json(['info' => 'Patient already exists.']);
         }
@@ -479,10 +489,21 @@ class PatientController extends Controller
                     $orgName ='<hr class="mt-1 mb-1"><b>Organization:</b> '.ucwords($Patient->orgName);
                 }
 
+                // Generate dynamic guardian relation based on patient gender and relation
+                $relationAbbrev = '';
+                if (strtolower($Patient->guardian_relation) == 'husband') {
+                    $relationAbbrev = 'w/o'; // wife of
+                } elseif (strtolower($Patient->guardian_relation) == 'father') {
+                    $relationAbbrev = (strtolower($Patient->genderName) == 'male') ? 's/o' : 'd/o'; // son of / daughter of
+                } else {
+                    $relationAbbrev = 'd/o'; // default to daughter of
+                }
+
                 return '<b>MR Code: </b>'.ucwords($MrCode)
                         .'<hr class="mt-1 mb-2">
                         '.ucwords($Patient->name)
                         .'<br>'.ucwords($Patient->genderName)
+                        .'<br><b>Guardian: </b> '.$relationAbbrev.' '.ucwords($Patient->guardian)
                         .'<br><b>Age: </b>'.$age
                         . '<hr class="mt-1 mb-2">'
                         . '<span class="label label-info popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $createdInfo .'">'

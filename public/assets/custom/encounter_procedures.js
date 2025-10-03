@@ -186,6 +186,7 @@ $(document).ready(function() {
                             // Clear global service performing CCs
                             window.currentServicePerformingCCs = null;
                             $('#ep_site').html('');
+                            $('#ep_guardian').html('');
                             $('#ep_smt').html('');
                             $('#ep_sgb').html('');
                             $('#ep_service').html('');
@@ -284,6 +285,7 @@ $(document).ready(function() {
                             var serviceGroup = response.serviceGroup;
                             $('#ep_details').addClass('d-flex flex-column justify-content-end align-items-end');
                             $('#ep_site').html('<b>Site</b> : ' + siteName);
+                            $('#ep_guardian').html('<b>Guardian</b> : ' + response.guardian);
                             $('#ep_smt').html('<b>Service Mode & Type</b> : ' + serviceMode + ' & ' + serviceType);
                             $('#ep_sgb').html('<b>Service Group & Booking</b> : ' + serviceGroup + ' & Booked');
                             $('#ep_service').html('<b>Service</b> : ' + serviceName);

@@ -539,11 +539,11 @@ class PatientMedicalRecord extends Controller
         //     return response()->json(['info' => 200, 'services' => $services]);
         // }
 
-
         // dd($services->count());
-
         $EncounterProcedurePatientDetails = PatientRegistration::select(
             'patient.name as patientName',
+            'patient.guardian as guardianName',
+            'patient.guardian_relation as guardianRelation',
             'gender.name as genderName',
             'patient.dob as patientDOB',
             'billingCC.name as billingCCName',
@@ -612,6 +612,17 @@ class PatientMedicalRecord extends Controller
             }
             $EncounterProcedurePatientDetails->patientDOB = $ageString;
 
+            $relationAbbrev = '';
+            if (strtolower($EncounterProcedurePatientDetails->guardianRelation) == 'husband') {
+                $relationAbbrev = 'w/o'; // wife of
+            } elseif (strtolower($EncounterProcedurePatientDetails->guardianRelation) == 'father') {
+                $relationAbbrev = (strtolower($EncounterProcedurePatientDetails->genderName) == 'male') ? 's/o' : 'd/o'; // son of / daughter of
+            } else {
+                $relationAbbrev = 'd/o'; // default to daughter of
+            }
+            $guardian = $relationAbbrev.' '.ucwords($EncounterProcedurePatientDetails->guardianName);
+
+            $EncounterProcedurePatientDetails->guardian = $guardian;
 
             // if ($EmployeeStatus != 0 && $empId != 0) {
             //     $employeeData = DB::table('employee')

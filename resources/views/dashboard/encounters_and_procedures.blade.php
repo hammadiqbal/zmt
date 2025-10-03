@@ -154,6 +154,9 @@
                                 </div>
 
                                 <div class="col-md-5" id="ep_details" style="position: absolute; bottom: 5%; right: 0;">
+                                     <div class="col-md-12 text-right p-0">
+                                        <span class="main_label col-auto" id="ep_guardian"></span>
+                                    </div>
                                     <div class="col-md-12 text-right p-0">
                                         <span class="main_label col-auto" id="ep_site"></span>
                                     </div>
