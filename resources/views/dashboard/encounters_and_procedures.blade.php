@@ -503,7 +503,7 @@
                                     <thead>
                                         <tr>
                                             <th></th>
-                                            <th>Date</th>
+                                            <th>Performer Details</th>
                                             <th>Service Mode & Group</th>
                                             {{-- <th>Clinical Notes</th> --}}
                                             <th>Summary/Plan</th>

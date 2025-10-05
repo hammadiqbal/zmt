@@ -39,6 +39,9 @@ use App\Models\Site;
 use App\Models\ServiceActivation;
 use App\Models\InvestigationTracking;
 use App\Models\ServiceBooking;
+use App\Models\User;
+use App\Models\Employee;
+use App\Models\PrefixSetup;
 use App\Http\Requests\ICDCodingRequest;
 use App\Http\Requests\VitalSignRequest;
 use App\Http\Requests\RequisitionEPIRequest;
@@ -2564,12 +2567,22 @@ class PatientMedicalRecord extends Controller
         // }
         $VisitBasedDetails = VisitBasedDetails::select('visit_based_details.*',
         'costcenter.name as Speciality','employee.name as Physician',
-        'service_mode.name as serviceMode','service_group.name as serviceGroup')
+        'service_mode.name as serviceMode','service_group.name as serviceGroup',
+        'user.is_employee as user_is_employee', 'user.id as userId',
+        'real_performer.name as real_performer_name', 'real_performer.prefix_id as real_performer_prefix_id',
+        'prefix.name as prefix_name', 'physician_prefix.name as physician_prefix_name')
         ->join('costcenter', 'costcenter.id', '=', 'visit_based_details.billing_cc')
         ->join('service_mode', 'service_mode.id', '=', 'visit_based_details.service_mode_id')
         ->join('services', 'services.id', '=', 'visit_based_details.service_id')
         ->join('service_group', 'service_group.id', '=', 'services.group_id')
         ->join('employee', 'employee.id', '=', 'visit_based_details.emp_id')
+        ->leftJoin('prefix as physician_prefix', 'physician_prefix.id', '=', 'employee.prefix_id')
+        ->leftJoin('user', 'user.id', '=', 'visit_based_details.user_id')
+        ->leftJoin('employee as real_performer', function($join) {
+            $join->on('real_performer.id', '=', 'user.emp_id')
+                 ->where('user.is_employee', '=', 1);
+        })
+        ->leftJoin('prefix as prefix', 'prefix.id', '=', 'real_performer.prefix_id')
         ->where('visit_based_details.mr_code', $mr)
         ->orderBy('visit_based_details.id', 'desc');
         // ->get();
@@ -2579,10 +2592,16 @@ class PatientMedicalRecord extends Controller
             ->addColumn('id_raw', function ($VisitBasedDetail) {
                 return $VisitBasedDetail->id;
             })
-            ->addColumn('date', function ($SocialHistory) {
-                $Date = $SocialHistory->timestamp;
-                $Date = Carbon::createFromTimestamp($Date)->format('d-F-y');
-                return $Date;
+            ->addColumn('date', function ($VisitBasedDetail) {
+                $Date = $VisitBasedDetail->timestamp;
+                $Date = Carbon::createFromTimestamp($Date)->format('d-M-y');
+                if ($VisitBasedDetail->user_is_employee == 1 && $VisitBasedDetail->real_performer_name) {
+                    $prefix = $VisitBasedDetail->prefix_name ? $VisitBasedDetail->prefix_name . ' ' : '';
+                    $performerName = $prefix . $VisitBasedDetail->real_performer_name;
+                }
+                // Fallback to responsible physician if no real performer
+                return $performerName.'<hr class="mt-1 mb-1">'.$Date;
+                // return $Date;
             })
             ->addColumn('ServiceModeGroup', function ($VisitBasedDetail) {
                 $serviceMode = $VisitBasedDetail->serviceMode;
@@ -2604,7 +2623,8 @@ class PatientMedicalRecord extends Controller
             })
             ->addColumn('physician', function ($VisitBasedDetail) {
                 $Physician = $VisitBasedDetail->Physician;
-                return $Physician;
+                $prefix = $VisitBasedDetail->physician_prefix_name ? $VisitBasedDetail->physician_prefix_name . ' ' : '';
+                return $prefix . $Physician;
             })
             ->editColumn('action', function ($VisitBasedDetail) {
                 $id = $VisitBasedDetail->id;
@@ -2621,7 +2641,7 @@ class PatientMedicalRecord extends Controller
                 . '</button>';
                 return $actionButtons;
             })
-            ->rawColumns(['id_raw','speciality','physician',
+            ->rawColumns(['id_raw','speciality','physician','real_performer',
             'summary','date','action','logs'])
             ->make(true);
     }

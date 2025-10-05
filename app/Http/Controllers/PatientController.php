@@ -703,7 +703,7 @@ class PatientController extends Controller
         $oldMR = $Patients->old_mrcode;
         $Gender = $Patients->genderName;
         $DateOfBirth = $Patients->dob;
-        $DateOfBirth = date("j-M-Y", $DateOfBirth);
+        $DateOfBirth = date("j-M-y", $DateOfBirth);
         $Org = $Patients->orgName;
         $Site = $Patients->siteName;
         $Province = $Patients->provinceName;

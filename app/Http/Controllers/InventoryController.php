@@ -8878,6 +8878,7 @@ class InventoryController extends Controller
             'inventory_management.ref_document_no',
             'inventory_management.transaction_qty',
             'inventory_management.batch_no',
+            'inventory_management.expiry_date',
             'inventory_management.effective_timestamp',
             'inventory_management.remarks',
             'inventory_management.source',
@@ -9122,6 +9123,7 @@ class InventoryController extends Controller
             //     return $html;
             // })
             ->addColumn('item_details', function ($row) {
+                // dd($row);
                 // --- helpers ---
                 $csv = function ($v) {
                     // keep indexes aligned; don't drop empties
@@ -9384,769 +9386,914 @@ class InventoryController extends Controller
         return view('dashboard.material_management.issue_dispense', compact('user','RequisitionNonMandatory','costcenters','MedicationRoutes','MedicationFrequencies'));
     }
 
-    public function GetIssueDispenseData(Request $request)
-    {
-        $rights = $this->rights;
-        $view = explode(',', $rights->issue_and_dispense)[1];
-        if ($view == 0) {
-            abort(403, 'Forbidden');
-        }
+    // public function GetIssueDispenseData(Request $request)
+    // {
+    //     $rights = $this->rights;
+    //     $view = explode(',', $rights->issue_and_dispense)[1];
+    //     if ($view == 0) {
+    //         abort(403, 'Forbidden');
+    //     }
 
 
-        // Common field definitions
-        $sharedFields = ['id', 'transaction_type_id', 'status', 'org_id', 'site_id', 'effective_timestamp', 'timestamp', 'last_updated', 'logid'];
+    //     // Common field definitions
+    //     $sharedFields = ['id', 'transaction_type_id', 'status', 'org_id', 'site_id', 'effective_timestamp', 'timestamp', 'last_updated', 'logid'];
         
-        $commonJoinFields = [
-            'patient.name as patientName',
-            'employee.name as Physician', 
-            'organization.organization as OrgName',
-            'org_site.name as SiteName',
-            'services.name as serviceName',
-            'service_mode.name as serviceMode',
-            'billingCC.name as billingCC',
-            'service_group.name as serviceGroup',
-            'service_type.name as serviceType',
-            'inventory_transaction_type.name as TransactionType'
-        ];
-
-        // Session site filtering helper
-        $applySessionFilter = function($query) {
-            if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
-                $sessionSiteIds = $this->assignedSites;
-                if(!empty($sessionSiteIds)) {
-                    $query->whereIn('org_site.id', $sessionSiteIds);
-                }
-            }
-            return $query;
-        };
-
-        // --- Medication Query ---
-        $medication = DB::table('req_medication_consumption as rmc')
-            ->join('costcenter as billingCC', 'billingCC.id', '=', 'rmc.billing_cc')
-            ->join('employee', 'employee.id', '=', 'rmc.responsible_physician')
-            ->join('service_mode', 'service_mode.id', '=', 'rmc.service_mode_id')
-            ->join('services', 'services.id', '=', 'rmc.service_id')
-            ->join('organization', 'organization.id', '=', 'rmc.org_id')
-            ->join('org_site', 'org_site.id', '=', 'rmc.site_id')
-            ->join('service_group', 'service_group.id', '=', 'rmc.service_group_id')
-            ->join('service_type', 'service_type.id', '=', 'rmc.service_type_id')
-            ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'rmc.transaction_type_id')
-            ->leftJoin('service_location as source_location', 'source_location.id', '=', 'rmc.source_location_id')
-            ->leftJoin('service_location as destination_location', 'destination_location.id', '=', 'rmc.destination_location_id')
-            ->join('patient', 'patient.mr_code', '=', 'rmc.mr_code')
-            ->select([
-                'rmc.id',
-                'rmc.transaction_type_id',
-                'rmc.status',
-                'rmc.org_id',
-                'rmc.site_id',
-                'rmc.effective_timestamp',
-                'rmc.timestamp',
-                'rmc.last_updated',
-                'rmc.logid',
-                'patient.name as patientName',
-                'employee.name as Physician',
-                'organization.organization as OrgName',
-                'org_site.name as SiteName',
-                'services.name as serviceName',
-                'service_mode.name as serviceMode',
-                'billingCC.name as billingCC',
-                'service_group.name as serviceGroup',
-                'service_type.name as serviceType',
-                'inventory_transaction_type.name as TransactionType',
-                DB::raw('COALESCE(source_location.name, "") as SourceLocationName'),
-                DB::raw('COALESCE(destination_location.name, "") as DestinationLocationName'),
-                'rmc.code as referenceNumber',
-                'rmc.mr_code',
-                'rmc.dose',
-                'rmc.route_ids',
-                'rmc.frequency_ids',
-                'rmc.days',
-                'rmc.inv_generic_ids',
-                'rmc.remarks',
-                DB::raw("'medication' as source")
-            ]);
-
-        $medication = $applySessionFilter($medication);
-
-        // --- Material Query ---
-        $material = DB::table('material_consumption_requisition as mcr')
-            ->leftJoin('patient', 'patient.mr_code', '=', 'mcr.mr_code')
-            ->leftJoin('employee', 'employee.id', '=', 'mcr.physician_id')
-            ->leftJoin('service_mode', 'service_mode.id', '=', 'mcr.service_mode_id')
-            ->leftJoin('services', 'services.id', '=', 'mcr.service_id')
-            ->leftJoin('service_group', 'service_group.id', '=', 'services.group_id')
-            ->leftJoin('service_type', 'service_type.id', '=', 'service_group.type_id')
-            ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'mcr.billing_cc')
-            ->leftJoin('organization', 'organization.id', '=', 'mcr.org_id')
-            ->leftJoin('org_site', 'org_site.id', '=', 'mcr.site_id')
-            ->leftJoin('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'mcr.transaction_type_id')
-            ->leftJoin('service_location as source_location', 'source_location.id', '=', 'mcr.source_location_id')
-            ->leftJoin('service_location as destination_location', 'destination_location.id', '=', 'mcr.destination_location_id')
-            ->select([
-                'mcr.id',
-                'mcr.transaction_type_id',
-                'mcr.status',
-                'mcr.org_id',
-                'mcr.site_id',
-                'mcr.effective_timestamp',
-                'mcr.timestamp',
-                'mcr.last_updated',
-                'mcr.logid',
-                'patient.name as patientName',
-                'employee.name as Physician',
-                'organization.organization as OrgName',
-                'org_site.name as SiteName',
-                'services.name as serviceName',
-                'service_mode.name as serviceMode',
-                'billingCC.name as billingCC',
-                'service_group.name as serviceGroup',
-                'service_type.name as serviceType',
-                'inventory_transaction_type.name as TransactionType',
-                DB::raw('COALESCE(source_location.name, "") as SourceLocationName'),
-                DB::raw('COALESCE(destination_location.name, "") as DestinationLocationName'),
-                'mcr.code as referenceNumber',
-                'mcr.mr_code',
-                DB::raw("'' as dose"),
-                DB::raw("'' as route_ids"),
-                DB::raw("'' as frequency_ids"),
-                DB::raw("'' as days"),
-                'mcr.generic_id as inv_generic_ids',
-                'mcr.remarks',
-                DB::raw("'material' as source")
-            ]);
-
-        $material = $applySessionFilter($material);
-
-        // --- Direct Issue/Dispense Query ---
-        $directIssueDispense = DB::table('inventory_management as im')
-            ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'im.transaction_type_id')
-            ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'inventory_transaction_type.activity_type')
-            ->join('organization', 'organization.id', '=', 'im.org_id')
-            ->join('org_site', 'org_site.id', '=', 'im.site_id')
-            ->leftJoin('patient', 'patient.mr_code', '=', 'im.mr_code')
-            ->leftJoin('employee', 'employee.id', '=', 'im.resp_physician')
-            ->leftJoin('service_mode', 'service_mode.id', '=', 'im.service_mode_id')
-            ->leftJoin('services', 'services.id', '=', 'im.service_id')
-            ->leftJoin('service_group', 'service_group.id', '=', 'services.group_id')
-            ->leftJoin('service_type', 'service_type.id', '=', 'service_group.type_id')
-            ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'im.billing_cc')
-            ->where(function($query) {
-                $query->where('ita.name', 'like', '%issue%')
-                    ->orWhere('ita.name', 'like', '%dispense%');
-            })
-            ->where(function($query) {
-                $query->whereNull('im.ref_document_no')
-                    ->orWhere(function($q) {
-                        $q->where('im.ref_document_no', 'not like', '%-MTC-%')
-                            ->where('im.ref_document_no', 'not like', '%-MDC-%');
-                    });
-            })
-            ->select([
-                'im.id',
-                'im.transaction_type_id',
-                'im.status',
-                'im.org_id',
-                'im.site_id',
-                'im.effective_timestamp',
-                'im.timestamp',
-                'im.last_updated',
-                'im.logid',
-                'patient.name as patientName',
-                'employee.name as Physician',
-                'organization.organization as OrgName',
-                'org_site.name as SiteName',
-                'services.name as serviceName',
-                'service_mode.name as serviceMode',
-                'billingCC.name as billingCC',
-                'service_group.name as serviceGroup',
-                'service_type.name as serviceType',
-                'inventory_transaction_type.name as TransactionType',
-                DB::raw("'' as SourceLocationName"),
-                DB::raw("'' as DestinationLocationName"),
-                'im.ref_document_no as referenceNumber',
-                'im.mr_code',
-                'im.dose',
-                'im.route_id as route_ids',
-                'im.frequency_id as frequency_ids',
-                'im.duration as days',
-                'im.inv_generic_id as inv_generic_ids',
-                'im.remarks',
-                DB::raw("'inventory' as source")
-            ]);
-
-        $directIssueDispense = $applySessionFilter($directIssueDispense);
-
-        // Create UNION query for server-side processing
-        $unionQuery = $medication
-            ->unionAll($material)
-            ->unionAll($directIssueDispense)
-            ->orderBy('timestamp', 'desc');
-
-        return DataTables::query($unionQuery)
-            // ->mergeBindings($combined))
-            ->addColumn('id_raw', fn($row) => $row->id)
-            ->editColumn('id', function ($row) {
-                // Optimize date formatting with single Carbon instance
-                $carbon = Carbon::class;
-                $timestamp = $carbon::createFromTimestamp($row->timestamp)->format('l d F Y - h:i A');
-                $effectiveDate = $carbon::createFromTimestamp($row->effective_timestamp)->format('l d F Y - h:i A');
-
-                // Build location info more efficiently
-                $locationParts = [];
-                if (!empty($row->SourceLocationName)) {
-                    $locationParts[] = '<br><b>Source Location</b>: ' . ucwords($row->SourceLocationName);
-                }
-                if (!empty($row->DestinationLocationName)) {
-                    $locationParts[] = '<br><b>Destination Location</b>: ' . ucwords($row->DestinationLocationName);
-                }
-                $locationInfo = implode('', $locationParts);
-
-                // Use sprintf for better performance and readability
-                return sprintf(
-                    '%s<hr class="mt-1 mb-2"><b>Request For</b>: %s%s<br><b>Site</b>: %s<br><b>Request Date </b>: %s<br><b>Effective Date </b>: %s<br><b>Remarks</b>: %s',
-                    $row->referenceNumber ?? 'N/A',
-                    $row->TransactionType ?? 'N/A',
-                    $locationInfo,
-                    $row->SiteName ?? 'N/A',
-                    $timestamp,
-                    $effectiveDate,
-                    $row->remarks ?: 'N/A'
-                );
-            })
-            ->editColumn('patientDetails', function ($row) {
-                if (empty($row->mr_code)) return 'N/A';
-
-                // Use sprintf for better performance
-                return sprintf(
-                    '<b>MR#:</b> %s<br>%s<hr class="mt-1 mb-2"><b>Service Mode</b>: %s<br><b>Service Group</b>: %s<br><b>Service</b>: %s<br><b>Responsible Physician</b>: %s<br><b>Billing CC</b>: %s',
-                    $row->mr_code,
-                    $row->patientName,
-                    $row->serviceMode,
-                    $row->serviceGroup,
-                    $row->serviceName,
-                    $row->Physician,
-                    $row->billingCC
-                );
-            })
-            ->editColumn('InventoryDetails', function ($row) {
-
-                static $rightsRespond = null;
-
-                static $genericNameCache = [];         // [generic_id => name]
-                static $routeNameCache = [];           // [route_id => name]
-                static $frequencyNameCache = [];       // [frequency_id => name]
-                static $brandNameCache = [];           // [brand_id => name]
-                static $locationNameCache = [];        // [location_id => name]
-
-                static $respondedByRefCache = [];      // [ref_document_no => [inv_generic_id => total_qty]]
-                static $imRefMapCache = [];            // [ref_document_no => [generic_id => ['brand_id'=>..,'batch_no'=>..,'expiry_date'=>..]]]
-                static $imFirstByGenericCache = [];    // [generic_id => ['brand_id'=>..,'batch_no'=>..]] for direct entries
-
-                static $balanceCache = [];             // ["org_site|org|site|generic|brand|batch" => ['orgBalance'=>..,'siteBalance'=>..,'locBalance'=>json]]
-
-                // ---- Rights: respond permission ----
-                if ($rightsRespond === null) {
-                    $Rights = $this->rights;
-                    $rightsRespond = (int) explode(',', $Rights->issue_and_dispense)[2];
-                }
-
-                // ---- Small helpers (memoized fetchers) ----
-                $getBrandName = function ($brandId) use (&$brandNameCache) {
-                    if (!$brandId) return '';
-                    if (!array_key_exists($brandId, $brandNameCache)) {
-                        $brandNameCache[$brandId] = (string) (DB::table('inventory_brand')->where('id', $brandId)->value('name') ?? '');
-                    }
-                    return $brandNameCache[$brandId];
-                };
-
-                $getLocationName = function ($locId) use (&$locationNameCache) {
-                    if (!$locId) return 'Unknown';
-                    if (!array_key_exists($locId, $locationNameCache)) {
-                        $locationNameCache[$locId] = (string) (DB::table('service_location')->where('id', $locId)->value('name') ?? 'Unknown');
-                    }
-                    return $locationNameCache[$locId];
-                };
-
-                $getRespondedMap = function ($refNo) use (&$respondedByRefCache) {
-                    if (empty($refNo)) return [];
-                    if (!array_key_exists($refNo, $respondedByRefCache)) {
-                        $respondedByRefCache[$refNo] = DB::table('inventory_management as im')
-                            ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
-                            ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'itt.activity_type')
-                            ->where('im.ref_document_no', $refNo)
-                            ->where(function ($q) {
-                                $q->where('ita.name', 'like', '%issue%')
-                                ->orWhere('ita.name', 'like', '%dispense%');
-                            })
-                            ->groupBy('im.inv_generic_id')
-                            ->select('im.inv_generic_id', DB::raw('SUM(im.transaction_qty) as total_qty'))
-                            ->pluck('total_qty', 'im.inv_generic_id')
-                            ->toArray();
-                    }
-                    return $respondedByRefCache[$refNo];
-                };
-
-                $getIMRefMap = function ($refNo) use (&$imRefMapCache) {
-                    if (empty($refNo)) return [];
-                    if (!array_key_exists($refNo, $imRefMapCache)) {
-                        $rows = DB::table('inventory_management')
-                            ->where('ref_document_no', $refNo)
-                            ->select('inv_generic_id', 'brand_id', 'batch_no', 'expiry_date')
-                            ->get();
-                        $map = [];
-                        foreach ($rows as $r) {
-                            $map[(int)$r->inv_generic_id] = [
-                                'brand_id'    => $r->brand_id,
-                                'batch_no'    => $r->batch_no,
-                                'expiry_date' => $r->expiry_date,
-                            ];
-                        }
-                        $imRefMapCache[$refNo] = $map;
-                    }
-                    return $imRefMapCache[$refNo];
-                };
-
-                $getIMFirstByGeneric = function ($genericId) use (&$imFirstByGenericCache) {
-                    $gid = (int) $genericId;
-                    if ($gid <= 0) return null;
-                    if (!array_key_exists($gid, $imFirstByGenericCache)) {
-                        $r = DB::table('inventory_management')
-                            ->where('inv_generic_id', $gid)
-                            ->select('brand_id', 'batch_no')
-                            ->first();
-                        $imFirstByGenericCache[$gid] = $r ? ['brand_id' => $r->brand_id, 'batch_no' => $r->batch_no] : null;
-                    }
-                    return $imFirstByGenericCache[$gid];
-                };
-
-                $getBalances = function ($orgId, $siteId, $genericId, $brandId, $batchNo, $preferredLocationName = null) use (&$balanceCache, $getLocationName) {
-                    $key = "{$orgId}|{$siteId}|{$genericId}|{$brandId}|{$batchNo}|".mb_strtolower(trim((string)$preferredLocationName));
-                    if (isset($balanceCache[$key])) {
-                        return $balanceCache[$key];
-                    }
-
-                    $baseQuery = DB::table('inventory_balance')
-                        ->where('org_id', $orgId)
-                        ->where('generic_id', $genericId)
-                        ->where('brand_id', $brandId)
-                        ->where('batch_no', $batchNo)
-                        ->orderBy('id', 'desc');
-
-                    // 1) Org/Site balance: try NULL location_id; if absent, fall back to latest ANY row
-                    $rowOrgSite = (clone $baseQuery)->whereNull('location_id')->first();
-                    if (!$rowOrgSite) {
-                        $rowOrgSite = (clone $baseQuery)->first();
-                    }
-
-                    $orgBal  = $rowOrgSite->org_balance  ?? 'N/A';
-                    $siteBal = $rowOrgSite->site_balance ?? 'N/A';
-
-                    // 2) Location balance: only the preferred location (by NAME), if provided
-                    $locJson = '[]';
-                    if ($preferredLocationName) {
-                        $needle = mb_strtolower(trim($preferredLocationName));
-                        $locRows = (clone $baseQuery)->whereNotNull('location_id')->get(); // desc by id
-
-                        // pick latest row PER location_id, then match by name and require > 0
-                        $seen = [];
-                        foreach ($locRows as $r) {
-                            $lid = (int) $r->location_id;
-                            if (isset($seen[$lid])) continue;        // already took the latest for this loc
-                            $seen[$lid] = true;
-
-                            $locName = $getLocationName($lid);
-                            if (mb_strtolower(trim($locName)) === $needle && ($r->location_balance ?? 0) > 0) {
-                                $locJson = htmlspecialchars(json_encode([$locName . ': ' . ($r->location_balance ?? 0)]), ENT_QUOTES, 'UTF-8');
-                                break;
-                            }
-                        }
-                    }
-
-                    return $balanceCache[$key] = [
-                        'orgBalance' => $orgBal ?? 'N/A',
-                        'siteBalance' => $siteBal ?? 'N/A',
-                        'locBalance'  => $locJson, // JSON array with just the matched location (or empty [])
-                    ];
-                };
-
-                // ---- Common prework per row ----
-                $isDirectEntry = false;
-                if ($row->source === 'inventory') {
-                    if (!empty($row->referenceNumber)) {
-                        if (str_contains($row->referenceNumber, '-MTC-') || str_contains($row->referenceNumber, '-MDC-')) {
-                            $isDirectEntry = false;
-                        } else {
-                            $isDirectEntry = true;
-                        }
-                    } else {
-                        $isDirectEntry = true;
-                    }
-                }
-
-                $isIssue = Str::contains(strtolower($row->TransactionType), 'issue');
-
-                // Always need generic names (batch fetch + cache)
-                $genericIds = array_filter(array_map('intval', explode(',', (string) $row->inv_generic_ids)));
-                $missingGenericIds = array_values(array_diff($genericIds, array_keys($genericNameCache)));
-                if ($missingGenericIds) {
-                    $fetched = InventoryGeneric::whereIn('id', $missingGenericIds)->pluck('name', 'id')->toArray();
-                    foreach ($fetched as $gid => $name) {
-                        $genericNameCache[(int)$gid] = $name;
-                    }
-                    // Fill any truly missing ones with 'N/A' to avoid repeat queries
-                    foreach ($missingGenericIds as $gid) {
-                        if (!isset($genericNameCache[$gid])) $genericNameCache[$gid] = 'N/A';
-                    }
-                }
-
-                // Medication-only dictionaries (routes/frequencies) — batch fetch + cache
-                $routeIds = [];
-                $frequencyIds = [];
-                if (!empty($row->route_ids))     $routeIds = array_filter(array_map('intval', explode(',', (string) $row->route_ids)));
-                if (!empty($row->frequency_ids)) $frequencyIds = array_filter(array_map('intval', explode(',', (string) $row->frequency_ids)));
-
-                $missingRouteIds = array_values(array_diff($routeIds, array_keys($routeNameCache)));
-                if ($missingRouteIds) {
-                    $fetched = MedicationRoutes::whereIn('id', $missingRouteIds)->pluck('name', 'id')->toArray();
-                    foreach ($fetched as $id => $name) $routeNameCache[(int)$id] = $name;
-                    foreach ($missingRouteIds as $id) if (!isset($routeNameCache[$id])) $routeNameCache[$id] = 'N/A';
-                }
-
-                $missingFreqIds = array_values(array_diff($frequencyIds, array_keys($frequencyNameCache)));
-                if ($missingFreqIds) {
-                    $fetched = MedicationFrequency::whereIn('id', $missingFreqIds)->pluck('name', 'id')->toArray();
-                    foreach ($fetched as $id => $name) $frequencyNameCache[(int)$id] = $name;
-                    foreach ($missingFreqIds as $id) if (!isset($frequencyNameCache[$id])) $frequencyNameCache[$id] = 'N/A';
-                }
-
-                // Shared pieces for table building
-                $tableRows = '';
-
-                // -----------------------------------------------
-                // MEDICATION BRANCH
-                // -----------------------------------------------
-                if ($row->source === 'medication') {
-                    $dose        = !empty($row->dose)        ? explode(',', (string) $row->dose)        : [];
-                    $routeIdsArr = !empty($row->route_ids)   ? array_map('intval', explode(',', (string) $row->route_ids))   : [];
-                    $freqIdsArr  = !empty($row->frequency_ids)? array_map('intval', explode(',', (string) $row->frequency_ids)) : [];
-                    $days        = !empty($row->days)        ? explode(',', (string) $row->days)        : [];
-
-                    // Responded entries (per referenceNumber) — cached
-                    $respondedEntries = [];
-                    if (!empty($row->referenceNumber)) {
-                        $respondedEntries = $getRespondedMap($row->referenceNumber);
-                    }
-
-                    $count = max(count($genericIds), count($dose), count($routeIdsArr), count($freqIdsArr), count($days));
-
-                    // If we will need brand/batch/expiry by reference, fetch once
-                    $refMap = [];
-                    if (!$isDirectEntry && !empty($row->referenceNumber)) {
-                        $refMap = $getIMRefMap($row->referenceNumber); // [generic_id => [brand_id,batch_no,expiry_date]]
-                    }
-
-                    for ($i = 0; $i < $count; $i++) {
-                        $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
-
-                        $currentGenericId = (int) ($genericIds[$i] ?? 0);
-                        $isResponded = array_key_exists($currentGenericId, $respondedEntries);
-
-                        // Balances
-                        $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A', 'locBalance' => 'N/A'];
-                        if ($isDirectEntry) {
-                            $balanceInfo = $getIMFirstByGeneric($currentGenericId);
-                            if ($balanceInfo) {
-                                $b = $getBalances(
-                                    $row->org_id, $row->site_id, $currentGenericId,
-                                    $balanceInfo['brand_id'], $balanceInfo['batch_no'],
-                                    $row->SourceLocationName ?: $row->DestinationLocationName
-                                );
-                                // $b = $getBalances($row->org_id, $row->site_id, $currentGenericId, $balanceInfo['brand_id'], $balanceInfo['batch_no']);
-                                $balances = $b;
-                            }
-                        } elseif (!empty($row->referenceNumber) && $isResponded) {
-                            $entry = $refMap[$currentGenericId] ?? null;
-                            if ($entry) {
-                                $b = $getBalances(
-                                    $row->org_id, $row->site_id, $currentGenericId,
-                                    $entry['brand_id'], $entry['batch_no'],
-                                    $row->SourceLocationName ?: $row->DestinationLocationName
-                                );
-                                // $b = $getBalances($row->org_id, $row->site_id, $currentGenericId, $entry['brand_id'], $entry['batch_no']);
-                                $balances = $b;
-                            }
-                        }
-
-                        // Status / Action logic (unchanged)
-                        if ($isDirectEntry || $isResponded) {
-                            if ($isIssue) { $status = 'Issued'; $statusClass = 'megna'; }
-                            else          { $status = 'Dispensed'; $statusClass = 'success'; }
-                            $actionBtn = 'N/A';
-                        } else {
-                            $status = 'Pending';
-                            $statusClass = 'warning';
-                            $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
-                        }
-
-                        // Brand/Batch/Expiry
-                        $brandName = '';
-                        $batchNo   = '';
-                        $expiryDate = '';
-                        if (!$isDirectEntry && !empty($row->referenceNumber)) {
-                            $itemData = $refMap[$currentGenericId] ?? null;
-                            if ($itemData) {
-                                $brandName = $getBrandName($itemData['brand_id']);
-                                $batchNo   = $itemData['batch_no'];
-                                $expiryDate = is_numeric($itemData['expiry_date'])
-                                    ? \Carbon\Carbon::createFromTimestamp($itemData['expiry_date'])->format('d-M-Y')
-                                    : $itemData['expiry_date'];
-                            }
-                        } else {
-                            // direct entry uses row fields (same as original)
-                            $brandName = $row->brandName ?? '';
-                            $batchNo   = $row->batch_no;
-                            $expiryDate = is_numeric($row->expiry_date)
-                                ? \Carbon\Carbon::createFromTimestamp($row->expiry_date)->format('d-M-Y')
-                                : $row->expiry_date;
-                        }
-
-                        // Enforce rights
-                        if ($rightsRespond != 1) {
-                            $actionBtn = '<code>Unauthorized Access</code>';
-                        }
-
-                        $tableRows .= '<tr style="background-color:'.$bg.';cursor:pointer;" class="balance-row"'
-                                    .' data-expiry="'.$expiryDate.'"'
-                                    .' data-brand="'.$brandName.'"'
-                                    .' data-batch="'.$batchNo.'"'
-                                    .' data-loc-balance="'.$balances['locBalance'].'"'
-                                    .' data-org-balance="'.$balances['orgBalance'].'"'
-                                    .' data-site-balance="'.$balances['siteBalance'].'">';
-
-                        $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($genericNameCache[$currentGenericId] ?? 'N/A').'</td>'
-                                    . '<td style="padding:8px;border:1px solid #ccc;">'.($dose[$i] ?? 'N/A').'</td>'
-                                    . '<td style="padding:8px;border:1px solid #ccc;">'.($routeNameCache[$routeIdsArr[$i] ?? 0] ?? 'N/A').'</td>'
-                                    . '<td style="padding:8px;border:1px solid #ccc;">'.($frequencyNameCache[$freqIdsArr[$i] ?? 0] ?? 'N/A').'</td>'
-                                    . '<td style="padding:8px;border:1px solid #ccc;">'.($days[$i] ?? 'N/A').'</td>'
-                                    . '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($respondedEntries[$currentGenericId] ?? '0').'</td>'
-                                    . '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>'
-                                    . '<td style="padding:8px;border:1px solid #ccc;"><span class="label label-'.$statusClass.'">'.$status.'</span></td>'
-                                    . '</tr>';
-                    }
-
-                    // Header (unchanged)
-                    $tableHeader = '<tr>'
-                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic</th>'
-                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Dose</th>'
-                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Route</th>'
-                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Frequency</th>'
-                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Duration (Days)</th>'
-                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>'
-                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
-                        .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
-                        .'</tr>';
-
-                    return '<table style="width:100%;border-collapse:collapse;font-size:13px;" class="table table-bordered">'
-                        .'<thead style="background-color:#e2e8f0;color:#000;">'.$tableHeader.'</thead>'
-                        .'<tbody>'.$tableRows.'</tbody></table>';
-                }
-
-                // -----------------------------------------------
-                // MATERIAL / INVENTORY BRANCH (non-medication)
-                // -----------------------------------------------
-                $demandQty       = !empty($row->demand_qty) ? array_map('floatval', explode(',', (string) $row->demand_qty)) : [];
-                $transactionQty  = ($row->source === 'inventory' && !empty($row->transaction_qty))
-                    ? array_map('floatval', explode(',', (string) $row->transaction_qty))
-                    : null;
-
-                // For partial/complete status we need responded per ref
-                $respondedQtys = [];
-                if (!empty($row->referenceNumber)) {
-                    $respondedQtys = $getRespondedMap($row->referenceNumber);
-                }
-
-                $doseArr       = !empty($row->dose)         ? explode(',', (string) $row->dose) : [];
-                $routeIdsArr   = !empty($row->route_ids)    ? array_map('intval', explode(',', (string) $row->route_ids)) : [];
-                $freqIdsArr    = !empty($row->frequency_ids)? array_map('intval', explode(',', (string) $row->frequency_ids)) : [];
-                $daysArr       = !empty($row->days)         ? explode(',', (string) $row->days) : [];
-
-                $batchNoArr    = !empty($row->batch_no)     ? explode(',', (string) $row->batch_no) : [];
-                $brandIdArr    = !empty($row->brand_id)     ? array_map('intval', explode(',', (string) $row->brand_id)) : [];
-                $expiryArr     = !empty($row->expiry_date)  ? explode(',', (string) $row->expiry_date) : [];
-
-                $showMedicationFields = (count($doseArr) > 0 || count($routeIdsArr) > 0 || count($freqIdsArr) > 0 || count($daysArr) > 0);
-                $showDemandQty        = (count($demandQty) > 0);
-
-                // Ensure route/frequency dictionaries are cached for this row
-                $missingRouteIds = array_values(array_diff($routeIdsArr, array_keys($routeNameCache)));
-                if ($missingRouteIds) {
-                    $fetched = MedicationRoutes::whereIn('id', $missingRouteIds)->pluck('name', 'id')->toArray();
-                    foreach ($fetched as $id => $name) $routeNameCache[(int)$id] = $name;
-                    foreach ($missingRouteIds as $id) if (!isset($routeNameCache[$id])) $routeNameCache[$id] = 'N/A';
-                }
-                $missingFreqIds = array_values(array_diff($freqIdsArr, array_keys($frequencyNameCache)));
-                if ($missingFreqIds) {
-                    $fetched = MedicationFrequency::whereIn('id', $missingFreqIds)->pluck('name', 'id')->toArray();
-                    foreach ($fetched as $id => $name) $frequencyNameCache[(int)$id] = $name;
-                    foreach ($missingFreqIds as $id) if (!isset($frequencyNameCache[$id])) $frequencyNameCache[$id] = 'N/A';
-                }
-
-                // Preload ref map if needed
-                $refMap = [];
-                if (!$isDirectEntry && !empty($row->referenceNumber)) {
-                    $refMap = $getIMRefMap($row->referenceNumber);
-                }
-
-                $count = count($genericIds);
-                for ($i = 0; $i < $count; $i++) {
-                    $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
-                    $currentGenericId = (int) $genericIds[$i];
-
-                    // Balances (identical logic paths)
-                    $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A', 'locBalance' => 'N/A'];
-                    if ($isDirectEntry) {
-                        $balanceInfo = $getIMFirstByGeneric($currentGenericId);
-                        if ($balanceInfo) {
-                            $b = $getBalances(
-                                $row->org_id, $row->site_id, $currentGenericId,
-                                $balanceInfo['brand_id'], $balanceInfo['batch_no'],
-                                $row->SourceLocationName ?: $row->DestinationLocationName
-                            );
-                            // $b = $getBalances($row->org_id, $row->site_id, $currentGenericId, $balanceInfo['brand_id'], $balanceInfo['batch_no']);
-                            $balances = $b;
-                        }
-                    } elseif (!empty($row->referenceNumber) && !empty($respondedQtys)) {
-                        $entry = $refMap[$currentGenericId] ?? null;
-                        if ($entry) {
-                            $b = $getBalances(
-                                $row->org_id, $row->site_id, $currentGenericId,
-                                $entry['brand_id'], $entry['batch_no'],
-                                $row->SourceLocationName ?: $row->DestinationLocationName
-                            );
-
-                            // $b = $getBalances($row->org_id, $row->site_id, $currentGenericId, $entry['brand_id'], $entry['batch_no']);
-                            $balances = $b;
-                        }
-                    }
-
-                    $currentDemandQty     = isset($demandQty[$i]) ? (float) $demandQty[$i] : 0.0;
-                    $currentRespondedQty  = isset($respondedQtys[$currentGenericId]) ? (float) $respondedQtys[$currentGenericId] : 0.0;
-
-                    // Status / Action (unchanged)
-                    if ($currentRespondedQty > 0) {
-                        if ($currentRespondedQty >= $currentDemandQty) {
-                            if ($isIssue) { $status = 'Issued'; $statusClass = 'megna'; }
-                            else          { $status = 'Dispensed'; $statusClass = 'success'; }
-                            $actionBtn = 'N/A';
-                        } else {
-                            $status = $isIssue ? 'Partially Issued' : 'Partially Dispensed';
-                            $statusClass = 'info';
-                            $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
-                        }
-                    } else {
-                        $status = 'Pending';
-                        $statusClass = 'warning';
-                        $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
-                    }
-
-                    // Override for direct entries
-                    if ($isDirectEntry) {
-                        if ($isIssue) { $status = 'Issued'; $statusClass = 'megna'; }
-                        else          { $status = 'Dispensed'; $statusClass = 'success'; }
-                        $actionBtn = 'N/A';
-                    }
-
-                    // Brand/Batch/Expiry
-                    $brandName = '';
-                    $batchNo   = '';
-                    $expiryDate = '';
-
-                    if (!$isDirectEntry && !empty($row->referenceNumber)) {
-                        $itemData = $refMap[$currentGenericId] ?? null;
-                        if ($itemData) {
-                            $brandName = $getBrandName($itemData['brand_id']);
-                            $batchNo   = $itemData['batch_no'];
-                            $expiryDate = is_numeric($itemData['expiry_date'])
-                                ? \Carbon\Carbon::createFromTimestamp($itemData['expiry_date'])->format('d-M-Y')
-                                : $itemData['expiry_date'];
-                        }
-                    } else {
-                        $brandName = isset($brandIdArr[$i]) ? $getBrandName((int)$brandIdArr[$i]) : '';
-                        $batchNo   = $batchNoArr[$i] ?? '';
-                        $rawExpiry = $expiryArr[$i] ?? '';
-                        $expiryDate = is_numeric($rawExpiry)
-                            ? \Carbon\Carbon::createFromTimestamp((int)$rawExpiry)->format('d-M-Y')
-                            : $rawExpiry;
-                    }
-
-                    // Enforce rights
-                    if ($rightsRespond != 1) {
-                        $actionBtn = '<code>Unauthorized Access</code>';
-                    }
-
-                    $tableRows .= '<tr style="background-color:'.$bg.'; cursor:pointer;" class="balance-row"'
-                                .' data-expiry="'.$expiryDate.'"'
-                                .' data-brand="'.$brandName.'"'
-                                .' data-batch="'.$batchNo.'"'
-                                .' data-loc-balance="'.$balances['locBalance'].'"'
-                                .' data-org-balance="'.$balances['orgBalance'].'"'
-                                .' data-site-balance="'.$balances['siteBalance'].'">';
-
-                    $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($genericNameCache[$currentGenericId] ?? 'N/A').'</td>';
-
-                    if ($showMedicationFields) {
-                        $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($doseArr[$i] ?? 'N/A').'</td>'
-                                    . '<td style="padding:8px;border:1px solid #ccc;">'.($routeNameCache[$routeIdsArr[$i] ?? 0] ?? 'N/A').'</td>'
-                                    . '<td style="padding:8px;border:1px solid #ccc;">'.($frequencyNameCache[$freqIdsArr[$i] ?? 0] ?? 'N/A').'</td>'
-                                    . '<td style="padding:8px;border:1px solid #ccc;">'.($daysArr[$i] ?? 'N/A').'</td>';
-                    }
-
-                    if ($showDemandQty) {
-                        $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($demandQty[$i] ?? 'N/A').'</td>';
-                    }
-
-                    // For inventory source, show its transactionQty column
-                    if ($row->source === 'inventory' && $transactionQty !== null) {
-                        $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($transactionQty[$i] ?? 'N/A').'</td>';
-                    }
-
-                    // For non-inventory source, show responded qty
-                    if ($row->source !== 'inventory' && $currentRespondedQty >= 0) {
-                        $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$currentRespondedQty.'</td>';
-                    }
-
-                    $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>'
-                                . '<td style="padding: 5px 15px;border: 1px solid #ccc;"><span class="label label-'.$statusClass.'">'.$status.'</span></td>'
-                                . '</tr>';
-                }
-
-                // Header (unchanged, just built once)
-                $tableHeader = '<tr>'
-                    .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic</th>';
-
-                if ($showMedicationFields) {
-                    $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Dose</th>'
-                                . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Route</th>'
-                                . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Frequency</th>'
-                                . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Duration (Days)</th>';
-                }
-                if ($showDemandQty) {
-                    $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Demand Qty</th>';
-                }
-
-                $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>'
-                            . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
-                            . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
-                            . '</tr>';
-
-                return '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
-                    .'<thead style="background-color:#e2e8f0;color:#000;">'.$tableHeader.'</thead>'
-                    .'<tbody>'.$tableRows.'</tbody></table>';
-            })
-        ->rawColumns(['id_raw', 'id', 'patientDetails', 'InventoryDetails'])
-        ->make(true);
-    }
+    //     $commonJoinFields = [
+    //         'patient.name as patientName',
+    //         'employee.name as Physician', 
+    //         'organization.organization as OrgName',
+    //         'org_site.name as SiteName',
+    //         'services.name as serviceName',
+    //         'service_mode.name as serviceMode',
+    //         'billingCC.name as billingCC',
+    //         'service_group.name as serviceGroup',
+    //         'service_type.name as serviceType',
+    //         'inventory_transaction_type.name as TransactionType'
+    //     ];
+
+    //     // Session site filtering helper
+    //     $applySessionFilter = function($query) {
+    //         if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+    //             $sessionSiteIds = $this->assignedSites;
+    //             if(!empty($sessionSiteIds)) {
+    //                 $query->whereIn('org_site.id', $sessionSiteIds);
+    //             }
+    //         }
+    //         return $query;
+    //     };
+
+    //     // --- Medication Query ---
+    //     $medication = DB::table('req_medication_consumption as rmc')
+    //         ->join('costcenter as billingCC', 'billingCC.id', '=', 'rmc.billing_cc')
+    //         ->join('employee', 'employee.id', '=', 'rmc.responsible_physician')
+    //         ->join('service_mode', 'service_mode.id', '=', 'rmc.service_mode_id')
+    //         ->join('services', 'services.id', '=', 'rmc.service_id')
+    //         ->join('organization', 'organization.id', '=', 'rmc.org_id')
+    //         ->join('org_site', 'org_site.id', '=', 'rmc.site_id')
+    //         ->join('service_group', 'service_group.id', '=', 'rmc.service_group_id')
+    //         ->join('service_type', 'service_type.id', '=', 'rmc.service_type_id')
+    //         ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'rmc.transaction_type_id')
+    //         ->leftJoin('service_location as source_location', 'source_location.id', '=', 'rmc.source_location_id')
+    //         ->leftJoin('service_location as destination_location', 'destination_location.id', '=', 'rmc.destination_location_id')
+    //         ->join('patient', 'patient.mr_code', '=', 'rmc.mr_code')
+    //         ->select([
+    //             'rmc.id',
+    //             'rmc.transaction_type_id',
+    //             'rmc.status',
+    //             'rmc.org_id',
+    //             'rmc.site_id',
+    //             'rmc.effective_timestamp',
+    //             'rmc.timestamp',
+    //             'rmc.last_updated',
+    //             'rmc.logid',
+    //             'patient.name as patientName',
+    //             'employee.name as Physician',
+    //             'organization.organization as OrgName',
+    //             'org_site.name as SiteName',
+    //             'services.name as serviceName',
+    //             'service_mode.name as serviceMode',
+    //             'billingCC.name as billingCC',
+    //             'service_group.name as serviceGroup',
+    //             'service_type.name as serviceType',
+    //             'inventory_transaction_type.name as TransactionType',
+    //             DB::raw('COALESCE(source_location.name, "") as SourceLocationName'),
+    //             DB::raw('COALESCE(destination_location.name, "") as DestinationLocationName'),
+    //             'rmc.code as referenceNumber',
+    //             'rmc.mr_code',
+    //             'rmc.dose',
+    //             'rmc.route_ids',
+    //             'rmc.frequency_ids',
+    //             'rmc.days',
+    //             'rmc.inv_generic_ids',
+    //             'rmc.remarks',
+    //             DB::raw("'medication' as source")
+    //         ]);
+
+    //     $medication = $applySessionFilter($medication);
+
+    //     // --- Material Query ---
+    //     $material = DB::table('material_consumption_requisition as mcr')
+    //         ->leftJoin('patient', 'patient.mr_code', '=', 'mcr.mr_code')
+    //         ->leftJoin('employee', 'employee.id', '=', 'mcr.physician_id')
+    //         ->leftJoin('service_mode', 'service_mode.id', '=', 'mcr.service_mode_id')
+    //         ->leftJoin('services', 'services.id', '=', 'mcr.service_id')
+    //         ->leftJoin('service_group', 'service_group.id', '=', 'services.group_id')
+    //         ->leftJoin('service_type', 'service_type.id', '=', 'service_group.type_id')
+    //         ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'mcr.billing_cc')
+    //         ->leftJoin('organization', 'organization.id', '=', 'mcr.org_id')
+    //         ->leftJoin('org_site', 'org_site.id', '=', 'mcr.site_id')
+    //         ->leftJoin('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'mcr.transaction_type_id')
+    //         ->leftJoin('service_location as source_location', 'source_location.id', '=', 'mcr.source_location_id')
+    //         ->leftJoin('service_location as destination_location', 'destination_location.id', '=', 'mcr.destination_location_id')
+    //         ->select([
+    //             'mcr.id',
+    //             'mcr.transaction_type_id',
+    //             'mcr.status',
+    //             'mcr.org_id',
+    //             'mcr.site_id',
+    //             'mcr.effective_timestamp',
+    //             'mcr.timestamp',
+    //             'mcr.last_updated',
+    //             'mcr.logid',
+    //             'patient.name as patientName',
+    //             'employee.name as Physician',
+    //             'organization.organization as OrgName',
+    //             'org_site.name as SiteName',
+    //             'services.name as serviceName',
+    //             'service_mode.name as serviceMode',
+    //             'billingCC.name as billingCC',
+    //             'service_group.name as serviceGroup',
+    //             'service_type.name as serviceType',
+    //             'inventory_transaction_type.name as TransactionType',
+    //             DB::raw('COALESCE(source_location.name, "") as SourceLocationName'),
+    //             DB::raw('COALESCE(destination_location.name, "") as DestinationLocationName'),
+    //             'mcr.code as referenceNumber',
+    //             'mcr.mr_code',
+    //             DB::raw("'' as dose"),
+    //             DB::raw("'' as route_ids"),
+    //             DB::raw("'' as frequency_ids"),
+    //             DB::raw("'' as days"),
+    //             'mcr.generic_id as inv_generic_ids',
+    //             'mcr.remarks',
+    //             DB::raw("'material' as source")
+    //         ]);
+
+    //     $material = $applySessionFilter($material);
+
+    //     // --- Direct Issue/Dispense Query ---
+    //     $directIssueDispense = DB::table('inventory_management as im')
+    //         ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'im.transaction_type_id')
+    //         ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'inventory_transaction_type.activity_type')
+    //         ->join('organization', 'organization.id', '=', 'im.org_id')
+    //         ->join('org_site', 'org_site.id', '=', 'im.site_id')
+    //         ->leftJoin('patient', 'patient.mr_code', '=', 'im.mr_code')
+    //         ->leftJoin('employee', 'employee.id', '=', 'im.resp_physician')
+    //         ->leftJoin('service_mode', 'service_mode.id', '=', 'im.service_mode_id')
+    //         ->leftJoin('services', 'services.id', '=', 'im.service_id')
+    //         ->leftJoin('service_group', 'service_group.id', '=', 'services.group_id')
+    //         ->leftJoin('service_type', 'service_type.id', '=', 'service_group.type_id')
+    //         ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'im.billing_cc')
+    //         ->where(function($query) {
+    //             $query->where('ita.name', 'like', '%issue%')
+    //                 ->orWhere('ita.name', 'like', '%dispense%');
+    //         })
+    //         ->where(function($query) {
+    //             $query->whereNull('im.ref_document_no')
+    //                 ->orWhere(function($q) {
+    //                     $q->where('im.ref_document_no', 'not like', '%-MTC-%')
+    //                         ->where('im.ref_document_no', 'not like', '%-MDC-%');
+    //                 });
+    //         })
+    //         ->select([
+    //             'im.id',
+    //             'im.transaction_type_id',
+    //             'im.status',
+    //             'im.org_id',
+    //             'im.site_id',
+    //             'im.effective_timestamp',
+    //             'im.timestamp',
+    //             'im.last_updated',
+    //             'im.logid',
+    //             'patient.name as patientName',
+    //             'employee.name as Physician',
+    //             'organization.organization as OrgName',
+    //             'org_site.name as SiteName',
+    //             'services.name as serviceName',
+    //             'service_mode.name as serviceMode',
+    //             'billingCC.name as billingCC',
+    //             'service_group.name as serviceGroup',
+    //             'service_type.name as serviceType',
+    //             'inventory_transaction_type.name as TransactionType',
+    //             DB::raw("'' as SourceLocationName"),
+    //             DB::raw("'' as DestinationLocationName"),
+    //             'im.ref_document_no as referenceNumber',
+    //             'im.mr_code',
+    //             'im.dose',
+    //             'im.route_id as route_ids',
+    //             'im.frequency_id as frequency_ids',
+    //             'im.duration as days',
+    //             'im.inv_generic_id as inv_generic_ids',
+    //             'im.remarks',
+    //             DB::raw("'inventory' as source")
+    //         ]);
+
+    //     $directIssueDispense = $applySessionFilter($directIssueDispense);
+
+    //     // Create UNION query for server-side processing
+    //     // $unionQuery = $medication
+    //     //     ->unionAll($material)
+    //     //     ->unionAll($directIssueDispense)
+    //     //     ->orderBy('timestamp', 'desc');
+    //     $unionBase = $medication->unionAll($material)->unionAll($directIssueDispense);
+    //     $unionQuery = DB::query()->fromSub($unionBase, 'u'); // alias "u" used in filters below
+
+    //     return DataTables::query($unionQuery)
+    //         // ->mergeBindings($combined))
+    //         ->filter(function ($query) use ($request) {
+    //             $from = $request->input('from_date');
+    //             $to   = $request->input('to_date'); 
+    //             $orgIds  = (array) $request->input('org_ids', []);
+    //             $siteIds = (array) $request->input('site_ids', []);
+    //             $ttIds   = (array) $request->input('transaction_type_ids', []);
+    //             $sources = (array) $request->input('sources', []); 
+
+    //             $statusEq = $request->input('status'); 
+
+    //             $ref      = trim((string) $request->input('reference'));
+    //             $mr       = trim((string) $request->input('mr_code'));
+    //             $patient  = trim((string) $request->input('patient'));
+    //             $phys     = trim((string) $request->input('physician'));
+    //             $service  = trim((string) $request->input('service'));
+    //             $svcMode  = trim((string) $request->input('service_mode'));
+    //             $svcGroup = trim((string) $request->input('service_group'));
+    //             $billing  = trim((string) $request->input('billing_cc'));
+    //             $siteName = trim((string) $request->input('site_name'));
+    //             $srcLoc   = trim((string) $request->input('source_location'));
+    //             $dstLoc   = trim((string) $request->input('destination_location'));
+    //             $remarks  = trim((string) $request->input('remarks'));
+    //             $generic  = trim((string) $request->input('generic_name')); // optional dedicated generic filter
+
+    //             if ($from) {
+    //                 $query->where('u.timestamp', '>=', \Carbon\Carbon::parse($from)->startOfDay()->timestamp);
+    //             }
+    //             if ($to) {
+    //                 $query->where('u.timestamp', '<=', \Carbon\Carbon::parse($to)->endOfDay()->timestamp);
+    //             }
+    //             if (!empty($orgIds))  { $query->whereIn('u.org_id', $orgIds); }
+    //             if (!empty($siteIds)) { $query->whereIn('u.site_id', $siteIds); }
+    //             if (!empty($ttIds))   { $query->whereIn('u.transaction_type_id', $ttIds); }
+    //             if (!empty($sources)) { $query->whereIn('u.source', $sources); }
+    //             if ($statusEq !== null && $statusEq !== '') {
+    //                 $query->where('u.status', $statusEq);
+    //             }
+
+    //             if ($ref)      { $query->where('u.referenceNumber', 'like', "%{$ref}%"); }
+    //             if ($mr)       { $query->where('u.mr_code', 'like', "%{$mr}%"); }
+    //             if ($patient)  { $query->where('u.patientName', 'like', "%{$patient}%"); }
+    //             if ($phys)     { $query->where('u.Physician', 'like', "%{$phys}%"); }
+    //             if ($service)  { $query->where('u.serviceName', 'like', "%{$service}%"); }
+    //             if ($svcMode)  { $query->where('u.serviceMode', 'like', "%{$svcMode}%"); }
+    //             if ($svcGroup) { $query->where('u.serviceGroup', 'like', "%{$svcGroup}%"); }
+    //             if ($billing)  { $query->where('u.billingCC', 'like', "%{$billing}%"); }
+    //             if ($siteName) { $query->where('u.SiteName', 'like', "%{$siteName}%"); }
+    //             if ($srcLoc)   { $query->where('u.SourceLocationName', 'like', "%{$srcLoc}%"); }
+    //             if ($dstLoc)   { $query->where('u.DestinationLocationName', 'like', "%{$dstLoc}%"); }
+    //             if ($remarks)  { $query->where('u.remarks', 'like', "%{$remarks}%"); }
+
+    //             // Optional dedicated filter by Generic name (matches any ID inside inv_generic_ids)
+    //             if ($generic) {
+    //                 $query->where(function ($qq) use ($generic) {
+    //                     $qq->whereRaw("
+    //                         EXISTS (
+    //                         SELECT 1
+    //                         FROM inventory_generic ig
+    //                         WHERE FIND_IN_SET(ig.id, u.inv_generic_ids)
+    //                             AND ig.name LIKE ?
+    //                         )", ["%{$generic}%"]
+    //                     );
+    //                 });
+    //             }
+
+    //             // -------- DataTables global search (search[value]) --------
+    //             $global = trim((string) data_get($request->input('search'), 'value'));
+    //             if ($global !== '') {
+    //                 $g = "%{$global}%";
+    //                 $query->where(function ($qq) use ($g) {
+    //                     $qq->orWhere('u.referenceNumber', 'like', $g)
+    //                     ->orWhere('u.patientName', 'like', $g)
+    //                     ->orWhere('u.Physician', 'like', $g)
+    //                     ->orWhere('u.OrgName', 'like', $g)
+    //                     ->orWhere('u.SiteName', 'like', $g)
+    //                     ->orWhere('u.serviceName', 'like', $g)
+    //                     ->orWhere('u.serviceMode', 'like', $g)
+    //                     ->orWhere('u.billingCC', 'like', $g)
+    //                     ->orWhere('u.serviceGroup', 'like', $g)
+    //                     ->orWhere('u.serviceType', 'like', $g)
+    //                     ->orWhere('u.TransactionType', 'like', $g)
+    //                     ->orWhere('u.SourceLocationName', 'like', $g)
+    //                     ->orWhere('u.DestinationLocationName', 'like', $g)
+    //                     ->orWhere('u.mr_code', 'like', $g)
+    //                     ->orWhere('u.remarks', 'like', $g)
+    //                     // Search by generic name too
+    //                     ->orWhereRaw("
+    //                             EXISTS (
+    //                             SELECT 1 FROM inventory_generic ig
+    //                             WHERE FIND_IN_SET(ig.id, u.inv_generic_ids)
+    //                                 AND ig.name LIKE ?
+    //                             )", [$g]
+    //                         );
+    //                 });
+    //             }
+
+    //             // -------- Column-specific search (DataTables columns[x][search][value]) --------
+    //             // Map client-side column names → fields here if you’re sending column-specific search.
+    //             $columns = (array) $request->input('columns', []);
+    //             foreach ($columns as $col) {
+    //                 $name  = data_get($col, 'data');           // expects your DataTables "data" key
+    //                 $value = trim((string) data_get($col, 'search.value'));
+    //                 if ($value === '') continue;
+
+    //                 switch ($name) {
+    //                     case 'referenceNumber':   $query->where('u.referenceNumber', 'like', "%{$value}%"); break;
+    //                     case 'mr_code':           $query->where('u.mr_code', 'like', "%{$value}%"); break;
+    //                     case 'patientName':       $query->where('u.patientName', 'like', "%{$value}%"); break;
+    //                     case 'Physician':         $query->where('u.Physician', 'like', "%{$value}%"); break;
+    //                     case 'SiteName':          $query->where('u.SiteName', 'like', "%{$value}%"); break;
+    //                     case 'OrgName':           $query->where('u.OrgName', 'like', "%{$value}%"); break;
+    //                     case 'serviceName':       $query->where('u.serviceName', 'like', "%{$value}%"); break;
+    //                     case 'serviceMode':       $query->where('u.serviceMode', 'like', "%{$value}%"); break;
+    //                     case 'serviceGroup':      $query->where('u.serviceGroup', 'like', "%{$value}%"); break;
+    //                     case 'serviceType':       $query->where('u.serviceType', 'like', "%{$value}%"); break;
+    //                     case 'TransactionType':   $query->where('u.TransactionType', 'like', "%{$value}%"); break;
+    //                     case 'SourceLocationName':$query->where('u.SourceLocationName', 'like', "%{$value}%"); break;
+    //                     case 'DestinationLocationName':
+    //                                             $query->where('u.DestinationLocationName', 'like', "%{$value}%"); break;
+    //                     case 'remarks':           $query->where('u.remarks', 'like', "%{$value}%"); break;
+    //                     case 'source':            $query->where('u.source', $value); break;
+    //                     case 'status':            $query->where('u.status', $value); break;
+    //                     case 'transaction_type_id':
+    //                                             $query->where('u.transaction_type_id', $value); break;
+    //                     // Generic name column (if you add one in client):
+    //                     case 'generic':
+    //                         $g = "%{$value}%";
+    //                         $query->whereRaw("
+    //                             EXISTS (
+    //                             SELECT 1 FROM inventory_generic ig
+    //                             WHERE FIND_IN_SET(ig.id, u.inv_generic_ids)
+    //                                 AND ig.name LIKE ?
+    //                             )", [$g]
+    //                         );
+    //                         break;
+    //                     default:
+    //                         // ignore unmapped columns
+    //                         break;
+    //                 }
+    //             }
+    //         })
+    //         ->addColumn('id_raw', fn($row) => $row->id)
+    //         ->editColumn('id', function ($row) {
+    //             // Optimize date formatting with single Carbon instance
+    //             $carbon = Carbon::class;
+    //             $timestamp = $carbon::createFromTimestamp($row->timestamp)->format('l d F Y - h:i A');
+    //             $effectiveDate = $carbon::createFromTimestamp($row->effective_timestamp)->format('l d F Y - h:i A');
+
+    //             // Build location info more efficiently
+    //             $locationParts = [];
+    //             if (!empty($row->SourceLocationName)) {
+    //                 $locationParts[] = '<br><b>Source Location</b>: ' . ucwords($row->SourceLocationName);
+    //             }
+    //             if (!empty($row->DestinationLocationName)) {
+    //                 $locationParts[] = '<br><b>Destination Location</b>: ' . ucwords($row->DestinationLocationName);
+    //             }
+    //             $locationInfo = implode('', $locationParts);
+
+    //             // Use sprintf for better performance and readability
+    //             return sprintf(
+    //                 '%s<hr class="mt-1 mb-2"><b>Request For</b>: %s%s<br><b>Site</b>: %s<br><b>Request Date </b>: %s<br><b>Effective Date </b>: %s<br><b>Remarks</b>: %s',
+    //                 $row->referenceNumber ?? 'N/A',
+    //                 $row->TransactionType ?? 'N/A',
+    //                 $locationInfo,
+    //                 $row->SiteName ?? 'N/A',
+    //                 $timestamp,
+    //                 $effectiveDate,
+    //                 $row->remarks ?: 'N/A'
+    //             );
+    //         })
+    //         ->editColumn('patientDetails', function ($row) {
+    //             if (empty($row->mr_code)) return 'N/A';
+
+    //             // Use sprintf for better performance
+    //             return sprintf(
+    //                 '<b>MR#:</b> %s<br>%s<hr class="mt-1 mb-2"><b>Service Mode</b>: %s<br><b>Service Group</b>: %s<br><b>Service</b>: %s<br><b>Responsible Physician</b>: %s<br><b>Billing CC</b>: %s',
+    //                 $row->mr_code,
+    //                 $row->patientName,
+    //                 $row->serviceMode,
+    //                 $row->serviceGroup,
+    //                 $row->serviceName,
+    //                 $row->Physician,
+    //                 $row->billingCC
+    //             );
+    //         })
+    //         ->editColumn('InventoryDetails', function ($row) {
+    //             // return '';
+    //             static $rightsRespond = null;
+
+    //             static $genericNameCache = [];         // [generic_id => name]
+    //             static $routeNameCache = [];           // [route_id => name]
+    //             static $frequencyNameCache = [];       // [frequency_id => name]
+    //             static $brandNameCache = [];           // [brand_id => name]
+    //             static $locationNameCache = [];        // [location_id => name]
+
+    //             static $respondedByRefCache = [];      // [ref_document_no => [inv_generic_id => total_qty]]
+    //             static $imRefMapCache = [];            // [ref_document_no => [generic_id => ['brand_id'=>..,'batch_no'=>..,'expiry_date'=>..]]]
+    //             static $imFirstByGenericCache = [];    // [generic_id => ['brand_id'=>..,'batch_no'=>..]] for direct entries
+
+    //             static $balanceCache = [];             // ["org_site|org|site|generic|brand|batch" => ['orgBalance'=>..,'siteBalance'=>..,'locBalance'=>json]]
+
+    //             // ---- Rights: respond permission ----
+    //             if ($rightsRespond === null) {
+    //                 $Rights = $this->rights;
+    //                 $rightsRespond = (int) explode(',', $Rights->issue_and_dispense)[2];
+    //             }
+
+    //             // ---- Small helpers (memoized fetchers) ----
+    //             $getBrandName = function ($brandId) use (&$brandNameCache) {
+    //                 if (!$brandId) return '';
+    //                 if (!array_key_exists($brandId, $brandNameCache)) {
+    //                     $brandNameCache[$brandId] = (string) (DB::table('inventory_brand')->where('id', $brandId)->value('name') ?? '');
+    //                 }
+    //                 return $brandNameCache[$brandId];
+    //             };
+
+    //             $getLocationName = function ($locId) use (&$locationNameCache) {
+    //                 if (!$locId) return 'Unknown';
+    //                 if (!array_key_exists($locId, $locationNameCache)) {
+    //                     $locationNameCache[$locId] = (string) (DB::table('service_location')->where('id', $locId)->value('name') ?? 'Unknown');
+    //                 }
+    //                 return $locationNameCache[$locId];
+    //             };
+
+    //             $getRespondedMap = function ($refNo) use (&$respondedByRefCache) {
+    //                 if (empty($refNo)) return [];
+    //                 if (!array_key_exists($refNo, $respondedByRefCache)) {
+    //                     $respondedByRefCache[$refNo] = DB::table('inventory_management as im')
+    //                         ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
+    //                         ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'itt.activity_type')
+    //                         ->where('im.ref_document_no', $refNo)
+    //                         ->where(function ($q) {
+    //                             $q->where('ita.name', 'like', '%issue%')
+    //                             ->orWhere('ita.name', 'like', '%dispense%');
+    //                         })
+    //                         ->groupBy('im.inv_generic_id')
+    //                         ->select('im.inv_generic_id', DB::raw('SUM(im.transaction_qty) as total_qty'))
+    //                         ->pluck('total_qty', 'im.inv_generic_id')
+    //                         ->toArray();
+    //                 }
+    //                 return $respondedByRefCache[$refNo];
+    //             };
+
+    //             $getIMRefMap = function ($refNo) use (&$imRefMapCache) {
+    //                 if (empty($refNo)) return [];
+    //                 if (!array_key_exists($refNo, $imRefMapCache)) {
+    //                     $rows = DB::table('inventory_management')
+    //                         ->where('ref_document_no', $refNo)
+    //                         ->select('inv_generic_id', 'brand_id', 'batch_no', 'expiry_date')
+    //                         ->get();
+    //                     $map = [];
+    //                     foreach ($rows as $r) {
+    //                         $map[(int)$r->inv_generic_id] = [
+    //                             'brand_id'    => $r->brand_id,
+    //                             'batch_no'    => $r->batch_no,
+    //                             'expiry_date' => $r->expiry_date,
+    //                         ];
+    //                     }
+    //                     $imRefMapCache[$refNo] = $map;
+    //                 }
+    //                 return $imRefMapCache[$refNo];
+    //             };
+
+    //             $getIMFirstByGeneric = function ($genericId) use (&$imFirstByGenericCache) {
+    //                 $gid = (int) $genericId;
+    //                 if ($gid <= 0) return null;
+    //                 if (!array_key_exists($gid, $imFirstByGenericCache)) {
+    //                     $r = DB::table('inventory_management')
+    //                         ->where('inv_generic_id', $gid)
+    //                         ->select('brand_id', 'batch_no')
+    //                         ->first();
+    //                     $imFirstByGenericCache[$gid] = $r ? ['brand_id' => $r->brand_id, 'batch_no' => $r->batch_no] : null;
+    //                 }
+    //                 return $imFirstByGenericCache[$gid];
+    //             };
+
+    //             $getBalances = function ($orgId, $siteId, $genericId, $brandId, $batchNo, $preferredLocationName = null) use (&$balanceCache, $getLocationName) {
+    //                 $key = "{$orgId}|{$siteId}|{$genericId}|{$brandId}|{$batchNo}|".mb_strtolower(trim((string)$preferredLocationName));
+    //                 if (isset($balanceCache[$key])) {
+    //                     return $balanceCache[$key];
+    //                 }
+
+    //                 $baseQuery = DB::table('inventory_balance')
+    //                     ->where('org_id', $orgId)
+    //                     ->where('generic_id', $genericId)
+    //                     ->where('brand_id', $brandId)
+    //                     ->where('batch_no', $batchNo)
+    //                     ->orderBy('id', 'desc');
+
+    //                 // 1) Org/Site balance: try NULL location_id; if absent, fall back to latest ANY row
+    //                 $rowOrgSite = (clone $baseQuery)->whereNull('location_id')->first();
+    //                 if (!$rowOrgSite) {
+    //                     $rowOrgSite = (clone $baseQuery)->first();
+    //                 }
+
+    //                 $orgBal  = $rowOrgSite->org_balance  ?? 'N/A';
+    //                 $siteBal = $rowOrgSite->site_balance ?? 'N/A';
+
+    //                 // 2) Location balance: only the preferred location (by NAME), if provided
+    //                 $locJson = '[]';
+    //                 if ($preferredLocationName) {
+    //                     $needle = mb_strtolower(trim($preferredLocationName));
+    //                     $locRows = (clone $baseQuery)->whereNotNull('location_id')->get(); // desc by id
+
+    //                     // pick latest row PER location_id, then match by name and require > 0
+    //                     $seen = [];
+    //                     foreach ($locRows as $r) {
+    //                         $lid = (int) $r->location_id;
+    //                         if (isset($seen[$lid])) continue;        // already took the latest for this loc
+    //                         $seen[$lid] = true;
+
+    //                         $locName = $getLocationName($lid);
+    //                         if (mb_strtolower(trim($locName)) === $needle && ($r->location_balance ?? 0) > 0) {
+    //                             $locJson = htmlspecialchars(json_encode([$locName . ': ' . ($r->location_balance ?? 0)]), ENT_QUOTES, 'UTF-8');
+    //                             break;
+    //                         }
+    //                     }
+    //                 }
+
+    //                 return $balanceCache[$key] = [
+    //                     'orgBalance' => $orgBal ?? 'N/A',
+    //                     'siteBalance' => $siteBal ?? 'N/A',
+    //                     'locBalance'  => $locJson, // JSON array with just the matched location (or empty [])
+    //                 ];
+    //             };
+
+    //             // ---- Common prework per row ----
+    //             $isDirectEntry = false;
+    //             if ($row->source === 'inventory') {
+    //                 if (!empty($row->referenceNumber)) {
+    //                     if (str_contains($row->referenceNumber, '-MTC-') || str_contains($row->referenceNumber, '-MDC-')) {
+    //                         $isDirectEntry = false;
+    //                     } else {
+    //                         $isDirectEntry = true;
+    //                     }
+    //                 } else {
+    //                     $isDirectEntry = true;
+    //                 }
+    //             }
+
+    //             $isIssue = Str::contains(strtolower($row->TransactionType), 'issue');
+
+    //             // Always need generic names (batch fetch + cache)
+    //             $genericIds = array_filter(array_map('intval', explode(',', (string) $row->inv_generic_ids)));
+    //             $missingGenericIds = array_values(array_diff($genericIds, array_keys($genericNameCache)));
+    //             if ($missingGenericIds) {
+    //                 $fetched = InventoryGeneric::whereIn('id', $missingGenericIds)->pluck('name', 'id')->toArray();
+    //                 foreach ($fetched as $gid => $name) {
+    //                     $genericNameCache[(int)$gid] = $name;
+    //                 }
+    //                 // Fill any truly missing ones with 'N/A' to avoid repeat queries
+    //                 foreach ($missingGenericIds as $gid) {
+    //                     if (!isset($genericNameCache[$gid])) $genericNameCache[$gid] = 'N/A';
+    //                 }
+    //             }
+
+    //             // Medication-only dictionaries (routes/frequencies) — batch fetch + cache
+    //             $routeIds = [];
+    //             $frequencyIds = [];
+    //             if (!empty($row->route_ids))     $routeIds = array_filter(array_map('intval', explode(',', (string) $row->route_ids)));
+    //             if (!empty($row->frequency_ids)) $frequencyIds = array_filter(array_map('intval', explode(',', (string) $row->frequency_ids)));
+
+    //             $missingRouteIds = array_values(array_diff($routeIds, array_keys($routeNameCache)));
+    //             if ($missingRouteIds) {
+    //                 $fetched = MedicationRoutes::whereIn('id', $missingRouteIds)->pluck('name', 'id')->toArray();
+    //                 foreach ($fetched as $id => $name) $routeNameCache[(int)$id] = $name;
+    //                 foreach ($missingRouteIds as $id) if (!isset($routeNameCache[$id])) $routeNameCache[$id] = 'N/A';
+    //             }
+
+    //             $missingFreqIds = array_values(array_diff($frequencyIds, array_keys($frequencyNameCache)));
+    //             if ($missingFreqIds) {
+    //                 $fetched = MedicationFrequency::whereIn('id', $missingFreqIds)->pluck('name', 'id')->toArray();
+    //                 foreach ($fetched as $id => $name) $frequencyNameCache[(int)$id] = $name;
+    //                 foreach ($missingFreqIds as $id) if (!isset($frequencyNameCache[$id])) $frequencyNameCache[$id] = 'N/A';
+    //             }
+
+    //             // Shared pieces for table building
+    //             $tableRows = '';
+
+    //             // -----------------------------------------------
+    //             // MEDICATION BRANCH
+    //             // -----------------------------------------------
+    //             if ($row->source === 'medication') {
+    //                 $dose        = !empty($row->dose)        ? explode(',', (string) $row->dose)        : [];
+    //                 $routeIdsArr = !empty($row->route_ids)   ? array_map('intval', explode(',', (string) $row->route_ids))   : [];
+    //                 $freqIdsArr  = !empty($row->frequency_ids)? array_map('intval', explode(',', (string) $row->frequency_ids)) : [];
+    //                 $days        = !empty($row->days)        ? explode(',', (string) $row->days)        : [];
+
+    //                 // Responded entries (per referenceNumber) — cached
+    //                 $respondedEntries = [];
+    //                 if (!empty($row->referenceNumber)) {
+    //                     $respondedEntries = $getRespondedMap($row->referenceNumber);
+    //                 }
+
+    //                 $count = max(count($genericIds), count($dose), count($routeIdsArr), count($freqIdsArr), count($days));
+
+    //                 // If we will need brand/batch/expiry by reference, fetch once
+    //                 $refMap = [];
+    //                 if (!$isDirectEntry && !empty($row->referenceNumber)) {
+    //                     $refMap = $getIMRefMap($row->referenceNumber); // [generic_id => [brand_id,batch_no,expiry_date]]
+    //                 }
+
+    //                 for ($i = 0; $i < $count; $i++) {
+    //                     $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
+
+    //                     $currentGenericId = (int) ($genericIds[$i] ?? 0);
+    //                     $isResponded = array_key_exists($currentGenericId, $respondedEntries);
+
+    //                     // Balances
+    //                     $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A', 'locBalance' => 'N/A'];
+    //                     if ($isDirectEntry) {
+    //                         $balanceInfo = $getIMFirstByGeneric($currentGenericId);
+    //                         if ($balanceInfo) {
+    //                             $b = $getBalances(
+    //                                 $row->org_id, $row->site_id, $currentGenericId,
+    //                                 $balanceInfo['brand_id'], $balanceInfo['batch_no'],
+    //                                 $row->SourceLocationName ?: $row->DestinationLocationName
+    //                             );
+    //                             // $b = $getBalances($row->org_id, $row->site_id, $currentGenericId, $balanceInfo['brand_id'], $balanceInfo['batch_no']);
+    //                             $balances = $b;
+    //                         }
+    //                     } elseif (!empty($row->referenceNumber) && $isResponded) {
+    //                         $entry = $refMap[$currentGenericId] ?? null;
+    //                         if ($entry) {
+    //                             $b = $getBalances(
+    //                                 $row->org_id, $row->site_id, $currentGenericId,
+    //                                 $entry['brand_id'], $entry['batch_no'],
+    //                                 $row->SourceLocationName ?: $row->DestinationLocationName
+    //                             );
+    //                             // $b = $getBalances($row->org_id, $row->site_id, $currentGenericId, $entry['brand_id'], $entry['batch_no']);
+    //                             $balances = $b;
+    //                         }
+    //                     }
+
+    //                     // Status / Action logic (unchanged)
+    //                     if ($isDirectEntry || $isResponded) {
+    //                         if ($isIssue) { $status = 'Issued'; $statusClass = 'megna'; }
+    //                         else          { $status = 'Dispensed'; $statusClass = 'success'; }
+    //                         $actionBtn = 'N/A';
+    //                     } else {
+    //                         $status = 'Pending';
+    //                         $statusClass = 'warning';
+    //                         $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
+    //                     }
+
+    //                     // Brand/Batch/Expiry
+    //                     $brandName = '';
+    //                     $batchNo   = '';
+    //                     $expiryDate = '';
+    //                     if (!$isDirectEntry && !empty($row->referenceNumber)) {
+    //                         $itemData = $refMap[$currentGenericId] ?? null;
+    //                         if ($itemData) {
+    //                             $brandName = $getBrandName($itemData['brand_id']);
+    //                             $batchNo   = $itemData['batch_no'];
+    //                             $expiryDate = is_numeric($itemData['expiry_date'])
+    //                                 ? \Carbon\Carbon::createFromTimestamp($itemData['expiry_date'])->format('d-M-Y')
+    //                                 : $itemData['expiry_date'];
+    //                         }
+    //                     } else {
+    //                         // direct entry uses row fields (same as original)
+    //                         $brandName = $row->brandName ?? '';
+    //                         $batchNo   = $row->batch_no;
+    //                         $expiryDate = is_numeric($row->expiry_date)
+    //                             ? \Carbon\Carbon::createFromTimestamp($row->expiry_date)->format('d-M-Y')
+    //                             : $row->expiry_date;
+    //                     }
+
+    //                     // Enforce rights
+    //                     if ($rightsRespond != 1) {
+    //                         $actionBtn = '<code>Unauthorized Access</code>';
+    //                     }
+
+    //                     $tableRows .= '<tr style="background-color:'.$bg.';cursor:pointer;" class="balance-row"'
+    //                                 .' data-expiry="'.$expiryDate.'"'
+    //                                 .' data-brand="'.$brandName.'"'
+    //                                 .' data-batch="'.$batchNo.'"'
+    //                                 .' data-loc-balance="'.$balances['locBalance'].'"'
+    //                                 .' data-org-balance="'.$balances['orgBalance'].'"'
+    //                                 .' data-site-balance="'.$balances['siteBalance'].'">';
+
+    //                     $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($genericNameCache[$currentGenericId] ?? 'N/A').'</td>'
+    //                                 . '<td style="padding:8px;border:1px solid #ccc;">'.($dose[$i] ?? 'N/A').'</td>'
+    //                                 . '<td style="padding:8px;border:1px solid #ccc;">'.($routeNameCache[$routeIdsArr[$i] ?? 0] ?? 'N/A').'</td>'
+    //                                 . '<td style="padding:8px;border:1px solid #ccc;">'.($frequencyNameCache[$freqIdsArr[$i] ?? 0] ?? 'N/A').'</td>'
+    //                                 . '<td style="padding:8px;border:1px solid #ccc;">'.($days[$i] ?? 'N/A').'</td>'
+    //                                 . '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($respondedEntries[$currentGenericId] ?? '0').'</td>'
+    //                                 . '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>'
+    //                                 . '<td style="padding:8px;border:1px solid #ccc;"><span class="label label-'.$statusClass.'">'.$status.'</span></td>'
+    //                                 . '</tr>';
+    //                 }
+
+    //                 // Header (unchanged)
+    //                 $tableHeader = '<tr>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Dose</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Route</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Frequency</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Duration (Days)</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
+    //                     .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
+    //                     .'</tr>';
+
+    //                 return '<table style="width:100%;border-collapse:collapse;font-size:13px;" class="table table-bordered">'
+    //                     .'<thead style="background-color:#e2e8f0;color:#000;">'.$tableHeader.'</thead>'
+    //                     .'<tbody>'.$tableRows.'</tbody></table>';
+    //             }
+
+    //             // -----------------------------------------------
+    //             // MATERIAL / INVENTORY BRANCH (non-medication)
+    //             // -----------------------------------------------
+    //             $demandQty       = !empty($row->demand_qty) ? array_map('floatval', explode(',', (string) $row->demand_qty)) : [];
+    //             $transactionQty  = ($row->source === 'inventory' && !empty($row->transaction_qty))
+    //                 ? array_map('floatval', explode(',', (string) $row->transaction_qty))
+    //                 : null;
+
+    //             // For partial/complete status we need responded per ref
+    //             $respondedQtys = [];
+    //             if (!empty($row->referenceNumber)) {
+    //                 $respondedQtys = $getRespondedMap($row->referenceNumber);
+    //             }
+
+    //             $doseArr       = !empty($row->dose)         ? explode(',', (string) $row->dose) : [];
+    //             $routeIdsArr   = !empty($row->route_ids)    ? array_map('intval', explode(',', (string) $row->route_ids)) : [];
+    //             $freqIdsArr    = !empty($row->frequency_ids)? array_map('intval', explode(',', (string) $row->frequency_ids)) : [];
+    //             $daysArr       = !empty($row->days)         ? explode(',', (string) $row->days) : [];
+
+    //             $batchNoArr    = !empty($row->batch_no)     ? explode(',', (string) $row->batch_no) : [];
+    //             $brandIdArr    = !empty($row->brand_id)     ? array_map('intval', explode(',', (string) $row->brand_id)) : [];
+    //             $expiryArr     = !empty($row->expiry_date)  ? explode(',', (string) $row->expiry_date) : [];
+
+    //             $showMedicationFields = (count($doseArr) > 0 || count($routeIdsArr) > 0 || count($freqIdsArr) > 0 || count($daysArr) > 0);
+    //             $showDemandQty        = (count($demandQty) > 0);
+
+    //             // Ensure route/frequency dictionaries are cached for this row
+    //             $missingRouteIds = array_values(array_diff($routeIdsArr, array_keys($routeNameCache)));
+    //             if ($missingRouteIds) {
+    //                 $fetched = MedicationRoutes::whereIn('id', $missingRouteIds)->pluck('name', 'id')->toArray();
+    //                 foreach ($fetched as $id => $name) $routeNameCache[(int)$id] = $name;
+    //                 foreach ($missingRouteIds as $id) if (!isset($routeNameCache[$id])) $routeNameCache[$id] = 'N/A';
+    //             }
+    //             $missingFreqIds = array_values(array_diff($freqIdsArr, array_keys($frequencyNameCache)));
+    //             if ($missingFreqIds) {
+    //                 $fetched = MedicationFrequency::whereIn('id', $missingFreqIds)->pluck('name', 'id')->toArray();
+    //                 foreach ($fetched as $id => $name) $frequencyNameCache[(int)$id] = $name;
+    //                 foreach ($missingFreqIds as $id) if (!isset($frequencyNameCache[$id])) $frequencyNameCache[$id] = 'N/A';
+    //             }
+
+    //             // Preload ref map if needed
+    //             $refMap = [];
+    //             if (!$isDirectEntry && !empty($row->referenceNumber)) {
+    //                 $refMap = $getIMRefMap($row->referenceNumber);
+    //             }
+
+    //             $count = count($genericIds);
+    //             for ($i = 0; $i < $count; $i++) {
+    //                 $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
+    //                 $currentGenericId = (int) $genericIds[$i];
+
+    //                 // Balances (identical logic paths)
+    //                 $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A', 'locBalance' => 'N/A'];
+    //                 if ($isDirectEntry) {
+    //                     $balanceInfo = $getIMFirstByGeneric($currentGenericId);
+    //                     if ($balanceInfo) {
+    //                         $b = $getBalances(
+    //                             $row->org_id, $row->site_id, $currentGenericId,
+    //                             $balanceInfo['brand_id'], $balanceInfo['batch_no'],
+    //                             $row->SourceLocationName ?: $row->DestinationLocationName
+    //                         );
+    //                         // $b = $getBalances($row->org_id, $row->site_id, $currentGenericId, $balanceInfo['brand_id'], $balanceInfo['batch_no']);
+    //                         $balances = $b;
+    //                     }
+    //                 } elseif (!empty($row->referenceNumber) && !empty($respondedQtys)) {
+    //                     $entry = $refMap[$currentGenericId] ?? null;
+    //                     if ($entry) {
+    //                         $b = $getBalances(
+    //                             $row->org_id, $row->site_id, $currentGenericId,
+    //                             $entry['brand_id'], $entry['batch_no'],
+    //                             $row->SourceLocationName ?: $row->DestinationLocationName
+    //                         );
+
+    //                         // $b = $getBalances($row->org_id, $row->site_id, $currentGenericId, $entry['brand_id'], $entry['batch_no']);
+    //                         $balances = $b;
+    //                     }
+    //                 }
+
+    //                 $currentDemandQty     = isset($demandQty[$i]) ? (float) $demandQty[$i] : 0.0;
+    //                 $currentRespondedQty  = isset($respondedQtys[$currentGenericId]) ? (float) $respondedQtys[$currentGenericId] : 0.0;
+
+    //                 // Status / Action (unchanged)
+    //                 if ($currentRespondedQty > 0) {
+    //                     if ($currentRespondedQty >= $currentDemandQty) {
+    //                         if ($isIssue) { $status = 'Issued'; $statusClass = 'megna'; }
+    //                         else          { $status = 'Dispensed'; $statusClass = 'success'; }
+    //                         $actionBtn = 'N/A';
+    //                     } else {
+    //                         $status = $isIssue ? 'Partially Issued' : 'Partially Dispensed';
+    //                         $statusClass = 'info';
+    //                         $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
+    //                     }
+    //                 } else {
+    //                     $status = 'Pending';
+    //                     $statusClass = 'warning';
+    //                     $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn" data-source="'. $row->source.'" data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '">Respond</a>';
+    //                 }
+
+    //                 // Override for direct entries
+    //                 if ($isDirectEntry) {
+    //                     if ($isIssue) { $status = 'Issued'; $statusClass = 'megna'; }
+    //                     else          { $status = 'Dispensed'; $statusClass = 'success'; }
+    //                     $actionBtn = 'N/A';
+    //                 }
+
+    //                 // Brand/Batch/Expiry
+    //                 $brandName = '';
+    //                 $batchNo   = '';
+    //                 $expiryDate = '';
+
+    //                 if (!$isDirectEntry && !empty($row->referenceNumber)) {
+    //                     $itemData = $refMap[$currentGenericId] ?? null;
+    //                     if ($itemData) {
+    //                         $brandName = $getBrandName($itemData['brand_id']);
+    //                         $batchNo   = $itemData['batch_no'];
+    //                         $expiryDate = is_numeric($itemData['expiry_date'])
+    //                             ? \Carbon\Carbon::createFromTimestamp($itemData['expiry_date'])->format('d-M-Y')
+    //                             : $itemData['expiry_date'];
+    //                     }
+    //                 } else {
+    //                     $brandName = isset($brandIdArr[$i]) ? $getBrandName((int)$brandIdArr[$i]) : '';
+    //                     $batchNo   = $batchNoArr[$i] ?? '';
+    //                     $rawExpiry = $expiryArr[$i] ?? '';
+    //                     $expiryDate = is_numeric($rawExpiry)
+    //                         ? \Carbon\Carbon::createFromTimestamp((int)$rawExpiry)->format('d-M-Y')
+    //                         : $rawExpiry;
+    //                 }
+
+    //                 // Enforce rights
+    //                 if ($rightsRespond != 1) {
+    //                     $actionBtn = '<code>Unauthorized Access</code>';
+    //                 }
+
+    //                 $tableRows .= '<tr style="background-color:'.$bg.'; cursor:pointer;" class="balance-row"'
+    //                             .' data-expiry="'.$expiryDate.'"'
+    //                             .' data-brand="'.$brandName.'"'
+    //                             .' data-batch="'.$batchNo.'"'
+    //                             .' data-loc-balance="'.$balances['locBalance'].'"'
+    //                             .' data-org-balance="'.$balances['orgBalance'].'"'
+    //                             .' data-site-balance="'.$balances['siteBalance'].'">';
+
+    //                 $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($genericNameCache[$currentGenericId] ?? 'N/A').'</td>';
+
+    //                 if ($showMedicationFields) {
+    //                     $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($doseArr[$i] ?? 'N/A').'</td>'
+    //                                 . '<td style="padding:8px;border:1px solid #ccc;">'.($routeNameCache[$routeIdsArr[$i] ?? 0] ?? 'N/A').'</td>'
+    //                                 . '<td style="padding:8px;border:1px solid #ccc;">'.($frequencyNameCache[$freqIdsArr[$i] ?? 0] ?? 'N/A').'</td>'
+    //                                 . '<td style="padding:8px;border:1px solid #ccc;">'.($daysArr[$i] ?? 'N/A').'</td>';
+    //                 }
+
+    //                 if ($showDemandQty) {
+    //                     $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($demandQty[$i] ?? 'N/A').'</td>';
+    //                 }
+
+    //                 // For inventory source, show its transactionQty column
+    //                 if ($row->source === 'inventory' && $transactionQty !== null) {
+    //                     $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.($transactionQty[$i] ?? 'N/A').'</td>';
+    //                 }
+
+    //                 // For non-inventory source, show responded qty
+    //                 if ($row->source !== 'inventory' && $currentRespondedQty >= 0) {
+    //                     $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$currentRespondedQty.'</td>';
+    //                 }
+
+    //                 $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>'
+    //                             . '<td style="padding: 5px 15px;border: 1px solid #ccc;"><span class="label label-'.$statusClass.'">'.$status.'</span></td>'
+    //                             . '</tr>';
+    //             }
+
+    //             // Header (unchanged, just built once)
+    //             $tableHeader = '<tr>'
+    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic</th>';
+
+    //             if ($showMedicationFields) {
+    //                 $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Dose</th>'
+    //                             . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Route</th>'
+    //                             . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Frequency</th>'
+    //                             . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Duration (Days)</th>';
+    //             }
+    //             if ($showDemandQty) {
+    //                 $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Demand Qty</th>';
+    //             }
+
+    //             $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>'
+    //                         . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
+    //                         . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
+    //                         . '</tr>';
+
+    //             return '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+    //                 .'<thead style="background-color:#e2e8f0;color:#000;">'.$tableHeader.'</thead>'
+    //                 .'<tbody>'.$tableRows.'</tbody></table>';
+    //         })
+    //     ->rawColumns(['id_raw', 'id', 'patientDetails', 'InventoryDetails'])
+    //     ->make(true);
+    // }
+
+    
 
     public function RespondIssueDispense(Request $r)
     {
@@ -14824,278 +14971,893 @@ class InventoryController extends Controller
         return view('dashboard.material_management.return', compact('user','RequisitionNonMandatory','costcenters','MedicationRoutes','MedicationFrequencies'));
     }
 
+    // public function GetReturnData(Request $request)
+    // {
+    //     $rights = $this->rights;
+    //     $view = explode(',', $rights->inventory_return)[1];
+    //     if ($view == 0) abort(403, 'Forbidden');
+
+    //     // ---------- Base issued/dispensed query ----------
+    //     $issuedDispensed = DB::table('inventory_management as im')
+    //         ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
+    //         ->join('inventory_source_destination_type as isdt', 'isdt.id', '=', 'itt.destination_location_type')
+    //         ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'itt.activity_type')
+    //         ->join('organization', 'organization.id', '=', 'im.org_id')
+    //         ->join('org_site', 'org_site.id', '=', 'im.site_id')
+    //         ->leftJoin('patient', 'patient.mr_code', '=', 'im.mr_code')
+    //         ->leftJoin('employee', 'employee.id', '=', 'im.resp_physician')
+    //         ->leftJoin('service_mode', 'service_mode.id', '=', 'im.service_mode_id')
+    //         ->leftJoin('services', 'services.id', '=', 'im.service_id')
+    //         ->leftJoin('service_group', 'service_group.id', '=', 'services.group_id')
+    //         ->leftJoin('service_type', 'service_type.id', '=', 'service_group.type_id')
+    //         ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'im.billing_cc')
+    //         ->where(function ($q) {
+    //             $q->where('ita.name', 'like', '%issue%')
+    //             ->orWhere('ita.name', 'like', '%dispense%');
+    //         })
+    //         ->select(
+    //             'im.*',
+    //             'itt.name as transaction_type',
+    //             'isdt.name as sourceDestinationName',
+    //             'ita.name as activity_type',
+    //             DB::raw('patient.name as patientName'),
+    //             DB::raw('employee.name as Physician'),
+    //             DB::raw('organization.organization as OrgName'),
+    //             DB::raw('org_site.name as SiteName'),
+    //             DB::raw('services.name as serviceName'),
+    //             DB::raw('service_mode.name as serviceMode'),
+    //             DB::raw('billingCC.name as billingCC'),
+    //             DB::raw('service_group.name as serviceGroup'),
+    //             DB::raw('service_type.name as serviceType')
+    //         );
+
+    //     // session site filter
+    //     if ($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+    //         $sessionSiteIds = $this->assignedSites;
+    //         if (!empty($sessionSiteIds)) {
+    //             $issuedDispensed->whereIn('org_site.id', $sessionSiteIds);
+    //         }
+    //     }
+
+    //     // ---------- Computed columns (consumed, returned, remaining) ----------
+    //     $issuedDispensed = $issuedDispensed->addSelect([
+    //         DB::raw('(SELECT COALESCE(SUM(im2.transaction_qty),0)
+    //                 FROM inventory_management im2
+    //                 INNER JOIN inventory_transaction_type itt2 ON itt2.id = im2.transaction_type_id
+    //                 INNER JOIN inventory_transaction_activity ita2 ON ita2.id = itt2.activity_type
+    //                 WHERE im2.ref_document_no = im.ref_document_no
+    //                 AND im2.inv_generic_id   = im.inv_generic_id
+    //                 AND im2.batch_no         = im.batch_no
+    //                 AND im2.brand_id         = im.brand_id
+    //                 AND ita2.name LIKE "%consumption%") AS consumed_qty'),
+
+    //         DB::raw('(SELECT COALESCE(SUM(im3.transaction_qty),0)
+    //                 FROM inventory_management im3
+    //                 INNER JOIN inventory_transaction_type itt3 ON itt3.id = im3.transaction_type_id
+    //                 INNER JOIN inventory_transaction_activity ita3 ON ita3.id = itt3.activity_type
+    //                 WHERE im3.ref_document_no = im.ref_document_no
+    //                 AND im3.inv_generic_id   = im.inv_generic_id
+    //                 AND im3.batch_no         = im.batch_no
+    //                 AND im3.brand_id         = im.brand_id
+    //                 AND ita3.name LIKE "%return%") AS returned_qty'),
+
+    //         DB::raw('(im.transaction_qty - (SELECT COALESCE(SUM(im4.transaction_qty),0)
+    //                 FROM inventory_management im4
+    //                 INNER JOIN inventory_transaction_type itt4 ON itt4.id = im4.transaction_type_id
+    //                 INNER JOIN inventory_transaction_activity ita4 ON ita4.id = itt4.activity_type
+    //                 WHERE im4.ref_document_no = im.ref_document_no
+    //                 AND im4.inv_generic_id   = im.inv_generic_id
+    //                 AND im4.batch_no         = im.batch_no
+    //                 AND im4.brand_id         = im.brand_id
+    //                 AND ita4.name LIKE "%consumption%")) AS remaining_qty'),
+    //     ]);
+
+    //     // ---------- Wrap as subquery for server-side pagination ----------
+    //     // $finalQuery = DB::table(DB::raw("({$issuedDispensed->toSql()}) as filtered_results"))
+    //     //     ->mergeBindings($issuedDispensed)
+    //     //     ->where('remaining_qty', '>', 0);
+    //     $finalQuery = DB::query()
+    //         ->fromSub($issuedDispensed, 'u')
+    //         ->where('remaining_qty', '>', 0);
+
+    //     // ---------- DataTables rendering ----------
+    //     return DataTables::query($finalQuery)
+    //         // Filters (explicit + DataTables global/column)
+    //         ->filter(function ($query) use ($request) {
+    //             // Explicit params (pass from your UI as needed)
+    //             $from   = $request->input('from_date');     // 'YYYY-MM-DD'
+    //             $to     = $request->input('to_date');       // 'YYYY-MM-DD'
+    //             $orgIds = (array) $request->input('org_ids', []);
+    //             $siteIds= (array) $request->input('site_ids', []);
+    //             $ttIds  = (array) $request->input('transaction_type_ids', []);
+
+    //             $ref      = trim((string) $request->input('reference')); // ref_document_no
+    //             $mr       = trim((string) $request->input('mr_code'));
+    //             $patient  = trim((string) $request->input('patient'));
+    //             $phys     = trim((string) $request->input('physician'));
+    //             $service  = trim((string) $request->input('service'));
+    //             $svcMode  = trim((string) $request->input('service_mode'));
+    //             $svcGroup = trim((string) $request->input('service_group'));
+    //             $billing  = trim((string) $request->input('billing_cc'));
+    //             $siteName = trim((string) $request->input('site_name'));
+    //             $remarks  = trim((string) $request->input('remarks'));
+    //             $srcDst   = trim((string) $request->input('location_type')); // e.g., "location" (matches sourceDestinationName)
+    //             $generic  = trim((string) $request->input('generic_name'));  // search generic via inv_generic_id→name
+
+    //             if ($from) {
+    //                 $query->where('u.timestamp', '>=', \Carbon\Carbon::parse($from)->startOfDay()->timestamp);
+    //             }
+    //             if ($to) {
+    //                 $query->where('u.timestamp', '<=', \Carbon\Carbon::parse($to)->endOfDay()->timestamp);
+    //             }
+    //             if (!empty($orgIds))  { $query->whereIn('u.org_id', $orgIds); }
+    //             if (!empty($siteIds)) { $query->whereIn('u.site_id', $siteIds); }
+    //             if (!empty($ttIds))   { $query->whereIn('u.transaction_type_id', $ttIds); }
+
+    //             if ($ref)      { $query->where('u.ref_document_no', 'like', "%{$ref}%"); }
+    //             if ($mr)       { $query->where('u.mr_code', 'like', "%{$mr}%"); }
+    //             if ($patient)  { $query->where('u.patientName', 'like', "%{$patient}%"); }
+    //             if ($phys)     { $query->where('u.Physician', 'like', "%{$phys}%"); }
+    //             if ($service)  { $query->where('u.serviceName', 'like', "%{$service}%"); }
+    //             if ($svcMode)  { $query->where('u.serviceMode', 'like', "%{$svcMode}%"); }
+    //             if ($svcGroup) { $query->where('u.serviceGroup', 'like', "%{$svcGroup}%"); }
+    //             if ($billing)  { $query->where('u.billingCC', 'like', "%{$billing}%"); }
+    //             if ($siteName) { $query->where('u.SiteName', 'like', "%{$siteName}%"); }
+    //             if ($remarks)  { $query->where('u.remarks', 'like', "%{$remarks}%"); }
+    //             if ($srcDst)   { $query->where('u.sourceDestinationName', 'like', "%{$srcDst}%"); }
+
+    //             // Generic name filter: matches current inv_generic_id to inventory_generic.name
+    //             if ($generic) {
+    //                 $g = "%{$generic}%";
+    //                 $query->whereRaw("
+    //                     EXISTS (
+    //                     SELECT 1
+    //                     FROM inventory_generic ig
+    //                     WHERE ig.id = u.inv_generic_id
+    //                         AND ig.name LIKE ?
+    //                     )", [$g]
+    //                 );
+    //             }
+
+    //             // DataTables global search
+    //             $global = trim((string) data_get($request->input('search'), 'value'));
+    //             if ($global !== '') {
+    //                 $g = "%{$global}%";
+    //                 $query->where(function ($qq) use ($g) {
+    //                     $qq->orWhere('u.ref_document_no', 'like', $g)
+    //                     ->orWhere('u.patientName', 'like', $g)
+    //                     ->orWhere('u.Physician', 'like', $g)
+    //                     ->orWhere('u.OrgName', 'like', $g)
+    //                     ->orWhere('u.SiteName', 'like', $g)
+    //                     ->orWhere('u.serviceName', 'like', $g)
+    //                     ->orWhere('u.serviceMode', 'like', $g)
+    //                     ->orWhere('u.billingCC', 'like', $g)
+    //                     ->orWhere('u.serviceGroup', 'like', $g)
+    //                     ->orWhere('u.serviceType', 'like', $g)
+    //                     ->orWhere('u.transaction_type', 'like', $g)
+    //                     ->orWhere('u.sourceDestinationName', 'like', $g)
+    //                     ->orWhere('u.mr_code', 'like', $g)
+    //                     ->orWhere('u.remarks', 'like', $g)
+    //                     // generic name
+    //                     ->orWhereRaw("
+    //                         EXISTS (
+    //                             SELECT 1
+    //                             FROM inventory_generic ig
+    //                             WHERE ig.id = u.inv_generic_id
+    //                             AND ig.name LIKE ?
+    //                         )", [$g]
+    //                     );
+    //                 });
+    //             }
+
+    //             // Column-specific search (if you send columns[x][search][value])
+    //             foreach ((array)$request->input('columns', []) as $col) {
+    //                 $name  = data_get($col, 'data');
+    //                 $value = trim((string) data_get($col, 'search.value'));
+    //                 if ($value === '') continue;
+
+    //                 switch ($name) {
+    //                     case 'ref_document_no':  $query->where('u.ref_document_no', 'like', "%{$value}%"); break;
+    //                     case 'mr_code':          $query->where('u.mr_code', 'like', "%{$value}%"); break;
+    //                     case 'patientName':      $query->where('u.patientName', 'like', "%{$value}%"); break;
+    //                     case 'Physician':        $query->where('u.Physician', 'like', "%{$value}%"); break;
+    //                     case 'SiteName':         $query->where('u.SiteName', 'like', "%{$value}%"); break;
+    //                     case 'OrgName':          $query->where('u.OrgName', 'like', "%{$value}%"); break;
+    //                     case 'serviceName':      $query->where('u.serviceName', 'like', "%{$value}%"); break;
+    //                     case 'serviceMode':      $query->where('u.serviceMode', 'like', "%{$value}%"); break;
+    //                     case 'serviceGroup':     $query->where('u.serviceGroup', 'like', "%{$value}%"); break;
+    //                     case 'serviceType':      $query->where('u.serviceType', 'like', "%{$value}%"); break;
+    //                     case 'transaction_type': $query->where('u.transaction_type', 'like', "%{$value}%"); break;
+    //                     case 'sourceDestinationName':
+    //                                             $query->where('u.sourceDestinationName', 'like', "%{$value}%"); break;
+    //                     case 'remarks':          $query->where('u.remarks', 'like', "%{$value}%"); break;
+    //                     case 'generic':
+    //                         $g = "%{$value}%";
+    //                         $query->whereRaw("
+    //                             EXISTS (
+    //                             SELECT 1 FROM inventory_generic ig
+    //                             WHERE ig.id = u.inv_generic_id
+    //                                 AND ig.name LIKE ?
+    //                             )", [$g]
+    //                         );
+    //                         break;
+    //                     default:
+    //                         // ignore others
+    //                         break;
+    //                 }
+    //             }
+    //         })
+    //         ->addColumn('return_raw', fn($row) => $row->id)
+    //         ->addColumn('id_raw', fn($row) => $row->id)
+
+    //         // ----- Left column -----
+    //         ->editColumn('id', function ($row) {
+    //             static $locNameCache = [];
+
+    //             $getLocName = function ($id) use (&$locNameCache) {
+    //                 $id = (int)$id;
+    //                 if ($id <= 0) return null;
+    //                 if (!array_key_exists($id, $locNameCache)) {
+    //                     $locNameCache[$id] = DB::table('service_location')->where('id', $id)->value('name');
+    //                 }
+    //                 return $locNameCache[$id];
+    //             };
+
+    //             $timestamp     = \Carbon\Carbon::createFromTimestamp($row->timestamp)->format('l d F Y - h:i A');
+    //             $effectiveDate = \Carbon\Carbon::createFromTimestamp($row->effective_timestamp)->format('l d F Y - h:i A');
+    //             $RequisitionCode = 'Ref: ' . ($row->ref_document_no ?? 'N/A');
+
+    //             $locationHtml = '';
+    //             if (!empty($row->sourceDestinationName) && str_contains(strtolower($row->sourceDestinationName), 'location')) {
+    //                 $destName = $getLocName($row->destination) ?? 'N/A';
+    //                 $locationHtml = '<b>Location</b>: ' . ucwords($destName) . '<br>';
+    //             }
+
+    //             return sprintf(
+    //                 '%s<hr class="mt-1 mb-2">%s<br>%s<b>Site</b>: %s<br><b>Issue Date </b>: %s<br><b>Effective Date </b>: %s<br><b>Remarks</b>: %s',
+    //                 $RequisitionCode,
+    //                 ucwords($row->transaction_type ?? 'N/A'),
+    //                 $locationHtml,
+    //                 $row->SiteName ?? 'N/A',
+    //                 $timestamp,
+    //                 $effectiveDate,
+    //                 $row->remarks ?: 'N/A'
+    //             );
+    //         })
+
+    //         // ----- Middle column -----
+    //         ->editColumn('patientDetails', function ($row) {
+    //             if (empty($row->mr_code)) return 'N/A';
+    //             return sprintf(
+    //                 '<b>MR#:</b> %s<br>%s<hr class="mt-1 mb-2"><b>Service Mode</b>: %s<br><b>Service Group</b>: %s<br><b>Service</b>: %s<br><b>Responsible Physician</b>: %s<br><b>Billing CC</b>: %s',
+    //                 $row->mr_code,
+    //                 $row->patientName,
+    //                 $row->serviceMode,
+    //                 $row->serviceGroup,
+    //                 $row->serviceName,
+    //                 $row->Physician,
+    //                 $row->billingCC
+    //             );
+    //         })
+
+    //         // ----- Right column (table with balances + actions) -----
+    //         ->editColumn('InventoryDetails', function ($row) {
+    //             // ---- Static caches across rows (per request) ----
+    //             static $rightsRespond = null;
+    //             static $genericNameCache = [];  // [id => name]
+    //             static $brandNameCache   = [];  // [id => name]
+    //             static $locNameCache     = [];  // [id => name]
+    //             static $balanceCache     = [];  // ["org|site|gen|brand|batch" => ['org','site','locJson']]
+
+    //             if ($rightsRespond === null) {
+    //                 $Rights = $this->rights;
+    //                 $rightsRespond = (int) explode(',', $Rights->inventory_return)[0];
+    //             }
+
+    //             // helpers
+    //             $getGenericName = function ($id) use (&$genericNameCache) {
+    //                 $id = (int)$id;
+    //                 if ($id <= 0) return 'N/A';
+    //                 if (!array_key_exists($id, $genericNameCache)) {
+    //                     $genericNameCache[$id] = InventoryGeneric::where('id', $id)->value('name') ?? 'N/A';
+    //                 }
+    //                 return $genericNameCache[$id];
+    //             };
+    //             $getBrandName = function ($id) use (&$brandNameCache) {
+    //                 $id = (int)$id;
+    //                 if ($id <= 0) return '';
+    //                 if (!array_key_exists($id, $brandNameCache)) {
+    //                     $brandNameCache[$id] = DB::table('inventory_brand')->where('id', $id)->value('name') ?? '';
+    //                 }
+    //                 return $brandNameCache[$id];
+    //             };
+    //             $getLocName = function ($id) use (&$locNameCache) {
+    //                 $id = (int)$id;
+    //                 if ($id <= 0) return null;
+    //                 if (!array_key_exists($id, $locNameCache)) {
+    //                     $locNameCache[$id] = DB::table('service_location')->where('id', $id)->value('name');
+    //                 }
+    //                 return $locNameCache[$id];
+    //             };
+
+    //             $getBalances = function ($orgId, $siteId, $genericId, $brandId, $batchNo) use (&$balanceCache, $getLocName) {
+    //                 $key = "{$orgId}|{$siteId}|{$genericId}|{$brandId}|{$batchNo}";
+    //                 if (isset($balanceCache[$key])) return $balanceCache[$key];
+
+    //                 // ORG balance (latest row)
+    //                 $orgBal = DB::table('inventory_balance')
+    //                     ->where('org_id', $orgId)
+    //                     ->where('generic_id', $genericId)
+    //                     ->where('brand_id', $brandId)
+    //                     ->where('batch_no', $batchNo)
+    //                     ->orderBy('id', 'desc')
+    //                     ->value('org_balance') ?? 'N/A';
+
+    //                 // SITE balance (latest row for this site)
+    //                 $siteBal = DB::table('inventory_balance')
+    //                     ->where('org_id', $orgId)
+    //                     ->where('site_id', $siteId)
+    //                     ->where('generic_id', $genericId)
+    //                     ->where('brand_id', $brandId)
+    //                     ->where('batch_no', $batchNo)
+    //                     ->orderBy('id', 'desc')
+    //                     ->value('site_balance') ?? 'N/A';
+
+    //                 // LOCATION balances (latest per location_id for this brand+batch)
+    //                 $locRows = DB::table('inventory_balance')
+    //                     ->where('org_id', $orgId)
+    //                     ->where('site_id', $siteId)
+    //                     ->where('generic_id', $genericId)
+    //                     ->where('brand_id', $brandId)
+    //                     ->where('batch_no', $batchNo)
+    //                     ->whereNotNull('location_id')
+    //                     ->orderBy('id', 'desc')
+    //                     ->get();
+
+    //                 $latestPerLoc = [];
+    //                 foreach ($locRows as $r) {
+    //                     if (!isset($latestPerLoc[$r->location_id])) $latestPerLoc[$r->location_id] = $r; // first = latest
+    //                 }
+
+    //                 $locEntries = [];
+    //                 foreach ($latestPerLoc as $locId => $r) {
+    //                     $bal = (float)($r->location_balance ?? 0);
+    //                     if ($bal <= 0) continue;
+    //                     $name = $getLocName($locId) ?? 'Unknown';
+    //                     $locEntries[] = $name . ': ' . $bal;
+    //                 }
+
+    //                 return $balanceCache[$key] = [
+    //                     'orgBalance'  => $orgBal,
+    //                     'siteBalance' => $siteBal,
+    //                     'locBalance'  => htmlspecialchars(json_encode(array_values($locEntries)), ENT_QUOTES, 'UTF-8'),
+    //                 ];
+    //             };
+
+    //             // ----- Row data -----
+    //             $genericId  = (int)$row->inv_generic_id;
+    //             $brandId    = (int)$row->brand_id;
+    //             $batchNo    = $row->batch_no;
+    //             $brandName  = $getBrandName($brandId);
+    //             $expiryDate = is_numeric($row->expiry_date)
+    //                 ? \Carbon\Carbon::createFromTimestamp($row->expiry_date)->format('d-M-Y')
+    //                 : $row->expiry_date;
+
+    //             $balances = $getBalances($row->org_id, $row->site_id, $genericId, $brandId, $batchNo);
+
+    //             // returned_qty is aliased in SQL; keep a safe fallback to return_qty if present
+    //             $returnQty     = property_exists($row, 'returned_qty') ? (float)$row->returned_qty : (float)($row->return_qty ?? 0);
+    //             $remainingQty  = (float)($row->remaining_qty ?? 0);
+    //             $issuedQty     = (float)($row->transaction_qty ?? 0);
+    //             $availableForReturn = $remainingQty - $returnQty;
+
+    //             // Status / Action
+    //             if ($returnQty > 0) {
+    //                 if ($returnQty == $remainingQty) {
+    //                     $status = 'Returned';
+    //                     $statusClass = 'success';
+    //                     $actionBtn = 'N/A';
+    //                 } else {
+    //                     $status = 'Partially Returned';
+    //                     $statusClass = 'info';
+    //                     $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+    //                         data-id="'. $row->id .'"
+    //                         data-generic-id="'. $genericId .'"
+    //                         data-brand-id="'. $brandName .'"
+    //                         data-batch-no="'. $batchNo .'"
+    //                         data-expiry="'. $expiryDate .'"
+    //                         data-issue-qty="'. $remainingQty .'">Return</a>';
+    //                 }
+    //             } else {
+    //                 $status = 'Available for Return';
+    //                 $statusClass = 'inverse';
+    //                 $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+    //                     data-id="'. $row->id .'"
+    //                     data-generic-id="'. $genericId .'"
+    //                     data-brand-id="'. $brandName .'"
+    //                     data-batch-no="'. $batchNo .'"
+    //                     data-expiry="'. $expiryDate .'"
+    //                     data-issue-qty="'. $remainingQty .'">Return</a>';
+    //             }
+
+    //             if ($rightsRespond != 1) $actionBtn = '<code>Unauthorized Access</code>';
+
+    //             // Single-row details table
+    //             $rowHtml = sprintf(
+    //                 '<tr style="background-color:#f9f9f9;cursor:pointer;" class="balance-row"
+    //                     data-expiry="%s"
+    //                     data-brand="%s"
+    //                     data-batch="%s"
+    //                     data-loc-balance="%s"
+    //                     data-org-balance="%s"
+    //                     data-site-balance="%s">
+    //                     <td style="padding:8px;border:1px solid #ccc;">%s</td>
+    //                     <td style="padding:8px;border:1px solid #ccc;">%s</td>
+    //                     <td style="padding:8px;border:1px solid #ccc;">%s</td>
+    //                     <td style="padding:8px;border:1px solid #ccc;">%s</td>
+    //                     <td style="padding:5px 15px;border:1px solid #ccc;">%s</td>
+    //                     <td style="padding:8px;border:1px solid #ccc;"><span class="label label-%s">%s</span></td>
+    //                 </tr>',
+    //                 e($expiryDate),
+    //                 e($brandName),
+    //                 e($batchNo),
+    //                 $balances['locBalance'],
+    //                 e($balances['orgBalance']),
+    //                 e($balances['siteBalance']),
+    //                 e($getGenericName($genericId)),
+    //                 $issuedQty,
+    //                 $returnQty,
+    //                 $availableForReturn,
+    //                 $actionBtn,
+    //                 $statusClass,
+    //                 $status
+    //             );
+
+    //             $header = '<tr>'
+    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic</th>'
+    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Issued Qty</th>'
+    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Return Qty</th>'
+    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Available for Return</th>'
+    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
+    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
+    //                 .'</tr>';
+
+    //             return '<table style="width:100%;border-collapse:collapse;font-size:13px;" class="table table-bordered">'
+    //                 .'<thead style="background-color:#e2e8f0;color:#000;">'.$header.'</thead>'
+    //                 .'<tbody>'.$rowHtml.'</tbody></table>';
+    //         })
+
+    //         ->rawColumns(['id_raw','id','patientDetails','InventoryDetails'])
+    //         ->make(true);
+    // }
+
     public function GetReturnData(Request $request)
-    {
-        $rights = $this->rights;
-        $view = explode(',', $rights->inventory_return)[1];
-        if ($view == 0) abort(403, 'Forbidden');
+{
+    $rights = $this->rights;
+    $view = explode(',', $rights->inventory_return)[1];
+    if ($view == 0) abort(403, 'Forbidden');
 
-        // ---------- Base issued/dispensed query ----------
-        $issuedDispensed = DB::table('inventory_management as im')
-            ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
-            ->join('inventory_source_destination_type as isdt', 'isdt.id', '=', 'itt.destination_location_type')
-            ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'itt.activity_type')
-            ->join('organization', 'organization.id', '=', 'im.org_id')
-            ->join('org_site', 'org_site.id', '=', 'im.site_id')
-            ->leftJoin('patient', 'patient.mr_code', '=', 'im.mr_code')
-            ->leftJoin('employee', 'employee.id', '=', 'im.resp_physician')
-            ->leftJoin('service_mode', 'service_mode.id', '=', 'im.service_mode_id')
-            ->leftJoin('services', 'services.id', '=', 'im.service_id')
-            ->leftJoin('service_group', 'service_group.id', '=', 'services.group_id')
-            ->leftJoin('service_type', 'service_type.id', '=', 'service_group.type_id')
-            ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'im.billing_cc')
-            ->where(function ($q) {
-                $q->where('ita.name', 'like', '%issue%')
-                ->orWhere('ita.name', 'like', '%dispense%');
-            })
-            ->select(
-                'im.*',
-                'itt.name as transaction_type',
-                'isdt.name as sourceDestinationName',
-                'ita.name as activity_type',
-                DB::raw('patient.name as patientName'),
-                DB::raw('employee.name as Physician'),
-                DB::raw('organization.organization as OrgName'),
-                DB::raw('org_site.name as SiteName'),
-                DB::raw('services.name as serviceName'),
-                DB::raw('service_mode.name as serviceMode'),
-                DB::raw('billingCC.name as billingCC'),
-                DB::raw('service_group.name as serviceGroup'),
-                DB::raw('service_type.name as serviceType')
-            );
+    // --------------------------------------------
+    // 1) Resolve activity-type ID sets (one time)
+    // --------------------------------------------
+    // These plucks are cheap and done once; they let MySQL/Postgres use indexes vs LIKE scans.
+    $issueDispenseActivityIds = DB::table('inventory_transaction_activity')
+        ->where(function ($q) {
+            $q->where('name', 'like', '%issue%')
+              ->orWhere('name', 'like', '%dispense%');
+        })
+        ->pluck('id')
+        ->all();
 
-        // session site filter
-        if ($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
-            $sessionSiteIds = $this->assignedSites;
-            if (!empty($sessionSiteIds)) {
-                $issuedDispensed->whereIn('org_site.id', $sessionSiteIds);
-            }
-        }
+    $consumptionActivityIds = DB::table('inventory_transaction_activity')
+        ->where('name', 'like', '%consumption%')
+        ->pluck('id')
+        ->all();
 
-        // ---------- Computed columns (consumed, returned, remaining) ----------
-        $issuedDispensed = $issuedDispensed->addSelect([
-            DB::raw('(SELECT COALESCE(SUM(im2.transaction_qty),0)
-                    FROM inventory_management im2
-                    INNER JOIN inventory_transaction_type itt2 ON itt2.id = im2.transaction_type_id
-                    INNER JOIN inventory_transaction_activity ita2 ON ita2.id = itt2.activity_type
-                    WHERE im2.ref_document_no = im.ref_document_no
-                    AND im2.inv_generic_id   = im.inv_generic_id
-                    AND im2.batch_no         = im.batch_no
-                    AND im2.brand_id         = im.brand_id
-                    AND ita2.name LIKE "%consumption%") AS consumed_qty'),
+    $returnActivityIds = DB::table('inventory_transaction_activity')
+        ->where('name', 'like', '%return%')
+        ->pluck('id')
+        ->all();
 
-            DB::raw('(SELECT COALESCE(SUM(im3.transaction_qty),0)
-                    FROM inventory_management im3
-                    INNER JOIN inventory_transaction_type itt3 ON itt3.id = im3.transaction_type_id
-                    INNER JOIN inventory_transaction_activity ita3 ON ita3.id = itt3.activity_type
-                    WHERE im3.ref_document_no = im.ref_document_no
-                    AND im3.inv_generic_id   = im.inv_generic_id
-                    AND im3.batch_no         = im.batch_no
-                    AND im3.brand_id         = im.brand_id
-                    AND ita3.name LIKE "%return%") AS returned_qty'),
+    // Protect against empty IN() which some DBs dislike
+    if (empty($issueDispenseActivityIds)) $issueDispenseActivityIds = [-1];
+    if (empty($consumptionActivityIds))   $consumptionActivityIds   = [-1];
+    if (empty($returnActivityIds))        $returnActivityIds        = [-1];
 
-            DB::raw('(im.transaction_qty - (SELECT COALESCE(SUM(im4.transaction_qty),0)
-                    FROM inventory_management im4
-                    INNER JOIN inventory_transaction_type itt4 ON itt4.id = im4.transaction_type_id
-                    INNER JOIN inventory_transaction_activity ita4 ON ita4.id = itt4.activity_type
-                    WHERE im4.ref_document_no = im.ref_document_no
-                    AND im4.inv_generic_id   = im.inv_generic_id
-                    AND im4.batch_no         = im.batch_no
-                    AND im4.brand_id         = im.brand_id
-                    AND ita4.name LIKE "%consumption%")) AS remaining_qty'),
+    // -------------------------------------------------------
+    // 2) Base: all ISSUE/DISPENSE rows we want to show/return
+    // -------------------------------------------------------
+    $issuedDispensed = DB::table('inventory_management as im')
+        ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
+        ->join('inventory_source_destination_type as isdt', 'isdt.id', '=', 'itt.destination_location_type')
+        ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'itt.activity_type')
+        ->join('organization', 'organization.id', '=', 'im.org_id')
+        ->join('org_site', 'org_site.id', '=', 'im.site_id')
+        ->leftJoin('patient', 'patient.mr_code', '=', 'im.mr_code')
+        ->leftJoin('employee', 'employee.id', '=', 'im.resp_physician')
+        ->leftJoin('service_mode', 'service_mode.id', '=', 'im.service_mode_id')
+        ->leftJoin('services', 'services.id', '=', 'im.service_id')
+        ->leftJoin('service_group', 'service_group.id', '=', 'services.group_id')
+        ->leftJoin('service_type', 'service_type.id', '=', 'service_group.type_id')
+        ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'im.billing_cc')
+        // Fast, indexable condition:
+        ->whereIn('ita.id', $issueDispenseActivityIds)
+        ->select([
+            'im.*',
+            'itt.name as transaction_type',
+            'isdt.name as sourceDestinationName',
+            'ita.name as activity_type',
+            DB::raw('patient.name as patientName'),
+            DB::raw('employee.name as Physician'),
+            DB::raw('organization.organization as OrgName'),
+            DB::raw('org_site.name as SiteName'),
+            DB::raw('services.name as serviceName'),
+            DB::raw('service_mode.name as serviceMode'),
+            DB::raw('billingCC.name as billingCC'),
+            DB::raw('service_group.name as serviceGroup'),
+            DB::raw('service_type.name as serviceType'),
         ]);
 
-        // ---------- Wrap as subquery for server-side pagination ----------
-        $finalQuery = DB::table(DB::raw("({$issuedDispensed->toSql()}) as filtered_results"))
-            ->mergeBindings($issuedDispensed)
-            ->where('remaining_qty', '>', 0);
+    // Session site restriction (push down early)
+    if ($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+        $sessionSiteIds = $this->assignedSites;
+        if (!empty($sessionSiteIds)) {
+            $issuedDispensed->whereIn('org_site.id', $sessionSiteIds);
+        }
+    }
 
-        // ---------- DataTables rendering ----------
-        return DataTables::query($finalQuery)
-            ->addColumn('return_raw', fn($row) => $row->id)
-            ->addColumn('id_raw', fn($row) => $row->id)
+    // ------------------------------------------------------------------
+    // 3) Pre-aggregate CONSUMPTION and RETURN once and join (no N×subq)
+    // ------------------------------------------------------------------
+    // Keys: (ref_document_no, inv_generic_id, batch_no, brand_id)
+    $consumptionAgg = DB::table('inventory_management as imc')
+        ->join('inventory_transaction_type as ittc', 'ittc.id', '=', 'imc.transaction_type_id')
+        ->join('inventory_transaction_activity as itac', 'itac.id', '=', 'ittc.activity_type')
+        ->whereIn('itac.id', $consumptionActivityIds)
+        ->groupBy('imc.ref_document_no', 'imc.inv_generic_id', 'imc.batch_no', 'imc.brand_id')
+        ->select([
+            'imc.ref_document_no',
+            'imc.inv_generic_id',
+            'imc.batch_no',
+            'imc.brand_id',
+            DB::raw('COALESCE(SUM(imc.transaction_qty),0) as consumed_qty'),
+        ]);
 
-            // ----- Left column -----
-            ->editColumn('id', function ($row) {
-                static $locNameCache = [];
+    $returnAgg = DB::table('inventory_management as imr')
+        ->join('inventory_transaction_type as ittr', 'ittr.id', '=', 'imr.transaction_type_id')
+        ->join('inventory_transaction_activity as itar', 'itar.id', '=', 'ittr.activity_type')
+        ->whereIn('itar.id', $returnActivityIds)
+        ->groupBy('imr.ref_document_no', 'imr.inv_generic_id', 'imr.batch_no', 'imr.brand_id')
+        ->select([
+            'imr.ref_document_no',
+            'imr.inv_generic_id',
+            'imr.batch_no',
+            'imr.brand_id',
+            DB::raw('COALESCE(SUM(imr.transaction_qty),0) as returned_qty'),
+        ]);
 
-                $getLocName = function ($id) use (&$locNameCache) {
-                    $id = (int)$id;
-                    if ($id <= 0) return null;
-                    if (!array_key_exists($id, $locNameCache)) {
-                        $locNameCache[$id] = DB::table('service_location')->where('id', $id)->value('name');
-                    }
-                    return $locNameCache[$id];
-                };
+    // Join the aggregates to the issue/dispense rows
+    $base = DB::query()
+        ->fromSub($issuedDispensed, 'im')
+        ->leftJoinSub($consumptionAgg, 'c', function ($j) {
+            $j->on('c.ref_document_no', '=', 'im.ref_document_no')
+              ->on('c.inv_generic_id',   '=', 'im.inv_generic_id')
+              ->on('c.batch_no',         '=', 'im.batch_no')
+              ->on('c.brand_id',         '=', 'im.brand_id');
+        })
+        ->leftJoinSub($returnAgg, 'r', function ($j) {
+            $j->on('r.ref_document_no', '=', 'im.ref_document_no')
+              ->on('r.inv_generic_id',   '=', 'im.inv_generic_id')
+              ->on('r.batch_no',         '=', 'im.batch_no')
+              ->on('r.brand_id',         '=', 'im.brand_id');
+        })
+        ->select([
+            'im.*',
+            DB::raw('COALESCE(c.consumed_qty,0) as consumed_qty'),
+            DB::raw('COALESCE(r.returned_qty,0)  as returned_qty'),
+            DB::raw('(im.transaction_qty - COALESCE(c.consumed_qty,0)) as remaining_qty'),
+        ]);
 
-                $timestamp     = \Carbon\Carbon::createFromTimestamp($row->timestamp)->format('l d F Y - h:i A');
-                $effectiveDate = \Carbon\Carbon::createFromTimestamp($row->effective_timestamp)->format('l d F Y - h:i A');
-                $RequisitionCode = 'Ref: ' . ($row->ref_document_no ?? 'N/A');
+    // Only keep rows that still have something to return
+    $finalQuery = DB::query()
+        ->fromSub($base, 'u')
+        ->where('u.remaining_qty', '>', 0);
 
-                $locationHtml = '';
-                if (!empty($row->sourceDestinationName) && str_contains(strtolower($row->sourceDestinationName), 'location')) {
-                    $destName = $getLocName($row->destination) ?? 'N/A';
-                    $locationHtml = '<b>Location</b>: ' . ucwords($destName) . '<br>';
+    // -----------------------------------------
+    // 4) DataTables (filters + ordering + view)
+    // -----------------------------------------
+    return DataTables::query($finalQuery)
+
+        // --------- FILTERS (explicit + global + per-column) ----------
+        ->filter(function ($query) use ($request) {
+            // Explicit params
+            $from    = $request->input('from_date');
+            $to      = $request->input('to_date');
+            $orgIds  = (array) $request->input('org_ids', []);
+            $siteIds = (array) $request->input('site_ids', []);
+            $ttIds   = (array) $request->input('transaction_type_ids', []);
+
+            $ref      = trim((string) $request->input('reference'));
+            $mr       = trim((string) $request->input('mr_code'));
+            $patient  = trim((string) $request->input('patient'));
+            $phys     = trim((string) $request->input('physician'));
+            $service  = trim((string) $request->input('service'));
+            $svcMode  = trim((string) $request->input('service_mode'));
+            $svcGroup = trim((string) $request->input('service_group'));
+            $billing  = trim((string) $request->input('billing_cc'));
+            $siteName = trim((string) $request->input('site_name'));
+            $remarks  = trim((string) $request->input('remarks'));
+            $srcDst   = trim((string) $request->input('location_type')); // matches sourceDestinationName
+            $generic  = trim((string) $request->input('generic_name'));  // via inventory_generic.name
+
+            if ($from) {
+                $query->where('u.timestamp', '>=', \Carbon\Carbon::parse($from)->startOfDay()->timestamp);
+            }
+            if ($to) {
+                $query->where('u.timestamp', '<=', \Carbon\Carbon::parse($to)->endOfDay()->timestamp);
+            }
+            if ($orgIds)  { $query->whereIn('u.org_id', $orgIds); }
+            if ($siteIds) { $query->whereIn('u.site_id', $siteIds); }
+            if ($ttIds)   { $query->whereIn('u.transaction_type_id', $ttIds); }
+
+            if ($ref)      { $query->where('u.ref_document_no', 'like', "%{$ref}%"); }
+            if ($mr)       { $query->where('u.mr_code', 'like', "%{$mr}%"); }
+            if ($patient)  { $query->where('u.patientName', 'like', "%{$patient}%"); }
+            if ($phys)     { $query->where('u.Physician', 'like', "%{$phys}%"); }
+            if ($service)  { $query->where('u.serviceName', 'like', "%{$service}%"); }
+            if ($svcMode)  { $query->where('u.serviceMode', 'like', "%{$svcMode}%"); }
+            if ($svcGroup) { $query->where('u.serviceGroup', 'like', "%{$svcGroup}%"); }
+            if ($billing)  { $query->where('u.billingCC', 'like', "%{$billing}%"); }
+            if ($siteName) { $query->where('u.SiteName', 'like', "%{$siteName}%"); }
+            if ($remarks)  { $query->where('u.remarks', 'like', "%{$remarks}%"); }
+            if ($srcDst)   { $query->where('u.sourceDestinationName', 'like', "%{$srcDst}%"); }
+
+            if ($generic) {
+                $g = "%{$generic}%";
+                $query->whereRaw("
+                    EXISTS (
+                        SELECT 1
+                        FROM inventory_generic ig
+                        WHERE ig.id = u.inv_generic_id
+                          AND ig.name LIKE ?
+                    )", [$g]
+                );
+            }
+
+            // DataTables global search
+            $global = trim((string) data_get($request->input('search'), 'value'));
+            if ($global !== '') {
+                $g = "%{$global}%";
+                $query->where(function ($qq) use ($g) {
+                    $qq->orWhere('u.ref_document_no', 'like', $g)
+                       ->orWhere('u.patientName', 'like', $g)
+                       ->orWhere('u.Physician', 'like', $g)
+                       ->orWhere('u.OrgName', 'like', $g)
+                       ->orWhere('u.SiteName', 'like', $g)
+                       ->orWhere('u.serviceName', 'like', $g)
+                       ->orWhere('u.serviceMode', 'like', $g)
+                       ->orWhere('u.billingCC', 'like', $g)
+                       ->orWhere('u.serviceGroup', 'like', $g)
+                       ->orWhere('u.serviceType', 'like', $g)
+                       ->orWhere('u.transaction_type', 'like', $g)
+                       ->orWhere('u.sourceDestinationName', 'like', $g)
+                       ->orWhere('u.mr_code', 'like', $g)
+                       ->orWhere('u.remarks', 'like', $g)
+                       ->orWhereRaw("
+                            EXISTS (
+                              SELECT 1 FROM inventory_generic ig
+                              WHERE ig.id = u.inv_generic_id
+                                AND ig.name LIKE ?
+                            )", [$g]
+                       );
+                });
+            }
+
+            // Column-specific search
+            foreach ((array)$request->input('columns', []) as $col) {
+                $name  = data_get($col, 'data');
+                $value = trim((string) data_get($col, 'search.value'));
+                if ($value === '') continue;
+
+                switch ($name) {
+                    case 'ref_document_no':  $query->where('u.ref_document_no', 'like', "%{$value}%"); break;
+                    case 'mr_code':          $query->where('u.mr_code', 'like', "%{$value}%"); break;
+                    case 'patientName':      $query->where('u.patientName', 'like', "%{$value}%"); break;
+                    case 'Physician':        $query->where('u.Physician', 'like', "%{$value}%"); break;
+                    case 'SiteName':         $query->where('u.SiteName', 'like', "%{$value}%"); break;
+                    case 'OrgName':          $query->where('u.OrgName', 'like', "%{$value}%"); break;
+                    case 'serviceName':      $query->where('u.serviceName', 'like', "%{$value}%"); break;
+                    case 'serviceMode':      $query->where('u.serviceMode', 'like', "%{$value}%"); break;
+                    case 'serviceGroup':     $query->where('u.serviceGroup', 'like', "%{$value}%"); break;
+                    case 'serviceType':      $query->where('u.serviceType', 'like', "%{$value}%"); break;
+                    case 'transaction_type': $query->where('u.transaction_type', 'like', "%{$value}%"); break;
+                    case 'sourceDestinationName':
+                                            $query->where('u.sourceDestinationName', 'like', "%{$value}%"); break;
+                    case 'remarks':          $query->where('u.remarks', 'like', "%{$value}%"); break;
+                    case 'generic':
+                        $g = "%{$value}%";
+                        $query->whereRaw("
+                            EXISTS (
+                              SELECT 1 FROM inventory_generic ig
+                              WHERE ig.id = u.inv_generic_id
+                                AND ig.name LIKE ?
+                            )", [$g]
+                        );
+                        break;
+                    default:
+                        break;
+                }
+            }
+        })
+
+        // Default order (latest first) if DT doesn't send one
+        ->order(function ($q) use ($request) {
+            if (!count($request->input('order', []))) {
+                $q->orderBy('u.timestamp', 'desc');
+            }
+        })
+
+        // ---------- Your existing renderers ----------
+        ->addColumn('return_raw', fn($row) => $row->id)
+        ->addColumn('id_raw', fn($row) => $row->id)
+
+        ->editColumn('id', function ($row) {
+            static $locNameCache = [];
+            $getLocName = function ($id) use (&$locNameCache) {
+                $id = (int)$id;
+                if ($id <= 0) return null;
+                if (!array_key_exists($id, $locNameCache)) {
+                    $locNameCache[$id] = DB::table('service_location')->where('id', $id)->value('name');
+                }
+                return $locNameCache[$id];
+            };
+
+            $timestamp     = \Carbon\Carbon::createFromTimestamp($row->timestamp)->format('l d F Y - h:i A');
+            $effectiveDate = \Carbon\Carbon::createFromTimestamp($row->effective_timestamp)->format('l d F Y - h:i A');
+            $RequisitionCode = 'Ref: ' . ($row->ref_document_no ?? 'N/A');
+
+            $locationHtml = '';
+            if (!empty($row->sourceDestinationName) && str_contains(strtolower($row->sourceDestinationName), 'location')) {
+                $destName = $getLocName($row->destination) ?? 'N/A';
+                $locationHtml = '<b>Location</b>: ' . ucwords($destName) . '<br>';
+            }
+
+            return sprintf(
+                '%s<hr class="mt-1 mb-2">%s<br>%s<b>Site</b>: %s<br><b>Issue Date </b>: %s<br><b>Effective Date </b>: %s<br><b>Remarks</b>: %s',
+                $RequisitionCode,
+                ucwords($row->transaction_type ?? 'N/A'),
+                $locationHtml,
+                $row->SiteName ?? 'N/A',
+                $timestamp,
+                $effectiveDate,
+                $row->remarks ?: 'N/A'
+            );
+        })
+
+        ->editColumn('patientDetails', function ($row) {
+            if (empty($row->mr_code)) return 'N/A';
+            return sprintf(
+                '<b>MR#:</b> %s<br>%s<hr class="mt-1 mb-2"><b>Service Mode</b>: %s<br><b>Service Group</b>: %s<br><b>Service</b>: %s<br><b>Responsible Physician</b>: %s<br><b>Billing CC</b>: %s',
+                $row->mr_code,
+                $row->patientName,
+                $row->serviceMode,
+                $row->serviceGroup,
+                $row->serviceName,
+                $row->Physician,
+                $row->billingCC
+            );
+        })
+
+        ->editColumn('InventoryDetails', function ($row) {
+            // (your existing right-column renderer unchanged)
+            // ---- Static caches across rows (per request) ----
+            static $rightsRespond = null;
+            static $genericNameCache = [];  // [id => name]
+            static $brandNameCache   = [];  // [id => name]
+            static $locNameCache     = [];  // [id => name]
+            static $balanceCache     = [];  // ["org|site|gen|brand|batch" => ['org','site','locJson']]
+
+            if ($rightsRespond === null) {
+                $Rights = $this->rights;
+                $rightsRespond = (int) explode(',', $Rights->inventory_return)[0];
+            }
+
+            $getGenericName = function ($id) use (&$genericNameCache) {
+                $id = (int)$id;
+                if ($id <= 0) return 'N/A';
+                if (!array_key_exists($id, $genericNameCache)) {
+                    $genericNameCache[$id] = InventoryGeneric::where('id', $id)->value('name') ?? 'N/A';
+                }
+                return $genericNameCache[$id];
+            };
+            $getBrandName = function ($id) use (&$brandNameCache) {
+                $id = (int)$id;
+                if ($id <= 0) return '';
+                if (!array_key_exists($id, $brandNameCache)) {
+                    $brandNameCache[$id] = DB::table('inventory_brand')->where('id', $id)->value('name') ?? '';
+                }
+                return $brandNameCache[$id];
+            };
+            $getLocName = function ($id) use (&$locNameCache) {
+                $id = (int)$id;
+                if ($id <= 0) return null;
+                if (!array_key_exists($id, $locNameCache)) {
+                    $locNameCache[$id] = DB::table('service_location')->where('id', $id)->value('name');
+                }
+                return $locNameCache[$id];
+            };
+
+            $getBalances = function ($orgId, $siteId, $genericId, $brandId, $batchNo) use (&$balanceCache, $getLocName) {
+                $key = "{$orgId}|{$siteId}|{$genericId}|{$brandId}|{$batchNo}";
+                if (isset($balanceCache[$key])) return $balanceCache[$key];
+
+                $orgBal = DB::table('inventory_balance')
+                    ->where('org_id', $orgId)
+                    ->where('generic_id', $genericId)
+                    ->where('brand_id', $brandId)
+                    ->where('batch_no', $batchNo)
+                    ->orderBy('id', 'desc')
+                    ->value('org_balance') ?? 'N/A';
+
+                $siteBal = DB::table('inventory_balance')
+                    ->where('org_id', $orgId)
+                    ->where('site_id', $siteId)
+                    ->where('generic_id', $genericId)
+                    ->where('brand_id', $brandId)
+                    ->where('batch_no', $batchNo)
+                    ->orderBy('id', 'desc')
+                    ->value('site_balance') ?? 'N/A';
+
+                $locRows = DB::table('inventory_balance')
+                    ->where('org_id', $orgId)
+                    ->where('site_id', $siteId)
+                    ->where('generic_id', $genericId)
+                    ->where('brand_id', $brandId)
+                    ->where('batch_no', $batchNo)
+                    ->whereNotNull('location_id')
+                    ->orderBy('id', 'desc')
+                    ->get();
+
+                $latestPerLoc = [];
+                foreach ($locRows as $r) {
+                    if (!isset($latestPerLoc[$r->location_id])) $latestPerLoc[$r->location_id] = $r; // first = latest
                 }
 
-                return sprintf(
-                    '%s<hr class="mt-1 mb-2">%s<br>%s<b>Site</b>: %s<br><b>Issue Date </b>: %s<br><b>Effective Date </b>: %s<br><b>Remarks</b>: %s',
-                    $RequisitionCode,
-                    ucwords($row->transaction_type ?? 'N/A'),
-                    $locationHtml,
-                    $row->SiteName ?? 'N/A',
-                    $timestamp,
-                    $effectiveDate,
-                    $row->remarks ?: 'N/A'
-                );
-            })
-
-            // ----- Middle column -----
-            ->editColumn('patientDetails', function ($row) {
-                if (empty($row->mr_code)) return 'N/A';
-                return sprintf(
-                    '<b>MR#:</b> %s<br>%s<hr class="mt-1 mb-2"><b>Service Mode</b>: %s<br><b>Service Group</b>: %s<br><b>Service</b>: %s<br><b>Responsible Physician</b>: %s<br><b>Billing CC</b>: %s',
-                    $row->mr_code,
-                    $row->patientName,
-                    $row->serviceMode,
-                    $row->serviceGroup,
-                    $row->serviceName,
-                    $row->Physician,
-                    $row->billingCC
-                );
-            })
-
-            // ----- Right column (table with balances + actions) -----
-            ->editColumn('InventoryDetails', function ($row) {
-                // ---- Static caches across rows (per request) ----
-                static $rightsRespond = null;
-                static $genericNameCache = [];  // [id => name]
-                static $brandNameCache   = [];  // [id => name]
-                static $locNameCache     = [];  // [id => name]
-                static $balanceCache     = [];  // ["org|site|gen|brand|batch" => ['org','site','locJson']]
-
-                if ($rightsRespond === null) {
-                    $Rights = $this->rights;
-                    $rightsRespond = (int) explode(',', $Rights->inventory_return)[0];
+                $locEntries = [];
+                foreach ($latestPerLoc as $locId => $r) {
+                    $bal = (float)($r->location_balance ?? 0);
+                    if ($bal <= 0) continue;
+                    $name = $getLocName($locId) ?? 'Unknown';
+                    $locEntries[] = $name . ': ' . $bal;
                 }
 
-                // helpers
-                $getGenericName = function ($id) use (&$genericNameCache) {
-                    $id = (int)$id;
-                    if ($id <= 0) return 'N/A';
-                    if (!array_key_exists($id, $genericNameCache)) {
-                        $genericNameCache[$id] = InventoryGeneric::where('id', $id)->value('name') ?? 'N/A';
-                    }
-                    return $genericNameCache[$id];
-                };
-                $getBrandName = function ($id) use (&$brandNameCache) {
-                    $id = (int)$id;
-                    if ($id <= 0) return '';
-                    if (!array_key_exists($id, $brandNameCache)) {
-                        $brandNameCache[$id] = DB::table('inventory_brand')->where('id', $id)->value('name') ?? '';
-                    }
-                    return $brandNameCache[$id];
-                };
-                $getLocName = function ($id) use (&$locNameCache) {
-                    $id = (int)$id;
-                    if ($id <= 0) return null;
-                    if (!array_key_exists($id, $locNameCache)) {
-                        $locNameCache[$id] = DB::table('service_location')->where('id', $id)->value('name');
-                    }
-                    return $locNameCache[$id];
-                };
+                return $balanceCache[$key] = [
+                    'orgBalance'  => $orgBal,
+                    'siteBalance' => $siteBal,
+                    'locBalance'  => htmlspecialchars(json_encode(array_values($locEntries)), ENT_QUOTES, 'UTF-8'),
+                ];
+            };
 
-                $getBalances = function ($orgId, $siteId, $genericId, $brandId, $batchNo) use (&$balanceCache, $getLocName) {
-                    $key = "{$orgId}|{$siteId}|{$genericId}|{$brandId}|{$batchNo}";
-                    if (isset($balanceCache[$key])) return $balanceCache[$key];
+            $genericId  = (int)$row->inv_generic_id;
+            $brandId    = (int)$row->brand_id;
+            $batchNo    = $row->batch_no;
+            $brandName  = $getBrandName($brandId);
+            $expiryDate = is_numeric($row->expiry_date)
+                ? \Carbon\Carbon::createFromTimestamp($row->expiry_date)->format('d-M-Y')
+                : $row->expiry_date;
 
-                    // ORG balance (latest row)
-                    $orgBal = DB::table('inventory_balance')
-                        ->where('org_id', $orgId)
-                        ->where('generic_id', $genericId)
-                        ->where('brand_id', $brandId)
-                        ->where('batch_no', $batchNo)
-                        ->orderBy('id', 'desc')
-                        ->value('org_balance') ?? 'N/A';
+            $balances = $getBalances($row->org_id, $row->site_id, $genericId, $brandId, $batchNo);
 
-                    // SITE balance (latest row for this site)
-                    $siteBal = DB::table('inventory_balance')
-                        ->where('org_id', $orgId)
-                        ->where('site_id', $siteId)
-                        ->where('generic_id', $genericId)
-                        ->where('brand_id', $brandId)
-                        ->where('batch_no', $batchNo)
-                        ->orderBy('id', 'desc')
-                        ->value('site_balance') ?? 'N/A';
+            $returnQty     = (float)($row->returned_qty ?? 0);
+            $remainingQty  = (float)($row->remaining_qty ?? 0);
+            $issuedQty     = (float)($row->transaction_qty ?? 0);
+            $availableForReturn = $remainingQty - $returnQty;
 
-                    // LOCATION balances (latest per location_id for this brand+batch)
-                    $locRows = DB::table('inventory_balance')
-                        ->where('org_id', $orgId)
-                        ->where('site_id', $siteId)
-                        ->where('generic_id', $genericId)
-                        ->where('brand_id', $brandId)
-                        ->where('batch_no', $batchNo)
-                        ->whereNotNull('location_id')
-                        ->orderBy('id', 'desc')
-                        ->get();
-
-                    $latestPerLoc = [];
-                    foreach ($locRows as $r) {
-                        if (!isset($latestPerLoc[$r->location_id])) $latestPerLoc[$r->location_id] = $r; // first = latest
-                    }
-
-                    $locEntries = [];
-                    foreach ($latestPerLoc as $locId => $r) {
-                        $bal = (float)($r->location_balance ?? 0);
-                        if ($bal <= 0) continue;
-                        $name = $getLocName($locId) ?? 'Unknown';
-                        $locEntries[] = $name . ': ' . $bal;
-                    }
-
-                    return $balanceCache[$key] = [
-                        'orgBalance'  => $orgBal,
-                        'siteBalance' => $siteBal,
-                        'locBalance'  => htmlspecialchars(json_encode(array_values($locEntries)), ENT_QUOTES, 'UTF-8'),
-                    ];
-                };
-
-                // ----- Row data -----
-                $genericId  = (int)$row->inv_generic_id;
-                $brandId    = (int)$row->brand_id;
-                $batchNo    = $row->batch_no;
-                $brandName  = $getBrandName($brandId);
-                $expiryDate = is_numeric($row->expiry_date)
-                    ? \Carbon\Carbon::createFromTimestamp($row->expiry_date)->format('d-M-Y')
-                    : $row->expiry_date;
-
-                $balances = $getBalances($row->org_id, $row->site_id, $genericId, $brandId, $batchNo);
-
-                // returned_qty is aliased in SQL; keep a safe fallback to return_qty if present
-                $returnQty     = property_exists($row, 'returned_qty') ? (float)$row->returned_qty : (float)($row->return_qty ?? 0);
-                $remainingQty  = (float)($row->remaining_qty ?? 0);
-                $issuedQty     = (float)($row->transaction_qty ?? 0);
-                $availableForReturn = $remainingQty - $returnQty;
-
-                // Status / Action
-                if ($returnQty > 0) {
-                    if ($returnQty == $remainingQty) {
-                        $status = 'Returned';
-                        $statusClass = 'success';
-                        $actionBtn = 'N/A';
-                    } else {
-                        $status = 'Partially Returned';
-                        $statusClass = 'info';
-                        $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
-                            data-id="'. $row->id .'"
-                            data-generic-id="'. $genericId .'"
-                            data-brand-id="'. $brandName .'"
-                            data-batch-no="'. $batchNo .'"
-                            data-expiry="'. $expiryDate .'"
-                            data-issue-qty="'. $remainingQty .'">Return</a>';
-                    }
+            if ($returnQty > 0) {
+                if ($returnQty == $remainingQty) {
+                    $status = 'Returned'; $statusClass = 'success'; $actionBtn = 'N/A';
                 } else {
-                    $status = 'Available for Return';
-                    $statusClass = 'inverse';
+                    $status = 'Partially Returned'; $statusClass = 'info';
                     $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
                         data-id="'. $row->id .'"
                         data-generic-id="'. $genericId .'"
@@ -15104,57 +15866,66 @@ class InventoryController extends Controller
                         data-expiry="'. $expiryDate .'"
                         data-issue-qty="'. $remainingQty .'">Return</a>';
                 }
+            } else {
+                $status = 'Available for Return'; $statusClass = 'inverse';
+                $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
+                    data-id="'. $row->id .'"
+                    data-generic-id="'. $genericId .'"
+                    data-brand-id="'. $brandName .'"
+                    data-batch-no="'. $batchNo .'"
+                    data-expiry="'. $expiryDate .'"
+                    data-issue-qty="'. $remainingQty .'">Return</a>';
+            }
+            if ($rightsRespond != 1) $actionBtn = '<code>Unauthorized Access</code>';
 
-                if ($rightsRespond != 1) $actionBtn = '<code>Unauthorized Access</code>';
+            $rowHtml = sprintf(
+                '<tr style="background-color:#f9f9f9;cursor:pointer;" class="balance-row"
+                    data-expiry="%s"
+                    data-brand="%s"
+                    data-batch="%s"
+                    data-loc-balance="%s"
+                    data-org-balance="%s"
+                    data-site-balance="%s">
+                    <td style="padding:8px;border:1px solid #ccc;">%s</td>
+                    <td style="padding:8px;border:1px solid #ccc;">%s</td>
+                    <td style="padding:8px;border:1px solid #ccc;">%s</td>
+                    <td style="padding:8px;border:1px solid #ccc;">%s</td>
+                    <td style="padding:5px 15px;border:1px solid #ccc;">%s</td>
+                    <td style="padding:8px;border:1px solid #ccc;"><span class="label label-%s">%s</span></td>
+                </tr>',
+                e($expiryDate),
+                e($brandName),
+                e($batchNo),
+                $balances['locBalance'],
+                e($balances['orgBalance']),
+                e($balances['siteBalance']),
+                e($getGenericName($genericId)),
+                $issuedQty,
+                $returnQty,
+                $availableForReturn,
+                $actionBtn,
+                $statusClass,
+                $status
+            );
 
-                // Single-row details table
-                $rowHtml = sprintf(
-                    '<tr style="background-color:#f9f9f9;cursor:pointer;" class="balance-row"
-                        data-expiry="%s"
-                        data-brand="%s"
-                        data-batch="%s"
-                        data-loc-balance="%s"
-                        data-org-balance="%s"
-                        data-site-balance="%s">
-                        <td style="padding:8px;border:1px solid #ccc;">%s</td>
-                        <td style="padding:8px;border:1px solid #ccc;">%s</td>
-                        <td style="padding:8px;border:1px solid #ccc;">%s</td>
-                        <td style="padding:8px;border:1px solid #ccc;">%s</td>
-                        <td style="padding:5px 15px;border:1px solid #ccc;">%s</td>
-                        <td style="padding:8px;border:1px solid #ccc;"><span class="label label-%s">%s</span></td>
-                    </tr>',
-                    e($expiryDate),
-                    e($brandName),
-                    e($batchNo),
-                    $balances['locBalance'],
-                    e($balances['orgBalance']),
-                    e($balances['siteBalance']),
-                    e($getGenericName($genericId)),
-                    $issuedQty,
-                    $returnQty,
-                    $availableForReturn,
-                    $actionBtn,
-                    $statusClass,
-                    $status
-                );
+            $header = '<tr>'
+                .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic</th>'
+                .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Issued Qty</th>'
+                .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Return Qty</th>'
+                .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Available for Return</th>'
+                .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
+                .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
+                .'</tr>';
 
-                $header = '<tr>'
-                    .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic</th>'
-                    .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Issued Qty</th>'
-                    .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Return Qty</th>'
-                    .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Available for Return</th>'
-                    .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
-                    .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
-                    .'</tr>';
+            return '<table style="width:100%;border-collapse:collapse;font-size:13px;" class="table table-bordered">'
+                .'<thead style="background-color:#e2e8f0;color:#000;">'.$header.'</thead>'
+                .'<tbody>'.$rowHtml.'</tbody></table>';
+        })
 
-                return '<table style="width:100%;border-collapse:collapse;font-size:13px;" class="table table-bordered">'
-                    .'<thead style="background-color:#e2e8f0;color:#000;">'.$header.'</thead>'
-                    .'<tbody>'.$rowHtml.'</tbody></table>';
-            })
+        ->rawColumns(['id_raw','id','patientDetails','InventoryDetails'])
+        ->make(true);
+}
 
-            ->rawColumns(['id_raw','id','patientDetails','InventoryDetails'])
-            ->make(true);
-    }
 
     public function RespondReturn(Request $r)
     {
