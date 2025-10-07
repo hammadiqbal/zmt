@@ -8,8 +8,7 @@ optimize return module
 check this in all inventory management modules
 .........................................................................
 check before upload to hosting
-<!-- set bydefault null sbp, dbp and score -->
-<!-- add generic_id,pack_size column in item_rates tables -->
+
 
 ............................................................................
 when mutiple time ajax run error change the .change function with like this

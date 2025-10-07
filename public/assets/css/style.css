@@ -9460,3 +9460,6 @@
     .modal-open .modal {
         overflow-y: auto !important;
     }
+    span.bs-caret {
+        margin-right: -2%;
+    }

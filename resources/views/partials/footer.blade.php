@@ -109,6 +109,9 @@
     $(document).ready(function() {
         $('select.selecter').select2();
     });
+     jQuery('#date-range').datepicker({
+        toggleActive: true
+    });
 
 </script>
 <script type="text/javascript">

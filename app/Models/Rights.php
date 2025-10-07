@@ -36,5 +36,5 @@ class Rights extends Model
     'financial_ledger_types','payroll_additions_setup','payroll_deduction_setup',
     'finance_transaction_types','finance_receiving','finance_payment','item_rates','service_rates',
     'payroll','taxation',
-    'ledger','msd_comprehensive_report','modules','user_id', 'logid','last_updated','timestamp'];
+    'ledger','msd_comprehensive_report','inventory_report','modules','user_id', 'logid','last_updated','timestamp'];
 }

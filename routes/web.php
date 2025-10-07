@@ -19,6 +19,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\PatientMedicalRecord;
+use App\Http\Controllers\ReportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -955,7 +956,8 @@ Route::get('medicalrecord/viewpatientattachment/{id}', [App\Http\Controllers\Pat
 
 // Patient Medical Record
 
-
-
-
-
+// Inventory Reports
+Route::get('inventory-report', [App\Http\Controllers\ReportController::class, 'InventoryReport'])->name('inventory-report');
+Route::post('inventory-report/get-data', [App\Http\Controllers\ReportController::class, 'getInventoryReportData'])->name('inventory-report-get-data');
+Route::post('inventory-report/download-pdf', [App\Http\Controllers\ReportController::class, 'downloadInventoryReportPDF'])->name('inventory-report-download-pdf');
+// Inventory Reports

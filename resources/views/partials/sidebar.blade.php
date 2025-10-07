@@ -1074,9 +1074,14 @@
 
                     @php
                     $hideMSDComprehensiveReport = true; 
+                    $hideInventoryReport = true; 
                     $hideMSDComprehensiveReportValues = explode(',', $rights->msd_comprehensive_report);
+                    $hideInventoryReportValues = explode(',', $rights->inventory_report);
                     if (in_array('1', $hideMSDComprehensiveReportValues)) {
                         $hideMSDComprehensiveReport = false;
+                    }
+                    if (in_array('1', $hideInventoryReportValues)) {
+                        $hideInventoryReport = false;
                     }
                     @endphp
                     @if (!$hideMSDComprehensiveReport)
@@ -1084,6 +1089,9 @@
                             <ul aria-expanded="false" class="collapse">
                                 @if (!$hideMSDComprehensiveReport)
                                     <li><a href="#">MSD Comprehensive Report</a></li>
+                                @endif
+                                @if (!$hideInventoryReport)
+                                    <li><a href="inventory-report">Inventory Report</a></li>
                                 @endif
                             </ul>
                         </li>
