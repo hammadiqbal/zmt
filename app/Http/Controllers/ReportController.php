@@ -93,7 +93,7 @@ class ReportController extends Controller
         $endTimestamp = $endDate->timestamp;
         
         // Build query with joins for inventory_balance, inventory_management, transaction_type, brand, generic, and source/destination types
-        $query = DB::table('inventory_balance')
+        $query = DB::table('inventory_balance')->distinct()
             ->join('inventory_management', 'inventory_balance.management_id', '=', 'inventory_management.id')
             ->leftJoin('inventory_transaction_type', 'inventory_management.transaction_type_id', '=', 'inventory_transaction_type.id')
             ->join('inventory_brand', 'inventory_balance.brand_id', '=', 'inventory_brand.id')
@@ -285,7 +285,7 @@ class ReportController extends Controller
         $endTimestamp = $endDate->timestamp;
         
         // Build query with joins for inventory_balance, inventory_management, transaction_type, brand, generic, and source/destination types
-        $query = DB::table('inventory_balance')
+        $query = DB::table('inventory_balance')->distinct()
             ->join('inventory_management', 'inventory_balance.management_id', '=', 'inventory_management.id')
             ->leftJoin('inventory_transaction_type', 'inventory_management.transaction_type_id', '=', 'inventory_transaction_type.id')
             ->join('inventory_brand', 'inventory_balance.brand_id', '=', 'inventory_brand.id')
