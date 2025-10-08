@@ -9463,6 +9463,9 @@
     span.bs-caret {
         margin-right: -2%;
     }
+    .datepicker-dropdown{
+        width: auto !important;
+    }
     .dropdown-menu{
         font-size: 12px !important;
         width:100%;
