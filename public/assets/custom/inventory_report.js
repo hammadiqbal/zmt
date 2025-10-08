@@ -357,22 +357,6 @@ $(document).ready(function() {
                     reportHtml += '</div>';
                 });
                 
-            // Add summary and download section
-            reportHtml += '<div class="card-footer bg-light">';
-            reportHtml += '<div class="row align-items-center">';
-            reportHtml += '<div class="col-md-6">';
-            reportHtml += '<small class="text-muted">';
-            reportHtml += '<i class="fa fa-info-circle"></i> Total Records: <strong>' + data.length + '</strong>';
-            reportHtml += ' | Sites: <strong>' + Object.keys(groupedData).length + '</strong>';
-            reportHtml += '</small>';
-            reportHtml += '</div>';
-            reportHtml += '<div class="col-md-6 text-right">';
-            reportHtml += '<button type="button" class="btn btn-success btn-sm" onclick="downloadReport()">';
-            reportHtml += '<i class="fa fa-download"></i> Download PDF Report';
-            reportHtml += '</button>';
-            reportHtml += '</div>';
-            reportHtml += '</div>';
-            reportHtml += '</div>';
         } else {
             reportHtml += '<div class="text-center p-4">';
             reportHtml += '<i class="fa fa-info-circle fa-3x text-muted mb-3"></i>';
