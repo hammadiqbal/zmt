@@ -1,3 +1,4 @@
+// Updated: Removed location from grouping - Cache bust: 2024-01-15
 $(document).ready(function() {
     
     // Initialize date picker for separate start and end inputs
@@ -13,7 +14,7 @@ $(document).ready(function() {
     
     $('#ir_type').html("<option selected disabled value=''>Select Item Type</option>").prop('disabled', true);
     $('#ir_subcat').html("<option selected disabled value=''>Select Sub Category</option>").prop('disabled', true);
-    $('#ir_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
+    // $('#ir_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
     $('#ir_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
     
     // Handle Sites multi-select behavior for selectpicker
@@ -38,21 +39,65 @@ $(document).ready(function() {
         }
     });
     
+    // Handle Transaction Types multi-select behavior for selectpicker
+    $('#ir_transactiontype').on('changed.bs.select', function() {
+        var selectedValues = $(this).val();
+        var allTransactionTypesValue = '0101';
+        
+        // If no transaction types are selected, select "All Transaction Types"
+        if (!selectedValues || selectedValues.length === 0) {
+            $(this).selectpicker('val', [allTransactionTypesValue]);
+            $(this).selectpicker('refresh');
+            return;
+        }
+        
+        // If "All Transaction Types" is selected along with other types, remove "All Transaction Types"
+        if (selectedValues.includes(allTransactionTypesValue) && selectedValues.length > 1) {
+            var newValues = selectedValues.filter(function(value) {
+                return value !== allTransactionTypesValue;
+            });
+            $(this).selectpicker('val', newValues);
+            $(this).selectpicker('refresh');
+        }
+    });
+    
+    // Handle Generics multi-select behavior for selectpicker
+    $('#ir_generic').on('changed.bs.select', function() {
+        var selectedValues = $(this).val();
+        var allGenericsValue = '0101';
+        
+        // If no generics are selected, select "All Generics"
+        if (!selectedValues || selectedValues.length === 0) {
+            $(this).selectpicker('val', [allGenericsValue]);
+            $(this).selectpicker('refresh');
+            return;
+        }
+        
+        // If "All Generics" is selected along with other generics, remove "All Generics"
+        if (selectedValues.includes(allGenericsValue) && selectedValues.length > 1) {
+            var newValues = selectedValues.filter(function(value) {
+                return value !== allGenericsValue;
+            });
+            $(this).selectpicker('val', newValues);
+            $(this).selectpicker('refresh');
+        }
+    });
+    
     // Clear filter functionality
     $('.clearFilter').click(function() {
         $('#ajax-loader').show();
 
         $('#ir_cat').val('Select Category').trigger('change');
         // $('#ir_subcat').val('').trigger('change');
-        $('#ir_subcat').html("<option selected disabled value=''>Select Sub Category</option>").prop('disabled', true);
-        $('#ir_type').html("<option selected disabled value=''>Select Item Type</option>").prop('disabled', true);
-        $('#ir_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
-        $('#ir_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
-        $('#ir_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled', true);
+        // $('#ir_subcat').html("<option selected disabled value=''>Select Sub Category</option>").prop('disabled', true);
+        // $('#ir_type').html("<option selected disabled value=''>Select Item Type</option>").prop('disabled', true);
+        // $('#ir_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
+        // $('#ir_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
+        // $('#ir_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled', true);
         
-        // Reset sites to "All Sites" only
-        $('#ir_site').selectpicker('val', ['0101']);
-        $('#ir_site').selectpicker('refresh');
+        // Reset sites, transaction types, and generics to "All" only
+        $('#ir_site,#ir_transactiontype,#ir_generic').selectpicker('val', ['0101']);
+        $('#ir_site,#ir_transactiontype,#ir_generic').selectpicker('refresh');
         
         $('#ajax-loader').hide();
 
@@ -62,9 +107,9 @@ $(document).ready(function() {
     });
   
     // Use existing functions for cascading dropdowns
-    CategoryChangeSubCategory('#ir_cat', '#ir_subcat', '#inv_report');
-    SubCategoryChangeInventoryType('#ir_subcat', '#ir_type', '#inv_report');
-    TypeChangeInventoryGeneric('#ir_type', '#ir_generic', '#inv_report');
+    // CategoryChangeSubCategory('#ir_cat', '#ir_subcat', '#inv_report');
+    // SubCategoryChangeInventoryType('#ir_subcat', '#ir_type', '#inv_report');
+    // TypeChangeInventoryGeneric('#ir_type', '#ir_generic', '#inv_report');
     GenericChangeBrand('#ir_generic', '#ir_brand', '#inv_report');
 
     //Inventory Report Form Submission
@@ -130,95 +175,195 @@ $(document).ready(function() {
         // Remove existing report results if any
         $('#report-results').remove();
         
-        // Create report results container
-        var reportHtml = '<div id="report-results" class="card mt-4">';
-        reportHtml += '<div class="card-header bg-primary text-white">';
-        reportHtml += '<h5 class="card-title mb-0"><i class="fa fa-chart-bar"></i> Inventory Report Results</h5>';
+        // Create report results container with attractive header
+        var reportHtml = '<div id="report-results" class="mt-4">';
+        
+        // Add attractive header like the second screenshot
+        reportHtml += '<div class="row page-titles" style="background-color: #f2f7f8; border: 1px solid #e9ecef; border-radius: 5px; margin-bottom: 20px;">';
+        reportHtml += '<div class="col-md-5 col-8 align-self-center">';
+        reportHtml += '<h3 class="text-themecolor m-b-0 m-t-0">Inventory Report</h3>';
         reportHtml += '</div>';
+        reportHtml += '<div class="col-md-7 col-4 align-self-center">';
+        reportHtml += '<div class="d-flex m-t-10 justify-content-end">';
+        reportHtml += '<div class="d-flex m-r-20 m-l-10">';
+        reportHtml += '<div class="chart-text m-r-10">';
+        reportHtml += '<h6 class="m-b-0"><small>TOTAL RECORDS</small></h6>';
+        reportHtml += '<h4 class="m-t-0 text-info">' + data.length + '</h4>';
+        reportHtml += '</div>';
+        reportHtml += '</div>';
+        reportHtml += '<div class="d-flex m-r-20 m-l-10">';
+        reportHtml += '<div class="chart-text m-r-10">';
+        reportHtml += '<h6 class="m-b-0"><small>SITES</small></h6>';
+        reportHtml += '<h4 class="m-t-0 text-primary">' + (data.length > 0 ? new Set(data.map(item => item.site_id)).size : 0) + '</h4>';
+        reportHtml += '</div>';
+        reportHtml += '</div>';
+        reportHtml += '<div>';
+        reportHtml += '<button class="btn btn-success btn-sm" onclick="downloadReport()"><i class="fa fa-download"></i> Download PDF</button>';
+        reportHtml += '</div>';
+        reportHtml += '</div>';
+        reportHtml += '</div>';
+        reportHtml += '</div>';
+        reportHtml += '</div>';
+        
+        reportHtml += '<div class="card">';
         reportHtml += '<div class="card-body p-0">';
         
         if(data.length > 0) {
-            reportHtml += '<div class="table-responsive">';
-            reportHtml += '<table class="table table-striped table-hover mb-0">';
-            reportHtml += '<thead class="thead-dark">';
-            reportHtml += '<tr>';
-            reportHtml += '<th class="text-center">#</th>';
-            reportHtml += '<th>Date</th>';
-            reportHtml += '<th>Transaction Type</th>';
-            reportHtml += '<th>Generic Name</th>';
-            reportHtml += '<th>Brand Name</th>';
-            reportHtml += '<th>Batch No</th>';
-            reportHtml += '<th class="text-center">Org Balance</th>';
-            reportHtml += '<th class="text-center">Site Balance</th>';
-            reportHtml += '<th class="text-center">Location Balance</th>';
-            reportHtml += '<th>Source</th>';
-            reportHtml += '<th>Destination</th>';
-            reportHtml += '<th>Ref Document</th>';
-            reportHtml += '<th>MR Code</th>';
-            reportHtml += '<th>Remarks</th>';
-            reportHtml += '</tr>';
-            reportHtml += '</thead>';
-            reportHtml += '<tbody>';
-            
-            data.forEach(function(item, index) {
-                // Format source display
-                var sourceDisplay = item.source || '';
-                if (item.source_type_name && item.source_type_name.toLowerCase().includes('location') && item.source_location_name) {
-                    sourceDisplay = item.source_location_name + ' (' + item.source_type_name + ')';
-                } else if (item.source_type_name) {
-                    sourceDisplay = sourceDisplay + ' (' + item.source_type_name + ')';
-                }
+            // Group data directly by generic, brand, batch (no location grouping)
+            var groupedData = {};
+            data.forEach(function(item) {
+                var key = (item.generic_name || 'Unknown') + '|' + 
+                         (item.brand_name || 'Unknown') + '|' + 
+                         (item.batch_no || 'Unknown');
                 
-                // Format destination display
-                var destinationDisplay = item.destination || '';
-                if (item.destination_type_name && item.destination_type_name.toLowerCase().includes('location') && item.destination_location_name) {
-                    destinationDisplay = item.destination_location_name + ' (' + item.destination_type_name + ')';
-                } else if (item.destination_type_name) {
-                    destinationDisplay = destinationDisplay + ' (' + item.destination_type_name + ')';
+                if (!groupedData[key]) {
+                    groupedData[key] = {
+                        generic: item.generic_name || 'Unknown',
+                        brand: item.brand_name || 'Unknown',
+                        batch: item.batch_no || 'Unknown',
+                        items: []
+                    };
                 }
-                
-                // Format date
-                var formattedDate = '';
-                if (item.timestamp) {
-                    var date = new Date(item.timestamp * 1000);
-                    formattedDate = date.toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                    }) + ' ' + date.toLocaleTimeString('en-US', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                }
-                
-                reportHtml += '<tr>';
-                reportHtml += '<td class="text-center">' + (index + 1) + '</td>';
-                reportHtml += '<td><small>' + formattedDate + '</small></td>';
-                reportHtml += '<td><span class="badge badge-info">' + (item.transaction_type_name || 'N/A') + '</span></td>';
-                reportHtml += '<td><strong>' + (item.generic_name || 'N/A') + '</strong></td>';
-                reportHtml += '<td>' + (item.brand_name || 'N/A') + '</td>';
-                reportHtml += '<td><code>' + (item.batch_no || 'N/A') + '</code></td>';
-                reportHtml += '<td class="text-center"><span class="badge badge-success">' + (item.org_balance || '0') + '</span></td>';
-                reportHtml += '<td class="text-center"><span class="badge badge-warning">' + (item.site_balance || '0') + '</span></td>';
-                reportHtml += '<td class="text-center"><span class="badge badge-secondary">' + (item.location_balance || '0') + '</span></td>';
-                reportHtml += '<td><small>' + sourceDisplay + '</small></td>';
-                reportHtml += '<td><small>' + destinationDisplay + '</small></td>';
-                reportHtml += '<td><code>' + (item.ref_document_no || 'N/A') + '</code></td>';
-                reportHtml += '<td><code>' + (item.mr_code || 'N/A') + '</code></td>';
-                reportHtml += '<td><small class="text-muted">' + (item.remarks ? item.remarks.substring(0, 50) + (item.remarks.length > 50 ? '...' : '') : 'N/A') + '</small></td>';
-                reportHtml += '</tr>';
+                groupedData[key].items.push(item);
             });
             
-            reportHtml += '</tbody>';
-            reportHtml += '</table>';
-            reportHtml += '</div>';
-            
+            // Create report for each item group
+            Object.keys(groupedData).forEach(function(key) {
+                var group = groupedData[key];
+                    
+                    reportHtml += '<div class="item-group border-bottom p-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; margin: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
+                    reportHtml += '<div class="row mb-3">';
+                    reportHtml += '<div class="col-md-4">';
+                    reportHtml += '<div class="text-center p-2" style="background: #ffffff; border-radius: 6px; border: 1px solid #dee2e6;">';
+                    reportHtml += '<div class="mb-1" style="font-size: 11px; font-weight: bold; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Generic</div>';
+                    reportHtml += '<div style="font-size: 12px; font-weight: 600; color: #495057;">' + group.generic + '</div>';
+                    reportHtml += '</div>';
+                    reportHtml += '</div>';
+                    reportHtml += '<div class="col-md-4">';
+                    reportHtml += '<div class="text-center p-2" style="background: #ffffff; border-radius: 6px; border: 1px solid #dee2e6;">';
+                    reportHtml += '<div class="mb-1" style="font-size: 11px; font-weight: bold; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Brand</div>';
+                    reportHtml += '<div style="font-size: 12px; font-weight: 600; color: #495057;">' + group.brand + '</div>';
+                    reportHtml += '</div>';
+                    reportHtml += '</div>';
+                    reportHtml += '<div class="col-md-4">';
+                    reportHtml += '<div class="text-center p-2" style="background: #ffffff; border-radius: 6px; border: 1px solid #dee2e6;">';
+                    reportHtml += '<div class="mb-1" style="font-size: 11px; font-weight: bold; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Batch</div>';
+                    reportHtml += '<div style="font-size: 12px; font-weight: 600; color: #495057;">' + group.batch + '</div>';
+                    reportHtml += '</div>';
+                    reportHtml += '</div>';
+                    reportHtml += '</div>';
+                    
+                    // Display transactions for this item group
+                    reportHtml += '<div class="table-responsive">';
+                    reportHtml += '<table class="table table-sm table-hover mb-0">';
+                    reportHtml += '<thead class="thead-light">';
+                    reportHtml += '<tr>';
+                    reportHtml += '<th>Transaction Info</th>';
+                    reportHtml += '<th>Transaction Qty</th>';
+                    reportHtml += '<th>Source</th>';
+                    reportHtml += '<th>Destination</th>';
+                    reportHtml += '<th>MR Code</th>';
+                    reportHtml += '<th class="text-center">Org Balance</th>';
+                    reportHtml += '<th class="text-center">Site Balance</th>';
+                    reportHtml += '<th class="text-center">Location Balance</th>';
+                    reportHtml += '</tr>';
+                    reportHtml += '</thead>';
+                    reportHtml += '<tbody>';
+                    
+                    group.items.forEach(function(item) {
+                        // Format source display
+                        var sourceDisplay = item.source || '';
+                        if (item.source_type_name && item.source_type_name.toLowerCase().includes('location') && item.source_location_name) {
+                            var cleanTypeName = item.source_type_name.replace('Inventory Location', 'Location');
+                            sourceDisplay = item.source_location_name + ' (' + cleanTypeName + ')';
+                        } else if (item.source_type_name && item.source_type_name.toLowerCase().includes('vendor')) {
+                            // Handle vendor display
+                            var vendorName = '';
+                            if (item.source_vendor_person_name && item.source_vendor_corporate_name) {
+                                vendorName = item.source_vendor_person_name + ' - ' + item.source_vendor_corporate_name;
+                            } else if (item.source_vendor_person_name) {
+                                vendorName = item.source_vendor_person_name;
+                            } else if (item.source_vendor_corporate_name) {
+                                vendorName = item.source_vendor_corporate_name;
+                            } else {
+                                vendorName = 'Vendor ID: ' + item.source;
+                            }
+                            sourceDisplay = vendorName + ' (' + item.source_type_name + ')';
+                        } else if (item.source_type_name) {
+                            sourceDisplay = sourceDisplay + ' (' + item.source_type_name + ')';
+                        }
+                        
+                        // Format destination display
+                        var destinationDisplay = item.destination || '';
+                        if (item.destination_type_name && item.destination_type_name.toLowerCase().includes('location') && item.destination_location_name) {
+                            var cleanTypeName = item.destination_type_name.replace('Inventory Location', 'Location');
+                            destinationDisplay = item.destination_location_name + ' (' + cleanTypeName + ')';
+                        } else if (item.destination_type_name && item.destination_type_name.toLowerCase().includes('vendor')) {
+                            // Handle vendor display
+                            var vendorName = '';
+                            if (item.destination_vendor_person_name && item.destination_vendor_corporate_name) {
+                                vendorName = item.destination_vendor_person_name + ' - ' + item.destination_vendor_corporate_name;
+                            } else if (item.destination_vendor_person_name) {
+                                vendorName = item.destination_vendor_person_name;
+                            } else if (item.destination_vendor_corporate_name) {
+                                vendorName = item.destination_vendor_corporate_name;
+                            } else {
+                                vendorName = 'Vendor ID: ' + item.destination;
+                            }
+                            destinationDisplay = vendorName;
+                        } else if (item.destination_type_name) {
+                            destinationDisplay = destinationDisplay + ' (' + item.destination_type_name + ')';
+                        }
+                        
+                        // Format date
+                        var formattedDate = '';
+                        if (item.timestamp) {
+                            var date = new Date(item.timestamp * 1000);
+                            formattedDate = date.toLocaleDateString('en-US', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit'
+                            }) + ' ' + date.toLocaleTimeString('en-US', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                        }
+                        
+                        // Transaction Info column content
+                        var transactionInfo = '<strong>Type:</strong> ' + (item.transaction_type_name || 'N/A') + '<br>';
+                        transactionInfo += '<strong>Ref Doc #:</strong> ' + (item.ref_document_no || 'N/A') + '<br>';
+                        transactionInfo += '<strong>Date:</strong> ' + formattedDate + '<br>';
+                        transactionInfo += '<strong>Site:</strong> ' + (item.site_name || 'N/A') + '<br>';
+                        transactionInfo += '<strong>Remarks:</strong> ' + (item.remarks || 'N/A');
+                        
+                        // Handle accurate transaction_qty (now single value)
+                        var transactionQtyDisplay = '<span class="badge badge-info">' + (item.accurate_transaction_qty || '0') + '</span>';
+                        
+                        reportHtml += '<tr>';
+                        reportHtml += '<td><small>' + transactionInfo   + '</small></td>';
+                        reportHtml += '<td>' + transactionQtyDisplay + '</td>';
+                        reportHtml += '<td><small>' + sourceDisplay + '</small></td>';
+                        reportHtml += '<td><small>' + destinationDisplay + '</small></td>';
+                        reportHtml += '<td><code>' + (item.mr_code || 'N/A') + '</code></td>';
+                        reportHtml += '<td class="text-center"><span class="badge badge-success">' + (item.org_balance || '0') + '</span></td>';
+                        reportHtml += '<td class="text-center"><span class="badge badge-warning">' + (item.site_balance || '0') + '</span></td>';
+                        reportHtml += '<td class="text-center"><span class="badge badge-secondary">' + (item.location_balance || '0') + '</span></td>';
+                        reportHtml += '</tr>';
+                    });
+                    
+                    reportHtml += '</tbody>';
+                    reportHtml += '</table>';
+                    reportHtml += '</div>';
+                    reportHtml += '</div>';
+                });
+                
             // Add summary and download section
             reportHtml += '<div class="card-footer bg-light">';
             reportHtml += '<div class="row align-items-center">';
             reportHtml += '<div class="col-md-6">';
             reportHtml += '<small class="text-muted">';
             reportHtml += '<i class="fa fa-info-circle"></i> Total Records: <strong>' + data.length + '</strong>';
+            reportHtml += ' | Sites: <strong>' + Object.keys(groupedData).length + '</strong>';
             reportHtml += '</small>';
             reportHtml += '</div>';
             reportHtml += '<div class="col-md-6 text-right">';
@@ -236,6 +381,7 @@ $(document).ready(function() {
             reportHtml += '</div>';
         }
         
+        reportHtml += '</div>';
         reportHtml += '</div>';
         reportHtml += '</div>';
         

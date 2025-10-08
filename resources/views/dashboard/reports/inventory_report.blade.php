@@ -40,12 +40,6 @@
 
     <div class="card">
         <div class="card-body">
-            <div class="row">
-                <div class="col">
-                    <h4 class="card-title">Inventory Reports</h4>
-                </div>
-            </div>
-
             <div class="row ">
                 <div class="col-lg-12">
                     <div class="card-body">
@@ -68,9 +62,9 @@
                                                 <div class="form-group has-custom m-b-5">
                                                     <label class="filterlabel">Select Custom Date</label>
                                                     <div class="input-daterange input-group" id="date-range">
-                                                        <input type="text" class="form-control p-0" name="start" value="{{ \Carbon\Carbon::now()->startOfMonth()->format('m/d/Y') }}"/>
+                                                        <input type="text" class="form-control" name="start" value="{{ \Carbon\Carbon::now()->startOfMonth()->format('m/d/Y') }}"/>
                                                         <span class="input-group-addon bg-info b-0 text-white">to</span>
-                                                        <input type="text" class="form-control p-0" name="end" value="{{ \Carbon\Carbon::now()->format('m/d/Y') }}"/>
+                                                        <input type="text" class="form-control" name="end" value="{{ \Carbon\Carbon::now()->format('m/d/Y') }}"/>
                                                     </div>
                                                     {{-- <input class="form-control input-daterange-datepicker" id="ir_daterange" type="text" name="ir_daterange" value="{{ \Carbon\Carbon::now()->startOfMonth()->format('m/d/Y') }} - {{ \Carbon\Carbon::now()->format('m/d/Y') }}" />  --}}
                                                 </div>
@@ -94,13 +88,13 @@
                                         </div>
                                     </div>
 
-                                    {{-- <div class="col-md-4">
+                                    <div class="col-md-5">
                                         <div class="form-group row">
                                             <div class="col-md-12">
                                                 <div class="form-group has-custom m-b-5">
                                                     <label class="filterlabel">Transaction Types</label>
-                                                    <select class="form-control selecter p-0" id="ir_transactiontype" style="color:#222d32">
-                                                        <option selected disabled >Select Transaction Type</option>
+                                                    <select class="form-control selectpicker p-0" multiple id="ir_transactiontype" name="ir_transactiontype[]" data-style="form-control btn-secondary">
+                                                        <option selected value="0101" >Select All</option>
                                                         @foreach ($TransactionTypes as $TransactionType)
                                                         <option value="{{ $TransactionType['id'] }}"> {{ $TransactionType['name'] }}</option>
                                                         @endforeach                                                
@@ -109,7 +103,37 @@
                                             </div>
                                         </div>
                                     </div>
-                                    
+
+                                    <div class="col-md-7">
+                                        <div class="form-group row">
+                                            <div class="col-md-12">
+                                                <div class="form-group has-custom m-b-5">
+                                                    <label class="filterlabel">Item Generic</label>
+                                                    <select class="form-control selectpicker p-0" multiple id="ir_generic" name="ir_generic[]" data-style="form-control btn-secondary">
+                                                        <option selected value="0101" >Select All</option>
+                                                        @foreach ($Generics as $Generic)
+                                                        <option value="{{ $Generic['id'] }}"> {{ $Generic['name'] }}</option>
+                                                        @endforeach                                                
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {{-- <div class="col-md-4">
+                                        <div class="form-group row">
+                                            <div class="col-md-12">
+                                                <div class="form-group has-custom m-b-5">
+                                                    <label class="filterlabel">Item Generic</label>
+                                                    <select class="form-control selecter p-0" id="ir_generic" style="color:#222d32">
+                                                        <option selected disabled >Select Item Generic</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> --}}
+
+                                    {{-- 
                                     <div class="col-md-4">
                                         <div class="form-group row">
                                             <div class="col-md-12">
@@ -152,18 +176,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-md-4">
-                                        <div class="form-group row">
-                                            <div class="col-md-12">
-                                                <div class="form-group has-custom m-b-5">
-                                                    <label class="filterlabel">Item Generic</label>
-                                                    <select class="form-control selecter p-0" id="ir_generic" style="color:#222d32">
-                                                        <option selected disabled >Select Item Generic</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                  
 
                                     <div class="col-md-4">
                                         <div class="form-group row">
@@ -207,19 +220,5 @@
 <!-- ============================================================== -->
 <!-- End Footer  -->
 <!-- ============================================================== -->
-<script>
-        $('.input-daterange-datepicker').daterangepicker({
-        buttonClasses: ['btn', 'btn-sm'],
-        applyClass: 'btn-danger',
-        cancelClass: 'btn-inverse',
-        opens: 'left',
-        maxSpan: {
-            "days": 365
-        },
-        locale: {
-            format: 'MM/DD/YYYY'
-        }
-    });
-</script>
 
 <script src="{{ asset('assets/custom/inventory_report.js') }}"></script>

@@ -127,11 +127,11 @@
         </div>
         <div class="info-row">
             <span class="info-label">Total Records:</span>
-            <span class="info-value">{{ $reportData->count() }}</span>
+            <span class="info-value">{{ $processedData->count() }}</span>
         </div>
     </div>
 
-    @if($reportData->count() > 0)
+    @if($processedData->count() > 0)
         <table>
             <thead>
                 <tr>
@@ -141,6 +141,7 @@
                     <th>Generic Name</th>
                     <th>Brand Name</th>
                     <th>Batch No</th>
+                    <th class="text-center">Transaction Qty</th>
                     <th class="text-center">Org Balance</th>
                     <th class="text-center">Site Balance</th>
                     <th class="text-center">Location Balance</th>
@@ -152,7 +153,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($reportData as $index => $item)
+                @foreach($processedData as $index => $item)
                     <tr>
                         <td class="text-center">{{ $index + 1 }}</td>
                         <td>
@@ -166,6 +167,7 @@
                         <td><strong>{{ $item->generic_name ?? 'N/A' }}</strong></td>
                         <td>{{ $item->brand_name ?? 'N/A' }}</td>
                         <td>{{ $item->batch_no ?? 'N/A' }}</td>
+                        <td class="text-center">{{ $item->accurate_transaction_qty ?? '0' }}</td>
                         <td class="text-center">{{ $item->org_balance ?? '0' }}</td>
                         <td class="text-center">{{ $item->site_balance ?? '0' }}</td>
                         <td class="text-center">{{ $item->location_balance ?? '0' }}</td>
