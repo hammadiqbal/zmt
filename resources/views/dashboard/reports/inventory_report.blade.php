@@ -55,6 +55,29 @@
                             <form id="inv_report" name="inv_report">
                                 @csrf
                                 <div class="row justify-content-center align-items-center">
+                                     @if($user->org_id != 0)
+                                        <div class="userOrganization">
+                                            <select class="form-contro selecter p-0" id="ir_org" name="ir_org">
+                                                <option selected value='{{ $user->org_id }}'>{{ $user->orgName }}</option>
+                                            </select>
+                                        </div>
+                                        @else
+                                        <div class="col-md-6">
+                                            <div class="form-group row">
+                                                <div class="col-md-12">
+                                                    <div class="form-group has-custom m-b-5">
+                                                        <label class="control-label">Organization</label>
+                                                        <select class="form-control selecter p-0" name="ir_org" id="ir_org" style="color:#222d32">
+                                                            @foreach ($Organizations as $Organization)
+                                                                <option value="{{ $Organization['id'] }}"> {{ $Organization['organization'] }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    {{-- <span class="text-danger" id="ir_org_error"></span> --}}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endif
 
                                     <div class="col-md-5">
                                         <div class="form-group row">
@@ -119,6 +142,45 @@
                                             </div>
                                         </div>
                                     </div>
+
+                                    <div class="col-md-5">
+                                        <div class="form-group row">
+                                            <div class="col-md-12">
+                                                <div class="form-group has-custom m-b-5">
+                                                    <label class="filterlabel">Item Brand</label>
+                                                    <select class="form-control selectpicker p-0" multiple id="ir_brand" name="ir_brand[]" data-style="form-control btn-secondary">
+                                                        <option selected value="0101" >Select All</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> 
+{{-- 
+                                    <div class="col-md-4">
+                                        <div class="form-group row">
+                                            <div class="col-md-12">
+                                                <div class="form-group has-custom m-b-5">
+                                                    <label class="filterlabel">Batch Number</label>
+                                                    <select class="form-control selectpicker p-0" multiple id="ir_batch" name="ir_batch[]" data-style="form-control btn-secondary" disabled>
+                                                        <option selected value="0101">Select All</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div> --}}
+
+
+                                    {{-- <div class="col-md-4">
+                                        <div class="form-group row">
+                                            <div class="col-md-12">
+                                                <div class="form-group has-custom m-b-5">
+                                                    <label class="filterlabel">Item Brand</label>
+                                                    <select class="form-control selecter p-0" id="ir_brand" name="ir_brand[]" style="color:#222d32">
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>  --}}
 
                                     {{-- <div class="col-md-4">
                                         <div class="form-group row">

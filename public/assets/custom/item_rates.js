@@ -403,8 +403,6 @@ function BrandChangeBatchForItemRates(brandSelector, batchSelector) {
             genericId = $('#ir_generic').val();
         }
         
-        console.log('BrandChangeBatchForItemRates called with:', {brandId, orgId, siteId, genericId, isEditModal});
-        
         if (brandId && orgId && siteId && genericId) {
             const $batch = $(batchSelector);
             

@@ -1,4 +1,3 @@
-// Updated: Removed location from grouping - Cache bust: 2024-01-15
 $(document).ready(function() {
     
     // Initialize date picker for separate start and end inputs
@@ -12,10 +11,13 @@ $(document).ready(function() {
         autoclose: true
     });
     
-    $('#ir_type').html("<option selected disabled value=''>Select Item Type</option>").prop('disabled', true);
-    $('#ir_subcat').html("<option selected disabled value=''>Select Sub Category</option>").prop('disabled', true);
+    // Initialize brand dropdown with "All Brands" option
+    fetchBrandsForGenerics('0101', false);
+    
+    // $('#ir_type').html("<option selected disabled value=''>Select Item Type</option>").prop('disabled', true);
+    // $('#ir_subcat').html("<option selected disabled value=''>Select Sub Category</option>").prop('disabled', true);
     // $('#ir_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
-    $('#ir_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
+    // $('#ir_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
     
     // Handle Sites multi-select behavior for selectpicker
     $('#ir_site').on('changed.bs.select', function() {
@@ -83,6 +85,62 @@ $(document).ready(function() {
         }
     });
     
+    $('#ir_generic').on('hidden.bs.select', function() {
+        var selectedValues = $(this).val();
+        
+        // $('#ir_brand').html('<option selected disabled value="">Select Item Brand</option>');
+        
+        if (!selectedValues || selectedValues.length === 0 ) {
+            $('#ir_brand').prop('disabled', true);
+            return;
+        }
+        $('#ir_brand').prop('disabled', false);
+        
+        var genericIds = selectedValues;
+        
+        if (genericIds.length > 0) {
+            fetchBrandsForGenerics(genericIds.join(','));
+        }
+    });
+    
+    // Handle Brands multi-select behavior for selectpicker
+    $('#ir_brand').on('changed.bs.select', function() {
+        var selectedValues = $(this).val();
+        var allBrandsValue = '0101';
+        
+        // Find the "Select All" option value (comma-separated brand IDs)
+        var selectAllValue = null;
+        $('#ir_brand option').each(function() {
+            if ($(this).text() === 'Select All') {
+                selectAllValue = $(this).val();
+            }
+        });
+        
+        // If no brands are selected, select "All Brands"
+        if (!selectedValues || selectedValues.length === 0) {
+            if (selectAllValue) {
+                $(this).selectpicker('val', [selectAllValue]);
+            } else {
+                $(this).selectpicker('val', [allBrandsValue]);
+            }
+            $(this).selectpicker('refresh');
+            return;
+        }
+        
+        // Check if "Select All" (comma-separated) or "0101" is selected along with other brands
+        var hasSelectAll = selectedValues.some(function(value) {
+            return value === selectAllValue || value === allBrandsValue;
+        });
+        
+        if (hasSelectAll && selectedValues.length > 1) {
+            var newValues = selectedValues.filter(function(value) {
+                return value !== selectAllValue && value !== allBrandsValue;
+            });
+            $(this).selectpicker('val', newValues);
+            $(this).selectpicker('refresh');
+        }
+    });
+    
     // Clear filter functionality
     $('.clearFilter').click(function() {
         $('#ajax-loader').show();
@@ -95,12 +153,21 @@ $(document).ready(function() {
         // $('#ir_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
         // $('#ir_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled', true);
         
-        // Reset sites, transaction types, and generics to "All" only
+        // Reset sites, transaction types, generics to "All" only
         $('#ir_site,#ir_transactiontype,#ir_generic').selectpicker('val', ['0101']);
         $('#ir_site,#ir_transactiontype,#ir_generic').selectpicker('refresh');
         
-        $('#ajax-loader').hide();
-
+        // Reset brand dropdown by fetching all brands with "Select All" option
+        fetchBrandsForGenerics('0101', false);
+        
+        // Hide report data
+        $('#report-results').remove();
+        $('.report-results').remove();
+        $('#inv_report').nextAll().remove(); // Remove any elements appended after the form
+        
+        setTimeout(function () {
+            $('#ajax-loader').fadeOut(200); // or .hide()
+          }, 1000);
         // $('#ir_type').val('').trigger('change');
         // $('#ir_generic').val('').trigger('change');
         // $('#ir_brand').val('').trigger('change');
@@ -110,7 +177,7 @@ $(document).ready(function() {
     // CategoryChangeSubCategory('#ir_cat', '#ir_subcat', '#inv_report');
     // SubCategoryChangeInventoryType('#ir_subcat', '#ir_type', '#inv_report');
     // TypeChangeInventoryGeneric('#ir_type', '#ir_generic', '#inv_report');
-    GenericChangeBrand('#ir_generic', '#ir_brand', '#inv_report');
+    // GenericChangeBrand('#ir_generic', '#ir_brand', '#inv_report');
 
     //Inventory Report Form Submission
     $('#inv_report').submit(function(e) {
@@ -120,21 +187,21 @@ $(document).ready(function() {
         var resp = true;
         
         // Validate required fields
-        $(data).each(function(i, field){
-            // Skip validation for start and end dates as they are handled separately
-            if (field.name === 'start' || field.name === 'end') {
-                return;
-            }
+        // $(data).each(function(i, field){
+        //     // Skip validation for start and end dates as they are handled separately
+        //     if (field.name === 'start' || field.name === 'end') {
+        //         return;
+        //     }
             
-            if ((field.value == '') || (field.value == null))
-            {
-                var FieldName = field.name;
-                var FieldID = '#'+FieldName + "_error";
-                $(FieldID).text("This field is required");
-                $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
-                resp = false;
-            }
-        });
+        //     if ((field.value == '') || (field.value == null))
+        //     {
+        //         var FieldName = field.name;
+        //         var FieldID = '#'+FieldName + "_error";
+        //         $(FieldID).text("This field is required");
+        //         $( 'input[name= "' +FieldName +'"' ).addClass('requirefield');
+        //         resp = false;
+        //     }
+        // });
         
         // Validate date range
         var startDate = $('input[name="start"]').val();
@@ -170,215 +237,189 @@ $(document).ready(function() {
         }
     });
 
-    // Function to display report data
-    function displayReportData(data) {
-        // Remove existing report results if any
-        $('#report-results').remove();
-        
-        // Create report results container with attractive header
-        var reportHtml = '<div id="report-results" class="mt-4">';
-        
-        // Add attractive header like the second screenshot
-        reportHtml += '<div class="row page-titles" style="background-color: #f2f7f8; border: 1px solid #e9ecef; border-radius: 5px; margin-bottom: 20px;">';
-        reportHtml += '<div class="col-md-5 col-8 align-self-center">';
-        reportHtml += '<h3 class="text-themecolor m-b-0 m-t-0">Inventory Report</h3>';
-        reportHtml += '</div>';
-        reportHtml += '<div class="col-md-7 col-4 align-self-center">';
-        reportHtml += '<div class="d-flex m-t-10 justify-content-end">';
-        reportHtml += '<div class="d-flex m-r-20 m-l-10">';
-        reportHtml += '<div class="chart-text m-r-10">';
-        reportHtml += '<h6 class="m-b-0"><small>TOTAL RECORDS</small></h6>';
-        reportHtml += '<h4 class="m-t-0 text-info">' + data.length + '</h4>';
-        reportHtml += '</div>';
-        reportHtml += '</div>';
-        reportHtml += '<div class="d-flex m-r-20 m-l-10">';
-        reportHtml += '<div class="chart-text m-r-10">';
-        reportHtml += '<h6 class="m-b-0"><small>SITES</small></h6>';
-        reportHtml += '<h4 class="m-t-0 text-primary">' + (data.length > 0 ? new Set(data.map(item => item.site_id)).size : 0) + '</h4>';
-        reportHtml += '</div>';
-        reportHtml += '</div>';
-        reportHtml += '<div>';
-        reportHtml += '<button class="btn btn-success btn-sm" onclick="downloadReport()"><i class="fa fa-download"></i> Download PDF</button>';
-        reportHtml += '</div>';
-        reportHtml += '</div>';
-        reportHtml += '</div>';
-        reportHtml += '</div>';
-        reportHtml += '</div>';
-        
-        reportHtml += '<div class="card">';
-        reportHtml += '<div class="card-body p-0">';
-        
-        if(data.length > 0) {
-            // Group data directly by generic, brand, batch (no location grouping)
-            var groupedData = {};
-            data.forEach(function(item) {
-                var key = (item.generic_name || 'Unknown') + '|' + 
-                         (item.brand_name || 'Unknown') + '|' + 
-                         (item.batch_no || 'Unknown');
-                
-                if (!groupedData[key]) {
-                    groupedData[key] = {
-                        generic: item.generic_name || 'Unknown',
-                        brand: item.brand_name || 'Unknown',
-                        batch: item.batch_no || 'Unknown',
-                        items: []
-                    };
-                }
-                groupedData[key].items.push(item);
-            });
-            
-            // Create report for each item group
-            Object.keys(groupedData).forEach(function(key) {
-                var group = groupedData[key];
-                    
-                    reportHtml += '<div class="item-group border-bottom p-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 8px; margin: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">';
-                    reportHtml += '<div class="row mb-3">';
-                    reportHtml += '<div class="col-md-4">';
-                    reportHtml += '<div class="text-center p-2" style="background: #ffffff; border-radius: 6px; border: 1px solid #dee2e6;">';
-                    reportHtml += '<div class="mb-1" style="font-size: 11px; font-weight: bold; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Generic</div>';
-                    reportHtml += '<div style="font-size: 12px; font-weight: 600; color: #495057;">' + group.generic + '</div>';
-                    reportHtml += '</div>';
-                    reportHtml += '</div>';
-                    reportHtml += '<div class="col-md-4">';
-                    reportHtml += '<div class="text-center p-2" style="background: #ffffff; border-radius: 6px; border: 1px solid #dee2e6;">';
-                    reportHtml += '<div class="mb-1" style="font-size: 11px; font-weight: bold; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Brand</div>';
-                    reportHtml += '<div style="font-size: 12px; font-weight: 600; color: #495057;">' + group.brand + '</div>';
-                    reportHtml += '</div>';
-                    reportHtml += '</div>';
-                    reportHtml += '<div class="col-md-4">';
-                    reportHtml += '<div class="text-center p-2" style="background: #ffffff; border-radius: 6px; border: 1px solid #dee2e6;">';
-                    reportHtml += '<div class="mb-1" style="font-size: 11px; font-weight: bold; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px;">Batch</div>';
-                    reportHtml += '<div style="font-size: 12px; font-weight: 600; color: #495057;">' + group.batch + '</div>';
-                    reportHtml += '</div>';
-                    reportHtml += '</div>';
-                    reportHtml += '</div>';
-                    
-                    // Display transactions for this item group
-                    reportHtml += '<div class="table-responsive">';
-                    reportHtml += '<table class="table table-sm table-hover mb-0">';
-                    reportHtml += '<thead class="thead-light">';
-                    reportHtml += '<tr>';
-                    reportHtml += '<th>Transaction Info</th>';
-                    reportHtml += '<th>Transaction Qty</th>';
-                    reportHtml += '<th>Source</th>';
-                    reportHtml += '<th>Destination</th>';
-                    reportHtml += '<th>MR Code</th>';
-                    reportHtml += '<th class="text-center">Org Balance</th>';
-                    reportHtml += '<th class="text-center">Site Balance</th>';
-                    reportHtml += '<th class="text-center">Location Balance</th>';
-                    reportHtml += '</tr>';
-                    reportHtml += '</thead>';
-                    reportHtml += '<tbody>';
-                    
-                    group.items.forEach(function(item) {
-                        // Format source display
-                        var sourceDisplay = item.source || '';
-                        if (item.source_type_name && item.source_type_name.toLowerCase().includes('location') && item.source_location_name) {
-                            var cleanTypeName = item.source_type_name.replace('Inventory Location', 'Location');
-                            sourceDisplay = item.source_location_name + ' (' + cleanTypeName + ')';
-                        } else if (item.source_type_name && item.source_type_name.toLowerCase().includes('vendor')) {
-                            // Handle vendor display
-                            var vendorName = '';
-                            if (item.source_vendor_person_name && item.source_vendor_corporate_name) {
-                                vendorName = item.source_vendor_person_name + ' - ' + item.source_vendor_corporate_name;
-                            } else if (item.source_vendor_person_name) {
-                                vendorName = item.source_vendor_person_name;
-                            } else if (item.source_vendor_corporate_name) {
-                                vendorName = item.source_vendor_corporate_name;
-                            } else {
-                                vendorName = 'Vendor ID: ' + item.source;
-                            }
-                            sourceDisplay = vendorName + ' (' + item.source_type_name + ')';
-                        } else if (item.source_type_name) {
-                            sourceDisplay = sourceDisplay + ' (' + item.source_type_name + ')';
-                        }
-                        
-                        // Format destination display
-                        var destinationDisplay = item.destination || '';
-                        if (item.destination_type_name && item.destination_type_name.toLowerCase().includes('location') && item.destination_location_name) {
-                            var cleanTypeName = item.destination_type_name.replace('Inventory Location', 'Location');
-                            destinationDisplay = item.destination_location_name + ' (' + cleanTypeName + ')';
-                        } else if (item.destination_type_name && item.destination_type_name.toLowerCase().includes('vendor')) {
-                            // Handle vendor display
-                            var vendorName = '';
-                            if (item.destination_vendor_person_name && item.destination_vendor_corporate_name) {
-                                vendorName = item.destination_vendor_person_name + ' - ' + item.destination_vendor_corporate_name;
-                            } else if (item.destination_vendor_person_name) {
-                                vendorName = item.destination_vendor_person_name;
-                            } else if (item.destination_vendor_corporate_name) {
-                                vendorName = item.destination_vendor_corporate_name;
-                            } else {
-                                vendorName = 'Vendor ID: ' + item.destination;
-                            }
-                            destinationDisplay = vendorName;
-                        } else if (item.destination_type_name) {
-                            destinationDisplay = destinationDisplay + ' (' + item.destination_type_name + ')';
-                        }
-                        
-                        // Format date
-                        var formattedDate = '';
-                        if (item.timestamp) {
-                            var date = new Date(item.timestamp * 1000);
-                            formattedDate = date.toLocaleDateString('en-US', {
-                                year: 'numeric',
-                                month: '2-digit',
-                                day: '2-digit'
-                            }) + ' ' + date.toLocaleTimeString('en-US', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            });
-                        }
-                        
-                        // Transaction Info column content
-                        var transactionInfo = '<strong>Type:</strong> ' + (item.transaction_type_name || 'N/A') + '<br>';
-                        transactionInfo += '<strong>Ref Doc #:</strong> ' + (item.ref_document_no || 'N/A') + '<br>';
-                        transactionInfo += '<strong>Date:</strong> ' + formattedDate + '<br>';
-                        transactionInfo += '<strong>Site:</strong> ' + (item.site_name || 'N/A') + '<br>';
-                        transactionInfo += '<strong>Remarks:</strong> ' + (item.remarks || 'N/A');
-                        
-                        // Handle accurate transaction_qty (now single value)
-                        var transactionQtyDisplay = '<span class="badge badge-info">' + (item.accurate_transaction_qty || '0') + '</span>';
-                        
-                        reportHtml += '<tr>';
-                        reportHtml += '<td><small>' + transactionInfo   + '</small></td>';
-                        reportHtml += '<td>' + transactionQtyDisplay + '</td>';
-                        reportHtml += '<td><small>' + sourceDisplay + '</small></td>';
-                        reportHtml += '<td><small>' + destinationDisplay + '</small></td>';
-                        reportHtml += '<td><code>' + (item.mr_code || 'N/A') + '</code></td>';
-                        reportHtml += '<td class="text-center"><span class="badge badge-success">' + (item.org_balance || '0') + '</span></td>';
-                        reportHtml += '<td class="text-center"><span class="badge badge-warning">' + (item.site_balance || '0') + '</span></td>';
-                        reportHtml += '<td class="text-center"><span class="badge badge-secondary">' + (item.location_balance || '0') + '</span></td>';
-                        reportHtml += '</tr>';
-                    });
-                    
-                    reportHtml += '</tbody>';
-                    reportHtml += '</table>';
-                    reportHtml += '</div>';
-                    reportHtml += '</div>';
-                });
-                
-        } else {
-            reportHtml += '<div class="text-center p-4">';
-            reportHtml += '<i class="fa fa-info-circle fa-3x text-muted mb-3"></i>';
-            reportHtml += '<h5 class="text-muted">No Data Found</h5>';
-            reportHtml += '<p class="text-muted">No inventory records found for the selected criteria.</p>';
-            reportHtml += '</div>';
-        }
-        
-        reportHtml += '</div>';
-        reportHtml += '</div>';
-        reportHtml += '</div>';
-        
-        // Append to the form
-        $('#inv_report').after(reportHtml);
-        
-        // Scroll to results
-        $('html, body').animate({
-            scrollTop: $('#report-results').offset().top - 100
-        }, 500);
-    }
 
 });
+
+function displayReportData(data) {
+    var rows = Array.isArray(data) ? data : [];
+
+    var $container = $('#report-results');
+    if (!$container.length) {
+        $('#inv_report').after('<div id="report-results" class="mt-4"></div>');
+        $container = $('#report-results');
+    }
+    
+    // Get distinct site names from the response data
+    // var siteNames = '';
+    // if (rows.length > 0) {
+    //     var distinctSiteNames = Array.from(new Set(rows.map(it => it.site_name || ''))).filter(Boolean);
+    //     siteNames = distinctSiteNames.join(', ');
+    // } else {
+    //     siteNames = 'No Sites';
+    // }
+
+    var siteCount = rows.length
+        ? Array.from(new Set(rows.map(it => it.site_id || ''))).filter(Boolean).length
+        : 0;
+
+    var html = '';
+    html += '<div class="row page-titles" style="background-color:#f2f7f8;border:1px solid #e9ecef;border-radius:5px;margin-bottom:20px;">';
+    html += '  <div class="col-md-5 col-8 align-self-center">';
+    html += '    <h3 class="text-themecolor m-b-0 m-t-0">Inventory Report</h3>';
+    html += '  </div>';
+    html += '  <div class="col-md-7 col-4 align-self-center">';
+    html += '    <div class="d-flex m-t-10 justify-content-end">';
+    html += '      <div class="d-flex m-r-20 m-l-10">';
+    html += '        <div class="chart-text m-r-10">';
+    html += '          <h6 class="m-b-0"><small>TOTAL RECORDS</small></h6>';
+    html += '          <h4 class="m-t-0 text-info">'+ rows.length +'</h4>';
+    html += '        </div>';
+    html += '      </div>';
+    html += '      <div class="d-flex m-r-20 m-l-10">';
+    html += '        <div class="chart-text m-r-10">';
+    html += '          <h6 class="m-b-0"><small>SITES</small></h6>';
+    html += '          <h4 class="m-t-0 text-primary">'+ siteCount +'</h4>';
+    html += '        </div>';
+    html += '      </div>';
+    html += '      <div>';
+    html += '        <button class="btn btn-success btn-sm" onclick="downloadReport()"><i class="fa fa-download"></i> Download PDF</button>';
+    html += '      </div>';
+    html += '    </div>';
+    html += '  </div>';
+    html += '</div>';
+
+    html += '<div class="card"><div class="card-body p-0">';
+
+    if (!rows.length) {
+        html += '<div class="text-center p-4">';
+        html += '  <i class="fa fa-info-circle fa-3x text-muted mb-3"></i>';
+        html += '  <h5 class="text-muted">No Data Found</h5>';
+        html += '  <p class="text-muted">No inventory records found for the selected criteria.</p>';
+        html += '</div>';
+    } 
+    else {
+        var grouped = {};
+        rows.forEach(function (it) {
+        var key = (it.generic_name || 'Unknown') + '|' + (it.brand_name || 'Unknown') + '|' + (it.batch_no || 'Unknown');
+        if (!grouped[key]) {
+            grouped[key] = {
+            generic: it.generic_name || 'Unknown',
+            brand: it.brand_name || 'Unknown',
+            batch: it.batch_no || 'Unknown',
+            items: []
+            };
+        }
+        grouped[key].items.push(it);
+        });
+
+        Object.keys(grouped).forEach(function (key) {
+        var g = grouped[key];
+
+        html += '<div class="item-group border-bottom p-3" style="background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%);border-radius:8px;margin:10px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">';
+        html += '  <div class="row mb-3">';
+        html += '    <div class="col-md-4"><div class="text-center p-2" style="background:#fff;border-radius:6px;border:1px solid #dee2e6;">';
+        html += '      <div class="mb-1" style="font-size:11px;font-weight:bold;color:#6c757d;text-transform:uppercase;letter-spacing:0.5px;">Generic</div>';
+        html += '      <div style="font-size:12px;font-weight:600;color:#495057;">' + g.generic + '</div>';
+        html += '    </div></div>';
+        html += '    <div class="col-md-4"><div class="text-center p-2" style="background:#fff;border-radius:6px;border:1px solid #dee2e6;">';
+        html += '      <div class="mb-1" style="font-size:11px;font-weight:bold;color:#6c757d;text-transform:uppercase;letter-spacing:0.5px;">Brand</div>';
+        html += '      <div style="font-size:12px;font-weight:600;color:#495057;">' + g.brand + '</div>';
+        html += '    </div></div>';
+        html += '    <div class="col-md-4"><div class="text-center p-2" style="background:#fff;border-radius:6px;border:1px solid #dee2e6;">';
+        html += '      <div class="mb-1" style="font-size:11px;font-weight:bold;color:#6c757d;text-transform:uppercase;letter-spacing:0.5px;">Batch</div>';
+        html += '      <div style="font-size:12px;font-weight:600;color:#495057;">' + g.batch + '</div>';
+        html += '    </div></div>';
+        html += '  </div>';
+
+        html += '  <div class="table-responsive">';
+        html += '    <table class="table table-sm table-hover mb-0">';
+        html += '      <thead class="thead-light">';
+        html += '        <tr>';
+        html += '          <th>Transaction Info</th>';
+        html += '          <th>Transaction Qty</th>';
+        html += '          <th>Source</th>';
+        html += '          <th>Destination</th>';
+        html += '          <th>MR Code</th>';
+        html += '          <th class="text-center">Org Balance</th>';
+        html += '          <th class="text-center">Site Balance</th>';
+        html += '          <th class="text-center">Location Balance</th>';
+        html += '        </tr>';
+        html += '      </thead>';
+        html += '      <tbody>';
+
+        g.items.forEach(function (it) {
+            // Source
+            var sourceDisplay = it.source || '';
+            if (it.source_type_name && it.source_type_name.toLowerCase().includes('location') && it.source_location_name) {
+            var cleanType = it.source_type_name.replace('Inventory Location', 'Location');
+            sourceDisplay = it.source_location_name + ' (' + cleanType + ')';
+            } else if (it.source_type_name && it.source_type_name.toLowerCase().includes('vendor')) {
+            var vn = it.source_vendor_person_name || '';
+            var vc = it.source_vendor_corporate_name || '';
+            var v = (vn && vc) ? (vn + ' - ' + vc) : (vn || vc || ('Vendor ID: ' + (it.source || '')));
+            sourceDisplay = v + ' (' + it.source_type_name + ')';
+            } else if (it.source_type_name) {
+            sourceDisplay = (sourceDisplay || '') + ' (' + it.source_type_name + ')';
+            }
+
+            // Destination
+            var destDisplay = it.destination || '';
+            if (it.destination_type_name && it.destination_type_name.toLowerCase().includes('location') && it.destination_location_name) {
+            var cleanType2 = it.destination_type_name.replace('Inventory Location', 'Location');
+            destDisplay = it.destination_location_name + ' (' + cleanType2 + ')';
+            } else if (it.destination_type_name && it.destination_type_name.toLowerCase().includes('vendor')) {
+            var dvn = it.destination_vendor_person_name || '';
+            var dvc = it.destination_vendor_corporate_name || '';
+            var dv = (dvn && dvc) ? (dvn + ' - ' + dvc) : (dvn || dvc || ('Vendor ID: ' + (it.destination || '')));
+            destDisplay = dv;
+            } else if (it.destination_type_name) {
+            destDisplay = (destDisplay || '') + ' (' + it.destination_type_name + ')';
+            }
+
+            // Timestamp (accept seconds or ms)
+            var formattedDate = '';
+            if (it.timestamp) {
+            var ts = Number(it.timestamp);
+            if (!isNaN(ts)) {
+                if (ts < 1e12) ts = ts * 1000; // seconds -> ms
+                var d = new Date(ts);
+                formattedDate =
+                d.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) +
+                ' ' +
+                d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            }
+            }
+
+            var info = '<strong>Type:</strong> ' + (it.transaction_type_name || 'N/A') + '<br>' +
+                    '<strong>Ref Doc #:</strong> ' + (it.ref_document_no || 'N/A') + '<br>' +
+                    '<strong>Date:</strong> ' + (formattedDate || 'N/A') + '<br>' +
+                    '<strong>Site:</strong> ' + (it.site_name || 'N/A') + '<br>' +
+                    '<strong>Remarks:</strong> ' + (it.remarks || 'N/A');
+
+            var qtyBadge = '<span class="badge badge-info">' + (it.accurate_transaction_qty || '0') + '</span>';
+
+            html += '<tr>';
+            html += '  <td><small>' + info + '</small></td>';
+            html += '  <td>' + qtyBadge + '</td>';
+            html += '  <td><small>' + (sourceDisplay || '') + '</small></td>';
+            html += '  <td><small>' + (destDisplay || '') + '</small></td>';
+            html += '  <td><code>' + (it.mr_code || 'N/A') + '</code></td>';
+            html += '  <td class="text-center"><span class="badge badge-success">' + (it.org_balance || '0') + '</span></td>';
+            html += '  <td class="text-center"><span class="badge badge-warning">' + (it.site_balance || '0') + '</span></td>';
+            html += '  <td class="text-center"><span class="badge badge-secondary">' + (it.location_balance || '0') + '</span></td>';
+            html += '</tr>';
+        });
+
+        html += '      </tbody>';
+        html += '    </table>';
+        html += '  </div>';
+        html += '</div>';
+        });
+    }
+    html += '</div></div>'; 
+    $container.html(html);
+    $('html, body').animate({ scrollTop: $container.offset().top - 100 }, 300);
+}
 
 // Function to download report (global scope)
 function downloadReport() {
@@ -411,4 +452,40 @@ function downloadReport() {
     document.body.removeChild(form);
 }
 
-
+// Function to fetch brands based on generic IDs
+function fetchBrandsForGenerics(genericIds, showLoading = true) {
+    $.ajax({
+        url: '/inventory/getgenericbrand',
+        method: 'GET',
+        data: {
+            genericId: genericIds
+        },
+        beforeSend: function() {
+            if (showLoading) {
+                $('#ir_brand').html('<option>Loading...</option>');
+            }
+        },
+        success: function(response) {
+            if (response && response.length > 0) {
+                // Collect all brand IDs for "All Brands" option
+                var allBrandIds = response.map(function(brand) {
+                    return brand.id;
+                }).join(',');
+                
+                var brandOptions = '<option selected value="' + allBrandIds + '">Select All</option>';
+                response.forEach(function(brand) {
+                    brandOptions += '<option value="' + brand.id + '">' + brand.name + '</option>';
+                });
+                $('#ir_brand').html(brandOptions);
+                $('#ir_brand').selectpicker();
+                $('#ir_brand').selectpicker('refresh');
+            }
+            else{
+                $('#ir_brand').html('<option>Data N/A</option>').prop('disabled', true);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('Error fetching brands:', error);
+        }
+    });
+}
