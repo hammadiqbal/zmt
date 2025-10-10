@@ -9470,3 +9470,6 @@
         font-size: 12px !important;
         width:100%;
     }
+    .dropdown-menu.show{
+        width: auto !important;
+    }

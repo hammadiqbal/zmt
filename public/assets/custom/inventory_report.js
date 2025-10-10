@@ -14,6 +14,13 @@ $(document).ready(function() {
     // Initialize brand dropdown with "All Brands" option
     fetchBrandsForGenerics('0101', false);
     
+    // Initialize batch dropdown with "All Batches" option
+    var orgId = $('#ir_org').val();
+    var siteIds = $('#ir_site').val();
+    var genericIds = $('#ir_generic').val();
+    var brandIds = $('#ir_brand').val();
+    fetchBatchesForReport(orgId, siteIds, genericIds, brandIds, false);
+    
     // $('#ir_type').html("<option selected disabled value=''>Select Item Type</option>").prop('disabled', true);
     // $('#ir_subcat').html("<option selected disabled value=''>Select Sub Category</option>").prop('disabled', true);
     // $('#ir_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
@@ -39,6 +46,22 @@ $(document).ready(function() {
             $(this).selectpicker('val', newValues);
             $(this).selectpicker('refresh');
         }
+    });
+    
+    $('#ir_site').on('hidden.bs.select', function() {
+        var selectedValues = $(this).val();
+        var selectedGenerics = $('#ir_generic').val();
+        var selectedBrands = $('#ir_brand').val();
+        
+        if (!selectedValues || selectedValues.length === 0) {
+            $('#ir_batch').prop('disabled', true);
+            return;
+        }
+        $('#ir_batch').prop('disabled', false);
+        
+        // Fetch batches based on all selected values
+        var orgId = $('#ir_org').val();
+        fetchBatchesForReport(orgId, selectedValues, selectedGenerics, selectedBrands);
     });
     
     // Handle Transaction Types multi-select behavior for selectpicker
@@ -92,6 +115,7 @@ $(document).ready(function() {
         
         if (!selectedValues || selectedValues.length === 0 ) {
             $('#ir_brand').prop('disabled', true);
+            $('#ir_batch').prop('disabled', true);
             return;
         }
         $('#ir_brand').prop('disabled', false);
@@ -101,6 +125,12 @@ $(document).ready(function() {
         if (genericIds.length > 0) {
             fetchBrandsForGenerics(genericIds.join(','));
         }
+        
+        // Update batches when generics change
+        var orgId = $('#ir_org').val();
+        var siteIds = $('#ir_site').val();
+        var brandIds = $('#ir_brand').val();
+        fetchBatchesForReport(orgId, siteIds, genericIds, brandIds);
     });
     
     // Handle Brands multi-select behavior for selectpicker
@@ -141,6 +171,60 @@ $(document).ready(function() {
         }
     });
     
+    $('#ir_brand').on('hidden.bs.select', function() {
+        var selectedValues = $(this).val();
+        var selectedGenerics = $('#ir_generic').val();
+        
+        if (!selectedValues || selectedValues.length === 0 || !selectedGenerics || selectedGenerics.length === 0) {
+            $('#ir_batch').prop('disabled', true);
+            return;
+        }
+        $('#ir_batch').prop('disabled', false);
+        
+        // Fetch batches based on all selected values
+        var orgId = $('#ir_org').val();
+        var siteIds = $('#ir_site').val();
+        fetchBatchesForReport(orgId, siteIds, selectedGenerics, selectedValues);
+    });
+    
+    // Handle Batches multi-select behavior for selectpicker
+    $('#ir_batch').on('changed.bs.select', function() {
+        var selectedValues = $(this).val();
+        var allBatchesValue = '0101';
+        
+        // Find the "Select All" option value (comma-separated batch numbers)
+        var selectAllValue = null;
+        $('#ir_batch option').each(function() {
+            if ($(this).text() === 'Select All') {
+                selectAllValue = $(this).val();
+            }
+        });
+        
+        // If no batches are selected, select "All Batches"
+        if (!selectedValues || selectedValues.length === 0) {
+            if (selectAllValue) {
+                $(this).selectpicker('val', [selectAllValue]);
+            } else {
+                $(this).selectpicker('val', [allBatchesValue]);
+            }
+            $(this).selectpicker('refresh');
+            return;
+        }
+        
+        // Check if "Select All" (comma-separated) or "0101" is selected along with other batches
+        var hasSelectAll = selectedValues.some(function(value) {
+            return value === selectAllValue || value === allBatchesValue;
+        });
+        
+        if (hasSelectAll && selectedValues.length > 1) {
+            var newValues = selectedValues.filter(function(value) {
+                return value !== selectAllValue && value !== allBatchesValue;
+            });
+            $(this).selectpicker('val', newValues);
+            $(this).selectpicker('refresh');
+        }
+    });
+    
     // Clear filter functionality
     $('.clearFilter').click(function() {
         $('#ajax-loader').show();
@@ -159,6 +243,17 @@ $(document).ready(function() {
         
         // Reset brand dropdown by fetching all brands with "Select All" option
         fetchBrandsForGenerics('0101', false);
+        
+        // Reset batch dropdown
+        var orgId = $('#ir_org').val();
+        var siteIds = $('#ir_site').val();
+        var genericIds = $('#ir_generic').val();
+        var brandIds = $('#ir_brand').val();
+        fetchBatchesForReport(orgId, siteIds, genericIds, brandIds, false);
+
+        // Reset batch dropdown
+        // $('#ir_batch').html('<option selected value="0101">Select All</option>').prop('disabled', true);
+        // $('#ir_batch').selectpicker('refresh');
         
         // Hide report data
         $('#report-results').remove();
@@ -468,11 +563,20 @@ function fetchBrandsForGenerics(genericIds, showLoading = true) {
         success: function(response) {
             if (response && response.length > 0) {
                 // Collect all brand IDs for "All Brands" option
-                var allBrandIds = response.map(function(brand) {
-                    return brand.id;
-                }).join(',');
+                var brandOptions = '';
+                if(genericIds == '0101')
+                {
+                console.log(genericIds);
+
+                    brandOptions = '<option selected value="0101">Select All</option>';
+                }
+                else{
+                    var allBrandIds = response.map(function(brand) {
+                        return brand.id;
+                    }).join(',');
+                    brandOptions = '<option selected value="' + allBrandIds + '">Select All</option>';
+                }
                 
-                var brandOptions = '<option selected value="' + allBrandIds + '">Select All</option>';
                 response.forEach(function(brand) {
                     brandOptions += '<option value="' + brand.id + '">' + brand.name + '</option>';
                 });
@@ -482,10 +586,73 @@ function fetchBrandsForGenerics(genericIds, showLoading = true) {
             }
             else{
                 $('#ir_brand').html('<option>Data N/A</option>').prop('disabled', true);
+                $('#ir_batch').html('<option>Data N/A</option>').prop('disabled', true);
             }
         },
         error: function(xhr, status, error) {
             console.log('Error fetching brands:', error);
+        }
+    });
+}
+
+// Function to fetch batches based on all fields for report
+function fetchBatchesForReport(orgId, siteIds, genericIds, brandIds, showLoading = true) {
+    // Convert arrays to comma-separated strings
+    var siteIdsStr = Array.isArray(siteIds) ? siteIds.join(',') : siteIds;
+    var genericIdsStr = Array.isArray(genericIds) ? genericIds.join(',') : genericIds;
+    var brandIdsStr = Array.isArray(brandIds) ? brandIds.join(',') : brandIds;
+    
+    if (!orgId || !siteIdsStr || !genericIdsStr || !brandIdsStr) {
+        $('#ir_batch').html('<option selected value="">Data N/A</option>').prop('disabled', true).selectpicker('refresh');
+        return;
+    }
+    console.log(orgId, siteIdsStr, genericIdsStr, brandIdsStr);
+    
+    $.ajax({
+        url: '/inventory/getbatchno',
+        method: 'GET',
+        data: {
+            orgId: orgId,
+            siteId: siteIdsStr,
+            genericId: genericIdsStr,
+            brandId: brandIdsStr
+        },
+        beforeSend: function() {
+            if (showLoading) {
+                $('#ir_batch').html('<option>Loading...</option>');
+            }
+        },
+        success: function(response) {
+            console.log(response);
+            if (response && response.length > 0) {
+                var batchOptions = '';
+                if(siteIdsStr == '0101' && genericIdsStr == '0101' && brandIdsStr == '0101')
+                {
+                    batchOptions = '<option selected value="0101">Select All</option>';
+                }
+                else{
+                    var allBatchNos = response.map(function(batch) {
+                        return batch.batch_no;
+                    }).join(',');
+                    batchOptions = '<option selected value="' + allBatchNos + '">Select All</option>';
+                }
+                
+                response.forEach(function(batch) {
+                    batchOptions += '<option value="' + batch.batch_no + '">' + batch.batch_no + '</option>';
+                });
+                $('#ir_batch').html(batchOptions);
+                $('#ir_batch').selectpicker();
+                $('#ir_batch').selectpicker('refresh');
+                $('#ir_batch').prop('disabled', false);
+            }
+            else {
+                console.log('else');
+                $('#ir_batch').html('<option selected value="">No Data Found</option>').prop('disabled', true).selectpicker('refresh');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('Error fetching batches:', error);
+            $('#ir_batch').html('<option selected value="">No Data Found</option>').prop('disabled', true).selectpicker('refresh');
         }
     });
 }

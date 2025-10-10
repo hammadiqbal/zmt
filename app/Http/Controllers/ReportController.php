@@ -70,9 +70,17 @@ class ReportController extends Controller
         $Categories = InventoryCategory::where('status', 1)->select('id', 'name')->get();
         $TransactionTypes = InventoryTransactionType::where('status', 1)->select('id', 'name')->get();
         $Generics = InventoryGeneric::where('status', 1)->select('id', 'name')->get();
-        $Sites = Site::where('status', 1)->select('id', 'name')->get();
+        $Sites = Site::where('status', 1)->select('id', 'name');
+        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+            $sessionSiteIds = $this->assignedSites;
+            if(!empty($sessionSiteIds)) {
+                $Sites->whereIn('id', $sessionSiteIds);
+            }
+        }
+        $Sites = $Sites->get();
+        $Organizations = Organization::where('status', 1)->select('id', 'organization')->get();
 
-        return view('dashboard.reports.inventory_report', compact('user','Categories','TransactionTypes','Sites','Generics'));
+        return view('dashboard.reports.inventory_report', compact('user','Categories','TransactionTypes','Sites','Generics','Organizations'));
     }
 
     public function getInventoryReportData(Request $request)
@@ -83,6 +91,8 @@ class ReportController extends Controller
         $sites = $request->input('ir_site', []); // Default to empty array if not provided
         $transactionTypes = $request->input('ir_transactiontype', []); // Default to empty array if not provided
         $generics = $request->input('ir_generic', []); // Default to empty array if not provided
+        $brands = $request->input('ir_brand', []); // Default to empty array if not provided
+        $batches = $request->input('ir_batch', []); // Default to empty array if not provided
         
         // Parse date range from separate inputs
         $startDate = Carbon::createFromFormat('m/d/Y', $startDateInput)->startOfDay();
@@ -119,6 +129,7 @@ class ReportController extends Controller
                      ->whereRaw('LOWER(destination_type.name) LIKE "%vendor%"');
             })
             ->whereBetween('inventory_balance.timestamp', [$startTimestamp, $endTimestamp]);
+        
         // Handle site filtering
         if (!empty($sites) && !in_array('0101', $sites)) {
             // Convert comma-separated string to array and then to integers
@@ -178,6 +189,47 @@ class ReportController extends Controller
             }
         }
         // If "0101" is selected or generics array is empty, don't add generic_id condition (get all generics)
+        
+        // Handle brand filtering
+        if (!empty($brands) && !in_array('0101', $brands)) {
+            // Convert comma-separated string to array and then to integers
+            $brandIds = [];
+            foreach ($brands as $brand) {
+                if (strpos($brand, ',') !== false) {
+                    // If it's a comma-separated string, explode it
+                    $brandIds = array_merge($brandIds, array_map('intval', explode(',', $brand)));
+                } else {
+                    // If it's a single value, add it directly
+                    $brandIds[] = intval($brand);
+                }
+            }
+            
+            if (!empty($brandIds)) {
+                $query->whereIn('inventory_balance.brand_id', $brandIds);
+            }
+        }
+        // If "0101" is selected or brands array is empty, don't add brand_id condition (get all brands)
+
+        // Handle batch filtering
+        if (!empty($batches) && !in_array('0101', $batches)) {
+            // Convert comma-separated string to array
+            $batchNos = [];
+            foreach ($batches as $batch) {
+                if (strpos($batch, ',') !== false) {
+                    // If it's a comma-separated string, explode it
+                    $batchNos = array_merge($batchNos, explode(',', $batch));
+                } else {
+                    // If it's a single value, add it directly
+                    $batchNos[] = $batch;
+                }
+            }
+            
+            if (!empty($batchNos)) {
+                $query->whereIn('inventory_balance.batch_no', $batchNos);
+            }
+        }
+        
+        // If "0101" is selected or batches array is empty, don't add batch_no condition (get all batches)
         
         // Select all required fields from all tables
         $reportData = $query->select(
@@ -263,7 +315,9 @@ class ReportController extends Controller
             'date_range' => $startDateInput . ' - ' . $endDateInput,
             'sites' => $sites,
             'transaction_types' => $transactionTypes,
-            'generics' => $generics
+            'generics' => $generics,
+            'brands' => $brands,
+            'batches' => $batches
         ]);
     }
 
@@ -275,6 +329,7 @@ class ReportController extends Controller
         $sites = $request->input('ir_site');
         $transactionTypes = $request->input('ir_transactiontype', []);
         $generics = $request->input('ir_generic', []);
+        $batches = $request->input('ir_batch', []);
         
         // Parse date range from separate inputs
         $startDate = Carbon::createFromFormat('m/d/Y', $startDateInput)->startOfDay();
@@ -361,6 +416,26 @@ class ReportController extends Controller
             }
         }
         // If "0101" is selected or generics array is empty, don't add generic_id condition (get all generics)
+        
+        // Handle batch filtering
+        if (!empty($batches) && !in_array('0101', $batches)) {
+            // Convert comma-separated string to array
+            $batchNos = [];
+            foreach ($batches as $batch) {
+                if (strpos($batch, ',') !== false) {
+                    // If it's a comma-separated string, explode it
+                    $batchNos = array_merge($batchNos, explode(',', $batch));
+                } else {
+                    // If it's a single value, add it directly
+                    $batchNos[] = $batch;
+                }
+            }
+            
+            if (!empty($batchNos)) {
+                $query->whereIn('inventory_balance.batch_no', $batchNos);
+            }
+        }
+        // If "0101" is selected or batches array is empty, don't add batch_no condition (get all batches)
         
         // Select all required fields from all tables
         $reportData = $query->select(

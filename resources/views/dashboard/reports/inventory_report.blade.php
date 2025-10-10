@@ -62,7 +62,7 @@
                                             </select>
                                         </div>
                                         @else
-                                        <div class="col-md-6">
+                                        <div class="col-md-12">
                                             <div class="form-group row">
                                                 <div class="col-md-12">
                                                     <div class="form-group has-custom m-b-5">
@@ -155,19 +155,19 @@
                                             </div>
                                         </div>
                                     </div> 
-{{-- 
-                                    <div class="col-md-4">
+
+                                    <div class="col-md-7">
                                         <div class="form-group row">
                                             <div class="col-md-12">
                                                 <div class="form-group has-custom m-b-5">
                                                     <label class="filterlabel">Batch Number</label>
-                                                    <select class="form-control selectpicker p-0" multiple id="ir_batch" name="ir_batch[]" data-style="form-control btn-secondary" disabled>
+                                                    <select class="form-control selectpicker p-0" multiple id="ir_batch" name="ir_batch[]" data-style="form-control btn-secondary" >
                                                         <option selected value="0101">Select All</option>
                                                     </select>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div> --}}
+                                    </div>
 
 
                                     {{-- <div class="col-md-4">

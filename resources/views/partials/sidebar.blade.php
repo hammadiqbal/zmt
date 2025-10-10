@@ -1084,7 +1084,7 @@
                         $hideInventoryReport = false;
                     }
                     @endphp
-                    @if (!$hideMSDComprehensiveReport)
+                    @if (!$hideMSDComprehensiveReport || !$hideInventoryReport)
                         <li> <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false"><i class="mdi mdi-book-open-page-variant"></i><span class="hide-menu">Reports</span></a>
                             <ul aria-expanded="false" class="collapse">
                                 @if (!$hideMSDComprehensiveReport)
