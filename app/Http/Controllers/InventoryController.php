@@ -10600,106 +10600,33 @@ class InventoryController extends Controller
 
         if (! $orgId || ! $siteId || ! $brandId || ! $genericId) {
             return response()->json(null, 400);
-        }   
-        
-        $query = InventoryBalance::where('org_id', $orgId);
-        
-        // Handle site_id condition
-        if ($siteId === '0101') {
-            // "Select All Sites" - don't add site_id condition
-        } elseif (strpos($siteId, ',') !== false) {
-            // Comma-separated site IDs
-            $siteIds = array_map('intval', explode(',', $siteId));
-            $query->whereIn('site_id', $siteIds);
-        } else {
-            // Single site ID
-            $query->where('site_id', $siteId);
         }
-        
-        // Handle brand_id condition
-        if ($brandId === '0101') {
-            // "Select All Brands" - don't add brand_id condition
-        } elseif (strpos($brandId, ',') !== false) {
-            $brandIds = array_map('intval', explode(',', $brandId));
-            $query->whereIn('brand_id', $brandIds);
-        } else {
-            $query->where('brand_id', $brandId);
-        }
-        
-        // Handle generic_id condition
-        if ($genericId === '0101') {
-            // "Select All Generics" - don't add generic_id condition
-        } elseif (strpos($genericId, ',') !== false) {
-            $genericIds = array_map('intval', explode(',', $genericId));
-            $query->whereIn('generic_id', $genericIds);
-        } else {
-            $query->where('generic_id', $genericId);
-        }
-        
-        // Build subquery conditions dynamically
-        $subQueryConditions = ['org_id = ?'];
-        $subQueryParams = [$orgId];
-        
-        // Add site_id condition to subquery
-        if ($siteId !== '0101') {
-            if (strpos($siteId, ',') !== false) {
-                $siteIds = array_map('intval', explode(',', $siteId));
-                $placeholders = str_repeat('?,', count($siteIds) - 1) . '?';
-                $subQueryConditions[] = "site_id IN ($placeholders)";
-                $subQueryParams = array_merge($subQueryParams, $siteIds);
-            } else {
-                $subQueryConditions[] = 'site_id = ?';
-                $subQueryParams[] = intval($siteId);
-            }
-        }
-        
-        // Add brand_id condition to subquery
-        if ($brandId !== '0101') {
-            if (strpos($brandId, ',') !== false) {
-                $brandIds = array_map('intval', explode(',', $brandId));
-                $placeholders = str_repeat('?,', count($brandIds) - 1) . '?';
-                $subQueryConditions[] = "brand_id IN ($placeholders)";
-                $subQueryParams = array_merge($subQueryParams, $brandIds);
-            } else {
-                $subQueryConditions[] = 'brand_id = ?';
-                $subQueryParams[] = intval($brandId);
-            }
-        }
-        
-        // Add generic_id condition to subquery
-        if ($genericId !== '0101') {
-            if (strpos($genericId, ',') !== false) {
-                $genericIds = array_map('intval', explode(',', $genericId));
-                $placeholders = str_repeat('?,', count($genericIds) - 1) . '?';
-                $subQueryConditions[] = "generic_id IN ($placeholders)";
-                $subQueryParams = array_merge($subQueryParams, $genericIds);
-            } else {
-                $subQueryConditions[] = 'generic_id = ?';
-                $subQueryParams[] = intval($genericId);
-            }
-        }
-        
-        $subQueryWhere = implode(' AND ', $subQueryConditions);
-        
-        $balances = $query
+
+        // 1) Pick the latest 'id' per batch_no (no balance filter inside subquery).
+        // 2) In the outer query, require site_balance > 0 to drop batches whose latest entry is zero.
+        $balances = InventoryBalance::where('org_id',     $orgId)
+            ->where('site_id',    $siteId)
+            ->where('brand_id',   $brandId)
+            ->where('generic_id', $genericId)
             ->whereRaw(
-                "id IN (
+                'id IN (
                     SELECT MAX(id)
                     FROM inventory_balance
-                    WHERE $subQueryWhere
+                    WHERE
+                        org_id     = ?
+                    AND site_id    = ?
+                    AND brand_id   = ?
+                    AND generic_id = ?
                     GROUP BY batch_no
-                )",
-                $subQueryParams
+                )',
+                [$orgId, $siteId, $brandId, $genericId]
             )
             ->where('site_balance', '>', 0)
             ->get(['batch_no', 'management_id', 'site_balance']);
 
         $batchList = [];
 
-
         foreach ($balances as $balance) {
-            // dd($balance, $orgId, $siteId, $brandId, $genericId);
-
             $mgmt = InventoryManagement::find($balance->management_id, [
                 'inv_generic_id',
                 'brand_id',
@@ -10717,48 +10644,19 @@ class InventoryController extends Controller
                 if (
                     isset($gIds[$i], $bIds[$i], $exps[$i])
                     && $b === $balance->batch_no
+                    && $gIds[$i] == $genericId
+                    && $bIds[$i] == $brandId
                 ) {
-                    // Check generic match
-                    $genericMatch = false;
-                    if ($genericId === '0101') {
-                        // Select All - always match
-                        $genericMatch = true;
-                    } elseif (strpos($genericId, ',') !== false) {
-                        // Comma-separated values
-                        $genericIds = explode(',', $genericId);
-                        $genericMatch = in_array($gIds[$i], $genericIds);
-                    } else {
-                        // Single value
-                        $genericMatch = ($gIds[$i] == $genericId);
-                    }
-                    
-                    // Check brand match
-                    $brandMatch = false;
-                    if ($brandId === '0101') {
-                        // Select All - always match
-                        $brandMatch = true;
-                    } elseif (strpos($brandId, ',') !== false) {
-                        // Comma-separated values
-                        $brandIds = explode(',', $brandId);
-                        $brandMatch = in_array($bIds[$i], $brandIds);
-                    } else {
-                        // Single value
-                        $brandMatch = ($bIds[$i] == $brandId);
-                    }
-                    
-                    if ($genericMatch && $brandMatch) {
-                        $expTimestamp = (int) $exps[$i];
-                        if ($expTimestamp <= 0) continue;
+                    $expTimestamp = (int) $exps[$i];
+                    if ($expTimestamp <= 0) continue;
 
-                        $batchList[] = [
-                            'batch_no'     => $b,
-                            'expiry_date'  => date('Y-m-d', $expTimestamp),
-                            'site_balance' => $balance->site_balance,
-                        ];
-                    }
+                    $batchList[] = [
+                        'batch_no'     => $b,
+                        'expiry_date'  => date('Y-m-d', $expTimestamp),
+                        'site_balance' => $balance->site_balance,
+                    ];
                 }
             }
-
         }
 
         if (empty($batchList)) {
@@ -10770,313 +10668,72 @@ class InventoryController extends Controller
             return strtotime($a['expiry_date']) - strtotime($b['expiry_date']);
         });
         // dd($batchList);
+        return response()->json($batchList);
+    }
+
+    public function GetBatchNoForReporting(Request $request)
+    {
+        $orgId     = $request->query('orgId');
+        $siteId    = $request->query('siteId');
+        $brandId   = $request->query('brandId');
+        $genericId = $request->query('genericId');
+
+        if (! $orgId || ! $siteId || ! $brandId || ! $genericId) {
+            return response()->json(null, 400);
+        }   
+        
+        // Build query directly from InventoryBalance table
+        $query = InventoryBalance::where('org_id', $orgId)
+            ->where('site_balance', '>', 0);
+        
+        // Add site_id condition
+        if ($siteId !== '0101') {
+            if (strpos($siteId, ',') !== false) {
+                $siteIds = array_map('intval', explode(',', $siteId));
+                $query->whereIn('site_id', $siteIds);
+            } else {
+                $query->where('site_id', intval($siteId));
+            }
+        }
+        
+        // Add brand_id condition
+        if ($brandId !== '0101') {
+            if (strpos($brandId, ',') !== false) {
+                $brandIds = array_map('intval', explode(',', $brandId));
+                $query->whereIn('brand_id', $brandIds);
+            } else {
+                $query->where('brand_id', intval($brandId));
+            }
+        }
+        
+        // Add generic_id condition
+        if ($genericId !== '0101') {
+            if (strpos($genericId, ',') !== false) {
+                $genericIds = array_map('intval', explode(',', $genericId));
+                $query->whereIn('generic_id', $genericIds);
+            } else {
+                $query->where('generic_id', intval($genericId));
+            }
+        }
+        
+        // Get distinct batch numbers with latest site_balance
+        $batches = $query
+            ->selectRaw('batch_no')
+            ->groupBy('batch_no')
+            ->orderBy('batch_no')
+            ->get();
+        
+        $batchList = [];
+        
+        foreach ($batches as $batch) {
+            $batchList[] = [
+                'batch_no'     => $batch->batch_no,
+            ];
+        }
 
         return response()->json($batchList);
     }
     
-    // public function GetBatchNo(Request $request)
-    // {
-    //     $orgId     = $request->query('orgId');
-    //     $siteId    = $request->query('siteId');
-    //     $brandId   = $request->query('brandId');
-    //     $genericId = $request->query('genericId');
-
-    //     if (! $orgId || ! $siteId || ! $brandId || ! $genericId) {
-    //         return response()->json(null, 400);
-    //     }
-
-    //     // 1) Pick the latest 'id' per batch_no (no balance filter inside subquery).
-    //     // 2) In the outer query, require site_balance > 0 to drop batches whose latest entry is zero.
-        
-    //     // Handle comma-separated values for report scenario
-    //     $query = InventoryBalance::where('org_id', $orgId);
-        
-    //     // Handle site_id (single value or comma-separated)
-    //     if ($siteId === '0101') {
-    //     } 
-    //     elseif (strpos($siteId, ',') !== false) {
-    //         $siteIds = array_map('intval', explode(',', $siteId));
-    //         $query->whereIn('site_id', $siteIds);
-    //     } else {
-    //         $query->where('site_id', $siteId);
-    //     }
-        
-    //     // Handle brand_id (single value or comma-separated)
-    //     if (strpos($brandId, ',') !== false) {
-    //         $brandIds = array_map('intval', explode(',', $brandId));
-    //         $query->whereIn('brand_id', $brandIds);
-    //     } else {
-    //         $query->where('brand_id', $brandId);
-    //     }
-        
-    //     // Handle generic_id (single value or comma-separated)
-    //     if (strpos($genericId, ',') !== false) {
-    //         $genericIds = array_map('intval', explode(',', $genericId));
-    //         $query->whereIn('generic_id', $genericIds);
-    //     } else {
-    //         $query->where('generic_id', $genericId);
-    //     }
-        
-    //     // Build dynamic whereRaw query for subquery based on parameter types
-    //     $subQueryConditions = ['org_id = ?'];
-    //     $subQueryParams = [$orgId];
-        
-    //     // Add site_id condition
-    //     if ($siteId === '0101') {
-    //     } 
-    //     else if (strpos($siteId, ',') !== false) {
-    //         $siteIds = array_map('intval', explode(',', $siteId));
-    //         $placeholders = str_repeat('?,', count($siteIds) - 1) . '?';
-    //         $subQueryConditions[] = "site_id IN ($placeholders)";
-    //         $subQueryParams = array_merge($subQueryParams, $siteIds);
-    //     } else {
-    //         $subQueryConditions[] = 'site_id = ?';
-    //         $subQueryParams[] = $siteId;
-    //     }
-        
-    //     // Add brand_id condition
-    //     if (strpos($brandId, ',') !== false) {
-    //         $brandIds = array_map('intval', explode(',', $brandId));
-    //         $placeholders = str_repeat('?,', count($brandIds) - 1) . '?';
-    //         $subQueryConditions[] = "brand_id IN ($placeholders)";
-    //         $subQueryParams = array_merge($subQueryParams, $brandIds);
-    //     } else {
-    //         $subQueryConditions[] = 'brand_id = ?';
-    //         $subQueryParams[] = $brandId;
-    //     }
-        
-    //     // Add generic_id condition
-    //     if (strpos($genericId, ',') !== false) {
-    //         $genericIds = array_map('intval', explode(',', $genericId));
-    //         $placeholders = str_repeat('?,', count($genericIds) - 1) . '?';
-    //         $subQueryConditions[] = "generic_id IN ($placeholders)";
-    //         $subQueryParams = array_merge($subQueryParams, $genericIds);
-    //     } else {
-    //         $subQueryConditions[] = 'generic_id = ?';
-    //         $subQueryParams[] = $genericId;
-    //     }
-        
-    //     $subQueryWhere = implode(' AND ', $subQueryConditions);
-        
-    //     $balances = $query
-    //         ->whereRaw(
-    //             "id IN (
-    //                 SELECT MAX(id)
-    //                 FROM inventory_balance
-    //                 WHERE $subQueryWhere
-    //                 GROUP BY batch_no
-    //             )",
-    //             $subQueryParams
-    //         )
-    //         ->where('site_balance', '>', 0)
-    //         ->get(['batch_no', 'management_id', 'site_balance']);
-
-    //     $batchList = [];
-
-    //     foreach ($balances as $balance) {
-    //         $mgmt = InventoryManagement::find($balance->management_id, [
-    //             'inv_generic_id',
-    //             'brand_id',
-    //             'batch_no',
-    //             'expiry_date',
-    //         ]);
-    //         if (! $mgmt) continue;
-
-    //         $gIds = explode(',', $mgmt->inv_generic_id);
-    //         $bIds = explode(',', $mgmt->brand_id);
-    //         $bNos = explode(',', $mgmt->batch_no);
-    //         $exps = explode(',', $mgmt->expiry_date);
-
-    //         foreach ($bNos as $i => $b) {
-    //             if (
-    //                 isset($gIds[$i], $bIds[$i], $exps[$i])
-    //                 && $b === $balance->batch_no
-    //                 && $gIds[$i] == $genericId
-    //                 && $bIds[$i] == $brandId
-    //             ) {
-    //                 $expTimestamp = (int) $exps[$i];
-    //                 if ($expTimestamp <= 0) continue;
-
-    //                 $batchList[] = [
-    //                     'batch_no'     => $b,
-    //                     'expiry_date'  => date('Y-m-d', $expTimestamp),
-    //                     'site_balance' => $balance->site_balance,
-    //                 ];
-    //             }
-    //         }
-    //     }
-
-    //     if (empty($batchList)) {
-    //         return response()->json([], 200);
-    //     }
-
-    //     // Sort by expiry_date (earliest first)
-    //     usort($batchList, function ($a, $b) {
-    //         return strtotime($a['expiry_date']) - strtotime($b['expiry_date']);
-    //     });
-    //     // dd($batchList);
-
-    //     return response()->json($batchList);
-    // }
-
-
-    // public function GetBatchNo(Request $request)
-    // {
-    //     $orgId     = $request->query('orgId');
-    //     $siteId    = $request->query('siteId');
-    //     $brandId   = $request->query('brandId');
-    //     $genericId = $request->query('genericId');
-
-    //     if (! $orgId || ! $siteId || ! $brandId || ! $genericId) {
-    //         return response()->json(null, 400);
-    //     }
-
-    //     // 1) Pick the latest 'id' per batch_no (no balance filter inside subquery).
-    //     // 2) In the outer query, require site_balance > 0 to drop batches whose latest entry is zero.
-        
-    //     // Handle comma-separated values for report scenario
-    //     $query = InventoryBalance::where('org_id', $orgId);
-        
-    //     // Handle site_id (single value, comma-separated, or "0101" for all sites)
-    //     if ($siteId === '0101') {
-    //         // "Select All Sites" - don't add site_id condition (get all sites)
-    //     } elseif (strpos($siteId, ',') !== false) {
-    //         // Comma-separated site IDs
-    //         $siteIds = array_map('intval', explode(',', $siteId));
-    //         $query->whereIn('site_id', $siteIds);
-    //     } else {
-    //         // Single site ID
-    //         $query->where('site_id', $siteId);
-    //     }
-        
-    //     // Handle brand_id (single value, comma-separated, or "0101" for all brands)
-    //     if ($brandId === '0101') {
-    //         // "Select All Brands" - don't add brand_id condition (get all brands)
-    //     } elseif (strpos($brandId, ',') !== false) {
-    //         $brandIds = array_map('intval', explode(',', $brandId));
-    //         $query->whereIn('brand_id', $brandIds);
-    //     } else {
-    //         $query->where('brand_id', $brandId);
-    //     }
-        
-    //     // Handle generic_id (single value, comma-separated, or "0101" for all generics)
-    //     if ($genericId === '0101') {
-    //         // "Select All Generics" - don't add generic_id condition (get all generics)
-    //     } elseif (strpos($genericId, ',') !== false) {
-    //         $genericIds = array_map('intval', explode(',', $genericId));
-    //         $query->whereIn('generic_id', $genericIds);
-    //     } else {
-    //         $query->where('generic_id', $genericId);
-    //     }
-        
-    //     // Build dynamic whereRaw query for subquery based on parameter types
-    //     $subQueryConditions = ['org_id = ?'];
-    //     $subQueryParams = [$orgId];
-        
-    //     // Add site_id condition
-    //     if ($siteId === '0101') {
-    //         // "Select All Sites" - don't add site_id condition to subquery
-    //     } elseif (strpos($siteId, ',') !== false) {
-    //         // Comma-separated site IDs
-    //         $siteIds = array_map('intval', explode(',', $siteId));
-    //         $placeholders = str_repeat('?,', count($siteIds) - 1) . '?';
-    //         $subQueryConditions[] = "site_id IN ($placeholders)";
-    //         $subQueryParams = array_merge($subQueryParams, $siteIds);
-    //     } else {
-    //         // Single site ID
-    //         $subQueryConditions[] = 'site_id = ?';
-    //         $subQueryParams[] = intval($siteId);
-    //     }
-        
-    //     // Add brand_id condition
-    //     if ($brandId === '0101') {
-    //         // "Select All Brands" - don't add brand_id condition to subquery
-    //     } elseif (strpos($brandId, ',') !== false) {
-    //         $brandIds = array_map('intval', explode(',', $brandId));
-    //         $placeholders = str_repeat('?,', count($brandIds) - 1) . '?';
-    //         $subQueryConditions[] = "brand_id IN ($placeholders)";
-    //         $subQueryParams = array_merge($subQueryParams, $brandIds);
-    //     } else {
-    //         $subQueryConditions[] = 'brand_id = ?';
-    //         $subQueryParams[] = intval($brandId);
-    //     }
-        
-    //     // Add generic_id condition
-    //     if ($genericId === '0101') {
-    //         // "Select All Generics" - don't add generic_id condition to subquery
-    //     } elseif (strpos($genericId, ',') !== false) {
-    //         $genericIds = array_map('intval', explode(',', $genericId));
-    //         $placeholders = str_repeat('?,', count($genericIds) - 1) . '?';
-    //         $subQueryConditions[] = "generic_id IN ($placeholders)";
-    //         $subQueryParams = array_merge($subQueryParams, $genericIds);
-    //     } else {
-    //         $subQueryConditions[] = 'generic_id = ?';
-    //         $subQueryParams[] = intval($genericId);
-    //     }
-        
-    //     $subQueryWhere = implode(' AND ', $subQueryConditions);
-        
-    //     $balances = $query
-    //         ->whereRaw(
-    //             "id IN (
-    //                 SELECT MAX(id)
-    //                 FROM inventory_balance
-    //                 WHERE $subQueryWhere
-    //                 GROUP BY batch_no
-    //             )",
-    //             $subQueryParams
-    //         )
-    //         ->where('site_balance', '>', 0)
-    //         ->get(['batch_no', 'management_id', 'site_balance']);
-
-    //     $batchList = [];
-
-    //     // Original logic for generic/brand matching
-    //     foreach ($balances as $balance) {
-    //         $mgmt = InventoryManagement::find($balance->management_id, [
-    //             'inv_generic_id',
-    //             'brand_id',
-    //             'batch_no',
-    //             'expiry_date',
-    //         ]);
-    //         if (! $mgmt) continue;
-
-    //         $gIds = explode(',', $mgmt->inv_generic_id);
-    //         $bIds = explode(',', $mgmt->brand_id);
-    //         $bNos = explode(',', $mgmt->batch_no);
-    //         $exps = explode(',', $mgmt->expiry_date);
-
-    //         foreach ($bNos as $i => $b) {
-    //             if (
-    //                 isset($gIds[$i], $bIds[$i], $exps[$i])
-    //                 && $b === $balance->batch_no
-    //                 && $gIds[$i] == $genericId
-    //                 && $bIds[$i] == $brandId
-    //             ) {
-    //                 $expTimestamp = (int) $exps[$i];
-    //                 if ($expTimestamp <= 0) continue;
-
-    //                 $batchList[] = [
-    //                     'batch_no'     => $b,
-    //                     'expiry_date'  => date('Y-m-d', $expTimestamp),
-    //                     'site_balance' => $balance->site_balance,
-    //                 ];
-    //             }
-    //         }
-    //     }
-
-    //     if (empty($batchList)) {
-    //         return response()->json([], 200);
-    //     }
-
-    //     // Sort by expiry_date (earliest first)
-    //     usort($batchList, function ($a, $b) {
-    //         return strtotime($a['expiry_date']) - strtotime($b['expiry_date']);
-    //     });
-
-    //     return response()->json($batchList);
-    // }
-
     public function AddIssueDispense(IssueDispenseRequest $request)
     {
         $rights = $this->rights;

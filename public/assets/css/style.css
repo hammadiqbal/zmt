@@ -36,11 +36,12 @@
         margin: 0;
         overflow-x: hidden;
         color: #67757c;
-        font-weight: 300
+        font-weight: 300;
+        position: static;
     }
 
     html {
-        position: relative;
+        position: static;
         min-height: 100%;
         background: #ffffff
     }
@@ -9466,10 +9467,13 @@
     .datepicker-dropdown{
         width: auto !important;
     }
-    .dropdown-menu{
-        font-size: 12px !important;
-        width:100%;
-    }
-    .dropdown-menu.show{
+    .nav-link .dropdown-menu{
         width: auto !important;
+    }
+    .bootstrap-select .dropdown-menu{
+        font-size: 12px !important;
+        width: 100% !important;
+    }
+    .datepicker-dropdown {
+        font-size: 12px !important;
     }

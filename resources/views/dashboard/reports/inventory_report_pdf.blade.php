@@ -207,9 +207,5 @@
         </div>
     @endif
 
-    <div class="footer">
-        <p>This report was generated automatically by the Inventory Management System</p>
-        <p>Page 1 of 1</p>
-    </div>
 </body>
 </html>

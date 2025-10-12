@@ -10,11 +10,8 @@ $(document).ready(function() {
         format: 'mm/dd/yyyy',
         autoclose: true
     });
-    
-    // Initialize brand dropdown with "All Brands" option
     fetchBrandsForGenerics('0101', false);
     
-    // Initialize batch dropdown with "All Batches" option
     var orgId = $('#ir_org').val();
     var siteIds = $('#ir_site').val();
     var genericIds = $('#ir_generic').val();
@@ -55,9 +52,15 @@ $(document).ready(function() {
         
         if (!selectedValues || selectedValues.length === 0) {
             $('#ir_batch').prop('disabled', true);
+            $('#inv_report button[type="submit"]').prop('disabled', true);
             return;
         }
         $('#ir_batch').prop('disabled', false);
+        
+        // Disable submit button while batches are loading
+        var $submitBtn = $('#inv_report button[type="submit"]');
+        var originalText = $submitBtn.html();
+        $submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Loading').prop('disabled', true);
         
         // Fetch batches based on all selected values
         var orgId = $('#ir_org').val();
@@ -110,27 +113,25 @@ $(document).ready(function() {
     
     $('#ir_generic').on('hidden.bs.select', function() {
         var selectedValues = $(this).val();
-        
         // $('#ir_brand').html('<option selected disabled value="">Select Item Brand</option>');
-        
         if (!selectedValues || selectedValues.length === 0 ) {
             $('#ir_brand').prop('disabled', true);
             $('#ir_batch').prop('disabled', true);
+            $('#inv_report button[type="submit"]').prop('disabled', true);
             return;
         }
         $('#ir_brand').prop('disabled', false);
+        $('#ir_batch').prop('disabled', false);
         
         var genericIds = selectedValues;
         
         if (genericIds.length > 0) {
+            // Disable submit button while brands are loading
+            var $submitBtn = $('#inv_report button[type="submit"]');
+            var originalText = $submitBtn.html();
+            $submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Loading').prop('disabled', true);
             fetchBrandsForGenerics(genericIds.join(','));
         }
-        
-        // Update batches when generics change
-        var orgId = $('#ir_org').val();
-        var siteIds = $('#ir_site').val();
-        var brandIds = $('#ir_brand').val();
-        fetchBatchesForReport(orgId, siteIds, genericIds, brandIds);
     });
     
     // Handle Brands multi-select behavior for selectpicker
@@ -145,7 +146,6 @@ $(document).ready(function() {
                 selectAllValue = $(this).val();
             }
         });
-        
         // If no brands are selected, select "All Brands"
         if (!selectedValues || selectedValues.length === 0) {
             if (selectAllValue) {
@@ -177,9 +177,15 @@ $(document).ready(function() {
         
         if (!selectedValues || selectedValues.length === 0 || !selectedGenerics || selectedGenerics.length === 0) {
             $('#ir_batch').prop('disabled', true);
+            $('#inv_report button[type="submit"]').prop('disabled', true);
             return;
         }
         $('#ir_batch').prop('disabled', false);
+        
+        // Disable submit button while batches are loading
+        var $submitBtn = $('#inv_report button[type="submit"]');
+        var originalText = $submitBtn.html();
+        $submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Loading').prop('disabled', true);
         
         // Fetch batches based on all selected values
         var orgId = $('#ir_org').val();
@@ -244,16 +250,11 @@ $(document).ready(function() {
         // Reset brand dropdown by fetching all brands with "Select All" option
         fetchBrandsForGenerics('0101', false);
         
-        // Reset batch dropdown
         var orgId = $('#ir_org').val();
         var siteIds = $('#ir_site').val();
         var genericIds = $('#ir_generic').val();
         var brandIds = $('#ir_brand').val();
         fetchBatchesForReport(orgId, siteIds, genericIds, brandIds, false);
-
-        // Reset batch dropdown
-        // $('#ir_batch').html('<option selected value="0101">Select All</option>').prop('disabled', true);
-        // $('#ir_batch').selectpicker('refresh');
         
         // Hide report data
         $('#report-results').remove();
@@ -263,9 +264,6 @@ $(document).ready(function() {
         setTimeout(function () {
             $('#ajax-loader').fadeOut(200); // or .hide()
           }, 1000);
-        // $('#ir_type').val('').trigger('change');
-        // $('#ir_generic').val('').trigger('change');
-        // $('#ir_brand').val('').trigger('change');
     });
   
     // Use existing functions for cascading dropdowns
@@ -278,6 +276,12 @@ $(document).ready(function() {
     $('#inv_report').submit(function(e) {
         e.preventDefault();
         $('#ajax-loader').show();
+        
+        // Show loading text on button
+        var $submitBtn = $('#inv_report button[type="submit"]');
+        var originalText = $submitBtn.html();
+        $submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Loading').prop('disabled', true);
+        
         var data = SerializeForm(this);
         var resp = true;
         
@@ -309,24 +313,22 @@ $(document).ready(function() {
 
         if(resp == true)
         {
-            // Form is valid, proceed with submission
             $.ajax({
                 url: "/inventory-report/get-data",
-                method: "POST",
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
+                method: "GET",
                 data: data,
                 success: function(response) {
                     // Handle success response
                     if(response.success) {
                         displayReportData(response.data);
                         $('#ajax-loader').hide();
+                        $submitBtn.html(originalText).prop('disabled', false);
                     }
                 },
                 error: function(xhr, status, error) {
-                    // Handle error
                     console.log('Error:', error);
+                    $('#ajax-loader').hide();
+                    $submitBtn.html(originalText).prop('disabled', false);
                 }
             });
         }
@@ -518,6 +520,9 @@ function displayReportData(data) {
 
 // Function to download report (global scope)
 function downloadReport() {
+    // Show loader with download message
+    // $('#ajax-loader').show();
+    
     // Get current form data
     var data = SerializeForm(document.getElementById('inv_report'));
     
@@ -525,6 +530,7 @@ function downloadReport() {
     var form = document.createElement('form');
     form.method = 'POST';
     form.action = '/inventory-report/download-pdf';
+    form.target = '_blank'; // Open in new tab to avoid page navigation
     
     // Add CSRF token
     var csrfToken = document.createElement('input');
@@ -545,6 +551,11 @@ function downloadReport() {
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
+    
+    // // Hide loader after a delay to ensure download has started
+    // setTimeout(function() {
+    //     $('#ajax-loader').hide();
+    // }, 2000);
 }
 
 // Function to fetch brands based on generic IDs
@@ -566,31 +577,65 @@ function fetchBrandsForGenerics(genericIds, showLoading = true) {
                 var brandOptions = '';
                 if(genericIds == '0101')
                 {
-                console.log(genericIds);
-
                     brandOptions = '<option selected value="0101">Select All</option>';
+                    response.forEach(function(brand) {
+                        brandOptions += '<option value="' + brand.id + '">' + brand.name + '</option>';
+                    });
                 }
                 else{
-                    var allBrandIds = response.map(function(brand) {
-                        return brand.id;
-                    }).join(',');
-                    brandOptions = '<option selected value="' + allBrandIds + '">Select All</option>';
+                    if (response.length === 1) {
+                        response.forEach(function(brand) {
+                            brandOptions += '<option selected value="' + brand.id + '">' + brand.name + '</option>';
+                        });
+                    } else {
+                        var allBrandIds = response.map(function(brand) {
+                            return brand.id;
+                        }).join(',');
+                        brandOptions = '<option selected value="0101">Select All</option>';
+                        response.forEach(function(brand) {
+                            brandOptions += '<option value="' + brand.id + '">' + brand.name + '</option>';
+                        });
+                    }
                 }
                 
-                response.forEach(function(brand) {
-                    brandOptions += '<option value="' + brand.id + '">' + brand.name + '</option>';
-                });
+                // response.forEach(function(brand) {
+                //     brandOptions += '<option value="' + brand.id + '">' + brand.name + '</option>';
+                // });
                 $('#ir_brand').html(brandOptions);
                 $('#ir_brand').selectpicker();
                 $('#ir_brand').selectpicker('refresh');
+                
+                // If only one brand is available, disable the dropdown and keep "Select All" selected
+                
+                // Re-enable submit button after brands are loaded
+                var $submitBtn = $('#inv_report button[type="submit"]');
+                $submitBtn.html('<i class="mdi mdi-file-document"></i> Get Inventory Report').prop('disabled', false);
+                
+                // Fetch batches after brands are loaded
+                var orgId = $('#ir_org').val();
+                var siteIds = $('#ir_site').val();
+                var genericIds = $('#ir_generic').val();
+                var brandIds = $('#ir_brand').val();
+                fetchBatchesForReport(orgId, siteIds, genericIds, brandIds);
             }
             else{
-                $('#ir_brand').html('<option>Data N/A</option>').prop('disabled', true);
-                $('#ir_batch').html('<option>Data N/A</option>').prop('disabled', true);
+                $('#ir_brand').html('<option selected value=" ">No Data Found</option>').prop('disabled', true).selectpicker('refresh');;
+                $('#ir_batch').html('<option selected value=" ">No Data Found</option>').prop('disabled', true).selectpicker('refresh');;
+                var $submitBtn = $('#inv_report button[type="submit"]');
+                $submitBtn.html('<i class="mdi mdi-file-document"></i> Get Inventory Report').prop('disabled', false);
             }
         },
         error: function(xhr, status, error) {
             console.log('Error fetching brands:', error);
+            var $submitBtn = $('#inv_report button[type="submit"]');
+            $submitBtn.html('<i class="mdi mdi-file-document"></i> Get Inventory Report').prop('disabled', false);
+            
+            // Still try to fetch batches even if brands failed
+            var orgId = $('#ir_org').val();
+            var siteIds = $('#ir_site').val();
+            var genericIds = $('#ir_generic').val();
+            var brandIds = $('#ir_brand').val();
+            fetchBatchesForReport(orgId, siteIds, genericIds, brandIds);
         }
     });
 }
@@ -601,15 +646,15 @@ function fetchBatchesForReport(orgId, siteIds, genericIds, brandIds, showLoading
     var siteIdsStr = Array.isArray(siteIds) ? siteIds.join(',') : siteIds;
     var genericIdsStr = Array.isArray(genericIds) ? genericIds.join(',') : genericIds;
     var brandIdsStr = Array.isArray(brandIds) ? brandIds.join(',') : brandIds;
-    
     if (!orgId || !siteIdsStr || !genericIdsStr || !brandIdsStr) {
-        $('#ir_batch').html('<option selected value="">Data N/A</option>').prop('disabled', true).selectpicker('refresh');
+        $('#ir_batch').html('<option selected value="">No Data Available</option>').prop('disabled', true).selectpicker('refresh');
         return;
     }
-    console.log(orgId, siteIdsStr, genericIdsStr, brandIdsStr);
-    
+    var $submitBtn = $('#inv_report button[type="submit"]');
+    $submitBtn.html('<i class="fa fa-spinner fa-spin"></i> Loading').prop('disabled', true);
+
     $.ajax({
-        url: '/inventory/getbatchno',
+        url: '/inventory/getbatchnoreporting',
         method: 'GET',
         data: {
             orgId: orgId,
@@ -623,7 +668,6 @@ function fetchBatchesForReport(orgId, siteIds, genericIds, brandIds, showLoading
             }
         },
         success: function(response) {
-            console.log(response);
             if (response && response.length > 0) {
                 var batchOptions = '';
                 if(siteIdsStr == '0101' && genericIdsStr == '0101' && brandIdsStr == '0101')
@@ -644,15 +688,21 @@ function fetchBatchesForReport(orgId, siteIds, genericIds, brandIds, showLoading
                 $('#ir_batch').selectpicker();
                 $('#ir_batch').selectpicker('refresh');
                 $('#ir_batch').prop('disabled', false);
+                
+                var $submitBtn = $('#inv_report button[type="submit"]');
+                $submitBtn.html('<i class="mdi mdi-file-document"></i> Get Inventory Report').prop('disabled', false);
             }
             else {
-                console.log('else');
                 $('#ir_batch').html('<option selected value="">No Data Found</option>').prop('disabled', true).selectpicker('refresh');
+                var $submitBtn = $('#inv_report button[type="submit"]');
+                $submitBtn.html('<i class="mdi mdi-file-document"></i> Get Inventory Report').prop('disabled', false);
             }
         },
         error: function(xhr, status, error) {
             console.log('Error fetching batches:', error);
             $('#ir_batch').html('<option selected value="">No Data Found</option>').prop('disabled', true).selectpicker('refresh');
+            var $submitBtn = $('#inv_report button[type="submit"]');
+            $submitBtn.html('<i class="mdi mdi-file-document"></i> Get Inventory Report').prop('disabled', false);
         }
     });
 }

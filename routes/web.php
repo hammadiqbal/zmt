@@ -958,6 +958,8 @@ Route::get('medicalrecord/viewpatientattachment/{id}', [App\Http\Controllers\Pat
 
 // Inventory Reports
 Route::get('inventory-report', [App\Http\Controllers\ReportController::class, 'InventoryReport'])->name('inventory-report');
-Route::post('inventory-report/get-data', [App\Http\Controllers\ReportController::class, 'getInventoryReportData'])->name('inventory-report-get-data');
+Route::get('inventory-report/get-data', [App\Http\Controllers\ReportController::class, 'getInventoryReportData'])->name('inventory-report-get-data');
 Route::post('inventory-report/download-pdf', [App\Http\Controllers\ReportController::class, 'downloadInventoryReportPDF'])->name('inventory-report-download-pdf');
+Route::get('inventory/getbatchnoreporting', [InventoryController::class, 'GetBatchNoForReporting'])->name('GetBatchNoForReporting');
+
 // Inventory Reports

@@ -52,8 +52,11 @@ class ReportController extends Controller
             $this->rights = session('rights');
             $this->assignedSites = session('sites');
             if (Auth::check()) {
+                // dd('if');
                 return $next($request);
             } else {
+                // dd('else'        );
+
                 return redirect('/');
             }
         });
@@ -225,9 +228,12 @@ class ReportController extends Controller
             }
             
             if (!empty($batchNos)) {
+                // Trim whitespace from each batch number
+                $batchNos = array_map('trim', $batchNos);
                 $query->whereIn('inventory_balance.batch_no', $batchNos);
             }
         }
+        // dd($query->toSql());
         
         // If "0101" is selected or batches array is empty, don't add batch_no condition (get all batches)
         
@@ -329,6 +335,7 @@ class ReportController extends Controller
         $sites = $request->input('ir_site');
         $transactionTypes = $request->input('ir_transactiontype', []);
         $generics = $request->input('ir_generic', []);
+        $brands = $request->input('ir_brand', []);
         $batches = $request->input('ir_batch', []);
         
         // Parse date range from separate inputs
@@ -354,6 +361,16 @@ class ReportController extends Controller
             ->leftJoin('service_location as destination_location', function($join) {
                 $join->on('destination_location.id', '=', 'inventory_management.destination')
                      ->whereRaw('LOWER(destination_type.name) LIKE "%location%"');
+            })
+            ->leftJoin('org_site', 'inventory_balance.site_id', '=', 'org_site.id')
+            ->leftJoin('service_location as balance_location', 'inventory_balance.location_id', '=', 'balance_location.id')
+            ->leftJoin('third_party as source_vendor', function($join) {
+                $join->on('source_vendor.id', '=', 'inventory_management.source')
+                     ->whereRaw('LOWER(source_type.name) LIKE "%vendor%"');
+            })
+            ->leftJoin('third_party as destination_vendor', function($join) {
+                $join->on('destination_vendor.id', '=', 'inventory_management.destination')
+                     ->whereRaw('LOWER(destination_type.name) LIKE "%vendor%"');
             })
             ->whereBetween('inventory_balance.timestamp', [$startTimestamp, $endTimestamp]);
         
@@ -417,6 +434,26 @@ class ReportController extends Controller
         }
         // If "0101" is selected or generics array is empty, don't add generic_id condition (get all generics)
         
+        // Handle brand filtering
+        if (!empty($brands) && !in_array('0101', $brands)) {
+            // Convert comma-separated string to array and then to integers
+            $brandIds = [];
+            foreach ($brands as $brand) {
+                if (strpos($brand, ',') !== false) {
+                    // If it's a comma-separated string, explode it
+                    $brandIds = array_merge($brandIds, array_map('intval', explode(',', $brand)));
+                } else {
+                    // If it's a single value, add it directly
+                    $brandIds[] = intval($brand);
+                }
+            }
+            
+            if (!empty($brandIds)) {
+                $query->whereIn('inventory_balance.brand_id', $brandIds);
+            }
+        }
+        // If "0101" is selected or brands array is empty, don't add brand_id condition (get all brands)
+        
         // Handle batch filtering
         if (!empty($batches) && !in_array('0101', $batches)) {
             // Convert comma-separated string to array
@@ -432,6 +469,8 @@ class ReportController extends Controller
             }
             
             if (!empty($batchNos)) {
+                // Trim whitespace from each batch number
+                $batchNos = array_map('trim', $batchNos);
                 $query->whereIn('inventory_balance.batch_no', $batchNos);
             }
         }
@@ -448,7 +487,7 @@ class ReportController extends Controller
                 'inventory_balance.org_balance',
                 'inventory_balance.site_balance',
                 'inventory_balance.location_balance',
-                'inventory_balance.remarks',
+                'inventory_management.remarks',
                 'inventory_balance.timestamp',
                 'inventory_management.transaction_type_id',
                 'inventory_management.ref_document_no',
@@ -520,7 +559,32 @@ class ReportController extends Controller
         $options->set('defaultFont', 'Arial');
         $pdf->setOptions($options);
 
-        $html = view('dashboard.reports.inventory_report_pdf', compact('processedData', 'startDateInput', 'endDateInput', 'sites', 'transactionTypes', 'generics'))->render();
+        // Get site names for display
+        $siteNames = [];
+        if (!empty($sites) && !in_array('0101', $sites)) {
+            // Convert comma-separated string to array and then to integers
+            $siteIds = [];
+            foreach ($sites as $site) {
+                if (strpos($site, ',') !== false) {
+                    // If it's a comma-separated string, explode it
+                    $siteIds = array_merge($siteIds, array_map('intval', explode(',', $site)));
+                } else {
+                    // If it's a single value, add it directly
+                    $siteIds[] = intval($site);
+                }
+            }
+            
+            if (!empty($siteIds)) {
+                $siteNames = DB::table('org_site')
+                    ->whereIn('id', $siteIds)
+                    ->pluck('name')
+                    ->toArray();
+            }
+        } else {
+            $siteNames = ['All Sites'];
+        }
+
+        $html = view('dashboard.reports.inventory_report_pdf', compact('processedData', 'startDateInput', 'endDateInput', 'sites', 'siteNames', 'transactionTypes', 'generics', 'brands', 'batches'))->render();
         $pdf->loadHtml($html);
         $pdf->setPaper('A4', 'landscape');
         $pdf->render();

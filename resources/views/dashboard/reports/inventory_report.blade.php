@@ -259,7 +259,7 @@
                                 <!-- Submit Button -->
                                 <div class="row mt-3">
                                     <div class="col-11 text-center">
-                                        <button type="submit" class="btn btn-primary p-2">
+                                        <button type="submit" id="inv-report" class="btn btn-primary p-2">
                                             <i class="mdi mdi-file-document"></i> Get Inventory Report
                                         </button>
                                     </div>
