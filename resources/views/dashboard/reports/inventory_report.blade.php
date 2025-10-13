@@ -37,7 +37,12 @@
             </ol>
         </div>
     </div>
+    @php
+    $inventoryReportSetup = explode(',', $rights->inventory_report);
+    $view = $inventoryReportSetup[1];
+    @endphp
 
+    @if ($view == 1)
     <div class="card">
         <div class="card-body">
             <div class="row ">
@@ -169,6 +174,19 @@
                                         </div>
                                     </div>
 
+                                    <div class="col-md-7">
+                                        <div class="form-group row">
+                                            <div class="col-md-12">
+                                                <div class="form-group has-custom m-b-5">
+                                                    <label class="filterlabel">Locations</label>
+                                                    <select class="form-control selectpicker p-0" multiple id="ir_location" name="ir_location[]" data-style="form-control btn-secondary" >
+                                                        <option selected value="0101">Select All</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
 
                                     {{-- <div class="col-md-4">
                                         <div class="form-group row">
@@ -273,6 +291,7 @@
 
         </div>
     </div>
+    @endif
 </div>
 
 <!-- ============================================================== -->

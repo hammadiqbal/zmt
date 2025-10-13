@@ -282,6 +282,7 @@ Route::get('services/activatesl-status', [App\Http\Controllers\ServicesControlle
 Route::get('services/activateslmodal/{id}', [App\Http\Controllers\ServicesController::class, 'UpdateActivatedServiceLocationModal'])->name('UpdateActivatedServiceLocationModal');
 Route::post('services/update-activatesl/{id}', [App\Http\Controllers\ServicesController::class, 'UpdateActivatedServiceLocation'])->name('UpdateActivatedServiceLocation');
 Route::get('services/getactivatedsl', [ServicesController::class, 'GetActivatedServiceLocation'])->name('services/getactivatedsl');
+Route::get('services/getinventoryreportlocations', [ServicesController::class, 'GetInventoryReportLocations'])->name('services/getinventoryreportlocations');
 Route::get('services/getallsl', [ServicesController::class, 'GetAllServiceLocations'])->name('services/getallsl');
 
 

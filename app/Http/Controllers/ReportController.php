@@ -88,6 +88,15 @@ class ReportController extends Controller
 
     public function getInventoryReportData(Request $request)
     {
+        $rights = $this->rights;
+        $view = explode(',', $rights->inventory_report)[1];
+        if ($view != 1) {
+            abort(403, 'Forbidden');
+        }
+
+        // Get download permission
+        $download = explode(',', $rights->inventory_report)[0];
+
         // Get form data
         $startDateInput = $request->input('start');
         $endDateInput = $request->input('end');
@@ -96,6 +105,7 @@ class ReportController extends Controller
         $generics = $request->input('ir_generic', []); // Default to empty array if not provided
         $brands = $request->input('ir_brand', []); // Default to empty array if not provided
         $batches = $request->input('ir_batch', []); // Default to empty array if not provided
+        $locations = $request->input('ir_location', []); // Default to empty array if not provided
         
         // Parse date range from separate inputs
         $startDate = Carbon::createFromFormat('m/d/Y', $startDateInput)->startOfDay();
@@ -135,14 +145,11 @@ class ReportController extends Controller
         
         // Handle site filtering
         if (!empty($sites) && !in_array('0101', $sites)) {
-            // Convert comma-separated string to array and then to integers
             $siteIds = [];
             foreach ($sites as $site) {
                 if (strpos($site, ',') !== false) {
-                    // If it's a comma-separated string, explode it
                     $siteIds = array_merge($siteIds, array_map('intval', explode(',', $site)));
                 } else {
-                    // If it's a single value, add it directly
                     $siteIds[] = intval($site);
                 }
             }
@@ -151,18 +158,14 @@ class ReportController extends Controller
                 $query->whereIn('inventory_balance.site_id', $siteIds);
             }
         }
-        // If "0101" is selected or sites array is empty, don't add site_id condition (get all sites)
         
         // Handle transaction type filtering
         if (!empty($transactionTypes) && !in_array('0101', $transactionTypes)) {
-            // Convert comma-separated string to array and then to integers
             $transactionTypeIds = [];
             foreach ($transactionTypes as $transactionType) {
                 if (strpos($transactionType, ',') !== false) {
-                    // If it's a comma-separated string, explode it
                     $transactionTypeIds = array_merge($transactionTypeIds, array_map('intval', explode(',', $transactionType)));
                 } else {
-                    // If it's a single value, add it directly
                     $transactionTypeIds[] = intval($transactionType);
                 }
             }
@@ -171,18 +174,14 @@ class ReportController extends Controller
                 $query->whereIn('inventory_management.transaction_type_id', $transactionTypeIds);
             }
         }
-        // If "0101" is selected or transaction types array is empty, don't add transaction_type_id condition (get all transaction types)
         
         // Handle generic filtering
         if (!empty($generics) && !in_array('0101', $generics)) {
-            // Convert comma-separated string to array and then to integers
             $genericIds = [];
             foreach ($generics as $generic) {
                 if (strpos($generic, ',') !== false) {
-                    // If it's a comma-separated string, explode it
                     $genericIds = array_merge($genericIds, array_map('intval', explode(',', $generic)));
                 } else {
-                    // If it's a single value, add it directly
                     $genericIds[] = intval($generic);
                 }
             }
@@ -191,18 +190,14 @@ class ReportController extends Controller
                 $query->whereIn('inventory_balance.generic_id', $genericIds);
             }
         }
-        // If "0101" is selected or generics array is empty, don't add generic_id condition (get all generics)
         
         // Handle brand filtering
         if (!empty($brands) && !in_array('0101', $brands)) {
-            // Convert comma-separated string to array and then to integers
             $brandIds = [];
             foreach ($brands as $brand) {
                 if (strpos($brand, ',') !== false) {
-                    // If it's a comma-separated string, explode it
                     $brandIds = array_merge($brandIds, array_map('intval', explode(',', $brand)));
                 } else {
-                    // If it's a single value, add it directly
                     $brandIds[] = intval($brand);
                 }
             }
@@ -211,18 +206,14 @@ class ReportController extends Controller
                 $query->whereIn('inventory_balance.brand_id', $brandIds);
             }
         }
-        // If "0101" is selected or brands array is empty, don't add brand_id condition (get all brands)
 
         // Handle batch filtering
         if (!empty($batches) && !in_array('0101', $batches)) {
-            // Convert comma-separated string to array
             $batchNos = [];
             foreach ($batches as $batch) {
                 if (strpos($batch, ',') !== false) {
-                    // If it's a comma-separated string, explode it
                     $batchNos = array_merge($batchNos, explode(',', $batch));
                 } else {
-                    // If it's a single value, add it directly
                     $batchNos[] = $batch;
                 }
             }
@@ -233,9 +224,23 @@ class ReportController extends Controller
                 $query->whereIn('inventory_balance.batch_no', $batchNos);
             }
         }
-        // dd($query->toSql());
         
-        // If "0101" is selected or batches array is empty, don't add batch_no condition (get all batches)
+        // Handle location filtering
+        if (!empty($locations) && !in_array('0101', $locations)) {
+            $locationIds = [];
+            foreach ($locations as $location) {
+                if (strpos($location, ',') !== false) {
+                    $locationIds = array_merge($locationIds, array_map('intval', explode(',', $location)));
+                } else {
+                    $locationIds[] = intval($location);
+                }
+            }
+            
+            if (!empty($locationIds)) {
+                $query->whereIn('inventory_balance.location_id', $locationIds);
+            }
+        }
+        // dd($query->toSql());
         
         // Select all required fields from all tables
         $reportData = $query->select(
@@ -256,6 +261,8 @@ class ReportController extends Controller
                 'inventory_management.destination',
                 'inventory_management.mr_code',
                 'inventory_management.transaction_qty',
+                'inventory_management.site_id as management_site_id',
+                'inventory_management.d_site_id as management_d_site_id',
                 'inventory_management.inv_generic_id as management_generic_ids',
                 'inventory_management.brand_id as management_brand_ids',
                 'inventory_management.batch_no as management_batch_nos',
@@ -278,13 +285,11 @@ class ReportController extends Controller
 
         // Process comma-separated values to get accurate transaction_qty
         $processedData = $reportData->map(function($item) {
-            // Get comma-separated arrays from inventory_management
             $genericIds = $item->management_generic_ids ? explode(',', $item->management_generic_ids) : [];
             $brandIds = $item->management_brand_ids ? explode(',', $item->management_brand_ids) : [];
             $batchNos = $item->management_batch_nos ? explode(',', $item->management_batch_nos) : [];
             $transactionQtys = $item->transaction_qty ? explode(',', $item->transaction_qty) : [];
             
-            // Find the index that matches the inventory_balance item
             $matchedIndex = -1;
             for ($i = 0; $i < count($genericIds); $i++) {
                 if (isset($genericIds[$i]) && isset($brandIds[$i]) && isset($batchNos[$i])) {
@@ -299,17 +304,27 @@ class ReportController extends Controller
                 }
             }
             
-            // Set the accurate transaction_qty
             if ($matchedIndex >= 0 && isset($transactionQtys[$matchedIndex])) {
                 $item->accurate_transaction_qty = trim($transactionQtys[$matchedIndex]);
             } else {
                 $item->accurate_transaction_qty = '0';
             }
             
-            // Remove the comma-separated fields as they're no longer needed
             unset($item->management_generic_ids);
             unset($item->management_brand_ids);
             unset($item->management_batch_nos);
+            
+            // Add site label
+            if (!empty($item->management_site_id) && !empty($item->management_d_site_id)) {
+                if ($item->site_id == $item->management_site_id) {
+                    $item->site_label = 'Source Site';
+                } elseif ($item->site_id == $item->management_d_site_id) {
+                    $item->site_label = 'Destination Site';
+                }
+            }
+            else{
+                $item->site_label = 'Site:';
+            }
             
             return $item;
         });
@@ -323,12 +338,20 @@ class ReportController extends Controller
             'transaction_types' => $transactionTypes,
             'generics' => $generics,
             'brands' => $brands,
-            'batches' => $batches
+            'batches' => $batches,
+            'locations' => $locations,
+            'download_permission' => $download
         ]);
     }
 
     public function downloadInventoryReportPDF(Request $request)
     {
+        $rights = $this->rights;
+        $download = explode(',', $rights->inventory_report)[0];
+        if ($download != 1) {
+            abort(403, 'Forbidden');
+        }
+
         // Get form data
         $startDateInput = $request->input('start');
         $endDateInput = $request->input('end');
@@ -337,6 +360,7 @@ class ReportController extends Controller
         $generics = $request->input('ir_generic', []);
         $brands = $request->input('ir_brand', []);
         $batches = $request->input('ir_batch', []);
+        $locations = $request->input('ir_location', []);
         
         // Parse date range from separate inputs
         $startDate = Carbon::createFromFormat('m/d/Y', $startDateInput)->startOfDay();
@@ -474,6 +498,22 @@ class ReportController extends Controller
                 $query->whereIn('inventory_balance.batch_no', $batchNos);
             }
         }
+        
+        // Handle location filtering
+        if (!empty($locations) && !in_array('0101', $locations)) {
+            $locationIds = [];
+            foreach ($locations as $location) {
+                if (strpos($location, ',') !== false) {
+                    $locationIds = array_merge($locationIds, array_map('intval', explode(',', $location)));
+                } else {
+                    $locationIds[] = intval($location);
+                }
+            }
+            
+            if (!empty($locationIds)) {
+                $query->whereIn('inventory_balance.location_id', $locationIds);
+            }
+        }
         // If "0101" is selected or batches array is empty, don't add batch_no condition (get all batches)
         
         // Select all required fields from all tables
@@ -495,6 +535,8 @@ class ReportController extends Controller
                 'inventory_management.destination',
                 'inventory_management.mr_code',
                 'inventory_management.transaction_qty',
+                'inventory_management.site_id as management_site_id',
+                'inventory_management.d_site_id as management_d_site_id',
                 'inventory_management.inv_generic_id as management_generic_ids',
                 'inventory_management.brand_id as management_brand_ids',
                 'inventory_management.batch_no as management_batch_nos',
@@ -550,6 +592,18 @@ class ReportController extends Controller
             unset($item->management_brand_ids);
             unset($item->management_batch_nos);
             
+            // Add site label
+            if (!empty($item->management_site_id) && !empty($item->management_d_site_id)) {
+                if ($item->site_id == $item->management_site_id) {
+                    $item->site_label = 'Source Site';
+                } elseif ($item->site_id == $item->management_d_site_id) {
+                    $item->site_label = 'Destination Site';
+                }
+            }
+            else{
+                $item->site_label = 'Site:';
+            }
+            
             return $item;
         });
 
@@ -584,7 +638,7 @@ class ReportController extends Controller
             $siteNames = ['All Sites'];
         }
 
-        $html = view('dashboard.reports.inventory_report_pdf', compact('processedData', 'startDateInput', 'endDateInput', 'sites', 'siteNames', 'transactionTypes', 'generics', 'brands', 'batches'))->render();
+        $html = view('dashboard.reports.inventory_report_pdf', compact('processedData', 'startDateInput', 'endDateInput', 'sites', 'siteNames', 'transactionTypes', 'generics', 'brands', 'batches', 'locations'))->render();
         $pdf->loadHtml($html);
         $pdf->setPaper('A4', 'landscape');
         $pdf->render();
@@ -592,6 +646,7 @@ class ReportController extends Controller
         $filename = 'inventory_report_' . date('Y-m-d_H-i-s') . '.pdf';
         return $pdf->stream($filename);
     }
+
 
    
 }

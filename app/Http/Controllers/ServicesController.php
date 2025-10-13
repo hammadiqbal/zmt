@@ -2845,30 +2845,75 @@ class ServicesController extends Controller
 
     // public function GetActivatedServiceLocation(Request $request)
     // {
-    //     $colName = 'service_location_activation';
-    //     if (PermissionDenied($colName)) {
-    //         abort(403);
-    //     }
+    //     // $colName = 'service_location_activation';
+    //     // if (PermissionDenied($colName)) {
+    //     //     abort(403);
+    //     // }
+    //     $user       = auth()->user();
+    //     $roleId     = $user->role_id;
+    //     $isEmployee = $user->is_employee;
+    //     $empId      = $user->emp_id;
 
     //     $siteId = $request->input('siteId');
     //     $inventoryStatus = $request->input('inventoryStatus');
+    //     $empCheck = $request->input('empCheck', true);
 
-    //     $serviceLocations = ServiceLocation::where('service_location.status', 1)
-    //         ->join('activated_location', function ($join) use ($siteId) {
-    //             $join->on('service_location.id', '=', 'activated_location.location_id')
-    //                 ->where('activated_location.site_id', '=', $siteId);
-    //         })
-    //         ->select('service_location.*',
-    //             DB::raw("CASE
-    //                         WHEN service_location.inventory_status = 1 THEN 'Inventory Locations'
-    //                         ELSE 'Non-Inventory Locations'
-    //                     END as category"))
-    //         ->orderBy('category', 'asc')
-    //         ->get();
+    //     $query = ServiceLocation::where('service_location.status', 1)
+    //     ->join('activated_location', function ($join) use ($siteId) {
+    //         $join->on('service_location.id', '=', 'activated_location.location_id')
+    //             ->where('activated_location.site_id', '=', $siteId)
+    //             ->where('activated_location.status', '=', 1);
+    //     });
 
+    //     if ($inventoryStatus === 'true' || $inventoryStatus === true) {
+    //         $query->where('service_location.inventory_status', 1);
+    //     }
 
+    //     if ($empCheck === 'true' || $empCheck === true) {
+    //         // dd($empCheck);
 
-    //     return response()->json($serviceLocations);
+    //         if ($roleId != 1 && $isEmployee == 1) {
+
+    //             $empInv = DB::table('emp_inventory_location')
+    //                 ->where('emp_id', $empId)
+    //                 ->where('status', 1)
+    //                 ->whereRaw('FIND_IN_SET(?, REPLACE(location_site, " ", ""))', [$siteId])
+    //                 ->orderByDesc('id')
+    //                 ->first();
+    //                 // dd($empInv);
+
+    //             $empServiceLocationIDs = [];
+
+    //             if ($empInv && !empty($empInv->service_location_id)) {
+    //                 // location_site is CSV aligned with service_location_id outer array
+    //                 $sites = array_map('trim', explode(',', (string)$empInv->location_site));
+    //                 $groups = json_decode($empInv->service_location_id, true);
+
+    //                 if (is_array($groups)) {
+    //                     // find the index of the current siteId within location_site
+    //                     $idx = array_search((string)$siteId, array_map('strval', $sites), true);
+
+    //                     if ($idx !== false && isset($groups[$idx]) && is_array($groups[$idx])) {
+    //                         // use only the group for this site
+    //                         $empServiceLocationIDs = array_map('strval', $groups[$idx]);
+    //                     } else {
+    //                         // fallback: no match -> empty set (or choose to flatten all if that's desired)
+    //                         $empServiceLocationIDs = [];
+    //                     }
+    //                 }
+    //             }
+
+    //             if (!empty($empServiceLocationIDs)) {
+    //                 $query->whereIn('service_location.id', $empServiceLocationIDs);
+    //             } else {
+    //                 // prevent returning everything when no IDs match
+    //                 $query->whereRaw('1=0');
+    //             }
+    //         }
+    //     }
+
+    //     $query = $query->get();
+    //     return response()->json($query);
     // }
 
     public function GetActivatedServiceLocation(Request $request)
@@ -2971,6 +3016,49 @@ class ServicesController extends Controller
 
         $query = $query->get();
         return response()->json($query);
+    }
+
+    public function GetInventoryReportLocations(Request $request)
+    {
+        $siteIds = $request->input('siteIds', []);
+        
+        if (is_string($siteIds)) {
+            $siteIds = explode(',', $siteIds);
+        }
+
+        if (empty($siteIds) || in_array('0101', $siteIds)) {
+            $query = ServiceLocation::where('service_location.status', 1)
+                ->join('activated_location', function ($join) {
+                    $join->on('service_location.id', '=', 'activated_location.location_id')
+                        ->where('activated_location.status', '=', 1);
+                })
+                ->select('service_location.id', 'service_location.name')
+                ->distinct();
+        } else {
+            // Handle multiple site IDs
+            $siteIdArray = [];
+            foreach ($siteIds as $siteId) {
+                if (strpos($siteId, ',') !== false) {
+                    $siteIdArray = array_merge($siteIdArray, array_map('intval', explode(',', $siteId)));
+                } else {
+                    $siteIdArray[] = intval($siteId);
+                }
+            }
+            
+            $query = ServiceLocation::where('service_location.status', 1)
+                ->join('activated_location', function ($join) use ($siteIdArray) {
+                    $join->on('service_location.id', '=', 'activated_location.location_id')
+                        ->whereIn('activated_location.site_id', $siteIdArray)
+                        ->where('activated_location.status', '=', 1);
+                })
+                ->select('service_location.id', 'service_location.name')
+                ->distinct();
+        }
+
+        $query->where('service_location.inventory_status', 1);
+
+        $locations = $query->orderBy('service_location.name')->get();
+        return response()->json($locations);
     }
 
     public function ActivateServiceLocation(SLActivationRequest $request)

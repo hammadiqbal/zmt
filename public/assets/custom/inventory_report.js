@@ -18,24 +18,20 @@ $(document).ready(function() {
     var brandIds = $('#ir_brand').val();
     fetchBatchesForReport(orgId, siteIds, genericIds, brandIds, false);
     
-    // $('#ir_type').html("<option selected disabled value=''>Select Item Type</option>").prop('disabled', true);
-    // $('#ir_subcat').html("<option selected disabled value=''>Select Sub Category</option>").prop('disabled', true);
-    // $('#ir_generic').html("<option selected disabled value=''>Select Item Generic</option>").prop('disabled', true);
-    // $('#ir_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
-    
+    // Initialize locations
+    fetchLocationsForReport(siteIds, false);
+  
     // Handle Sites multi-select behavior for selectpicker
     $('#ir_site').on('changed.bs.select', function() {
         var selectedValues = $(this).val();
         var allSitesValue = '0101';
         
-        // If no sites are selected, select "All Sites"
         if (!selectedValues || selectedValues.length === 0) {
             $(this).selectpicker('val', [allSitesValue]);
             $(this).selectpicker('refresh');
             return;
         }
         
-        // If "All Sites" is selected along with other sites, remove "All Sites"
         if (selectedValues.includes(allSitesValue) && selectedValues.length > 1) {
             var newValues = selectedValues.filter(function(value) {
                 return value !== allSitesValue;
@@ -65,6 +61,9 @@ $(document).ready(function() {
         // Fetch batches based on all selected values
         var orgId = $('#ir_org').val();
         fetchBatchesForReport(orgId, selectedValues, selectedGenerics, selectedBrands);
+        
+        // Fetch locations based on selected sites
+        fetchLocationsForReport(selectedValues);
     });
     
     // Handle Transaction Types multi-select behavior for selectpicker
@@ -231,6 +230,44 @@ $(document).ready(function() {
         }
     });
     
+    // Handle Locations multi-select behavior for selectpicker
+    $('#ir_location').on('changed.bs.select', function() {
+        var selectedValues = $(this).val();
+        var allLocationsValue = '0101';
+        
+        // Find the "Select All" option value (comma-separated location IDs)
+        var selectAllValue = null;
+        $('#ir_location option').each(function() {
+            if ($(this).text() === 'Select All') {
+                selectAllValue = $(this).val();
+            }
+        });
+        
+        // If no locations are selected, select "All Locations"
+        if (!selectedValues || selectedValues.length === 0) {
+            if (selectAllValue) {
+                $(this).selectpicker('val', [selectAllValue]);
+            } else {
+                $(this).selectpicker('val', [allLocationsValue]);
+            }
+            $(this).selectpicker('refresh');
+            return;
+        }
+        
+        // Check if "Select All" (comma-separated) or "0101" is selected along with other locations
+        var hasSelectAll = selectedValues.some(function(value) {
+            return value === selectAllValue || value === allLocationsValue;
+        });
+        
+        if (hasSelectAll && selectedValues.length > 1) {
+            var newValues = selectedValues.filter(function(value) {
+                return value !== selectAllValue && value !== allLocationsValue;
+            });
+            $(this).selectpicker('val', newValues);
+            $(this).selectpicker('refresh');
+        }
+    });
+    
     // Clear filter functionality
     $('.clearFilter').click(function() {
         $('#ajax-loader').show();
@@ -243,9 +280,9 @@ $(document).ready(function() {
         // $('#ir_brand').html("<option selected disabled value=''>Select Item Brand</option>").prop('disabled', true);
         // $('#ir_transactiontype').html("<option selected disabled value=''>Select Transaction Type</option>").prop('disabled', true);
         
-        // Reset sites, transaction types, generics to "All" only
-        $('#ir_site,#ir_transactiontype,#ir_generic').selectpicker('val', ['0101']);
-        $('#ir_site,#ir_transactiontype,#ir_generic').selectpicker('refresh');
+        // Reset sites, transaction types, generics, locations to "All" only
+        $('#ir_site,#ir_transactiontype,#ir_generic,#ir_location').selectpicker('val', ['0101']);
+        $('#ir_site,#ir_transactiontype,#ir_generic,#ir_location').selectpicker('refresh');
         
         // Reset brand dropdown by fetching all brands with "Select All" option
         fetchBrandsForGenerics('0101', false);
@@ -255,6 +292,9 @@ $(document).ready(function() {
         var genericIds = $('#ir_generic').val();
         var brandIds = $('#ir_brand').val();
         fetchBatchesForReport(orgId, siteIds, genericIds, brandIds, false);
+        
+        // Reset locations
+        fetchLocationsForReport(siteIds, false);
         
         // Hide report data
         $('#report-results').remove();
@@ -320,7 +360,7 @@ $(document).ready(function() {
                 success: function(response) {
                     // Handle success response
                     if(response.success) {
-                        displayReportData(response.data);
+                        displayReportData(response.data, response.download_permission);
                         $('#ajax-loader').hide();
                         $submitBtn.html(originalText).prop('disabled', false);
                     }
@@ -337,8 +377,9 @@ $(document).ready(function() {
 
 });
 
-function displayReportData(data) {
+function displayReportData(data, downloadPermission) {
     var rows = Array.isArray(data) ? data : [];
+    var showDownloadButton = downloadPermission == 1;
 
     var $container = $('#report-results');
     if (!$container.length) {
@@ -378,9 +419,11 @@ function displayReportData(data) {
     html += '          <h4 class="m-t-0 text-primary">'+ siteCount +'</h4>';
     html += '        </div>';
     html += '      </div>';
-    html += '      <div>';
-    html += '        <button class="btn btn-success btn-sm" onclick="downloadReport()"><i class="fa fa-download"></i> Download PDF</button>';
-    html += '      </div>';
+    html += '            <div>';
+        if (showDownloadButton) {
+            html += '        <button class="btn btn-success btn-sm" onclick="downloadReport()"><i class="fa fa-download"></i> Download PDF</button>';
+        }
+        html += '      </div>';
     html += '    </div>';
     html += '  </div>';
     html += '</div>';
@@ -403,10 +446,26 @@ function displayReportData(data) {
             generic: it.generic_name || 'Unknown',
             brand: it.brand_name || 'Unknown',
             batch: it.batch_no || 'Unknown',
-            items: []
+            items: [],
+            final_org_balance: 0,
+            site_balances: {},
+            location_balances: {}
             };
         }
         grouped[key].items.push(it);
+        
+        // Calculate final balances (use the last transaction's balance)
+        grouped[key].final_org_balance = it.org_balance || 0;
+        
+        // Collect site balances
+        if (it.site_name) {
+            grouped[key].site_balances[it.site_name] = it.site_balance || 0;
+        }
+        
+        // Collect location balances
+        if (it.location_name) {
+            grouped[key].location_balances[it.location_name] = it.location_balance || 0;
+        }
         });
 
         Object.keys(grouped).forEach(function (key) {
@@ -425,6 +484,46 @@ function displayReportData(data) {
         html += '    <div class="col-md-4"><div class="text-center p-2" style="background:#fff;border-radius:6px;border:1px solid #dee2e6;">';
         html += '      <div class="mb-1" style="font-size:11px;font-weight:bold;color:#6c757d;text-transform:uppercase;letter-spacing:0.5px;">Batch</div>';
         html += '      <div style="font-size:12px;font-weight:600;color:#495057;">' + g.batch + '</div>';
+        html += '    </div></div>';
+        html += '  </div>';
+        
+        // Balances Summary Line
+        html += '  <div class="row mb-2">';
+        html += '    <div class="col-md-3"><div class="text-center p-2" style="background:#fff;border-radius:6px;border:1px solid #dee2e6;">';
+        html += '      <div class="mb-1" style="font-size:9px;font-weight:bold;color:#27ae60;text-transform:uppercase;">Org Balance</div>';
+        html += '      <div style="font-size:10px;font-weight:600;color:#495057;">' + g.final_org_balance + '</div>';
+        html += '    </div></div>';
+        
+        html += '    <div class="col-md-6"><div class="text-center p-2" style="background:#fff;border-radius:6px;border:1px solid #dee2e6;">';
+        html += '      <div class="mb-1" style="font-size:9px;font-weight:bold;color:#f39c12;text-transform:uppercase;">Site - Location Balance</div>';
+        
+        // Combine site and location balances
+        var combinedBalances = {};
+        g.items.forEach(function(item) {
+            if (item.site_name && item.location_name) {
+                var key = item.site_name + ' - ' + item.location_name;
+                combinedBalances[key] = item.site_balance || 0;
+            } else if (item.site_name) {
+                combinedBalances[item.site_name] = item.site_balance || 0;
+            } else if (item.location_name) {
+                combinedBalances[item.location_name] = item.location_balance || 0;
+            }
+        });
+        
+        var combinedKeys = Object.keys(combinedBalances);
+        if (combinedKeys.length > 0) {
+            var combinedText = combinedKeys.map(function(name) {
+                return name + ': ' + combinedBalances[name];
+            }).join('<br>');
+            html += '      <div style="font-size:10px;font-weight:600;color:#495057;">' + combinedText + '</div>';
+        } else {
+            html += '      <div style="font-size:10px;font-weight:600;color:#495057;">N/A</div>';
+        }
+        html += '    </div></div>';
+        
+        html += '    <div class="col-md-3"><div class="text-center p-2" style="background:#fff;border-radius:6px;border:1px solid #dee2e6;">';
+        html += '      <div class="mb-1" style="font-size:9px;font-weight:bold;color:#3498db;text-transform:uppercase;">Total Transactions</div>';
+        html += '      <div style="font-size:10px;font-weight:600;color:#495057;">' + g.items.length + '</div>';
         html += '    </div></div>';
         html += '  </div>';
 
@@ -476,21 +575,21 @@ function displayReportData(data) {
             // Timestamp (accept seconds or ms)
             var formattedDate = '';
             if (it.timestamp) {
-            var ts = Number(it.timestamp);
-            if (!isNaN(ts)) {
-                if (ts < 1e12) ts = ts * 1000; // seconds -> ms
-                var d = new Date(ts);
-                formattedDate =
-                d.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) +
-                ' ' +
-                d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            }
+                var ts = Number(it.timestamp);
+                if (!isNaN(ts)) {
+                    if (ts < 1e12) ts = ts * 1000; // seconds -> ms
+                    var d = new Date(ts);
+                    formattedDate =
+                    d.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) +
+                    ' ' +
+                    d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                }
             }
 
             var info = '<strong>Type:</strong> ' + (it.transaction_type_name || 'N/A') + '<br>' +
                     '<strong>Ref Doc #:</strong> ' + (it.ref_document_no || 'N/A') + '<br>' +
                     '<strong>Date:</strong> ' + (formattedDate || 'N/A') + '<br>' +
-                    '<strong>Site:</strong> ' + (it.site_name || 'N/A') + '<br>' +
+                    '<strong>' + it.site_label + '</strong> ' + (it.site_name || 'N/A') + '<br>' +
                     '<strong>Remarks:</strong> ' + (it.remarks || 'N/A');
 
             var qtyBadge = '<span class="badge badge-info">' + (it.accurate_transaction_qty || '0') + '</span>';
@@ -520,9 +619,6 @@ function displayReportData(data) {
 
 // Function to download report (global scope)
 function downloadReport() {
-    // Show loader with download message
-    // $('#ajax-loader').show();
-    
     // Get current form data
     var data = SerializeForm(document.getElementById('inv_report'));
     
@@ -673,17 +769,25 @@ function fetchBatchesForReport(orgId, siteIds, genericIds, brandIds, showLoading
                 if(siteIdsStr == '0101' && genericIdsStr == '0101' && brandIdsStr == '0101')
                 {
                     batchOptions = '<option selected value="0101">Select All</option>';
+                    response.forEach(function(batch) {
+                        batchOptions += '<option value="' + batch.batch_no + '">' + batch.batch_no + '</option>';
+                    });
                 }
                 else{
-                    var allBatchNos = response.map(function(batch) {
-                        return batch.batch_no;
-                    }).join(',');
-                    batchOptions = '<option selected value="' + allBatchNos + '">Select All</option>';
+                    if (response.length === 1) {
+                        response.forEach(function(batch) {
+                            batchOptions += '<option selected value="' + batch.batch_no + '">' + batch.batch_no + '</option>';
+                        });
+                    } else {
+                        var allBatchNos = response.map(function(batch) {
+                            return batch.batch_no;
+                        }).join(',');
+                        batchOptions = '<option selected value="' + allBatchNos + '">Select All</option>';
+                        response.forEach(function(batch) {
+                            batchOptions += '<option value="' + batch.batch_no + '">' + batch.batch_no + '</option>';
+                        });
+                    }
                 }
-                
-                response.forEach(function(batch) {
-                    batchOptions += '<option value="' + batch.batch_no + '">' + batch.batch_no + '</option>';
-                });
                 $('#ir_batch').html(batchOptions);
                 $('#ir_batch').selectpicker();
                 $('#ir_batch').selectpicker('refresh');
@@ -703,6 +807,87 @@ function fetchBatchesForReport(orgId, siteIds, genericIds, brandIds, showLoading
             $('#ir_batch').html('<option selected value="">No Data Found</option>').prop('disabled', true).selectpicker('refresh');
             var $submitBtn = $('#inv_report button[type="submit"]');
             $submitBtn.html('<i class="mdi mdi-file-document"></i> Get Inventory Report').prop('disabled', false);
+        }
+    });
+}
+
+// Function to fetch locations based on selected sites for inventory report
+function fetchLocationsForReport(siteIds, showLoading = true) {
+    // Convert arrays to comma-separated strings
+    var siteIdsStr = Array.isArray(siteIds) ? siteIds.join(',') : siteIds;
+    
+    if (!siteIdsStr) {
+        $('#ir_location').html('<option selected value="0101">Select All</option>').prop('disabled', false).selectpicker('refresh');
+        return;
+    }
+
+    $.ajax({
+        url: '/services/getinventoryreportlocations',
+        method: 'GET',
+        data: {
+            siteIds: siteIdsStr,
+            inventoryStatus: true,
+            empCheck: false
+        },
+        beforeSend: function() {
+            if (showLoading) {
+                $('#ir_location').html('<option>Loading...</option>');
+            }
+        },
+        success: function(response) {
+            if (response && response.length > 0) {
+
+                var locationOptions = '';
+                if(siteIdsStr == '0101')
+                {
+                    locationOptions = '<option selected value="0101">Select All</option>';
+                    response.forEach(function(location) {
+                        locationOptions += '<option value="' + location.id + '">' + location.name + '</option>';
+                    });
+                }
+                else{
+                    if (response.length === 1) {
+                        response.forEach(function(location) {
+                            locationOptions += '<option selected value="' + location.id + '">' + location.name + '</option>';
+                        });
+                    } else {
+                        var allLocationIds = response.map(function(location) {
+                            return location.id;
+                        }).join(',');
+                        locationOptions = '<option selected value="' + allLocationIds + '">Select All</option>';
+                        response.forEach(function(location) {
+                            locationOptions += '<option  value="' + location.id + '">' + location.name + '</option>';
+                        });
+                    }
+                }
+
+
+                // if(siteIdsStr == '0101')
+                // {
+                //     locationOptions = '<option selected value="0101">Select All</option>';
+                // }
+                // else{
+                //     var allLocationIds = response.map(function(location) {
+                //         return location.id;
+                //     }).join(',');
+                //     locationOptions = '<option selected value="' + allLocationIds + '">Select All</option>';
+                // }
+                
+                // response.forEach(function(location) {
+                //     locationOptions += '<option value="' + location.id + '">' + location.name + '</option>';
+                // });
+                $('#ir_location').html(locationOptions);
+                $('#ir_location').selectpicker();
+                $('#ir_location').selectpicker('refresh');
+                $('#ir_location').prop('disabled', false);
+            }
+            else {
+                $('#ir_location').html('<option selected value="0101">Select All</option>').prop('disabled', false).selectpicker('refresh');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('Error fetching locations:', error);
+            $('#ir_location').html('<option selected value="0101">Select All</option>').prop('disabled', false).selectpicker('refresh');
         }
     });
 }
