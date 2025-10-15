@@ -1857,6 +1857,7 @@ class PatientController extends Controller
             'sls.end_timestamp',
             'sls.schedule_pattern',
             'e.name as empName',
+            'prefix.name as prefixName',
             'e.id as empId',
             'o.organization as orgName',
             'o.id as orgId',
@@ -1906,6 +1907,7 @@ class PatientController extends Controller
         ->leftJoin('service_location as sl', 'sl.id', '=', 'sb.service_location_id')
         ->leftJoin('service_location_scheduling as sls', 'sls.id', '=', 'sb.schedule_id')
         ->leftJoin('costcenter as pcc', 'pcc.id', '=', 'e.cc_id')
+        ->leftJoin('prefix', 'prefix.id', '=', 'e.prefix_id')
         ->leftJoin('activated_service as as1', function($join) {
             $join->on('as1.service_id', '=', 'combined.service_id')
                 ->on('as1.site_id', '=', DB::raw('COALESCE(sb.site_id, pi.site_id, req.site_id)'))
@@ -2211,7 +2213,12 @@ class PatientController extends Controller
     
                 $Pattern = ucwords(($PatientInOutDetail->schedule_pattern ?? 'N/A'));
     
-                $empName = ucwords((string)($PatientInOutDetail->empName ?? 'N/A'));
+                $prefix   = trim((string)($PatientInOutDetail->prefixName ?? ''));
+                $nameRaw  = trim((string)($PatientInOutDetail->empName ?? ''));
+
+                $empName = $nameRaw !== ''
+                    ? preg_replace('/\s+/', ' ', trim($prefix . ' ' . ucwords($nameRaw)))
+                    : 'N/A';                
                 $empId = $PatientInOutDetail->empId ?? '';
     
                 $Service = ucwords((string)($PatientInOutDetail->ServiceName ?? ''));

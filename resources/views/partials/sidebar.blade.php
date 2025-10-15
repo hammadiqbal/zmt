@@ -832,7 +832,7 @@
                                 </li>
                                 @endif
 
-                                @if (!$hideTransactionType  || $hideInventorySourceDestinationType || $hideInventoryTransactionActivity)
+                                @if (!$hideTransactionType  || !$hideInventorySourceDestinationType || !$hideInventoryTransactionActivity)
                                 <li>
                                     <a class="has-arrow waves-effect waves-dark" href="#" aria-expanded="false">
                                         <span class="hide-menu">Inventory Transaction Setup</span>
