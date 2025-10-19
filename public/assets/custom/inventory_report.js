@@ -360,7 +360,7 @@ $(document).ready(function() {
                 success: function(response) {
                     // Handle success response
                     if(response.success) {
-                        displayReportData(response.data, response.download_permission);
+                        displayReportData(response.data);
                         $('#ajax-loader').hide();
                         $submitBtn.html(originalText).prop('disabled', false);
                     }
@@ -377,15 +377,17 @@ $(document).ready(function() {
 
 });
 
-function displayReportData(data, downloadPermission) {
+function displayReportData(data) {
     var rows = Array.isArray(data) ? data : [];
-    var showDownloadButton = downloadPermission == 1;
 
     var $container = $('#report-results');
     if (!$container.length) {
         $('#inv_report').after('<div id="report-results" class="mt-4"></div>');
         $container = $('#report-results');
     }
+    
+    // Check for pending/processing reports for current user
+    checkUserPendingReports();
     
     // Get distinct site names from the response data
     // var siteNames = '';
@@ -420,10 +422,8 @@ function displayReportData(data, downloadPermission) {
     html += '        </div>';
     html += '      </div>';
     html += '            <div>';
-        if (showDownloadButton) {
-            html += '        <button class="btn btn-success btn-sm" onclick="downloadReport()"><i class="fa fa-download"></i> Download PDF</button>';
-        }
-        html += '      </div>';
+    html += '        <button class="btn btn-success btn-sm" onclick="downloadReport()"><i class="fa fa-download"></i> Generate Report</button>';
+    html += '      </div>';
     html += '    </div>';
     html += '  </div>';
     html += '</div>';
@@ -617,41 +617,323 @@ function displayReportData(data, downloadPermission) {
     $('html, body').animate({ scrollTop: $container.offset().top - 100 }, 300);
 }
 
+// Global variables for report processing
+var currentReportId = null;
+var statusCheckInterval = null;
+
 // Function to download report (global scope)
 function downloadReport() {
     // Get current form data
     var data = SerializeForm(document.getElementById('inv_report'));
     
-    // Create form for download
-    var form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '/inventory-report/download-pdf';
-    form.target = '_blank'; // Open in new tab to avoid page navigation
+    // Show progress loader
+    showProgressLoader();
     
-    // Add CSRF token
-    var csrfToken = document.createElement('input');
-    csrfToken.type = 'hidden';
-    csrfToken.name = '_token';
-    csrfToken.value = $('meta[name="csrf-token"]').attr('content');
-    form.appendChild(csrfToken);
+    // Submit report request
+    $.ajax({
+        url: '/inventory-report/request-pdf',
+        method: 'POST',
+        data: data,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        },
+        success: function(response) {
+            if (response.success) {
+                currentReportId = response.report_id;
+                showSuccessMessage(response.message);
+                startStatusPolling();
+            } else {
+                hideProgressLoader();
+                showErrorMessage('Failed to submit report request');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideProgressLoader();
+            showErrorMessage('Error submitting report request: ' + error);
+        }
+    });
+}
+
+// Function to show progress loader
+function showProgressLoader() {
+    var $downloadBtn = $('button[onclick="downloadReport()"]');
+    var originalHtml = $downloadBtn.html();
     
-    // Add form data
-    data.forEach(function(field) {
-        var input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = field.name;
-        input.value = field.value;
-        form.appendChild(input);
+    $downloadBtn.html('<i class="fa fa-spinner fa-spin"></i> Processing... 0%')
+                .prop('disabled', true)
+                .data('original-html', originalHtml);
+    
+    // Add progress bar
+    if (!$('#progress-container').length) {
+        $downloadBtn.after('<div id="progress-container" class="mt-2"><div class="progress" style="height: 20px;"><div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div></div></div>');
+    }
+}
+
+// Function to hide progress loader
+function hideProgressLoader() {
+    var $downloadBtn = $('button[onclick="downloadReport()"]');
+    var originalHtml = $downloadBtn.data('original-html');
+    
+    if (originalHtml) {
+        $downloadBtn.html(originalHtml).prop('disabled', false);
+    }
+    
+    $('#progress-container').remove();
+    
+    // Clear any existing interval
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+        statusCheckInterval = null;
+    }
+}
+
+// Function to update progress
+function updateProgress(percentage, message) {
+    var $downloadBtn = $('button[onclick="downloadReport()"]');
+    var $progressBar = $('#progress-bar');
+    
+    $downloadBtn.html('<i class="fa fa-spinner fa-spin"></i> Processing report');
+    $progressBar.css('width', percentage + '%')
+                .attr('aria-valuenow', percentage)
+                .text(percentage + '%');
+}
+
+// Function to start status polling
+function startStatusPolling() {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+    }
+    
+    statusCheckInterval = setInterval(function() {
+        checkReportStatus();
+    }, 3000); // Check every 3 seconds
+}
+
+// Function to check report status
+function checkReportStatus() {
+    if (!currentReportId) {
+        return;
+    }
+    
+    $.ajax({
+        url: '/inventory-report/check-status',
+        method: 'GET',
+        data: {
+            report_id: currentReportId
+        },
+        success: function(response) {
+            if (response.success) {
+                updateProgress(response.progress, response.message);
+                
+                if (response.status === 'completed') {
+                    // Report completed - check if email was sent
+                    clearInterval(statusCheckInterval);
+                    statusCheckInterval = null;
+                    
+                    hideProgressLoader();
+                    
+                    // Check if email was sent
+                    if (response.email_sent) {
+                        showSuccessMessage('Report completed! Check your email for the report.');
+                    } else {
+                        showSuccessMessage('Report complete! You\'ll receive an email shortly.');
+                    }
+                    
+                } else if (response.status === 'failed') {
+                    // Report failed
+                    clearInterval(statusCheckInterval);
+                    statusCheckInterval = null;
+                    
+                    hideProgressLoader();
+                    showErrorMessage('Report generation failed. Please try again.');
+                }
+            } else {
+                hideProgressLoader();
+                showErrorMessage(response.message || 'Failed to check report status');
+            }
+        },
+        error: function(xhr, status, error) {
+            hideProgressLoader();
+            showErrorMessage('Error checking report status: ' + error);
+        }
+    });
+}
+
+
+// Function to show success message
+function showSuccessMessage(message) {
+    // Remove any existing alerts
+    $('.alert-success, .alert-danger').remove();
+    
+    var alertHtml = '<div class="alert alert-success alert-dismissible fade show mt-4 text-center" role="alert">' +
+                    '<i class="fa fa-check-circle"></i> ' + message +
+                    '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                    '<span aria-hidden="true">&times;</span>' +
+                    '</button>' +
+                    '</div>';
+    
+    $('#report-results').before(alertHtml);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(function() {
+        $('.alert-success').fadeOut();
+    }, 10000);
+}
+
+// Function to show error message
+function showErrorMessage(message) {
+    // Remove any existing alerts
+    $('.alert-success, .alert-danger').remove();
+    
+    var alertHtml = '<div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">' +
+                    '<i class="fa fa-exclamation-circle"></i> ' + message +
+                    '<button type="button" class="close" data-dismiss="alert" aria-label="Close">' +
+                    '<span aria-hidden="true">&times;</span>' +
+                    '</button>' +
+                    '</div>';
+    
+    $('#report-results').before(alertHtml);
+    
+    // Auto-hide after 8 seconds
+    setTimeout(function() {
+        $('.alert-danger').fadeOut();
+    }, 8000);
+}
+
+// Function to check for pending reports for current user
+function checkUserPendingReports() {
+    $.ajax({
+        url: '/inventory-report/check-user-reports',
+        method: 'GET',
+        success: function(response) {
+            if (response.success && response.reports && response.reports.length > 0) {
+                showPendingReportsStatus(response.reports);
+                
+                // Hide generate button if there are pending/processing reports
+                var hasActiveReports = response.reports.some(function(report) {
+                    return report.status === 'pending' || report.status === 'processing';
+                });
+                
+                if (hasActiveReports) {
+                    hideGenerateButton();
+                } else {
+                    // No active reports - show button regardless of completed/failed reports
+                    showGenerateButton();
+                }
+            } else {
+                // No reports found, show generate button
+                showGenerateButton();
+            }
+        },
+        error: function(xhr, status, error) {
+            console.log('Error checking user reports:', error);
+            // On error, show generate button
+            showGenerateButton();
+        }
+    });
+}
+
+// Function to show pending reports status
+function showPendingReportsStatus(reports) {
+    // Remove any existing status alerts
+    $('.alert-info').remove();
+    
+    // Find the first active report (pending or processing)
+    var activeReport = reports.find(function(report) {
+        return report.status === 'pending' || report.status === 'processing';
     });
     
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
+    if (activeReport) {
+        // Replace the generate button with status display
+        replaceGenerateButtonWithStatus(activeReport);
+        
+        // Auto-refresh every 10 seconds if there are processing reports
+        setTimeout(function() {
+            checkUserPendingReports();
+        }, 10000);
+    } else {
+        // If no active reports, show the generate button
+        // Completed/failed reports don't prevent new report generation
+        showGenerateButton();
+        $('.report-status-container').remove(); // Remove any status message
+    }
+}
+
+// Function to get status badge class
+function getStatusBadgeClass(status) {
+    switch (status) {
+        case 'pending':
+            return 'warning';
+        case 'processing':
+            return 'info';
+        case 'completed':
+            return 'success';
+        case 'failed':
+            return 'danger';
+        default:
+            return 'secondary';
+    }
+}
+
+// Function to hide generate button
+function hideGenerateButton() {
+    var $generateBtn = $('button[onclick="downloadReport()"]');
+    if ($generateBtn.length) {
+        $generateBtn.hide();
+    }
+}
+
+// Function to show generate button
+function showGenerateButton() {
+    var $generateBtn = $('button[onclick="downloadReport()"]');
+    if ($generateBtn.length) {
+        $generateBtn.show();
+        
+        // Remove any existing status containers
+        $('.report-status-container').remove();
+    }
+}
+
+// Function to replace generate button with status display
+function replaceGenerateButtonWithStatus(report) {
+    var $generateBtn = $('button[onclick="downloadReport()"]');
+    if (!$generateBtn.length) {
+        return;
+    }
     
-    // // Hide loader after a delay to ensure download has started
-    // setTimeout(function() {
-    //     $('#ajax-loader').hide();
-    // }, 2000);
+    // Remove any existing status containers
+    $('.report-status-container').remove();
+    
+    // Hide the generate button
+    $generateBtn.hide();
+    
+    // Create status display HTML
+    var statusHtml = '<div class="report-status-container" style="display: inline-block; width: 100%;font-size:12px;">';
+    
+    if (report.status === 'pending') {
+        statusHtml += '<div class="alert alert-info mb-0" style="padding: 8px 12px; margin-bottom: 0;">';
+        statusHtml += '<i class="fa fa-spinner fa-spin"></i> <strong>Report in process, you will receive an email when it\'s ready</strong>';
+        statusHtml += '<div class="mt-2">';
+        statusHtml += '<div class="progress" style="height: 20px;">';
+        statusHtml += '<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 1%" aria-valuenow="1" aria-valuemin="0" aria-valuemax="100">1%</div>';
+        statusHtml += '</div>';
+        statusHtml += '</div>';
+        statusHtml += '</div>';
+    } else if (report.status === 'processing') {
+        statusHtml += '<div class="alert alert-info mb-0" style="padding: 8px 12px; margin-bottom: 0;">';
+        statusHtml += '<i class="fa fa-spinner fa-spin"></i> <strong>Report in process, you will receive an email when it\'s ready</strong>';
+        statusHtml += '<div class="mt-2">';
+        statusHtml += '<div class="progress" style="height: 20px;">';
+        statusHtml += '<div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: ' + report.progress_percentage + '%" aria-valuenow="' + report.progress_percentage + '" aria-valuemin="0" aria-valuemax="100">' + report.progress_percentage + '%</div>';
+        statusHtml += '</div>';
+        statusHtml += '</div>';
+        statusHtml += '</div>';
+    }
+    
+    statusHtml += '</div>';
+    
+    // Insert status display after the generate button
+    $generateBtn.after(statusHtml);
 }
 
 // Function to fetch brands based on generic IDs
@@ -694,9 +976,6 @@ function fetchBrandsForGenerics(genericIds, showLoading = true) {
                     }
                 }
                 
-                // response.forEach(function(brand) {
-                //     brandOptions += '<option value="' + brand.id + '">' + brand.name + '</option>';
-                // });
                 $('#ir_brand').html(brandOptions);
                 $('#ir_brand').selectpicker();
                 $('#ir_brand').selectpicker('refresh');
@@ -779,10 +1058,7 @@ function fetchBatchesForReport(orgId, siteIds, genericIds, brandIds, showLoading
                             batchOptions += '<option selected value="' + batch.batch_no + '">' + batch.batch_no + '</option>';
                         });
                     } else {
-                        var allBatchNos = response.map(function(batch) {
-                            return batch.batch_no;
-                        }).join(',');
-                        batchOptions = '<option selected value="' + allBatchNos + '">Select All</option>';
+                        batchOptions = '<option selected value="0101">Select All</option>';
                         response.forEach(function(batch) {
                             batchOptions += '<option value="' + batch.batch_no + '">' + batch.batch_no + '</option>';
                         });
@@ -851,31 +1127,13 @@ function fetchLocationsForReport(siteIds, showLoading = true) {
                             locationOptions += '<option selected value="' + location.id + '">' + location.name + '</option>';
                         });
                     } else {
-                        var allLocationIds = response.map(function(location) {
-                            return location.id;
-                        }).join(',');
-                        locationOptions = '<option selected value="' + allLocationIds + '">Select All</option>';
+                        locationOptions = '<option selected value="0101">Select All</option>';
                         response.forEach(function(location) {
                             locationOptions += '<option  value="' + location.id + '">' + location.name + '</option>';
                         });
                     }
                 }
 
-
-                // if(siteIdsStr == '0101')
-                // {
-                //     locationOptions = '<option selected value="0101">Select All</option>';
-                // }
-                // else{
-                //     var allLocationIds = response.map(function(location) {
-                //         return location.id;
-                //     }).join(',');
-                //     locationOptions = '<option selected value="' + allLocationIds + '">Select All</option>';
-                // }
-                
-                // response.forEach(function(location) {
-                //     locationOptions += '<option value="' + location.id + '">' + location.name + '</option>';
-                // });
                 $('#ir_location').html(locationOptions);
                 $('#ir_location').selectpicker();
                 $('#ir_location').selectpicker('refresh');

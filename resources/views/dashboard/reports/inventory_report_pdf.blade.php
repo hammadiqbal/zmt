@@ -151,15 +151,24 @@
 
     @if($processedData->count() > 0)
         @php
+            // Helper function to get property from array or object
+            function getItemProperty($item, $property, $default = null) {
+                return is_array($item) ? ($item[$property] ?? $default) : ($item->$property ?? $default);
+            }
+            
             // Group data by generic_name + brand_name + batch_no
             $grouped = [];
             foreach($processedData as $item) {
-                $key = ($item->generic_name ?? 'Unknown') . '|' . ($item->brand_name ?? 'Unknown') . '|' . ($item->batch_no ?? 'Unknown');
+                $genericName = getItemProperty($item, 'generic_name', 'Unknown');
+                $brandName = getItemProperty($item, 'brand_name', 'Unknown');
+                $batchNo = getItemProperty($item, 'batch_no', 'Unknown');
+                
+                $key = $genericName . '|' . $brandName . '|' . $batchNo;
                 if (!isset($grouped[$key])) {
                     $grouped[$key] = [
-                        'generic' => $item->generic_name ?? 'Unknown',
-                        'brand' => $item->brand_name ?? 'Unknown',
-                        'batch' => $item->batch_no ?? 'Unknown',
+                        'generic' => $genericName,
+                        'brand' => $brandName,
+                        'batch' => $batchNo,
                         'items' => [],
                         'final_org_balance' => 0,
                         'site_balances' => [],
@@ -169,16 +178,18 @@
                 $grouped[$key]['items'][] = $item;
                 
                 // Calculate final balances (use the last transaction's balance)
-                $grouped[$key]['final_org_balance'] = $item->org_balance ?? 0;
+                $grouped[$key]['final_org_balance'] = getItemProperty($item, 'org_balance', 0);
                 
                 // Collect site balances
-                if (!empty($item->site_name)) {
-                    $grouped[$key]['site_balances'][$item->site_name] = $item->site_balance ?? 0;
+                $siteName = getItemProperty($item, 'site_name');
+                if (!empty($siteName)) {
+                    $grouped[$key]['site_balances'][$siteName] = getItemProperty($item, 'site_balance', 0);
                 }
                 
                 // Collect location balances
-                if (!empty($item->location_name)) {
-                    $grouped[$key]['location_balances'][$item->location_name] = $item->location_balance ?? 0;
+                $locationName = getItemProperty($item, 'location_name');
+                if (!empty($locationName)) {
+                    $grouped[$key]['location_balances'][$locationName] = getItemProperty($item, 'location_balance', 0);
                 }
             }
         @endphp
@@ -219,13 +230,16 @@
                                     @php
                                         $combinedBalances = [];
                                         foreach($group['items'] as $item) {
-                                            if (!empty($item->site_name) && !empty($item->location_name)) {
-                                                $key = $item->site_name . ' - ' . $item->location_name;
-                                                $combinedBalances[$key] = $item->site_balance ?? 0;
-                                            } elseif (!empty($item->site_name)) {
-                                                $combinedBalances[$item->site_name] = $item->site_balance ?? 0;
-                                            } elseif (!empty($item->location_name)) {
-                                                $combinedBalances[$item->location_name] = $item->location_balance ?? 0;
+                                            $siteName = getItemProperty($item, 'site_name');
+                                            $locationName = getItemProperty($item, 'location_name');
+                                            
+                                            if (!empty($siteName) && !empty($locationName)) {
+                                                $key = $siteName . ' - ' . $locationName;
+                                                $combinedBalances[$key] = getItemProperty($item, 'site_balance', 0);
+                                            } elseif (!empty($siteName)) {
+                                                $combinedBalances[$siteName] = getItemProperty($item, 'site_balance', 0);
+                                            } elseif (!empty($locationName)) {
+                                                $combinedBalances[$locationName] = getItemProperty($item, 'location_balance', 0);
                                             }
                                         }
                                     @endphp
@@ -267,76 +281,83 @@
                                 <td style="border: 1px solid #000; padding: 5px; font-size: 8px;">
                                     @php
                                         $formattedDate = '';
-                                        if ($item->timestamp) {
-                                            $formattedDate = \Carbon\Carbon::createFromTimestamp($item->timestamp)->format('m/d/Y H:i');
+                                        $timestamp = getItemProperty($item, 'timestamp');
+                                        if ($timestamp) {
+                                            $formattedDate = \Carbon\Carbon::createFromTimestamp($timestamp)->format('m/d/Y H:i');
                                         }
                                     @endphp
-                                    <strong>Type:</strong> {{ $item->transaction_type_name ?? 'N/A' }}<br>
-                                    <strong>Ref Doc #:</strong> {{ $item->ref_document_no ?? 'N/A' }}<br>
+                                    <strong>Type:</strong> {{ getItemProperty($item, 'transaction_type_name', 'N/A') }}<br>
+                                    <strong>Ref Doc #:</strong> {{ getItemProperty($item, 'ref_document_no', 'N/A') }}<br>
                                     <strong>Date:</strong> {{ $formattedDate ?: 'N/A' }}<br>
-                                    <strong>{{ $item->site_label ?? 'Site:' }}</strong> {{ $item->site_name ?? 'N/A' }}<br>
-                                    <strong>Remarks:</strong> {{ $item->remarks ?? 'N/A' }}
+                                    <strong>{{ getItemProperty($item, 'site_label', 'Site:') }}</strong> {{ getItemProperty($item, 'site_name', 'N/A') }}<br>
+                                    <strong>Remarks:</strong> {{ getItemProperty($item, 'remarks', 'N/A') }}
                                 </td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center; font-size: 8px;">
-                                    <span style="background-color: #3498db; color: white; padding: 2px 4px; font-weight: bold;">{{ $item->accurate_transaction_qty ?? '0' }}</span>
+                                    <span style="background-color: #3498db; color: white; padding: 2px 4px; font-weight: bold;">{{ getItemProperty($item, 'accurate_transaction_qty', '0') }}</span>
                         </td>
                                 <td style="border: 1px solid #000; padding: 5px; font-size: 8px;">
                             @php
-                                $sourceDisplay = $item->source ?? '';
-                                if ($item->source_type_name && str_contains(strtolower($item->source_type_name), 'location') && $item->source_location_name) {
-                                    $sourceDisplay = $item->source_location_name . ' (' . $item->source_type_name . ')';
-                                        } elseif ($item->source_type_name && str_contains(strtolower($item->source_type_name), 'vendor')) {
-                                            $vendorName = $item->source_vendor_person_name ?? '';
-                                            $corporateName = $item->source_vendor_corporate_name ?? '';
-                                            if ($vendorName && $corporateName) {
-                                                $sourceDisplay = $vendorName . ' - ' . $corporateName;
-                                            } elseif ($vendorName) {
-                                                $sourceDisplay = $vendorName;
-                                            } elseif ($corporateName) {
-                                                $sourceDisplay = $corporateName;
-                                            } else {
-                                                $sourceDisplay = 'Vendor ID: ' . ($item->source ?? '');
-                                            }
-                                            $sourceDisplay .= ' (' . $item->source_type_name . ')';
-                                } elseif ($item->source_type_name) {
-                                    $sourceDisplay = $sourceDisplay . ' (' . $item->source_type_name . ')';
+                                $sourceDisplay = getItemProperty($item, 'source', '');
+                                $sourceTypeName = getItemProperty($item, 'source_type_name');
+                                $sourceLocationName = getItemProperty($item, 'source_location_name');
+                                
+                                if ($sourceTypeName && str_contains(strtolower($sourceTypeName), 'location') && $sourceLocationName) {
+                                    $sourceDisplay = $sourceLocationName . ' (' . $sourceTypeName . ')';
+                                } elseif ($sourceTypeName && str_contains(strtolower($sourceTypeName), 'vendor')) {
+                                    $vendorName = getItemProperty($item, 'source_vendor_person_name', '');
+                                    $corporateName = getItemProperty($item, 'source_vendor_corporate_name', '');
+                                    if ($vendorName && $corporateName) {
+                                        $sourceDisplay = $vendorName . ' - ' . $corporateName;
+                                    } elseif ($vendorName) {
+                                        $sourceDisplay = $vendorName;
+                                    } elseif ($corporateName) {
+                                        $sourceDisplay = $corporateName;
+                                    } else {
+                                        $sourceDisplay = 'Vendor ID: ' . getItemProperty($item, 'source', '');
+                                    }
+                                    $sourceDisplay .= ' (' . $sourceTypeName . ')';
+                                } elseif ($sourceTypeName) {
+                                    $sourceDisplay = $sourceDisplay . ' (' . $sourceTypeName . ')';
                                 }
                             @endphp
                             {{ $sourceDisplay }}
                         </td>
                                 <td style="border: 1px solid #000; padding: 5px; font-size: 8px;">
                             @php
-                                $destinationDisplay = $item->destination ?? '';
-                                if ($item->destination_type_name && str_contains(strtolower($item->destination_type_name), 'location') && $item->destination_location_name) {
-                                    $destinationDisplay = $item->destination_location_name . ' (' . $item->destination_type_name . ')';
-                                        } elseif ($item->destination_type_name && str_contains(strtolower($item->destination_type_name), 'vendor')) {
-                                            $vendorName = $item->destination_vendor_person_name ?? '';
-                                            $corporateName = $item->destination_vendor_corporate_name ?? '';
-                                            if ($vendorName && $corporateName) {
-                                                $destinationDisplay = $vendorName . ' - ' . $corporateName;
-                                            } elseif ($vendorName) {
-                                                $destinationDisplay = $vendorName;
-                                            } elseif ($corporateName) {
-                                                $destinationDisplay = $corporateName;
-                                            } else {
-                                                $destinationDisplay = 'Vendor ID: ' . ($item->destination ?? '');
-                                            }
-                                            $destinationDisplay .= ' (' . $item->destination_type_name . ')';
-                                } elseif ($item->destination_type_name) {
-                                    $destinationDisplay = $destinationDisplay . ' (' . $item->destination_type_name . ')';
+                                $destinationDisplay = getItemProperty($item, 'destination', '');
+                                $destinationTypeName = getItemProperty($item, 'destination_type_name');
+                                $destinationLocationName = getItemProperty($item, 'destination_location_name');
+                                
+                                if ($destinationTypeName && str_contains(strtolower($destinationTypeName), 'location') && $destinationLocationName) {
+                                    $destinationDisplay = $destinationLocationName . ' (' . $destinationTypeName . ')';
+                                } elseif ($destinationTypeName && str_contains(strtolower($destinationTypeName), 'vendor')) {
+                                    $vendorName = getItemProperty($item, 'destination_vendor_person_name', '');
+                                    $corporateName = getItemProperty($item, 'destination_vendor_corporate_name', '');
+                                    if ($vendorName && $corporateName) {
+                                        $destinationDisplay = $vendorName . ' - ' . $corporateName;
+                                    } elseif ($vendorName) {
+                                        $destinationDisplay = $vendorName;
+                                    } elseif ($corporateName) {
+                                        $destinationDisplay = $corporateName;
+                                    } else {
+                                        $destinationDisplay = 'Vendor ID: ' . getItemProperty($item, 'destination', '');
+                                    }
+                                    $destinationDisplay .= ' (' . $destinationTypeName . ')';
+                                } elseif ($destinationTypeName) {
+                                    $destinationDisplay = $destinationDisplay . ' (' . $destinationTypeName . ')';
                                 }
                             @endphp
                             {{ $destinationDisplay }}
                         </td>
-                                <td style="border: 1px solid #000; padding: 5px; font-size: 8px;">{{ $item->mr_code ?? 'N/A' }}</td>
+                                <td style="border: 1px solid #000; padding: 5px; font-size: 8px;">{{ getItemProperty($item, 'mr_code', 'N/A') }}</td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center; font-size: 8px;">
-                                    <span style="background-color: #27ae60; color: white; padding: 2px 4px; font-weight: bold;">{{ $item->org_balance ?? '0' }}</span>
+                                    <span style="background-color: #27ae60; color: white; padding: 2px 4px; font-weight: bold;">{{ getItemProperty($item, 'org_balance', '0') }}</span>
                                 </td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center; font-size: 8px;">
-                                    <span style="background-color: #f39c12; color: white; padding: 2px 4px; font-weight: bold;">{{ $item->site_balance ?? '0' }}</span>
+                                    <span style="background-color: #f39c12; color: white; padding: 2px 4px; font-weight: bold;">{{ getItemProperty($item, 'site_balance', '0') }}</span>
                                 </td>
                                 <td style="border: 1px solid #000; padding: 5px; text-align: center; font-size: 8px;">
-                                    <span style="background-color: #7f8c8d; color: white; padding: 2px 4px; font-weight: bold;">{{ $item->location_balance ?? '0' }}</span>
+                                    <span style="background-color: #7f8c8d; color: white; padding: 2px 4px; font-weight: bold;">{{ getItemProperty($item, 'location_balance', '0') }}</span>
                                 </td>
                     </tr>
                 @endforeach

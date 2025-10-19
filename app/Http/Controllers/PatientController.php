@@ -1801,7 +1801,7 @@ class PatientController extends Controller
             return Cache::get($cacheKey);
         }
         
-            // Revert to original working query structure
+        // Revert to original working query structure
         $query = DB::table(DB::raw("(
             SELECT mr_code, emp_id, billing_cc, service_id, service_mode_id
             FROM (

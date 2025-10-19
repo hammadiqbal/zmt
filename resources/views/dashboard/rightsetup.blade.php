@@ -132,7 +132,7 @@
                                                         @elseif($moduleName == 'inventory_report')
                                                         <li>
                                                             <input type="checkbox" name="{{ $moduleName }}[]" class="check add" id="minimal-checkbox-{{ $moduleName }}-add-{{ $key }}">
-                                                            <label for="minimal-checkbox-{{ $moduleName }}-add-{{ $key }}">Download Report</label>
+                                                            <label for="minimal-checkbox-{{ $moduleName }}-add-{{ $key }}">Generate Report</label>
                                                         </li>
                                                         @endif
                                                         <li>

@@ -960,7 +960,10 @@ Route::get('medicalrecord/viewpatientattachment/{id}', [App\Http\Controllers\Pat
 // Inventory Reports
 Route::get('inventory-report', [App\Http\Controllers\ReportController::class, 'InventoryReport'])->name('inventory-report');
 Route::get('inventory-report/get-data', [App\Http\Controllers\ReportController::class, 'getInventoryReportData'])->name('inventory-report-get-data');
-Route::post('inventory-report/download-pdf', [App\Http\Controllers\ReportController::class, 'downloadInventoryReportPDF'])->name('inventory-report-download-pdf');
+// Background report processing routes
+Route::post('inventory-report/request-pdf', [App\Http\Controllers\ReportController::class, 'requestInventoryReportPDF'])->name('inventory-report-request-pdf');
+Route::get('inventory-report/check-status', [App\Http\Controllers\ReportController::class, 'checkReportStatus'])->name('inventory-report-check-status');
+Route::get('inventory-report/check-user-reports', [App\Http\Controllers\ReportController::class, 'checkUserReports'])->name('inventory-report-check-user-reports');
 Route::get('inventory/getbatchnoreporting', [InventoryController::class, 'GetBatchNoForReporting'])->name('GetBatchNoForReporting');
 
 // Inventory Reports
