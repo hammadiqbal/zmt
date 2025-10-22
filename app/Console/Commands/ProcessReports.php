@@ -21,7 +21,7 @@ class ProcessReports extends Command
      *
      * @var string
      */
-    protected $description = 'Process pending reports in the queue';
+    protected $description = 'Process pending reports in the queue and generate Excel files';
 
     /**
      * Execute the console command.
@@ -30,8 +30,8 @@ class ProcessReports extends Command
      */
     public function handle()
     {
-        $this->info('Starting chunked report processing...');
-        Log::info('ProcessReports: Starting chunked report processing');
+        $this->info('Starting chunked report processing with Excel generation...');
+        Log::info('ProcessReports: Starting chunked report processing with Excel generation');
         
         $startTime = time();
         $maxExecutionTime = 20; // 20 seconds max per cron job
@@ -74,11 +74,10 @@ class ProcessReports extends Command
         ]);
         
         // Get pending and processing reports
-            $activeReports = ReportManagement::whereIn('status', [
-                ReportManagement::STATUS_PENDING, 
-                ReportManagement::STATUS_PROCESSING
-            ])->where('progress_percentage', '<', 95) // Exclude reports ready for PDF generation (95%)
-            ->orderBy('created_at', 'asc')->get();
+        $activeReports = ReportManagement::whereIn('status', [
+            ReportManagement::STATUS_PENDING, 
+            ReportManagement::STATUS_PROCESSING
+        ])->orderBy('created_at', 'asc')->get();
         
         Log::info('ProcessReports: Found active reports', [
             'count' => $activeReports->count(),
@@ -156,8 +155,9 @@ class ProcessReports extends Command
      */
     private function processCompletedReports($maxTime)
     {
-        // Get completed reports that haven't had emails sent
-        $completedReports = ReportManagement::where('status', ReportManagement::STATUS_COMPLETED)
+        // Get reports that are ready for email (processing with 100% progress but no email sent)
+        $completedReports = ReportManagement::where('status', ReportManagement::STATUS_PROCESSING)
+            ->where('progress_percentage', 100)
             ->whereNull('email_sent_at')
             ->orderBy('created_at', 'asc')
             ->get();
@@ -227,11 +227,11 @@ class ProcessReports extends Command
     }
     
     /**
-     * Process inventory report in chunks
+     * Process inventory report in chunks with Excel generation
      */
     private function processInventoryReportChunked($report, $startTime, $maxExecutionTime)
     {
-        Log::info('ProcessReports: Starting inventory report processing', [
+        Log::info('ProcessReports: Starting inventory report processing with Excel generation', [
             'reportId' => $report->id,
             'userId' => $report->user_id,
             'startTime' => $startTime,
@@ -244,7 +244,7 @@ class ProcessReports extends Command
             
             Log::info('ProcessReports: Created ReportController instance');
             
-            // Process the report in chunks
+            // Process the report in chunks and generate Excel
             $success = $reportController->processInventoryReportChunked($report->id, $startTime, $maxExecutionTime);
             
             Log::info('ProcessReports: Inventory report processing completed', [
@@ -255,9 +255,9 @@ class ProcessReports extends Command
             return $success;
             
         } catch (\Exception $e) {
-            $this->error("Inventory PDF processing failed: " . $e->getMessage());
+            $this->error("Inventory Excel processing failed: " . $e->getMessage());
             
-            Log::error('ProcessReports: Inventory PDF processing failed', [
+            Log::error('ProcessReports: Inventory Excel processing failed', [
                 'reportId' => $report->id,
                 'userId' => $report->user_id,
                 'error' => $e->getMessage(),

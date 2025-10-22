@@ -19,7 +19,6 @@ class Kernel extends ConsoleKernel
         // $schedule->command('service:end')->everyMinute();
         $schedule->command('brand:brand-expiration')->everyFiveMinutes();
         $schedule->command('reports:process')->everyMinute();
-        $schedule->command('reports:process-pdf')->everyMinute(); // Dedicated PDF generation with 5-minute timeout
         // Stock monitoring alerts - run once daily
         $schedule->command('stock:monitor')->daily();
     }

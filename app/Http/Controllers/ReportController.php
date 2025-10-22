@@ -9,6 +9,14 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Style\Color;
+
 use App\Models\InventoryManagement;
 use App\Models\InventoryBalance;
 use App\Models\InventoryCategory;
@@ -33,8 +41,6 @@ use App\Models\MedicationRoutes;
 use App\Models\MedicationFrequency;
 use App\Models\ReportManagement;
 
-use Dompdf\Dompdf;
-use Dompdf\Options;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Mail;
 
@@ -45,6 +51,7 @@ class ReportController extends Controller
     private $roles;
     private $rights;
     private $assignedSites;
+    private $spreadsheet;
     
     public function __construct()
     {
@@ -344,11 +351,10 @@ class ReportController extends Controller
         ]);
     }
 
-
     /**
-     * Request inventory report PDF (background processing)
+     * Request inventory report Excel (background processing)
      */
-    public function requestInventoryReportPDF(Request $request)
+    public function requestInventoryReportExcel(Request $request)
     {
         $rights = $this->rights;
         $download = explode(',', $rights->inventory_report)[0];
@@ -360,7 +366,7 @@ class ReportController extends Controller
         $reportRequest = ReportManagement::create([
             'user_id' => auth()->id(),
             'module_name' => ReportManagement::MODULE_INVENTORY_REPORT,
-            'report_type' => ReportManagement::TYPE_PDF,
+            'report_type' => ReportManagement::TYPE_EXCEL,
             'request_data' => $request->all(),
             'status' => ReportManagement::STATUS_PENDING,
             'progress_percentage' => 0
@@ -396,7 +402,7 @@ class ReportController extends Controller
             'success' => true,
             'status' => $report->status,
             'progress' => $report->progress_percentage,
-            'message' => $this->getStatusMessage($report->status, $report->progress_percentage),
+            'message' => $this->getStatusMessage($report->status, $report->progress_percentage, $report->email_sent_at),
             'download_ready' => $report->isReadyForDownload(),
             'file_name' => $report->file_name,
             'email_sent' => $report->email_sent_at ? true : false
@@ -438,9 +444,8 @@ class ReportController extends Controller
         ]);
     }
 
-
     /**
-     * Process inventory report PDF in chunks (called by cron job)
+     * Process inventory report Excel in chunks (called by cron job)
      */
     public function processInventoryReportChunked($reportId, $startTime, $maxExecutionTime)
     {
@@ -494,8 +499,8 @@ class ReportController extends Controller
             if ($report->progress_percentage < 10) {
                 $startDate = Carbon::createFromFormat('m/d/Y', $requestData['start'])->startOfDay();
                 $endDate = Carbon::createFromFormat('m/d/Y', $requestData['end'])->endOfDay();
-        $startTimestamp = $startDate->timestamp;
-        $endTimestamp = $endDate->timestamp;
+                $startTimestamp = $startDate->timestamp;
+                $endTimestamp = $endDate->timestamp;
         
                 $report->updateProgress(10);
                 
@@ -515,7 +520,7 @@ class ReportController extends Controller
             
             // Build query (only if not done yet)
             if ($report->progress_percentage < 20) {
-        $query = DB::table('inventory_balance')->distinct()
+            $query = DB::table('inventory_balance')->distinct()
             ->join('inventory_management', 'inventory_balance.management_id', '=', 'inventory_management.id')
             ->leftJoin('inventory_transaction_type', 'inventory_management.transaction_type_id', '=', 'inventory_transaction_type.id')
             ->join('inventory_brand', 'inventory_balance.brand_id', '=', 'inventory_brand.id')
@@ -594,49 +599,42 @@ class ReportController extends Controller
                 ]);
             }
             
-            // Check if report is ready for PDF generation (95% progress) - CHECK THIS FIRST
-            if ($report->progress_percentage >= 95) {
-                Log::info('ReportController: Report ready for PDF generation (deferred)');
-                
-                // Generate PDF for large reports
-                $this->generatePDF($report, $requestData);
-                
-                Log::info('ReportController: PDF generated successfully');
-                
-                // Mark as completed (100%) - email will be sent in next cron job
-                $report->markAsCompletedWithoutEmail();
-                
-                Log::info('ReportController: Report marked as completed');
-                
-                return true;
-            }
-            
             // Check if processing is complete (90% progress)
             if ($report->progress_percentage >= 90) {
-                Log::info('ReportController: Report ready for PDF generation');
+                Log::info('ReportController: Report ready for Excel generation');
                 
-                // Check if this is a very large report that needs separate PDF generation
-                $recordCount = $requestData['totalRecords'] ?? 0;
-                Log::info('ReportController: Checking report size', [
-                    'recordCount' => $recordCount,
-                    'isLargeReport' => $recordCount > 2000
-                ]);
-                
-                // For large reports (>2000 records), defer PDF generation to next cron job
-                if ($recordCount > 2000) {
-                    Log::info('ReportController: Large report detected, deferring PDF generation to next cron job');
-                    $report->updateProgress(95); // Mark as ready for PDF generation
-                    return true; // Exit this cron job, PDF will be generated in next run
+                // Check if Excel file already exists
+                if ($report->file_path && Storage::exists($report->file_path)) {
+                    Log::info('ReportController: Excel file already exists, skipping generation', [
+                        'filePath' => $report->file_path
+                    ]);
+                    
+                    // Keep status as processing until email is sent
+                    $report->updateProgress(100);
+                    
+                    Log::info('ReportController: Report ready for email sending');
+                    
+                    return true;
                 }
                 
-                // For smaller reports, generate PDF immediately
-                Log::info('ReportController: Small report, generating PDF immediately');
-                $this->generatePDF($report, $requestData);
+                // Check time limit before Excel generation
+                $elapsedTime = time() - $startTime;
+                // Require at least a small buffer to finish writing the file
+                if ($elapsedTime >= ($maxExecutionTime - 5)) {
+                    Log::info('ReportController: Time limit reached before Excel generation', [
+                        'elapsedTime' => $elapsedTime,
+                        'maxExecutionTime' => $maxExecutionTime
+                    ]);
+                    return true; // Stop processing, will continue in next cron job
+                }
                 
-                Log::info('ReportController: PDF generated successfully');
+                // Generate Excel file with time limit
+                $this->generateExcel($report, $requestData, $startTime, $maxExecutionTime);
                 
-                // Mark as completed (100%) - email will be sent in next cron job
-                $report->markAsCompletedWithoutEmail();
+                Log::info('ReportController: Excel generated successfully');
+                
+                // Keep status as processing until email is sent - email will be sent in next cron job
+                $report->updateProgress(100);
                 
                 Log::info('ReportController: Report marked as completed');
                 
@@ -821,32 +819,6 @@ class ReportController extends Controller
             
             return $item;
         });
-    }
-
-    /**
-     * Get site names for display
-     */
-    private function getSiteNames($sites)
-    {
-        if (!empty($sites) && !in_array('0101', $sites)) {
-            $siteIds = [];
-            foreach ($sites as $site) {
-                if (strpos($site, ',') !== false) {
-                    $siteIds = array_merge($siteIds, array_map('intval', explode(',', $site)));
-                } else {
-                    $siteIds[] = intval($site);
-                }
-            }
-            
-            if (!empty($siteIds)) {
-                return DB::table('org_site')
-                    ->whereIn('id', $siteIds)
-                    ->pluck('name')
-                    ->toArray();
-            }
-        }
-        
-        return ['All Sites'];
     }
 
     /**
@@ -1082,11 +1054,14 @@ class ReportController extends Controller
             
             Log::info('ReportController: Email sent successfully');
             
-            // Mark email as sent
+            // Mark email as sent and report as completed
             $report->markEmailSent();
-            Log::info('ReportController: Email marked as sent', [
+            $report->markAsCompleted($report->file_path, $report->file_name);
+            
+            Log::info('ReportController: Email marked as sent and report completed', [
                 'reportId' => $report->id,
-                'emailSentAt' => $report->email_sent_at
+                'emailSentAt' => $report->email_sent_at,
+                'status' => $report->status
             ]);
             
         } catch (\Exception $e) {
@@ -1283,14 +1258,26 @@ class ReportController extends Controller
     }
 
     /**
-     * Generate PDF from processed data
+     * Generate CSV from processed data
      */
-    private function generatePDF($report, $requestData)
+    private function generateExcel($report, $requestData, $startTime = null, $maxExecutionTime = null)
     {
-        Log::info('ReportController: Starting generatePDF', [
+        Log::info('ReportController: Starting generateExcel', [
             'reportId' => $report->id,
             'tempDataFile' => $requestData['tempDataFile'] ?? 'temp/report_' . $report->id . '_data.json'
         ]);
+        
+        // Check time limit if parameters provided
+        if ($startTime && $maxExecutionTime) {
+            $elapsedTime = time() - $startTime;
+            if ($elapsedTime >= $maxExecutionTime) {
+                Log::info('ReportController: Time limit reached in generateExcel', [
+                    'elapsedTime' => $elapsedTime,
+                    'maxExecutionTime' => $maxExecutionTime
+                ]);
+                throw new \Exception('Time limit reached during Excel generation');
+            }
+        }
         
         // Read processed data from temporary file
         $tempFilePath = storage_path('app/' . ($requestData['tempDataFile'] ?? 'temp/report_' . $report->id . '_data.json'));
@@ -1314,197 +1301,368 @@ class ReportController extends Controller
             'recordCount' => $processedData->count()
         ]);
 
-        // Generate PDF
-        Log::info('ReportController: Creating PDF instance');
-        $pdf = new \Dompdf\Dompdf();
-        $options = new \Dompdf\Options();
-        $options->set('defaultFont', 'Arial');
-        $options->set('isRemoteEnabled', false); // Disable remote content for performance
-        $options->set('isHtml5ParserEnabled', true); // Enable HTML5 parser for better performance
-        $options->set('debugKeepTemp', false); // Don't keep temp files
-        $pdf->setOptions($options);
-
-        // Get site names
-        Log::info('ReportController: Getting site names');
-        $siteNames = $this->getSiteNames($requestData['ir_site'] ?? []);
-        
-        // Prepare variables for the view
+        // Prepare variables for the Excel
         $startDateInput = $requestData['start'];
         $endDateInput = $requestData['end'];
-        $sites = $requestData['ir_site'] ?? [];
-        $transactionTypes = $requestData['ir_transactiontype'] ?? [];
-        $generics = $requestData['ir_generic'] ?? [];
-        $brands = $requestData['ir_brand'] ?? [];
-        $batches = $requestData['ir_batch'] ?? [];
-        $locations = $requestData['ir_location'] ?? [];
-        
-        Log::info('ReportController: Rendering PDF view');
-        $html = view('dashboard.reports.inventory_report_pdf', compact(
-            'processedData', 
-            'startDateInput', 
-            'endDateInput', 
-            'sites', 
-            'siteNames', 
-            'transactionTypes', 
-            'generics', 
-            'brands', 
-            'batches', 
-            'locations'
-        ))->render();
-        
-        Log::info('ReportController: Loading HTML into PDF');
-        $pdf->loadHtml($html);
-        $pdf->setPaper('A4', 'landscape');
-        
-        Log::info('ReportController: Rendering PDF');
-        
-        // For large reports, increase memory and time limits temporarily
-        $originalMemoryLimit = ini_get('memory_limit');
-        $originalTimeLimit = ini_get('max_execution_time');
-        
-        ini_set('memory_limit', '512M');
-        ini_set('max_execution_time', 300); // 5 minutes for PDF rendering
-        
-        try {
-        $pdf->render();
-            Log::info('ReportController: PDF rendered successfully');
-        } catch (\Exception $e) {
-            Log::error('ReportController: PDF rendering failed', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
-            ]);
-            throw $e;
-        } finally {
-            // Restore original limits
-            ini_set('memory_limit', $originalMemoryLimit);
-            ini_set('max_execution_time', $originalTimeLimit);
-        }
+        // Generate Excel content (single pass)
+        Log::info('ReportController: Creating Excel file');
+        $this->generateExcelContent($processedData, $startDateInput, $endDateInput, $report->id);
 
         // Save file
-        $filename = 'inventory_report_' . $report->id . '_' . date('Y-m-d_H-i-s') . '.pdf';
+        $filename = 'inventory_report_' . $report->id . '_' . date('Y-m-d_H-i-s') . '.xlsx';
         $filePath = 'reports/' . $filename;
         
-        Log::info('ReportController: Saving PDF file', [
-            'filename' => $filename,
-            'filePath' => $filePath
-        ]);
+        // Set worksheet name to match filename (without extension)
+        $this->spreadsheet->getActiveSheet()->setTitle('Inventory Report');
         
-        // Ensure reports directory exists
-        if (!Storage::exists('reports')) {
-            Log::info('ReportController: Creating reports directory');
-            Storage::makeDirectory('reports');
-        }
-        
-        // Save the PDF file
-        $saved = Storage::put($filePath, $pdf->output());
-        
-        if (!$saved) {
-            Log::error('ReportController: Failed to save PDF file');
-            throw new \Exception('Failed to save PDF file to storage');
-        }
-        
-        Log::info('ReportController: PDF saved successfully');
-        
-        // Update file path and name (completion will be marked separately)
-        $report->update([
-            'file_path' => $filePath,
-            'file_name' => $filename,
-            'processed_at' => now()
-        ]);
-        
-        Log::info('ReportController: Report updated with file info');
-        
-        // Clean up temporary data file
-        $tempFilePath = storage_path('app/' . ($requestData['tempDataFile'] ?? 'temp/report_' . $report->id . '_data.json'));
-        if (file_exists($tempFilePath)) {
-            unlink($tempFilePath);
-            Log::info('ReportController: Cleaned up temporary data file');
-        }
-        
-        Log::info('ReportController: generatePDF completed successfully');
+        Log::info('ReportController: Saving Excel file', ['filename' => $filename, 'filePath' => $filePath]);
+        $reportsDir = storage_path('app/reports');
+        if (!file_exists($reportsDir)) { mkdir($reportsDir, 0755, true); }
+        (new Xlsx($this->spreadsheet))->save(storage_path('app/' . $filePath));
+
+        // Update report info
+        $report->update(['file_path' => $filePath, 'file_name' => $filename, 'processed_at' => now()]);
+
+        // Cleanup temp data
+        if (file_exists($tempFilePath)) { @unlink($tempFilePath); }
     }
-    
+
+
     /**
-     * Generate PDF for a specific report (called by dedicated PDF generation command)
+     * Generate Excel content with PDF-matching design
      */
-    public function generatePDFForReport($reportId)
+    private function generateExcelContent($processedData, $startDateInput, $endDateInput, $reportId)
     {
-        Log::info('ReportController: Starting generatePDFForReport', [
-            'reportId' => $reportId
-        ]);
+        // Create new Spreadsheet
+        $this->spreadsheet = new Spreadsheet();
+        $sheet = $this->spreadsheet->getActiveSheet();
         
-        $report = ReportManagement::find($reportId);
+        // Helper function to get property from array or object
+        $getItemProperty = function($item, $property, $default = null) {
+            return is_array($item) ? ($item[$property] ?? $default) : ($item->$property ?? $default);
+        };
         
-        if (!$report) {
-            Log::error('ReportController: Report not found', ['reportId' => $reportId]);
-            throw new \Exception("Report not found: {$reportId}");
-        }
+        // Helper function to format date
+        $formatDate = function($timestamp) {
+            if ($timestamp) {
+                return \Carbon\Carbon::createFromTimestamp($timestamp)->format('m/d/Y H:i');
+            }
+            return 'N/A';
+        };
         
-        if ($report->progress_percentage != 95) {
-            Log::error('ReportController: Report not ready for PDF generation', [
-                'reportId' => $reportId,
-                'progress' => $report->progress_percentage
-            ]);
-            throw new \Exception("Report not ready for PDF generation. Progress: {$report->progress_percentage}%");
-        }
-        
-        $requestData = $report->request_data;
-        
-        Log::info('ReportController: Generating PDF for report', [
-            'reportId' => $reportId,
-            'tempDataFile' => $requestData['tempDataFile'] ?? 'temp/report_' . $reportId . '_data.json'
-        ]);
-        
-        try {
-            // Generate PDF
-            $this->generatePDF($report, $requestData);
+        // Helper function to format source/destination
+        $formatSourceDestination = function($item, $type) use ($getItemProperty) {
+            $display = $getItemProperty($item, $type, '');
+            $typeName = $getItemProperty($item, $type . '_type_name');
+            $locationName = $getItemProperty($item, $type . '_location_name');
             
-            Log::info('ReportController: PDF generated successfully');
-            
-            // Mark as completed (100%) - email will be sent in next cron job
-            $report->markAsCompletedWithoutEmail();
-            
-            Log::info('ReportController: Report marked as completed');
-            
-            return true;
-            
-        } catch (\Exception $e) {
-            Log::error('ReportController: PDF generation failed', [
-                'reportId' => $reportId,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            // Clean up temporary data file on error
-            $tempFilePath = storage_path('app/temp/report_' . $reportId . '_data.json');
-            if (file_exists($tempFilePath)) {
-                unlink($tempFilePath);
-                Log::info('ReportController: Cleaned up temporary data file');
+            if ($typeName && str_contains(strtolower($typeName), 'location') && $locationName) {
+                $display = $locationName . ' (' . $typeName . ')';
+            } elseif ($typeName && str_contains(strtolower($typeName), 'vendor')) {
+                $vendorName = $getItemProperty($item, $type . '_vendor_person_name', '');
+                $corporateName = $getItemProperty($item, $type . '_vendor_corporate_name', '');
+                if ($vendorName && $corporateName) {
+                    $display = $vendorName . ' - ' . $corporateName;
+                } elseif ($vendorName) {
+                    $display = $vendorName;
+                } elseif ($corporateName) {
+                    $display = $corporateName;
+                } else {
+                    $display = 'Vendor ID: ' . $getItemProperty($item, $type, '');
+                }
+                $display .= ' (' . $typeName . ')';
+            } elseif ($typeName) {
+                $display = $display . ' (' . $typeName . ')';
             }
             
-            $report->markAsFailed($e->getMessage());
-            throw $e;
+            return $display;
+        };
+        
+        $currentRow = 1;
+        
+        // Calculate site count
+        $siteCount = 0;
+        if ($processedData->count() > 0) {
+            $uniqueSiteIds = $processedData->pluck('site_id')->unique()->filter()->count();
+            $siteCount = $uniqueSiteIds;
+        }
+
+        // Construct the full header text with line breaks
+        $headerText = "INVENTORY REPORT\n" .
+                      "─────────────────────────────────────────────\n" .
+                      "Generated on: " . date('m/d/Y H:i') . "\n" .
+                      "Date Range: " . $startDateInput . " to " . $endDateInput . "\n" .
+                      "Total Sites: " . $siteCount . "\n" .
+                      "Total Records: " . $processedData->count();
+
+        // === CONSOLIDATED REPORT HEADER SECTION ===
+        $sheet->setCellValue('A' . $currentRow, $headerText);
+        $sheet->mergeCells('A' . $currentRow . ':L' . ($currentRow + 5)); // Merge across A to L, and 6 rows down for the 6 lines of text (including HR)
+        
+        // Apply styles
+        $sheet->getStyle('A' . $currentRow)->getFont()->setBold(true)->setSize(12);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('A' . $currentRow)->getAlignment()->setWrapText(true); // Enable text wrapping for line breaks
+        
+        // Set row height to accommodate multiple lines
+        $sheet->getRowDimension($currentRow)->setRowHeight(70);
+
+        // Apply background color (lighter grey - same as generic/brand/batch lines)
+        $sheet->getStyle('A' . $currentRow)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF0F0F0'); // Lighter grey background
+
+        // Apply border (thick dark green)
+        $sheet->getStyle('A' . $currentRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THICK)->setColor(new Color('FF006100')); // Dark green border
+        
+        $currentRow += 7; // Move currentRow past the merged block (6 lines of text + 1 empty row for spacing)
+
+        
+        if ($processedData->count() > 0) {
+            // Group data by generic_name + brand_name + batch_no
+            $grouped = [];
+            foreach($processedData as $item) {
+                $genericName = $getItemProperty($item, 'generic_name', 'Unknown');
+                $brandName = $getItemProperty($item, 'brand_name', 'Unknown');
+                $batchNo = $getItemProperty($item, 'batch_no', 'Unknown');
+                
+                $key = $genericName . '|' . $brandName . '|' . $batchNo;
+                if (!isset($grouped[$key])) {
+                    $grouped[$key] = [
+                        'generic' => $genericName,
+                        'brand' => $brandName,
+                        'batch' => $batchNo,
+                        'items' => [],
+                        'final_org_balance' => 0,
+                        'site_balances' => [],
+                        'location_balances' => []
+                    ];
+                }
+                $grouped[$key]['items'][] = $item;
+                
+                // Calculate final balances (use the last transaction's balance)
+                $grouped[$key]['final_org_balance'] = $getItemProperty($item, 'org_balance', 0);
+                
+                // Collect site balances
+                $siteName = $getItemProperty($item, 'site_name');
+                if (!empty($siteName)) {
+                    $grouped[$key]['site_balances'][$siteName] = $getItemProperty($item, 'site_balance', 0);
+                }
+                
+                // Collect location balances
+                $locationName = $getItemProperty($item, 'location_name');
+                if (!empty($locationName)) {
+                    $grouped[$key]['location_balances'][$locationName] = $getItemProperty($item, 'location_balance', 0);
+                }
+            }
+
+            // === PRODUCT SECTIONS ===
+            foreach($grouped as $key => $group) {
+                $productGroupStartRow = $currentRow;
+                
+                // Product Identification Section - Horizontal layout with background (centered)
+                $sheet->mergeCells('B' . $currentRow . ':D' . $currentRow);
+                $sheet->setCellValue('B' . $currentRow, 'GENERIC: ' . $group['generic']);
+                $sheet->mergeCells('E' . $currentRow . ':G' . $currentRow);
+                $sheet->setCellValue('E' . $currentRow, 'BRAND: ' . $group['brand']);
+                $sheet->mergeCells('H' . $currentRow . ':J' . $currentRow);
+                $sheet->setCellValue('H' . $currentRow, 'BATCH: ' . $group['batch']);
+                
+                // Apply different background color (lighter grey) and bold formatting to all columns
+                $sheet->getStyle('A' . $currentRow . ':L' . $currentRow)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF0F0F0'); // Lighter grey background
+                $sheet->getStyle('B' . $currentRow)->getFont()->setBold(true);
+                $sheet->getStyle('E' . $currentRow)->getFont()->setBold(true);
+                $sheet->getStyle('H' . $currentRow)->getFont()->setBold(true);
+                
+                // Center text within merged cells (both horizontally and vertically)
+                $sheet->getStyle('B' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('E' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+                $sheet->getStyle('H' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+                
+                // Set compact row height for the first row (Generic/Brand/Batch)
+                $sheet->getRowDimension($currentRow)->setRowHeight(25);
+                $currentRow++;
+                
+                // Summary Balances Section - Horizontal layout with background and colors (centered)
+                $sheet->mergeCells('B' . $currentRow . ':D' . $currentRow);
+                $sheet->setCellValue('B' . $currentRow, 'ORG BALANCE: ' . $group['final_org_balance']);
+                $sheet->getStyle('B' . $currentRow)->getFont()->setBold(true)->setColor(new Color('70AD47')); // Green
+                $sheet->getStyle('B' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+                
+                // Site-Location Balance Section
+                $combinedBalances = [];
+                foreach($group['items'] as $item) {
+                    $siteName = $getItemProperty($item, 'site_name');
+                    $locationName = $getItemProperty($item, 'location_name');
+                    
+                    if (!empty($siteName) && !empty($locationName)) {
+                        $key = $siteName . ' - ' . $locationName;
+                        $combinedBalances[$key] = $getItemProperty($item, 'site_balance', 0);
+                    } elseif (!empty($siteName)) {
+                        $combinedBalances[$siteName] = $getItemProperty($item, 'site_balance', 0);
+                    } elseif (!empty($locationName)) {
+                        $combinedBalances[$locationName] = $getItemProperty($item, 'location_balance', 0);
+                    }
+                }
+                
+                if (count($combinedBalances) > 0) {
+                    $balanceStrings = [];
+                    foreach($combinedBalances as $name => $balance) {
+                        $balanceStrings[] = $name . ': ' . $balance;
+                    }
+                $sheet->mergeCells('E' . $currentRow . ':G' . $currentRow);
+                $sheet->setCellValue('E' . $currentRow, 'SITE - LOCATION BALANCE: ' . implode(', ', $balanceStrings));
+                $sheet->getStyle('E' . $currentRow)->getFont()->setBold(true)->setColor(new Color('FF6B46C1')); // Purple instead of orange
+                $sheet->getStyle('E' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+                }
+                
+                $sheet->mergeCells('H' . $currentRow . ':J' . $currentRow);
+                $sheet->setCellValue('H' . $currentRow, 'TOTAL TRANSACTIONS: ' . count($group['items']));
+                $sheet->getStyle('H' . $currentRow)->getFont()->setBold(true)->setColor(new Color('5B9BD5')); // Blue
+                $sheet->getStyle('H' . $currentRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+                
+                // Apply different background color to the entire row across all columns
+                $sheet->getStyle('A' . $currentRow . ':L' . $currentRow)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF0F0F0'); // Lighter grey background
+                
+                // Set compact row height for the second row (Summary Balances)
+                $sheet->getRowDimension($currentRow)->setRowHeight(25);
+                
+                // Note: Border removed from product summary section for cleaner appearance
+                
+                $currentRow++; // Empty line before transaction table
+                
+                // === TRANSACTION TABLE HEADERS ===
+                $headers = [
+                    'Transaction Type',
+                    'Ref Doc #',
+                    'Date & Time',
+                    'Site',
+                    'Source',
+                    'Destination',
+                    'MR Code',
+                    'Transaction Qty',
+                    'Org Balance',
+                    'Site Balance',
+                    'Location Balance',
+                    'Remarks'
+                ];
+                
+                $headerRow = $currentRow;
+                foreach($headers as $col => $header) {
+                    $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 1) . $currentRow;
+                    $sheet->setCellValue($cell, $header);
+                    $sheet->getStyle($cell)->getFont()->setBold(true);
+                    $sheet->getStyle($cell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                    $sheet->getStyle($cell)->getFill()->setFillType(Fill::FILL_SOLID);
+                    $sheet->getStyle($cell)->getFill()->getStartColor()->setRGB('4472C4'); // Dark blue background
+                    $sheet->getStyle($cell)->getFont()->getColor()->setRGB('FFFFFF'); // White text
+                }
+                // Note: Header border will be applied as part of the transaction table group border
+                $currentRow++;
+                
+                // === TRANSACTION DATA ROWS ===
+                $transactionTableStartRow = $currentRow; // Store start row for grouping border
+                foreach($group['items'] as $item) {
+                    $formattedDate = $formatDate($getItemProperty($item, 'timestamp'));
+                    $sourceDisplay = $formatSourceDestination($item, 'source');
+                    $destinationDisplay = $formatSourceDestination($item, 'destination');
+                    
+                    $rowData = [
+                        $getItemProperty($item, 'transaction_type_name', 'N/A'),
+                        $getItemProperty($item, 'ref_document_no', 'N/A'),
+                        $formattedDate,
+                        $getItemProperty($item, 'site_name', 'N/A'),
+                        $sourceDisplay,
+                        $destinationDisplay,
+                        $getItemProperty($item, 'mr_code', 'N/A'),
+                        $getItemProperty($item, 'accurate_transaction_qty', '0'),
+                        $getItemProperty($item, 'org_balance', '0'),
+                        $getItemProperty($item, 'site_balance', '0'),
+                        $getItemProperty($item, 'location_balance', '0'),
+                        $getItemProperty($item, 'remarks', 'N/A')
+                    ];
+                    
+                    foreach($rowData as $col => $value) {
+                        $cell = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($col + 1) . $currentRow;
+                        $sheet->setCellValue($cell, $value);
+                        
+                        // Apply special formatting for balance columns
+                        if (in_array($col, [7, 8, 9, 10])) { // Transaction Qty, Org Balance, Site Balance, Location Balance
+                            $sheet->getStyle($cell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                            $sheet->getStyle($cell)->getFill()->setFillType(Fill::FILL_SOLID);
+                            
+                            // Different colors for different balance types
+                            switch($col) {
+                                case 7: // Transaction Qty
+                                    $sheet->getStyle($cell)->getFill()->getStartColor()->setRGB('5B9BD5'); // Light blue
+                                    break;
+                                case 8: // Org Balance
+                                    $sheet->getStyle($cell)->getFill()->getStartColor()->setRGB('70AD47'); // Light green
+                                    break;
+                                case 9: // Site Balance
+                                    $sheet->getStyle($cell)->getFill()->getStartColor()->setRGB('FF6B46C1'); // Purple (changed from orange)
+                                    break;
+                                case 10: // Location Balance
+                                    $sheet->getStyle($cell)->getFill()->getStartColor()->setRGB('A5A5A5'); // Light grey
+                                    break;
+                            }
+                            $sheet->getStyle($cell)->getFont()->getColor()->setRGB('FFFFFF'); // White text
+                        } else {
+                            $sheet->getStyle($cell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_LEFT);
+                        }
+                    }
+                    // Note: Individual row borders removed - will apply grouping border around entire transaction table
+                    $currentRow++;
+                }
+                
+                // Apply grouping border around the entire transaction table (headers + all data rows)
+                $transactionTableEndRow = $currentRow - 1; // Last data row
+                $sheet->getStyle('A' . $headerRow . ':L' . $transactionTableEndRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+                
+                $currentRow += 2; // Two empty lines between product groups for better spacing
+            }
+        } else {
+            $sheet->setCellValue('A' . $currentRow, 'No Data Found');
+        }
+        
+        $columnWidths = [
+            'A' => 15,
+            'B' => 9,
+            'C' => 10,
+            'D' => 15,
+            'E' => 30,
+            'F' => 30,
+            'G' => 10,
+            'H' => 15,
+            'I' => 12,
+            'J' => 12,
+            'K' => 15,
+            'L' => 15
+        ];
+        
+        foreach($columnWidths as $column => $width) {
+            $sheet->getColumnDimension($column)->setWidth($width);
         }
     }
 
     /**
      * Get status message
      */
-    private function getStatusMessage($status, $progress)
+    private function getStatusMessage($status, $progress, $emailSentAt = null)
     {
         switch ($status) {
             case ReportManagement::STATUS_PENDING:
                 return 'Report request submitted. Waiting to be processed...';
             case ReportManagement::STATUS_PROCESSING:
                 if ($progress >= 100) {
-                    return 'Report complete! You\'ll receive an email shortly.';
+                    return 'Sending email...';
                 }
                 return "Processing report... {$progress}% complete";
             case ReportManagement::STATUS_COMPLETED:
-                return 'Report completed successfully! Check your email for the report.';
+                if ($emailSentAt) {
+                    return 'Report completed successfully! Check your email for the report.';
+                } else {
+                    return 'Report ready! Sending email...';
+                }
             case ReportManagement::STATUS_FAILED:
                 return 'Report generation failed. Please try again.';
             default:

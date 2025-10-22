@@ -422,7 +422,7 @@ function displayReportData(data) {
     html += '        </div>';
     html += '      </div>';
     html += '            <div>';
-    html += '        <button class="btn btn-success btn-sm" onclick="downloadReport()"><i class="fa fa-download"></i> Generate Report</button>';
+        html += '        <button class="btn btn-success btn-sm" onclick="downloadReport()"><i class="fa fa-download"></i> Generate Report</button>';
     html += '      </div>';
     html += '    </div>';
     html += '  </div>';
@@ -631,7 +631,7 @@ function downloadReport() {
     
     // Submit report request
     $.ajax({
-        url: '/inventory-report/request-pdf',
+        url: '/inventory-report/request-excel',
         method: 'POST',
         data: data,
         headers: {
@@ -692,7 +692,7 @@ function updateProgress(percentage, message) {
     var $downloadBtn = $('button[onclick="downloadReport()"]');
     var $progressBar = $('#progress-bar');
     
-    $downloadBtn.html('<i class="fa fa-spinner fa-spin"></i> Processing report');
+    $downloadBtn.html('<i class="fa fa-spinner fa-spin"></i> ' + message);
     $progressBar.css('width', percentage + '%')
                 .attr('aria-valuenow', percentage)
                 .text(percentage + '%');
@@ -727,16 +727,16 @@ function checkReportStatus() {
                 
                 if (response.status === 'completed') {
                     // Report completed - check if email was sent
-                    clearInterval(statusCheckInterval);
-                    statusCheckInterval = null;
-                    
-                    hideProgressLoader();
-                    
-                    // Check if email was sent
                     if (response.email_sent) {
-                        showSuccessMessage('Report completed! Check your email for the report.');
+                        // Email sent - show success and stop polling
+                        clearInterval(statusCheckInterval);
+                        statusCheckInterval = null;
+                        
+                        hideProgressLoader();
+                        showSuccessMessage('Excel report completed! Check your email for the report.');
                     } else {
-                        showSuccessMessage('Report complete! You\'ll receive an email shortly.');
+                        // Email not sent yet - continue polling
+                        updateProgress(response.progress, 'Report ready! Sending email...');
                     }
                     
                 } else if (response.status === 'failed') {
@@ -745,7 +745,7 @@ function checkReportStatus() {
                     statusCheckInterval = null;
                     
                     hideProgressLoader();
-                    showErrorMessage('Report generation failed. Please try again.');
+                    showErrorMessage('Excel report generation failed. Please try again.');
                 }
             } else {
                 hideProgressLoader();
@@ -777,7 +777,7 @@ function showSuccessMessage(message) {
     // Auto-hide after 5 seconds
     setTimeout(function() {
         $('.alert-success').fadeOut();
-    }, 10000);
+    }, 15000);
 }
 
 // Function to show error message
@@ -806,6 +806,7 @@ function checkUserPendingReports() {
         url: '/inventory-report/check-user-reports',
         method: 'GET',
         success: function(response) {
+            console.log(response);
             if (response.success && response.reports && response.reports.length > 0) {
                 showPendingReportsStatus(response.reports);
                 
