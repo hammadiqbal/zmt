@@ -71,14 +71,12 @@ $(document).ready(function() {
         var selectedValues = $(this).val();
         var allTransactionTypesValue = '0101';
         
-        // If no transaction types are selected, select "All Transaction Types"
         if (!selectedValues || selectedValues.length === 0) {
             $(this).selectpicker('val', [allTransactionTypesValue]);
             $(this).selectpicker('refresh');
             return;
         }
         
-        // If "All Transaction Types" is selected along with other types, remove "All Transaction Types"
         if (selectedValues.includes(allTransactionTypesValue) && selectedValues.length > 1) {
             var newValues = selectedValues.filter(function(value) {
                 return value !== allTransactionTypesValue;
@@ -93,14 +91,12 @@ $(document).ready(function() {
         var selectedValues = $(this).val();
         var allGenericsValue = '0101';
         
-        // If no generics are selected, select "All Generics"
         if (!selectedValues || selectedValues.length === 0) {
             $(this).selectpicker('val', [allGenericsValue]);
             $(this).selectpicker('refresh');
             return;
         }
         
-        // If "All Generics" is selected along with other generics, remove "All Generics"
         if (selectedValues.includes(allGenericsValue) && selectedValues.length > 1) {
             var newValues = selectedValues.filter(function(value) {
                 return value !== allGenericsValue;
@@ -138,14 +134,13 @@ $(document).ready(function() {
         var selectedValues = $(this).val();
         var allBrandsValue = '0101';
         
-        // Find the "Select All" option value (comma-separated brand IDs)
         var selectAllValue = null;
         $('#ir_brand option').each(function() {
             if ($(this).text() === 'Select All') {
                 selectAllValue = $(this).val();
             }
         });
-        // If no brands are selected, select "All Brands"
+        
         if (!selectedValues || selectedValues.length === 0) {
             if (selectAllValue) {
                 $(this).selectpicker('val', [selectAllValue]);
@@ -156,7 +151,6 @@ $(document).ready(function() {
             return;
         }
         
-        // Check if "Select All" (comma-separated) or "0101" is selected along with other brands
         var hasSelectAll = selectedValues.some(function(value) {
             return value === selectAllValue || value === allBrandsValue;
         });
@@ -197,7 +191,6 @@ $(document).ready(function() {
         var selectedValues = $(this).val();
         var allBatchesValue = '0101';
         
-        // Find the "Select All" option value (comma-separated batch numbers)
         var selectAllValue = null;
         $('#ir_batch option').each(function() {
             if ($(this).text() === 'Select All') {
@@ -205,7 +198,6 @@ $(document).ready(function() {
             }
         });
         
-        // If no batches are selected, select "All Batches"
         if (!selectedValues || selectedValues.length === 0) {
             if (selectAllValue) {
                 $(this).selectpicker('val', [selectAllValue]);
@@ -216,7 +208,6 @@ $(document).ready(function() {
             return;
         }
         
-        // Check if "Select All" (comma-separated) or "0101" is selected along with other batches
         var hasSelectAll = selectedValues.some(function(value) {
             return value === selectAllValue || value === allBatchesValue;
         });
@@ -235,7 +226,6 @@ $(document).ready(function() {
         var selectedValues = $(this).val();
         var allLocationsValue = '0101';
         
-        // Find the "Select All" option value (comma-separated location IDs)
         var selectAllValue = null;
         $('#ir_location option').each(function() {
             if ($(this).text() === 'Select All') {
@@ -243,7 +233,6 @@ $(document).ready(function() {
             }
         });
         
-        // If no locations are selected, select "All Locations"
         if (!selectedValues || selectedValues.length === 0) {
             if (selectAllValue) {
                 $(this).selectpicker('val', [selectAllValue]);
@@ -254,7 +243,6 @@ $(document).ready(function() {
             return;
         }
         
-        // Check if "Select All" (comma-separated) or "0101" is selected along with other locations
         var hasSelectAll = selectedValues.some(function(value) {
             return value === selectAllValue || value === allLocationsValue;
         });
@@ -270,6 +258,9 @@ $(document).ready(function() {
     
     // Clear filter functionality
     $('.clearFilter').click(function() {
+        // Reset report data
+        resetReportData();
+        
         $('#ajax-loader').show();
 
         $('#ir_cat').val('Select Category').trigger('change');
@@ -315,6 +306,10 @@ $(document).ready(function() {
     //Inventory Report Form Submission
     $('#inv_report').submit(function(e) {
         e.preventDefault();
+        
+        // Reset previous report data
+        resetReportData();
+        
         $('#ajax-loader').show();
         
         // Show loading text on button
@@ -380,6 +375,11 @@ $(document).ready(function() {
 function displayReportData(data) {
     var rows = Array.isArray(data) ? data : [];
 
+    // Store the full dataset globally for infinite scroll
+    allReportData = rows;
+    displayedItemsCount = 0;
+    isReportDataLoaded = true;
+
     var $container = $('#report-results');
     if (!$container.length) {
         $('#inv_report').after('<div id="report-results" class="mt-4"></div>');
@@ -389,19 +389,12 @@ function displayReportData(data) {
     // Check for pending/processing reports for current user
     checkUserPendingReports();
     
-    // Get distinct site names from the response data
-    // var siteNames = '';
-    // if (rows.length > 0) {
-    //     var distinctSiteNames = Array.from(new Set(rows.map(it => it.site_name || ''))).filter(Boolean);
-    //     siteNames = distinctSiteNames.join(', ');
-    // } else {
-    //     siteNames = 'No Sites';
-    // }
-
+    // Calculate site count from full data
     var siteCount = rows.length
         ? Array.from(new Set(rows.map(it => it.site_id || ''))).filter(Boolean).length
         : 0;
 
+    // Render the header
     var html = '';
     html += '<div class="row page-titles" style="background-color:#f2f7f8;border:1px solid #e9ecef;border-radius:5px;margin-bottom:20px;">';
     html += '  <div class="col-md-5 col-8 align-self-center">';
@@ -422,55 +415,125 @@ function displayReportData(data) {
     html += '        </div>';
     html += '      </div>';
     html += '            <div>';
-        html += '        <button class="btn btn-success btn-sm" onclick="downloadReport()"><i class="fa fa-download"></i> Generate Report</button>';
+    html += '        <button class="btn btn-success btn-sm" onclick="downloadReport()"><i class="fa fa-download"></i> Generate Report</button>';
     html += '      </div>';
     html += '    </div>';
     html += '  </div>';
     html += '</div>';
 
-    html += '<div class="card"><div class="card-body p-0">';
-
+    html += '<div class="card"><div class="card-body p-0" id="report-data-container">';
+    
     if (!rows.length) {
         html += '<div class="text-center p-4">';
         html += '  <i class="fa fa-info-circle fa-3x text-muted mb-3"></i>';
         html += '  <h5 class="text-muted">No Data Found</h5>';
         html += '  <p class="text-muted">No inventory records found for the selected criteria.</p>';
         html += '</div>';
+        isReportDataLoaded = false;
     } 
     else {
-        var grouped = {};
-        rows.forEach(function (it) {
+        // Render initial batch (500 items)
+        renderNextBatch();
+        
+        // Add scroll listener for infinite scroll
+        attachInfiniteScrollListener();
+    }
+    
+    html += '</div></div>'; 
+    $container.html(html);
+    $('html, body').animate({ scrollTop: $container.offset().top - 100 }, 300);
+}
+
+// Function to render next batch of items
+function renderNextBatch() {
+    if (!isReportDataLoaded || allReportData.length === 0) {
+        return;
+    }
+    
+    const ITEMS_PER_BATCH = 500;
+    var rows = allReportData;
+    var grouped = {};
+    
+    // Group all data by (generic + brand + batch)
+    rows.forEach(function (it) {
         var key = (it.generic_name || 'Unknown') + '|' + (it.brand_name || 'Unknown') + '|' + (it.batch_no || 'Unknown');
         if (!grouped[key]) {
             grouped[key] = {
-            generic: it.generic_name || 'Unknown',
-            brand: it.brand_name || 'Unknown',
-            batch: it.batch_no || 'Unknown',
-            items: [],
-            final_org_balance: 0,
-            site_balances: {},
-            location_balances: {}
+                generic: it.generic_name || 'Unknown',
+                brand: it.brand_name || 'Unknown',
+                batch: it.batch_no || 'Unknown',
+                items: [],
+                final_org_balance: 0,
+                site_balances: {},
+                location_balances: {}
             };
         }
         grouped[key].items.push(it);
         
-        // Calculate final balances (use the last transaction's balance)
+        // Calculate final balances
         grouped[key].final_org_balance = it.org_balance || 0;
         
-        // Collect site balances
         if (it.site_name) {
             grouped[key].site_balances[it.site_name] = it.site_balance || 0;
         }
         
-        // Collect location balances
         if (it.location_name) {
             grouped[key].location_balances[it.location_name] = it.location_balance || 0;
         }
-        });
-
-        Object.keys(grouped).forEach(function (key) {
-        var g = grouped[key];
-
+    });
+    
+    // Convert grouped object to array
+    var groupsArray = Object.keys(grouped).map(function(key) {
+        return grouped[key];
+    });
+    
+    // Get groups to render (starting from displayedItemsCount)
+    var groupsToRender = [];
+    var itemsInBatch = 0;
+    var currentIndex = 0;
+    
+    // Count how many groups we've already rendered
+    var renderedGroups = 0;
+    var totalItemsRendered = 0;
+    
+    for (var i = 0; i < groupsArray.length; i++) {
+        var group = groupsArray[i];
+        if (totalItemsRendered >= displayedItemsCount) {
+            // This group or part of it needs to be rendered
+            if (itemsInBatch + group.items.length <= ITEMS_PER_BATCH) {
+                groupsToRender.push({
+                    group: group,
+                    startIndex: 0,
+                    endIndex: group.items.length - 1
+                });
+                itemsInBatch += group.items.length;
+                totalItemsRendered += group.items.length;
+            } else {
+                // This group would exceed the batch, but render what we can
+                var remaining = ITEMS_PER_BATCH - itemsInBatch;
+                if (remaining > 0) {
+                    groupsToRender.push({
+                        group: group,
+                        startIndex: 0,
+                        endIndex: remaining - 1
+                    });
+                    itemsInBatch += remaining;
+                    totalItemsRendered += remaining;
+                }
+                break;
+            }
+        } else {
+            totalItemsRendered += group.items.length;
+        }
+    }
+    
+    // Render the groups
+    var $dataContainer = $('#report-data-container');
+    var html = '';
+    
+    groupsToRender.forEach(function(groupInfo) {
+        var g = groupInfo.group;
+        
         html += '<div class="item-group border-bottom p-3" style="background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%);border-radius:8px;margin:10px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">';
         html += '  <div class="row mb-3">';
         html += '    <div class="col-md-4"><div class="text-center p-2" style="background:#fff;border-radius:6px;border:1px solid #dee2e6;">';
@@ -543,83 +606,152 @@ function displayReportData(data) {
         html += '      </thead>';
         html += '      <tbody>';
 
-        g.items.forEach(function (it) {
-            // Source
-            var sourceDisplay = it.source || '';
-            if (it.source_type_name && it.source_type_name.toLowerCase().includes('location') && it.source_location_name) {
-            var cleanType = it.source_type_name.replace('Inventory Location', 'Location');
-            sourceDisplay = it.source_location_name + ' (' + cleanType + ')';
-            } else if (it.source_type_name && it.source_type_name.toLowerCase().includes('vendor')) {
-            var vn = it.source_vendor_person_name || '';
-            var vc = it.source_vendor_corporate_name || '';
-            var v = (vn && vc) ? (vn + ' - ' + vc) : (vn || vc || ('Vendor ID: ' + (it.source || '')));
-            sourceDisplay = v + ' (' + it.source_type_name + ')';
-            } else if (it.source_type_name) {
-            sourceDisplay = (sourceDisplay || '') + ' (' + it.source_type_name + ')';
-            }
-
-            // Destination
-            var destDisplay = it.destination || '';
-            if (it.destination_type_name && it.destination_type_name.toLowerCase().includes('location') && it.destination_location_name) {
-            var cleanType2 = it.destination_type_name.replace('Inventory Location', 'Location');
-            destDisplay = it.destination_location_name + ' (' + cleanType2 + ')';
-            } else if (it.destination_type_name && it.destination_type_name.toLowerCase().includes('vendor')) {
-            var dvn = it.destination_vendor_person_name || '';
-            var dvc = it.destination_vendor_corporate_name || '';
-            var dv = (dvn && dvc) ? (dvn + ' - ' + dvc) : (dvn || dvc || ('Vendor ID: ' + (it.destination || '')));
-            destDisplay = dv;
-            } else if (it.destination_type_name) {
-            destDisplay = (destDisplay || '') + ' (' + it.destination_type_name + ')';
-            }
-
-            // Timestamp (accept seconds or ms)
-            var formattedDate = '';
-            if (it.timestamp) {
-                var ts = Number(it.timestamp);
-                if (!isNaN(ts)) {
-                    if (ts < 1e12) ts = ts * 1000; // seconds -> ms
-                    var d = new Date(ts);
-                    formattedDate =
-                    d.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) +
-                    ' ' +
-                    d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                }
-            }
-
-            var info = '<strong>Type:</strong> ' + (it.transaction_type_name || 'N/A') + '<br>' +
-                    '<strong>Ref Doc #:</strong> ' + (it.ref_document_no || 'N/A') + '<br>' +
-                    '<strong>Date:</strong> ' + (formattedDate || 'N/A') + '<br>' +
-                    '<strong>' + it.site_label + '</strong> ' + (it.site_name || 'N/A') + '<br>' +
-                    '<strong>Remarks:</strong> ' + (it.remarks || 'N/A');
-
-            var qtyBadge = '<span class="badge badge-info">' + (it.accurate_transaction_qty || '0') + '</span>';
-
-            html += '<tr>';
-            html += '  <td><small>' + info + '</small></td>';
-            html += '  <td>' + qtyBadge + '</td>';
-            html += '  <td><small>' + (sourceDisplay || '') + '</small></td>';
-            html += '  <td><small>' + (destDisplay || '') + '</small></td>';
-            html += '  <td><code>' + (it.mr_code || 'N/A') + '</code></td>';
-            html += '  <td class="text-center"><span class="badge badge-success">' + (it.org_balance || '0') + '</span></td>';
-            html += '  <td class="text-center"><span class="badge badge-warning">' + (it.site_balance || '0') + '</span></td>';
-            html += '  <td class="text-center"><span class="badge badge-secondary">' + (it.location_balance || '0') + '</span></td>';
-            html += '</tr>';
-        });
+        // Render only the items in the range
+        for (var j = groupInfo.startIndex; j <= groupInfo.endIndex; j++) {
+            var it = g.items[j];
+            html += renderTransactionRow(it);
+        }
 
         html += '      </tbody>';
         html += '    </table>';
         html += '  </div>';
         html += '</div>';
-        });
-    }
-    html += '</div></div>'; 
-    $container.html(html);
-    $('html, body').animate({ scrollTop: $container.offset().top - 100 }, 300);
+    });
+    
+    // Append to container
+    $dataContainer.append(html);
+    
+    // Update displayed count
+    displayedItemsCount += itemsInBatch;
+    
+    // Update UI to show loading status
+    updateLoadingStatus();
 }
 
-// Global variables for report processing
-var currentReportId = null;
-var statusCheckInterval = null;
+// Function to render a single transaction row
+function renderTransactionRow(it) {
+    // Source
+    var sourceDisplay = it.source || '';
+    if (it.source_type_name && it.source_type_name.toLowerCase().includes('location') && it.source_location_name) {
+        var cleanType = it.source_type_name.replace('Inventory Location', 'Location');
+        sourceDisplay = it.source_location_name + ' (' + cleanType + ')';
+    } else if (it.source_type_name && it.source_type_name.toLowerCase().includes('vendor')) {
+        var vn = it.source_vendor_person_name || '';
+        var vc = it.source_vendor_corporate_name || '';
+        var v = (vn && vc) ? (vn + ' - ' + vc) : (vn || vc || ('Vendor ID: ' + (it.source || '')));
+        sourceDisplay = v + ' (' + it.source_type_name + ')';
+    } else if (it.source_type_name) {
+        sourceDisplay = (sourceDisplay || '') + ' (' + it.source_type_name + ')';
+    }
+
+    // Destination
+    var destDisplay = it.destination || '';
+    if (it.destination_type_name && it.destination_type_name.toLowerCase().includes('location') && it.destination_location_name) {
+        var cleanType2 = it.destination_type_name.replace('Inventory Location', 'Location');
+        destDisplay = it.destination_location_name + ' (' + cleanType2 + ')';
+    } else if (it.destination_type_name && it.destination_type_name.toLowerCase().includes('vendor')) {
+        var dvn = it.destination_vendor_person_name || '';
+        var dvc = it.destination_vendor_corporate_name || '';
+        var dv = (dvn && dvc) ? (dvn + ' - ' + dvc) : (dvn || dvc || ('Vendor ID: ' + (it.destination || '')));
+        destDisplay = dv;
+    } else if (it.destination_type_name) {
+        destDisplay = (destDisplay || '') + ' (' + it.destination_type_name + ')';
+    }
+
+    // Timestamp (accept seconds or ms)
+    var formattedDate = '';
+    if (it.timestamp) {
+        var ts = Number(it.timestamp);
+        if (!isNaN(ts)) {
+            if (ts < 1e12) ts = ts * 1000; // seconds -> ms
+            var d = new Date(ts);
+            formattedDate =
+                d.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) +
+                ' ' +
+                d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+    }
+
+    var info = '<strong>Type:</strong> ' + (it.transaction_type_name || 'N/A') + '<br>' +
+            '<strong>Ref Doc #:</strong> ' + (it.ref_document_no || 'N/A') + '<br>' +
+            '<strong>Date:</strong> ' + (formattedDate || 'N/A') + '<br>' +
+            '<strong>' + it.site_label + '</strong> ' + (it.site_name || 'N/A') + '<br>' +
+            '<strong>Remarks:</strong> ' + (it.remarks || 'N/A');
+
+    var qtyBadge = '<span class="badge badge-info">' + (it.accurate_transaction_qty || '0') + '</span>';
+
+    var html = '<tr>';
+    html += '  <td><small>' + info + '</small></td>';
+    html += '  <td>' + qtyBadge + '</td>';
+    html += '  <td><small>' + (sourceDisplay || '') + '</small></td>';
+    html += '  <td><small>' + (destDisplay || '') + '</small></td>';
+    html += '  <td><code>' + (it.mr_code || 'N/A') + '</code></td>';
+    html += '  <td class="text-center"><span class="badge badge-success">' + (it.org_balance || '0') + '</span></td>';
+    html += '  <td class="text-center"><span class="badge badge-warning">' + (it.site_balance || '0') + '</span></td>';
+    html += '  <td class="text-center"><span class="badge badge-secondary">' + (it.location_balance || '0') + '</span></td>';
+    html += '</tr>';
+    
+    return html;
+}
+
+// Function to attach infinite scroll listener
+function attachInfiniteScrollListener() {
+    // Remove existing listeners
+    $(window).off('scroll.infiniteScroll');
+    
+    var isLoading = false;
+    
+    $(window).on('scroll.infiniteScroll', function() {
+        // Check if we've loaded all data
+        if (displayedItemsCount >= allReportData.length) {
+            return;
+        }
+        
+        // Check if currently loading
+        if (isLoading) {
+            return;
+        }
+        
+        // Check if user has scrolled near bottom
+        if ($(window).scrollTop() + $(window).height() > $(document).height() - 500) {
+            isLoading = true;
+            renderNextBatch();
+            isLoading = false;
+        }
+    });
+}
+
+// Function to update loading status
+function updateLoadingStatus() {
+    var $dataContainer = $('#report-data-container');
+    var totalRecords = allReportData.length;
+    var percentage = Math.min(Math.round((displayedItemsCount / totalRecords) * 100), 100);
+    
+    // Remove existing loading indicator
+    $dataContainer.find('.loading-indicator').remove();
+    
+    if (displayedItemsCount < totalRecords) {
+        var loadingHtml = '<div class="loading-indicator text-center p-3" style="background:#f8f9fa;border-top:2px solid #007bff;">' +
+            '<i class="fa fa-spinner fa-spin"></i> ' +
+            'Loaded ' + displayedItemsCount + ' of ' + totalRecords + ' records (' + percentage + '%)' +
+            '</div>';
+        $dataContainer.append(loadingHtml);
+    } else {
+        var completeHtml = '<div class="loading-indicator text-center p-3" style="background:#d4edda;border-top:2px solid #28a745;">' +
+            '<i class="fa fa-check-circle text-success"></i> ' +
+            'All ' + totalRecords + ' records loaded' +
+            '</div>';
+        $dataContainer.append(completeHtml);
+    }
+}
+
+// Function to reset report data when form is submitted
+function resetReportData() {
+    allReportData = [];
+    displayedItemsCount = 0;
+    isReportDataLoaded = false;
+    $(window).off('scroll.infiniteScroll');
+}
 
 // Function to download report (global scope)
 function downloadReport() {
