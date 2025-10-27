@@ -2483,7 +2483,7 @@ class PatientMedicalRecord extends Controller
         ->first();
 
         if (!$PatientArrivalDeparture) {
-            return response()->json(['error' => "Failed to add visit-based details due to an issue with the patient's arrival end time."]);
+            return response()->json(['error' => "Unable to add visit details — the patient has not arrived yet."]);
         }
 
         $VisitBasedDetail->save();

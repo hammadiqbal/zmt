@@ -147,13 +147,12 @@ class PatientController extends Controller
                 $baseQuery->whereIn('site_id', $sessionSiteIds);
             }
         }
-        // $PatientMRCode = $baseQuery
-        // ->leftJoin('service_booking', function($join) {
-        //     $join->on('patient.mr_code', '=', DB::raw('service_booking.mr_code'))
-        //         ->where('service_booking.status', 1);
-        // })
-        // ->whereNull('service_booking.mr_code');
-        $PatientMRCode = $baseQuery->get();
+        $baseQuery->orderByDesc('id'); 
+        $PatientMRCode = $baseQuery->get()->map(function ($row) {
+            $row->name = ucwords($row->name);
+            return $row;
+        });
+        // $PatientMRCode = $baseQuery->get();
         return response()->json($PatientMRCode);
     }
 
