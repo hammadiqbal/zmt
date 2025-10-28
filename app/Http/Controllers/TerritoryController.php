@@ -101,16 +101,27 @@ class TerritoryController extends Controller
                 return response()->json(['error' => 'Failed to create province.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'province',
-                'content' => "'{$ProvinceName}' added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $this->currentDatetime,
-            ]);
+            $newData = [
+                'name' => $ProvinceName,
+                'status' => $status,
+                'effective_timestamp' => $pedt,
+            ];
+            $logId = createLog(
+                'province',
+                'insert',
+                [
+                    'message' => "'{$ProvinceName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $Province->id,
+                null,
+                $newData,
+                $sessionId
+            );
 
             $provinceLog = Province::where('id', $Province->id)->first();
             $logIds = $provinceLog->logid ? explode(',', $provinceLog->logid) : [];
-            $logIds[] = $logs->id;
+            $logIds[] = $logId;
             $provinceLog->logid = implode(',', $logIds);
             $provinceLog->save();
 
@@ -197,16 +208,28 @@ class TerritoryController extends Controller
                 return response()->json(['error' => 'Failed to create division.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'division',
-                'content' => "'{$DivisionName}' added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $this->currentDatetime,
-            ]);
+            $newData = [
+                'name' => $DivisionName,
+                'province_id' => $province,
+                'status' => $status,
+                'effective_timestamp' => $dedt,
+            ];
+            $logId = createLog(
+                'division',
+                'insert',
+                [
+                    'message' => "'{$DivisionName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $Division->id,
+                null,
+                $newData,
+                $sessionId
+            );
 
             $divisionLog = Division::where('id', $Division->id)->first();
             $logIds = $divisionLog->logid ? explode(',', $divisionLog->logid) : [];
-            $logIds[] = $logs->id;
+            $logIds[] = $logId;
             $divisionLog->logid = implode(',', $logIds);
             $divisionLog->save();
             $InsertedID = Division::find($Division->id);
@@ -308,16 +331,29 @@ class TerritoryController extends Controller
             if (empty($District->id)) {
                 return response()->json(['error' => 'Failed to create District.']);
             }
-            $logs = Logs::create([
-                'module' => 'distrcit',
-                'content' => "'{$DistrictName}' added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $this->currentDatetime,
-            ]);
+            $newData = [
+                'name' => $DistrictName,
+                'province_id' => $province,
+                'division_id' => $division,
+                'status' => $status,
+                'effective_timestamp' => $dt_edt,
+            ];
+            $logId = createLog(
+                'district',
+                'insert',
+                [
+                    'message' => "'{$DistrictName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $District->id,
+                null,
+                $newData,
+                $sessionId
+            );
 
             $districtLog = District::where('id', $District->id)->first();
             $logIds = $districtLog->logid ? explode(',', $districtLog->logid) : [];
-            $logIds[] = $logs->id;
+            $logIds[] = $logId;
             $districtLog->logid = implode(',', $logIds);
             $districtLog->save();
 
@@ -633,21 +669,35 @@ class TerritoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'province',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        $oldData = [
+            // Use status from request (represents current status before toggle)
+            'status' => (int)$Status,
+        ];
+        $newData = [
+            'status' => $UpdateStatus,
+        ];
+        $logId = createLog(
+            'province',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ProvinceID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ProvinceLog = Province::where('id', $ProvinceID)->first();
         $logIds = $ProvinceLog->logid ? explode(',', $ProvinceLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ProvinceLog->logid = implode(',', $logIds);
         $ProvinceLog->save();
 
         $province->save();
         return response()->json(['success' => true, 200]);
     }
+
     public function UpdateDivisionStatus(Request $request)
     {
         $rights = $this->rights;
@@ -680,15 +730,27 @@ class TerritoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'division',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        $oldData = [
+            'status' => (int)$Status,
+        ];
+        $newData = [
+            'status' => $UpdateStatus,
+        ];
+        $logId = createLog(
+            'division',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $DivisionID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $DivisionLog = Division::where('id', $DivisionID)->first();
         $logIds = $DivisionLog->logid ? explode(',', $DivisionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $DivisionLog->logid = implode(',', $logIds);
         $DivisionLog->save();
 
@@ -729,15 +791,27 @@ class TerritoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'district',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        $oldData = [
+            'status' => (int)$Status,
+        ];
+        $newData = [
+            'status' => $UpdateStatus,
+        ];
+        $logId = createLog(
+            'district',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $DistrictID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $DistrictLog = District::where('id', $DistrictID)->first();
         $logIds = $DistrictLog->logid ? explode(',', $DistrictLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $DistrictLog->logid = implode(',', $logIds);
         $DistrictLog->save();
 
@@ -889,6 +963,12 @@ class TerritoryController extends Controller
             abort(403, 'Forbidden');
         }
         $provinvce = Province::findOrFail($id);
+        // Capture old data before update
+        $oldProvinceData = [
+            'name' => $provinvce->name,
+            'status' => $provinvce->status,
+            'effective_timestamp' => $provinvce->effective_timestamp,
+        ];
         // Update the role with the new values
         $provinvce->name = $request->input('u_province');
         $effective_date = $request->input('u_edt');
@@ -920,21 +1000,32 @@ class TerritoryController extends Controller
         }
 
 
-        $logs = Logs::create([
-            'module' => 'province',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        $oldData = $oldProvinceData;
+        $newData = [
+            'name' => $provinvce->name,
+            'status' => $provinvce->status,
+            'effective_timestamp' => $provinvce->effective_timestamp,
+        ];
+        $logId = createLog(
+            'province',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $provinvce->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ProvinceLog = Province::where('id', $provinvce->id)->first();
         $logIds = $ProvinceLog->logid ? explode(',', $ProvinceLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ProvinceLog->logid = implode(',', $logIds);
         $ProvinceLog->save();
 
         return response()->json(['success' => 'Province updated successfully']);
     }
-
 
     public function UpdateDivision(Request $request, $id)
     {
@@ -945,6 +1036,13 @@ class TerritoryController extends Controller
             abort(403, 'Forbidden');
         }
         $division = Division::findOrFail($id);
+        // Capture old data
+        $oldDivisionData = [
+            'name' => $division->name,
+            'province_id' => $division->province_id,
+            'status' => $division->status,
+            'effective_timestamp' => $division->effective_timestamp,
+        ];
         // Update the role with the new values
         $division->name = $request->input('u_division');
         $division->province_id = $request->input('ud_province');
@@ -974,15 +1072,27 @@ class TerritoryController extends Controller
             return response()->json(['error' => 'Failed to update division. Please try again']);
         }
 
-        $logs = Logs::create([
-            'module' => 'division',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        $newData = [
+            'name' => $division->name,
+            'province_id' => $division->province_id,
+            'status' => $division->status,
+            'effective_timestamp' => $division->effective_timestamp,
+        ];
+        $logId = createLog(
+            'division',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $division->id,
+            $oldDivisionData,
+            $newData,
+            $sessionId
+        );
         $DivisionLog = Division::where('id', $division->id)->first();
         $logIds = $DivisionLog->logid ? explode(',', $DivisionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $DivisionLog->logid = implode(',', $logIds);
         $DivisionLog->save();
 
@@ -998,6 +1108,15 @@ class TerritoryController extends Controller
             abort(403, 'Forbidden');
         }
         $district = District::findOrFail($id);
+
+        // Capture old data
+        $oldDistrictData = [
+            'name' => $district->name,
+            'province_id' => $district->province_id,
+            'division_id' => $district->division_id,
+            'status' => $district->status,
+            'effective_timestamp' => $district->effective_timestamp,
+        ];
 
         // Update the role with the new values
         $district->name = $request->input('u_district');
@@ -1027,15 +1146,28 @@ class TerritoryController extends Controller
         if (empty($district->id)) {
             return response()->json(['error' => 'Failed to update district. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'district',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        $newData = [
+            'name' => $district->name,
+            'province_id' => $district->province_id,
+            'division_id' => $district->division_id,
+            'status' => $district->status,
+            'effective_timestamp' => $district->effective_timestamp,
+        ];
+        $logId = createLog(
+            'district',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $district->id,
+            $oldDistrictData,
+            $newData,
+            $sessionId
+        );
         $DistrictLog = District::where('id', $district->id)->first();
         $logIds = $DistrictLog->logid ? explode(',', $DistrictLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $DistrictLog->logid = implode(',', $logIds);
         $DistrictLog->save();
 

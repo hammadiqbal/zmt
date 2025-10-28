@@ -15,14 +15,13 @@
                 <div class="navbar-header">
                     <a class="navbar-brand" href="{{ route('dashboard') }}">
                         @if($user->org_id == 0)
-                        <h1 class="text-white font-weight-bold display-4">PHC</h1>
+                        <h1 class="text-white font-weight-bold display-4">{{ config('app.name') }}</h1>
                         @else
                         <img src="{{ asset('assets/org/'.$user->org_id.'_'.$user->logo) }}" width="120" alt="homepage" class="light-logo img-fluid" /> 
                         {{-- <img src="{{ asset('assets/logo.png') }}" width="120" alt="homepage" class="light-logo img-fluid" />  --}}
                         @endif
                     </a>
                 </div>
-
 
                 <!-- ============================================================== -->
                 <!-- End Logo -->
@@ -39,11 +38,11 @@
                             <i class="mdi mdi-home" onclick="window.location.href='{{ route('home') }}'" title="Click here to view home" style="cursor:pointer;color: white;font-size: 30px;margin-left: 16px;"></i>
                         @endif
                      </ul>
-                     <ul class="navbar-nav mr-auto mt-md-0">
+                      <ul class="navbar-nav mr-auto mt-md-0">
                         {{-- <button >Go Back</button> --}}
                         <h2 class="text-white mb-0">{{ ucwords($user->orgName) }}</h2>
                         {{-- <i class="mdi mdi-keyboard-backspace" onclick="goBack()" style="cursor:pointer;color: white;font-size: 30px;margin-left: 16px;"></i> --}}
-                     </ul>
+                     </ul> 
                     <!-- ============================================================== -->
                     <!-- User profile and search -->
                     <!-- ============================================================== -->

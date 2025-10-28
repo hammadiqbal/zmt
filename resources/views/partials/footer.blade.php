@@ -37,6 +37,7 @@
     <!--Custom JavaScript -->
     <script src="{{ asset('assets/js/custom.js') }}"></script>
     <script src="{{ asset('assets/js/custom.min.js') }}"></script>
+    <script src="{{ asset('assets/custom/view_logs.js') }}"></script>
 
     <!-- datatable -->
     <script src="{{ asset('assets/lib/plugins/datatables/jquery.dataTables.min.js') }}"></script>
@@ -80,15 +81,15 @@
     {{-- <script src="{{ asset('assets/lib/plugins/cropper/cropper.min.js') }}"></script> --}}
     {{-- <script src="{{ asset('assets/lib/plugins/cropper/cropper-init.js') }}"></script> --}}
    <!-- logs -->
-    <div class="modal fade bs-example-modal-lg" id="logs" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
-        <div class="modal-dialog modal-lg" role="document">
+    <div class="modal fade bs-example-modal-xl" id="logs" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+        <div class="modal-dialog modal-xl" role="document">
 
                 <div class="modal-content">
                     <div class="modal-header">
                         <h4 class="modal-title" id="myLargeModalLabel">Not Found</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body" style="max-height: calc(100vh - 250px); overflow-y: auto;">
                         <div class="row">
                         </div>
                     </div>
@@ -109,7 +110,8 @@
     $(document).ready(function() {
         $('select.selecter').select2();
     });
-     jQuery('#date-range').datepicker({
+
+    jQuery('#date-range').datepicker({
         toggleActive: true
     });
 

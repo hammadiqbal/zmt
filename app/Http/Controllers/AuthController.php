@@ -306,6 +306,7 @@ class AuthController extends Controller
         }
 
     }
+    
     public function ResetPassword()
     {
         $token = request('token');

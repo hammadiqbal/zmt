@@ -130,14 +130,29 @@ class ServicesController extends Controller
                 return response()->json(['error' => 'Failed to create Service Mode.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'services',
-                'content' => "'{$SMName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $ServiceMode->logid = $logs->id;
+            // Prepare new data for logging
+            $newServiceModeData = [
+                'name' => $SMName,
+                'code' => $Code,
+                'billing_mode' => $BillingMode,
+                'status' => $status,
+                'effective_timestamp' => $SMEdt,
+            ];
+
+            $logId = createLog(
+                'service_modes',
+                'insert',
+                [
+                    'message' => "'{$SMName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $ServiceMode->id,
+                null,
+                $newServiceModeData,
+                $sessionId
+            );
+
+            $ServiceMode->logid = $logId;
             $ServiceMode->save();
             return response()->json(['success' => 'Service mode created successfully']);
         }
@@ -261,15 +276,27 @@ class ServicesController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'service_modes',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ServiceModeID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ServiceModeLog = ServiceMode::where('id', $ServiceModeID)->first();
         $logIds = $ServiceModeLog->logid ? explode(',', $ServiceModeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceModeLog->logid = implode(',', $logIds);
         $ServiceModeLog->save();
 
@@ -312,10 +339,18 @@ class ServicesController extends Controller
         {
             abort(403, 'Forbidden');
         }
-        $ServiceModes = ServiceMode::findOrFail($id);
+        $ServiceMode = ServiceMode::findOrFail($id);
+        
+        // Capture old data before update
+        $oldData = [
+            'name' => $ServiceMode->name,
+            'billing_mode' => $ServiceMode->billing_mode,
+            'status' => $ServiceMode->status,
+            'effective_timestamp' => $ServiceMode->effective_timestamp,
+        ];
 
-        $ServiceModes->name = $request->input('u_sm');
-        $ServiceModes->billing_mode = $request->input('u_billing_mode');
+        $ServiceMode->name = $request->input('u_sm');
+        $ServiceMode->billing_mode = $request->input('u_billing_mode');
         $effective_date = $request->input('u_sm_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -327,28 +362,45 @@ class ServicesController extends Controller
              $status = 0; //Inactive
         }
 
-        $ServiceModes->effective_timestamp = $effective_date;
-        $ServiceModes->last_updated = $this->currentDatetime;
-        $ServiceModes->status = $status;
+        $ServiceMode->effective_timestamp = $effective_date;
+        $ServiceMode->last_updated = $this->currentDatetime;
+        $ServiceMode->status = $status;
 
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $ServiceModes->save();
+        $ServiceMode->save();
 
-        if (empty($ServiceModes->id)) {
+        if (empty($ServiceMode->id)) {
             return response()->json(['error' => 'Failed to update Service Mode. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-        $ServiceModeLog = ServiceMode::where('id', $ServiceModes->id)->first();
+        
+        // Capture new data after update
+        $newData = [
+            'name' => $ServiceMode->name,
+            'billing_mode' => $ServiceMode->billing_mode,
+            'status' => $ServiceMode->status,
+            'effective_timestamp' => $ServiceMode->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'service_modes',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ServiceMode->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        
+        $ServiceModeLog = ServiceMode::where('id', $ServiceMode->id)->first();
         $logIds = $ServiceModeLog->logid ? explode(',', $ServiceModeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceModeLog->logid = implode(',', $logIds);
         $ServiceModeLog->save();
         return response()->json(['success' => 'Service Mode updated successfully']);
@@ -419,14 +471,28 @@ class ServicesController extends Controller
                 return response()->json(['error' => 'Failed to create Service type.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'services',
-                'content' => "'{$STName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $ServiceType->logid = $logs->id;
+            // Prepare new data for logging
+            $newServiceTypeData = [
+                'name' => $STName,
+                'code' => $STCode,
+                'status' => $status,
+                'effective_timestamp' => $STEdt,
+            ];
+
+            $logId = createLog(
+                'service_types',
+                'insert',
+                [
+                    'message' => "'{$STName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $ServiceType->id,
+                null,
+                $newServiceTypeData,
+                $sessionId
+            );
+
+            $ServiceType->logid = $logId;
             $ServiceType->save();
             return response()->json(['success' => 'Service type created successfully']);
         }
@@ -545,15 +611,27 @@ class ServicesController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'service_types',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ServiceTypeID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ServiceTypeLog = ServiceType::where('id', $ServiceTypeID)->first();
         $logIds = $ServiceTypeLog->logid ? explode(',', $ServiceTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceTypeLog->logid = implode(',', $logIds);
         $ServiceTypeLog->save();
 
@@ -592,9 +670,16 @@ class ServicesController extends Controller
         {
             abort(403, 'Forbidden');
         }
-        $ServiceTypes = ServiceType::findOrFail($id);
+        $ServiceType = ServiceType::findOrFail($id);
+        
+        // Capture old data before update
+        $oldData = [
+            'name' => $ServiceType->name,
+            'status' => $ServiceType->status,
+            'effective_timestamp' => $ServiceType->effective_timestamp,
+        ];
 
-        $ServiceTypes->name = $request->input('u_st');
+        $ServiceType->name = $request->input('u_st');
         $effective_date = $request->input('u_st_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -606,28 +691,43 @@ class ServicesController extends Controller
              $status = 0; //Inactive
         }
 
-        $ServiceTypes->effective_timestamp = $effective_date;
-        $ServiceTypes->last_updated = $this->currentDatetime;
-        $ServiceTypes->status = $status;
+        $ServiceType->effective_timestamp = $effective_date;
+        $ServiceType->last_updated = $this->currentDatetime;
+        $ServiceType->status = $status;
 
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $ServiceTypes->save();
+        $ServiceType->save();
 
-        if (empty($ServiceTypes->id)) {
+        if (empty($ServiceType->id)) {
             return response()->json(['error' => 'Failed to update Service Type. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-        $ServiceTypeLog = ServiceType::where('id', $ServiceTypes->id)->first();
+        
+        // Capture new data after update
+        $newData = [
+            'name' => $ServiceType->name,
+            'status' => $ServiceType->status,
+            'effective_timestamp' => $ServiceType->effective_timestamp,
+        ];
+        
+        $logId = createLog(
+            'service_types',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ServiceType->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        
+        $ServiceTypeLog = ServiceType::where('id', $ServiceType->id)->first();
         $logIds = $ServiceTypeLog->logid ? explode(',', $ServiceTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceTypeLog->logid = implode(',', $logIds);
         $ServiceTypeLog->save();
         return response()->json(['success' => 'Service Type updated successfully']);
@@ -691,14 +791,27 @@ class ServicesController extends Controller
                 return response()->json(['error' => 'Failed to create Service unit.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'services',
-                'content' => "'{$Name}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $ServiceUnit->logid = $logs->id;
+            // Prepare new data for logging
+            $newServiceUnitData = [
+                'name' => $Name,
+                'status' => $status,
+                'effective_timestamp' => $SUEdt,
+            ];
+
+            $logId = createLog(
+                'service_units',
+                'insert',
+                [
+                    'message' => "'{$Name}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $ServiceUnit->id,
+                null,
+                $newServiceUnitData,
+                $sessionId
+            );
+
+            $ServiceUnit->logid = $logId;
             $ServiceUnit->save();
             return response()->json(['success' => 'Service unit created successfully']);
         }
@@ -713,7 +826,7 @@ class ServicesController extends Controller
         {
             abort(403, 'Forbidden');
         }
-        $ServiceUnits = ServiceUnit::select('*')->orderBy('id', 'desc');
+        $ServiceUnits = ServiceUnit::select('*')->orderBy('id', 'asc');
         // ->get()
         // return DataTables::of($ServiceUnits)
         return DataTables::eloquent($ServiceUnits)
@@ -815,15 +928,27 @@ class ServicesController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-        $ServiceUnitLog = ServiceType::where('id', $ServiceUnitID)->first();
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'service_units',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ServiceUnitID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
+        $ServiceUnitLog = ServiceUnit::where('id', $ServiceUnitID)->first();
         $logIds = $ServiceUnitLog->logid ? explode(',', $ServiceUnitLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceUnitLog->logid = implode(',', $logIds);
         $ServiceUnitLog->save();
 
@@ -862,9 +987,16 @@ class ServicesController extends Controller
         {
             abort(403, 'Forbidden');
         }
-        $ServiceUnits = ServiceUnit::findOrFail($id);
+        $ServiceUnit = ServiceUnit::findOrFail($id);
+        
+        // Capture old data before update
+        $oldData = [
+            'name' => $ServiceUnit->name,
+            'status' => $ServiceUnit->status,
+            'effective_timestamp' => $ServiceUnit->effective_timestamp,
+        ];
 
-        $ServiceUnits->name = $request->input('u_su');
+        $ServiceUnit->name = $request->input('u_su');
         $effective_date = $request->input('u_su_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -876,28 +1008,43 @@ class ServicesController extends Controller
              $status = 0; //Inactive
         }
 
-        $ServiceUnits->effective_timestamp = $effective_date;
-        $ServiceUnits->last_updated = $this->currentDatetime;
-        $ServiceUnits->status = $status;
+        $ServiceUnit->effective_timestamp = $effective_date;
+        $ServiceUnit->last_updated = $this->currentDatetime;
+        $ServiceUnit->status = $status;
 
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $ServiceUnits->save();
+        $ServiceUnit->save();
 
-        if (empty($ServiceUnits->id)) {
+        if (empty($ServiceUnit->id)) {
             return response()->json(['error' => 'Failed to update Service Unit. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-        $ServiceUnitsLog = ServiceUnit::where('id', $ServiceUnits->id)->first();
+        
+        // Capture new data after update
+        $newData = [
+            'name' => $ServiceUnit->name,
+            'status' => $ServiceUnit->status,
+            'effective_timestamp' => $ServiceUnit->effective_timestamp,
+        ];
+        
+        $logId = createLog(
+            'service_units',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ServiceUnit->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        
+        $ServiceUnitsLog = ServiceUnit::where('id', $ServiceUnit->id)->first();
         $logIds = $ServiceUnitsLog->logid ? explode(',', $ServiceUnitsLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceUnitsLog->logid = implode(',', $logIds);
         $ServiceUnitsLog->save();
         return response()->json(['success' => 'Service Unit updated successfully']);
@@ -971,14 +1118,29 @@ class ServicesController extends Controller
                 return response()->json(['error' => 'Failed to create Service Group.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'services',
-                'content' => "'{$SGName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $ServiceGroup->logid = $logs->id;
+            // Prepare new data for logging
+            $newServiceGroupData = [
+                'name' => $SGName,
+                'code' => $SGCode,
+                'type_id' => $SGtype,
+                'status' => $status,
+                'effective_timestamp' => $SGEdt,
+            ];
+
+            $logId = createLog(
+                'service_groups',
+                'insert',
+                [
+                    'message' => "'{$SGName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $ServiceGroup->id,
+                null,
+                $newServiceGroupData,
+                $sessionId
+            );
+
+            $ServiceGroup->logid = $logId;
             $ServiceGroup->save();
             return response()->json(['success' => 'Service Group created successfully']);
         }
@@ -1105,15 +1267,27 @@ class ServicesController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'service_groups',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ServiceGroupID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ServiceGroupLog = ServiceGroup::where('id', $ServiceGroupID)->first();
         $logIds = $ServiceGroupLog->logid ? explode(',', $ServiceGroupLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceGroupLog->logid = implode(',', $logIds);
         $ServiceGroupLog->save();
 
@@ -1170,9 +1344,18 @@ class ServicesController extends Controller
             abort(403, 'Forbidden');
         }
 
-        $ServiceGroups = ServiceGroup::findOrFail($id);
-        $ServiceGroups->name = $request->input('u_sg');
-        $ServiceGroups->type_id = $request->input('u_sg_type');
+        $ServiceGroup = ServiceGroup::findOrFail($id);
+        
+        // Capture old data before update
+        $oldData = [
+            'name' => $ServiceGroup->name,
+            'type_id' => $ServiceGroup->type_id,
+            'status' => $ServiceGroup->status,
+            'effective_timestamp' => $ServiceGroup->effective_timestamp,
+        ];
+
+        $ServiceGroup->name = $request->input('u_sg');
+        $ServiceGroup->type_id = $request->input('u_sg_type');
         $effective_date = $request->input('u_sg_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -1184,28 +1367,44 @@ class ServicesController extends Controller
              $status = 0; //Inactive
         }
 
-        $ServiceGroups->effective_timestamp = $effective_date;
-        $ServiceGroups->last_updated = $this->currentDatetime;
-        $ServiceGroups->status = $status;
+        $ServiceGroup->effective_timestamp = $effective_date;
+        $ServiceGroup->last_updated = $this->currentDatetime;
+        $ServiceGroup->status = $status;
 
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $ServiceGroups->save();
+        $ServiceGroup->save();
 
-        if (empty($ServiceGroups->id)) {
+        if (empty($ServiceGroup->id)) {
             return response()->json(['error' => 'Failed to update Service Group. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-        $ServiceGroupLog = ServiceGroup::where('id', $ServiceGroups->id)->first();
+        
+        // Capture new data after update
+        $newData = [
+            'name' => $ServiceGroup->name,
+            'type_id' => $ServiceGroup->type_id,
+            'status' => $ServiceGroup->status,
+            'effective_timestamp' => $ServiceGroup->effective_timestamp,
+        ];
+        
+        $logId = createLog(
+            'service_groups',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ServiceGroup->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        
+        $ServiceGroupLog = ServiceGroup::where('id', $ServiceGroup->id)->first();
         $logIds = $ServiceGroupLog->logid ? explode(',', $ServiceGroupLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceGroupLog->logid = implode(',', $logIds);
         $ServiceGroupLog->save();
         return response()->json(['success' => 'Service Group updated successfully']);
@@ -1279,14 +1478,30 @@ class ServicesController extends Controller
                 return response()->json(['error' => 'Failed to create Service.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'services',
-                'content' => "'{$Service}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $Services->logid = $logs->id;
+            // Prepare new data for logging
+            $newServiceData = [
+                'name' => $Service,
+                'group_id' => $GroupId,
+                'charge' => $Charge,
+                'unit_id' => $Unit,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
+
+            $logId = createLog(
+                'services',
+                'insert',
+                [
+                    'message' => "'{$Service}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $Services->id,
+                null,
+                $newServiceData,
+                $sessionId
+            );
+
+            $Services->logid = $logId;
             $Services->save();
             return response()->json(['success' => 'Service created successfully']);
         }
@@ -1432,15 +1647,27 @@ class ServicesController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'services',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ServiceID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ServicesLog = Service::where('id', $ServiceID)->first();
         $logIds = $ServicesLog->logid ? explode(',', $ServicesLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServicesLog->logid = implode(',', $logIds);
         $ServicesLog->save();
 
@@ -1504,11 +1731,22 @@ class ServicesController extends Controller
             abort(403, 'Forbidden');
         }
 
-        $Services = Service::findOrFail($id);
-        $Services->name = $request->input('u_service');
-        $Services->group_id = $request->input('u_s_group');
-        $Services->charge = $request->input('u_s_charge');
-        $Services->unit_id = $request->input('u_s_unit');
+        $Service = Service::findOrFail($id);
+        
+        // Capture old data before update
+        $oldData = [
+            'name' => $Service->name,
+            'group_id' => $Service->group_id,
+            'charge' => $Service->charge,
+            'unit_id' => $Service->unit_id,
+            'status' => $Service->status,
+            'effective_timestamp' => $Service->effective_timestamp,
+        ];
+
+        $Service->name = $request->input('u_service');
+        $Service->group_id = $request->input('u_s_group');
+        $Service->charge = $request->input('u_s_charge');
+        $Service->unit_id = $request->input('u_s_unit');
         $effective_date = $request->input('u_s_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -1520,28 +1758,46 @@ class ServicesController extends Controller
              $status = 0; //Inactive
         }
 
-        $Services->effective_timestamp = $effective_date;
-        $Services->last_updated = $this->currentDatetime;
-        $Services->status = $status;
+        $Service->effective_timestamp = $effective_date;
+        $Service->last_updated = $this->currentDatetime;
+        $Service->status = $status;
 
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $Services->save();
+        $Service->save();
 
-        if (empty($Services->id)) {
+        if (empty($Service->id)) {
             return response()->json(['error' => 'Failed to update Service. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-        $ServicesLog = Service::where('id', $Services->id)->first();
+        
+        // Capture new data after update
+        $newData = [
+            'name' => $Service->name,
+            'group_id' => $Service->group_id,
+            'charge' => $Service->charge,
+            'unit_id' => $Service->unit_id,
+            'status' => $Service->status,
+            'effective_timestamp' => $Service->effective_timestamp,
+        ];
+        
+        $logId = createLog(
+            'services',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $Service->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        
+        $ServicesLog = Service::where('id', $Service->id)->first();
         $logIds = $ServicesLog->logid ? explode(',', $ServicesLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServicesLog->logid = implode(',', $logIds);
         $ServicesLog->save();
         return response()->json(['success' => 'Service updated successfully']);
@@ -1648,14 +1904,32 @@ class ServicesController extends Controller
                 return response()->json(['error' => 'Failed to Activate Service.']);
             }
 
+            // Prepare new data for logging
+            $newActivatedServiceData = [
+                'org_id' => $ActivateService->org_id,
+                'site_id' => $ActivateService->site_id,
+                'service_id' => $ActivateService->service_id,
+                'ordering_cc_ids' => $ActivateService->ordering_cc_ids,
+                'performing_cc_ids' => $ActivateService->performing_cc_ids,
+                'servicemode_ids' => $ActivateService->servicemode_ids,
+                'status' => $ActivateService->status,
+                'effective_timestamp' => $Edt,
+            ];
 
-            $logs = Logs::create([
-                'module' => 'services',
-                'content' => "Service activated by '{$sessionName}'",
-                'event' => 'activate',
-                'timestamp' => $timestamp,
-            ]);
-            $ActivateService->logid = $logs->id;
+            $logId = createLog(
+                'service_activations',
+                'insert',
+                [
+                    'message' => "Service activated",
+                    'created_by' => $sessionName
+                ],
+                $ActivateService->id,
+                null,
+                $newActivatedServiceData,
+                $sessionId
+            );
+
+            $ActivateService->logid = $logId;
 
 
             $existsInRequisition = ServiceRequisitionSetup::where('org_id', $OrgId)
@@ -1955,15 +2229,27 @@ class ServicesController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'service_activations',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ActivateServiceID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ActivateServiceLog = ServiceActivation::where('id', $ActivateServiceID)->first();
         $logIds = $ActivateServiceLog->logid ? explode(',', $ActivateServiceLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ActivateServiceLog->logid = implode(',', $logIds);
         $ActivateServiceLog->save();
 
@@ -2070,6 +2356,17 @@ class ServicesController extends Controller
             abort(403, 'Forbidden');
         }
         $ActivatedService = ServiceActivation::findOrFail($id);
+        
+        // Capture old data before update
+        $oldData = [
+            'service_id' => $ActivatedService->service_id,
+            'ordering_cc_ids' => $ActivatedService->ordering_cc_ids,
+            'performing_cc_ids' => $ActivatedService->performing_cc_ids,
+            'servicemode_ids' => $ActivatedService->servicemode_ids,
+            'status' => $ActivatedService->status,
+            'effective_timestamp' => $ActivatedService->effective_timestamp,
+        ];
+
         $ActivatedService->service_id = $request->input('u_service');
         $OrderingCCId = $request->input('ubillingcc_id');
         $OrderingCCIds = is_array($OrderingCCId) ? implode(',', $OrderingCCId) : '';
@@ -2097,21 +2394,40 @@ class ServicesController extends Controller
 
         $session = auth()->user();
         $sessionName = $session->name;
+        $sessionId = $session->id;
 
         $ActivatedService->save();
 
         if (empty($ActivatedService->id)) {
             return response()->json(['error' => 'Service Activation Update Failed. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newData = [
+            'service_id' => $ActivatedService->service_id,
+            'ordering_cc_ids' => $ActivatedService->ordering_cc_ids,
+            'performing_cc_ids' => $ActivatedService->performing_cc_ids,
+            'servicemode_ids' => $ActivatedService->servicemode_ids,
+            'status' => $ActivatedService->status,
+            'effective_timestamp' => $ActivatedService->effective_timestamp,
+        ];
+        
+        $logId = createLog(
+            'service_activations',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ActivatedService->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        
         $ActivatedServiceLog = ServiceActivation::where('id', $ActivatedService->id)->first();
         $logIds = $ActivatedServiceLog->logid ? explode(',', $ActivatedServiceLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ActivatedServiceLog->logid = implode(',', $logIds);
         $ActivatedServiceLog->save();
         return response()->json(['success' => 'Service Activation updated successfully']);
@@ -2216,7 +2532,6 @@ class ServicesController extends Controller
             ->where('patient_inout.status', 1)
             ->distinct()
             ->get();
-;
         return response()->json($serviceDetails);
     }
 
@@ -2488,7 +2803,6 @@ class ServicesController extends Controller
         }
 
 
-
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
@@ -2523,14 +2837,29 @@ class ServicesController extends Controller
                 return response()->json(['error' => 'Failed to create Service location.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'services',
-                'content' => "'{$ServiceLocation}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $ServiceLocations->logid = $logs->id;
+            // Prepare new data for logging
+            $newServiceLocationData = [
+                'name' => $ServiceLocation,
+                'org_id' => $Org,
+                'inventory_status' => $InvStatus,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
+
+            $logId = createLog(
+                'service_locations',
+                'insert',
+                [
+                    'message' => "'{$ServiceLocation}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $ServiceLocations->id,
+                null,
+                $newServiceLocationData,
+                $sessionId
+            );
+
+            $ServiceLocations->logid = $logId;
             $ServiceLocations->save();
             return response()->json(['success' => 'Service location created successfully']);
         }
@@ -2670,15 +2999,27 @@ class ServicesController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'service_locations',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $LocationID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ServiceLocationLog = ServiceLocation::where('id', $LocationID)->first();
         $logIds = $ServiceLocationLog->logid ? explode(',', $ServiceLocationLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceLocationLog->logid = implode(',', $logIds);
         $ServiceLocationLog->save();
 
@@ -2730,14 +3071,24 @@ class ServicesController extends Controller
             abort(403, 'Forbidden');
         }
 
-        $ServiceLocations = ServiceLocation::findOrFail($id);
-        $ServiceLocations->name = $request->input('u_sl');
+        $ServiceLocation = ServiceLocation::findOrFail($id);
+        
+        // Capture old data before update
+        $oldData = [
+            'name' => $ServiceLocation->name,
+            'org_id' => $ServiceLocation->org_id,
+            'inventory_status' => $ServiceLocation->inventory_status,
+            'status' => $ServiceLocation->status,
+            'effective_timestamp' => $ServiceLocation->effective_timestamp,
+        ];
+
+        $ServiceLocation->name = $request->input('u_sl');
         $orgID = $request->input('u_slorg');
         if (isset($orgID)) {
-            $ServiceLocations->org_id = $orgID;
+            $ServiceLocation->org_id = $orgID;
         }
-        // $ServiceLocations->site_id = $request->input('u_slsite');
-        $ServiceLocations->inventory_status = $request->input('u_invstatus');
+        // $ServiceLocation->site_id = $request->input('u_slsite');
+        $ServiceLocation->inventory_status = $request->input('u_invstatus');
         $effective_date = $request->input('usl_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -2749,28 +3100,45 @@ class ServicesController extends Controller
              $status = 0; //Inactive
         }
 
-        $ServiceLocations->effective_timestamp = $effective_date;
-        $ServiceLocations->last_updated = $this->currentDatetime;
-        $ServiceLocations->status = $status;
+        $ServiceLocation->effective_timestamp = $effective_date;
+        $ServiceLocation->last_updated = $this->currentDatetime;
+        $ServiceLocation->status = $status;
 
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $ServiceLocations->save();
+        $ServiceLocation->save();
 
-        if (empty($ServiceLocations->id)) {
+        if (empty($ServiceLocation->id)) {
             return response()->json(['error' => 'Service Location Update Failed. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-        $ServiceLocationLog = ServiceLocation::where('id', $ServiceLocations->id)->first();
+        
+        // Capture new data after update
+        $newData = [
+            'name' => $ServiceLocation->name,
+            'org_id' => $ServiceLocation->org_id,
+            'inventory_status' => $ServiceLocation->inventory_status,
+            'status' => $ServiceLocation->status,
+            'effective_timestamp' => $ServiceLocation->effective_timestamp,
+        ];
+        
+        $logId = createLog(
+            'service_locations',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ServiceLocation->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        
+        $ServiceLocationLog = ServiceLocation::where('id', $ServiceLocation->id)->first();
         $logIds = $ServiceLocationLog->logid ? explode(',', $ServiceLocationLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceLocationLog->logid = implode(',', $logIds);
         $ServiceLocationLog->save();
         return response()->json(['success' => 'Service Location updated successfully']);
@@ -3125,14 +3493,29 @@ class ServicesController extends Controller
                     return response()->json(['error' => 'Failed to Activate Service Location.']);
                 }
 
-                $logs = Logs::create([
-                    'module' => 'service',
-                    'content' => "Service Location activated by '{$sessionName}'",
-                    'event' => 'activate',
-                    'timestamp' => $timestamp,
-                ]);
-                $logId = $logs->id;
-                $ActivatedLocation->logid = $logs->id;
+                // Prepare new data for logging
+                $newActivatedLocationData = [
+                    'org_id' => $ActivatedLocation->org_id,
+                    'site_id' => $ActivatedLocation->site_id,
+                    'location_id' => $ActivatedLocation->location_id,
+                    'status' => $ActivatedLocation->status,
+                    'effective_timestamp' => $Edt,
+                ];
+
+                $logId = createLog(
+                    'activated_locations',
+                    'insert',
+                    [
+                        'message' => "Service Location activated",
+                        'created_by' => $sessionName
+                    ],
+                    $ActivatedLocation->id,
+                    null,
+                    $newActivatedLocationData,
+                    $sessionId
+                );
+
+                $ActivatedLocation->logid = $logId;
                 $ActivatedLocation->save();
                 // $activatedCount++;
             }
@@ -3284,15 +3667,27 @@ class ServicesController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'activated_locations',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ActivateSLID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ActivatedLocationLog = ActivatedLocations::where('id', $ActivateSLID)->first();
         $logIds = $ActivatedLocationLog->logid ? explode(',', $ActivatedLocationLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ActivatedLocationLog->logid = implode(',', $logIds);
         $ActivatedLocationLog->save();
 
@@ -3349,6 +3744,15 @@ class ServicesController extends Controller
         }
 
         $ActivatedLocation = ActivatedLocations::findOrFail($id);
+        
+        // Capture old data before update
+        $oldData = [
+            'org_id' => $ActivatedLocation->org_id,
+            'site_id' => $ActivatedLocation->site_id,
+            'location_id' => $ActivatedLocation->location_id,
+            'status' => $ActivatedLocation->status,
+            'effective_timestamp' => $ActivatedLocation->effective_timestamp,
+        ];
 
         $orgID = $request->input('u_slorg');
 
@@ -3381,15 +3785,32 @@ class ServicesController extends Controller
         if (empty($ActivatedLocation->id)) {
             return response()->json(['error' => 'Service Location Activation Failed. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newData = [
+            'org_id' => $ActivatedLocation->org_id,
+            'site_id' => $ActivatedLocation->site_id,
+            'location_id' => $ActivatedLocation->location_id,
+            'status' => $ActivatedLocation->status,
+            'effective_timestamp' => $ActivatedLocation->effective_timestamp,
+        ];
+        
+        $logId = createLog(
+            'activated_locations',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ActivatedLocation->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        
         $ActivatedLocationLog = ActivatedLocations::where('id', $ActivatedLocation->id)->first();
         $logIds = $ActivatedLocationLog->logid ? explode(',', $ActivatedLocationLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ActivatedLocationLog->logid = implode(',', $logIds);
         $ActivatedLocationLog->save();
         return response()->json(['success' => 'Service Location Activation updated successfully']);
@@ -3550,14 +3971,34 @@ class ServicesController extends Controller
                 return response()->json(['error' => 'Failed to create Service location Schedule.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'services',
-                'content' => "'{$LocationSchedule}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $LocationScheduling->logid = $logs->id;
+            // Prepare new data for logging
+            $newLocationSchedulingData = [
+                'name' => $LocationSchedule,
+                'org_id' => $Org,
+                'site_id' => $Site,
+                'service_location_id' => $ServiceLocation,
+                'start_timestamp' => $startTimestamp,
+                'end_timestamp' => $endTimestamp,
+                'schedule_pattern' => $schedulePattern,
+                'emp_id' => $Emp,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
+
+            $logId = createLog(
+                'service_location_scheduling',
+                'insert',
+                [
+                    'message' => "'{$LocationSchedule}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $LocationScheduling->id,
+                null,
+                $newLocationSchedulingData,
+                $sessionId
+            );
+
+            $LocationScheduling->logid = $logId;
             $LocationScheduling->save();
             return response()->json(['success' => 'Service location Schedule created successfully']);
         }
@@ -3751,15 +4192,27 @@ class ServicesController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'service_location_scheduling',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $LocationSchedulingID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $LocationSchedulingLog = ServiceLocationScheduling::where('id', $LocationSchedulingID)->first();
         $logIds = $LocationSchedulingLog->logid ? explode(',', $LocationSchedulingLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $LocationSchedulingLog->logid = implode(',', $logIds);
         $LocationSchedulingLog->save();
 
@@ -3894,6 +4347,26 @@ class ServicesController extends Controller
             abort(403, 'Forbidden');
         }
         $LocationSchedule = ServiceLocationScheduling::findOrFail($id);
+        
+        // Capture old data before update
+        $oldData = [
+            'name' => $LocationSchedule->name,
+            'org_id' => $LocationSchedule->org_id,
+            'site_id' => $LocationSchedule->site_id,
+            'service_location_id' => $LocationSchedule->service_location_id,
+            'start_timestamp' => $LocationSchedule->start_timestamp,
+            'end_timestamp' => $LocationSchedule->end_timestamp,
+            'schedule_pattern' => $LocationSchedule->schedule_pattern,
+            'total_patient_limit' => $LocationSchedule->total_patient_limit,
+            'new_patient_limit' => $LocationSchedule->new_patient_limit,
+            'followup_patient_limit' => $LocationSchedule->followup_patient_limit,
+            'routine_patient_limit' => $LocationSchedule->routine_patient_limit,
+            'urgent_patient_limit' => $LocationSchedule->urgent_patient_limit,
+            'emp_id' => $LocationSchedule->emp_id,
+            'status' => $LocationSchedule->status,
+            'effective_timestamp' => $LocationSchedule->effective_timestamp,
+        ];
+
         $LocationSchedule->name = $request->input('u_service_schedule');
         $orgID = $request->input('u_ssorg');
         if (isset($orgID)) {
@@ -3975,15 +4448,42 @@ class ServicesController extends Controller
         if (empty($LocationSchedule->id)) {
             return response()->json(['error' => 'Service Location Schedule Update Failed. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newData = [
+            'name' => $LocationSchedule->name,
+            'org_id' => $LocationSchedule->org_id,
+            'site_id' => $LocationSchedule->site_id,
+            'service_location_id' => $LocationSchedule->service_location_id,
+            'start_timestamp' => $LocationSchedule->start_timestamp,
+            'end_timestamp' => $LocationSchedule->end_timestamp,
+            'schedule_pattern' => $LocationSchedule->schedule_pattern,
+            'total_patient_limit' => $LocationSchedule->total_patient_limit,
+            'new_patient_limit' => $LocationSchedule->new_patient_limit,
+            'followup_patient_limit' => $LocationSchedule->followup_patient_limit,
+            'routine_patient_limit' => $LocationSchedule->routine_patient_limit,
+            'urgent_patient_limit' => $LocationSchedule->urgent_patient_limit,
+            'emp_id' => $LocationSchedule->emp_id,
+            'status' => $LocationSchedule->status,
+            'effective_timestamp' => $LocationSchedule->effective_timestamp,
+        ];
+        
+        $logId = createLog(
+            'service_location_scheduling',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $LocationSchedule->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        
         $LocationScheduleLog = ServiceLocationScheduling::where('id', $LocationSchedule->id)->first();
         $logIds = $LocationScheduleLog->logid ? explode(',', $LocationScheduleLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $LocationScheduleLog->logid = implode(',', $logIds);
         $LocationScheduleLog->save();
         return response()->json(['success' => 'Service Location Schedule updated successfully']);
@@ -4156,14 +4656,35 @@ class ServicesController extends Controller
                 return response()->json(['error' => 'Unable to Book Service! Please Try Again.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'services',
-                'content' => "'{$Remarks}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $Booking->logid = $logs->id;
+            // Prepare new data for logging
+            $newBookingData = [
+                'remarks' => $Remarks,
+                'org_id' => $Org,
+                'site_id' => $Site,
+                'service_location_id' => $ServiceLocation,
+                'service_id' => $Service,
+                'service_mode_id' => $ServiceMode,
+                'billing_cc' => $BillingCC,
+                'schedule_id' => $LocationSchedule,
+                'emp_id' => $Physician,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
+
+            $logId = createLog(
+                'service_booking',
+                'insert',
+                [
+                    'message' => "Service has been booked",
+                    'created_by' => $sessionName
+                ],
+                $Booking->id,
+                null,
+                $newBookingData,
+                $sessionId
+            );
+
+            $Booking->logid = $logId;
             $Booking->save();
             return response()->json(['success' => 'Service Booking created successfully']);
         }
@@ -4806,15 +5327,27 @@ class ServicesController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'service_booking',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ServiceBookingID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ServiceBookingLog = ServiceBooking::where('id', $ServiceBookingID)->first();
         $logIds = $ServiceBookingLog->logid ? explode(',', $ServiceBookingLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceBookingLog->logid = implode(',', $logIds);
         $ServiceBookingLog->save();
 
@@ -4905,22 +5438,41 @@ class ServicesController extends Controller
         {
             abort(403, 'Forbidden');
         }
-        $ServiceBookings = ServiceBooking::findOrFail($id);
-        $ServiceBookings->remarks = $request->input('u_sb_remarks');
+        $ServiceBooking = ServiceBooking::findOrFail($id);
+        
+        // Capture old data before update
+        $oldData = [
+            'remarks' => $ServiceBooking->remarks,
+            'org_id' => $ServiceBooking->org_id,
+            'site_id' => $ServiceBooking->site_id,
+            'service_location_id' => $ServiceBooking->service_location_id,
+            'schedule_id' => $ServiceBooking->schedule_id,
+            'emp_id' => $ServiceBooking->emp_id,
+            'service_id' => $ServiceBooking->service_id,
+            'service_mode_id' => $ServiceBooking->service_mode_id,
+            'billing_cc' => $ServiceBooking->billing_cc,
+            'mr_code' => $ServiceBooking->mr_code,
+            'patient_status' => $ServiceBooking->patient_status,
+            'patient_priority' => $ServiceBooking->patient_priority,
+            'status' => $ServiceBooking->status,
+            'effective_timestamp' => $ServiceBooking->effective_timestamp,
+        ];
+
+        $ServiceBooking->remarks = $request->input('u_sb_remarks');
         $orgID = $request->input('u_sb_org');
         if (isset($orgID)) {
-            $ServiceBookings->org_id = $orgID;
+            $ServiceBooking->org_id = $orgID;
         }
-        $ServiceBookings->site_id = $request->input('u_sb_site');
-        $ServiceBookings->service_location_id = $request->input('u_sb_location');
-        $ServiceBookings->schedule_id = $request->input('u_sb_schedule');
-        $ServiceBookings->emp_id = $request->input('u_sb_emp');
-        $ServiceBookings->service_id = $request->input('u_sb_service');
-        $ServiceBookings->service_mode_id = $request->input('u_sb_sm');
-        $ServiceBookings->billing_cc = $request->input('u_sb_cc');
-        $ServiceBookings->mr_code = $request->input('u_sb_mr');
-        $ServiceBookings->patient_status = $request->input('u_sbp_status');
-        $ServiceBookings->patient_priority = $request->input('u_sbp_priority');
+        $ServiceBooking->site_id = $request->input('u_sb_site');
+        $ServiceBooking->service_location_id = $request->input('u_sb_location');
+        $ServiceBooking->schedule_id = $request->input('u_sb_schedule');
+        $ServiceBooking->emp_id = $request->input('u_sb_emp');
+        $ServiceBooking->service_id = $request->input('u_sb_service');
+        $ServiceBooking->service_mode_id = $request->input('u_sb_sm');
+        $ServiceBooking->billing_cc = $request->input('u_sb_cc');
+        $ServiceBooking->mr_code = $request->input('u_sb_mr');
+        $ServiceBooking->patient_status = $request->input('u_sbp_status');
+        $ServiceBooking->patient_priority = $request->input('u_sbp_priority');
         $effective_date = $request->input('u_sb_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -4932,28 +5484,54 @@ class ServicesController extends Controller
              $status = 0; //Inactive
         }
 
-        $ServiceBookings->effective_timestamp = $effective_date;
-        $ServiceBookings->last_updated = $this->currentDatetime;
-        $ServiceBookings->status = $status;
+        $ServiceBooking->effective_timestamp = $effective_date;
+        $ServiceBooking->last_updated = $this->currentDatetime;
+        $ServiceBooking->status = $status;
 
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $ServiceBookings->save();
+        $ServiceBooking->save();
 
-        if (empty($ServiceBookings->id)) {
+        if (empty($ServiceBooking->id)) {
             return response()->json(['error' => 'Service Booking Update Failed. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-        $ServiceBookingLog = ServiceBooking::where('id', $ServiceBookings->id)->first();
+        
+        // Capture new data after update
+        $newData = [
+            'remarks' => $ServiceBooking->remarks,
+            'org_id' => $ServiceBooking->org_id,
+            'site_id' => $ServiceBooking->site_id,
+            'service_location_id' => $ServiceBooking->service_location_id,
+            'schedule_id' => $ServiceBooking->schedule_id,
+            'emp_id' => $ServiceBooking->emp_id,
+            'service_id' => $ServiceBooking->service_id,
+            'service_mode_id' => $ServiceBooking->service_mode_id,
+            'billing_cc' => $ServiceBooking->billing_cc,
+            'mr_code' => $ServiceBooking->mr_code,
+            'patient_status' => $ServiceBooking->patient_status,
+            'patient_priority' => $ServiceBooking->patient_priority,
+            'status' => $ServiceBooking->status,
+            'effective_timestamp' => $ServiceBooking->effective_timestamp,
+        ];
+        
+        $logId = createLog(
+            'service_booking',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ServiceBooking->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        
+        $ServiceBookingLog = ServiceBooking::where('id', $ServiceBooking->id)->first();
         $logIds = $ServiceBookingLog->logid ? explode(',', $ServiceBookingLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceBookingLog->logid = implode(',', $logIds);
         $ServiceBookingLog->save();
         return response()->json(['success' => 'Service Booking updated successfully']);
@@ -5205,15 +5783,27 @@ class ServicesController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'service_requisition_setup',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ServiceRequisitionLog = ServiceRequisitionSetup::where('id', $ID)->first();
         $logIds = $ServiceRequisitionLog->logid ? explode(',', $ServiceRequisitionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceRequisitionLog->logid = implode(',', $logIds);
         $ServiceRequisitionLog->save();
 
@@ -5271,6 +5861,17 @@ class ServicesController extends Controller
         }
 
         $ServiceRequisition = ServiceRequisitionSetup::findOrFail($id);
+        
+        // Capture old data before update
+        $oldData = [
+            'org_id' => $ServiceRequisition->org_id,
+            'service_id' => $ServiceRequisition->service_id,
+            'mandatory' => $ServiceRequisition->mandatory,
+            'description' => $ServiceRequisition->description,
+            'status' => $ServiceRequisition->status,
+            'effective_timestamp' => $ServiceRequisition->effective_timestamp,
+        ];
+
         $orgID = $request->input('u_srorg');
         if (isset($orgID)) {
             $ServiceRequisition->org_id = $orgID;
@@ -5302,15 +5903,33 @@ class ServicesController extends Controller
         if (empty($ServiceRequisition->id)) {
             return response()->json(['error' => 'Service Requisition Details Update Failed. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'services',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newData = [
+            'org_id' => $ServiceRequisition->org_id,
+            'service_id' => $ServiceRequisition->service_id,
+            'mandatory' => $ServiceRequisition->mandatory,
+            'description' => $ServiceRequisition->description,
+            'status' => $ServiceRequisition->status,
+            'effective_timestamp' => $ServiceRequisition->effective_timestamp,
+        ];
+        
+        $logId = createLog(
+            'service_requisition_setup',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ServiceRequisition->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        
         $ServiceRequisitionLog = ServiceRequisitionSetup::where('id', $ServiceRequisition->id)->first();
         $logIds = $ServiceRequisitionLog->logid ? explode(',', $ServiceRequisitionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceRequisitionLog->logid = implode(',', $logIds);
         $ServiceRequisitionLog->save();
         return response()->json(['success' => 'Service Requisition details updated successfully']);

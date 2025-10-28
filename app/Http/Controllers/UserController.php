@@ -79,10 +79,22 @@ class UserController extends Controller
         {
             abort(403, 'Forbidden');
         }
-        $roles = UserRole::select(['id', 'role', 'remarks', 'status','logid',
-        'effective_timestamp','user_id','last_updated','timestamp'])
-        ->where('id', '!=', '1')
-        ->orderBy('id', 'desc');
+        // Join rights to fetch rights log ids along with role log ids
+        $roles = UserRole::select([
+            'role.id',
+            'role.role',
+            'role.remarks',
+            'role.status',
+            'role.logid',
+            'role.effective_timestamp',
+            'role.user_id',
+            'role.last_updated',
+            'role.timestamp',
+            DB::raw('rights.logid as rights_logid')
+        ])
+        ->leftJoin('rights', 'rights.role_id', '=', 'role.id')
+        ->where('role.id', '!=', '1')
+        ->orderBy('role.id', 'desc');
         // ->get();
 
         // return DataTables::of($roles)
@@ -130,6 +142,7 @@ class UserController extends Controller
             ->addColumn('action', function ($role) {
                 $roleId = $role->id;
                 $logId = $role->logid;
+                $rightsLogId = isset($role->rights_logid) ? $role->rights_logid : null;
                 $sessionRights = $this->rights;
                 $edit = explode(',', $sessionRights->user_roles)[2];
                 $add = explode(',', $sessionRights->user_roles)[0];
@@ -137,9 +150,12 @@ class UserController extends Controller
                 $asignRights = explode(',', $sessionRights->user_roles)[4];
 
                 $actionButtons = '';
-
-                $rights = DB::table('rights')->where('role_id', $roleId)->first();
-                if ($rights) {
+                
+                // Prefer joined rights info when available (fallback to a direct lookup)
+                $hasRights = $rightsLogId !== null ? true : DB::table('rights')->where('role_id', $roleId)->exists();
+                if ($hasRights) {
+                    // Combine role and rights log ids
+                    $combinedLogIds = trim(implode(',', array_filter([$logId, $rightsLogId])));
                     if ($edit == 1) {
                         $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 edit-role" data-role-id="'.$roleId.'">'
                         . '<i class="fa fa-edit"></i> Edit'
@@ -147,7 +163,7 @@ class UserController extends Controller
                     }
                     
                     
-                    $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
+                    $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$combinedLogIds.'">'
                     . '<i class="fa fa-eye"></i> View Logs'
                     . '</button>';
 
@@ -223,20 +239,35 @@ class UserController extends Controller
             $UserRole->last_updated = $last_updated;
             $UserRole->timestamp = $timestamp;
             $UserRole->save();
+            
             if (empty($UserRole->id)) {
                 return response()->json(['error' => 'Failed to create role.']);
             }
-            $logs = Logs::create([
-                'module' => 'role',
-                'content' => "'{$roleName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $UserRole->logid = $logs->id;
+            
+            // Prepare new data for logging
+            $newRoleData = [
+                'role' => $roleName,
+                'remarks' => $remarks,
+                'status' => $status,
+                'effective_timestamp' => $roleEdt,
+            ];
+            
+            $logId = createLog(
+                'user_roles',
+                'insert',
+                [
+                    'message' => "'{$roleName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $UserRole->id,
+                null,
+                $newRoleData,
+                $sessionId
+            );
+            
+            $UserRole->logid = $logId;
             $UserRole->save();
 
-            $InsertedID = UserRole::find($UserRole->id);
             return response()->json(['success' => 'Role created successfully']);
         }
     }
@@ -258,7 +289,12 @@ class UserController extends Controller
         $sessionId = $session->id;
 
         $role = UserRole::find($RoleID);
-        // $TableName = (new UserRole())->getTable();
+        
+        // Capture old status data
+        $oldStatusData = [
+            // use current status from request as the old value prior to toggle
+            'status' => (int)$Status,
+        ];
 
         if($Status == 0)
         {
@@ -271,23 +307,38 @@ class UserController extends Controller
             $statusLog = 'Inactive';
             $role->effective_timestamp = 0;
         }
-        // Find the role by ID
+        
+        // Update the status
         $role->status = $UpdateStatus;
         $role->last_updated = $CurrentTimestamp;
+        $role->save();
 
-        $logs = Logs::create([
-            'module' => 'role',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture new status data
+        $newStatusData = [
+            'status' => $role->status,
+        ];
+        
+        // Create log for status change
+        $logId = createLog(
+            'user_roles',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $RoleID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
+        // Update role logid
         $userRole = UserRole::where('id', $RoleID)->first();
         $logIds = $userRole->logid ? explode(',', $userRole->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $userRole->logid = implode(',', $logIds);
         $userRole->save();
 
-        $role->save();
         return response()->json(['success' => true, 200]);
 
     }
@@ -326,8 +377,16 @@ class UserController extends Controller
             abort(403, 'Forbidden');
         }
         $role = UserRole::findOrFail($id);
+        
+        // Capture old data
+        $oldRoleData = [
+            'role' => $role->role,
+            'remarks' => $role->remarks,
+            'status' => $role->status,
+            'effective_timestamp' => $role->effective_timestamp,
+        ];
+        
         // Update the role with the new values
-        $roleName = $role->role;
         $role->role = $request->input('u_role');
         $role->remarks = $request->input('u_remarks');
         $effective_date = $request->input('u_edt');
@@ -335,40 +394,53 @@ class UserController extends Controller
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
         $EffectDateTime->subMinute(1);
         if ($EffectDateTime->isPast()) {
-            $status = 1; //Active
+            $status = 1;
         } else {
-             $status = 0; //Inactive
+             $status = 0;
         }
 
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        // $role->effective_timestamp = $effective_date->timestamp;
         $role->effective_timestamp = $effective_date;
         $role->last_updated = $this->currentDatetime;
         $role->status = $status;
-
         $role->save();
 
         if (empty($role->id)) {
             return response()->json(['error' => 'Failed to update role. Please try again']);
         }
-        else{
-            $logs = Logs::create([
-                'module' => 'role',
-                'content' => "Data has been updated by '{$sessionName}'",
-                'event' => 'update',
-                'timestamp' => $this->currentDatetime,
-            ]);
-            $userRole = UserRole::where('id', $id)->first();
-            $logIds = $userRole->logid ? explode(',', $userRole->logid) : [];
-            $logIds[] = $logs->id;
-            $userRole->logid = implode(',', $logIds);
-            $userRole->save();
+        
+        // Capture new data
+        $newRoleData = [
+            'role' => $role->role,
+            'remarks' => $role->remarks,
+            'status' => $role->status,
+            'effective_timestamp' => $role->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'user_roles',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $id,
+            $oldRoleData,
+            $newRoleData,
+            $sessionId
+        );
+        
+        $userRole = UserRole::where('id', $id)->first();
+        $logIds = $userRole->logid ? explode(',', $userRole->logid) : [];
+        $logIds[] = $logId;
+        $userRole->logid = implode(',', $logIds);
+        $userRole->save();
 
-            return response()->json(['success' => 'Role updated successfully']);
-        }
+        return response()->json(['success' => 'Role updated successfully']);
 
     }
 
@@ -403,6 +475,12 @@ class UserController extends Controller
     public function UpdateProfile(Request $request, $id)
     {
         $Users = Users::findOrFail($id);
+        
+        // Capture old image
+        $oldData = [
+            'image' => $Users->image,
+        ];
+        
         $userImg = $request->file('userImg');
 
         if (isset($userImg)) {
@@ -410,10 +488,9 @@ class UserController extends Controller
             $Users->image = $imgFileName;
             $imgFileName = $id . '_' . $imgFileName;
             $userImg->move(public_path('assets/users'), $imgFileName);
-
         }
+        
         $Users->last_updated = $this->currentDatetime;
-
         $session = auth()->user();
         $sessionName = $session->name;
         $sessionId = $session->id;
@@ -423,17 +500,29 @@ class UserController extends Controller
         if (empty($Users->id)) {
             return response()->json(['error' => 'Failed to update image. Please try again']);
         }
-        // $data = "Data has been updated by '{$sessionName}'";
-        $logs = Logs::create([
-            'module' => 'user',
-            'content' => "Profile Picture has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new image
+        $newData = [
+            'image' => $Users->image,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'user_setup',
+            'update',
+            [
+                'message' => "Profile Picture has been updated",
+                'updated_by' => $sessionName
+            ],
+            $id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
 
         $UserLog = Users::where('id', $id)->first();
         $logIds = $UserLog->logid ? explode(',', $UserLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $UserLog->logid = implode(',', $logIds);
         $UserLog->save();
 
@@ -491,15 +580,23 @@ class UserController extends Controller
         }
         $Rights = Rights::create($dataToInsert);
 
-        $logs = Logs::create([
-            'module' => 'user',
-            'content' => "Rights has been added by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
+        // Log summary only (no previous/new data required)
+        $logId = createLog(
+            'user_roles',
+            'insert',
+            [
+                'message' => "Rights assigned",
+                'created_by' => $sessionName
+            ],
+            $roleId,
+            null,
+            null,
+            $sessionId
+        );
 
-        $Rights->logid = $logs->id;
+        $Rights->logid = $logId;
         $Rights->save();
+        
         return response()->json(['success' => 'Rights Assigned successfully']);
 
     }
@@ -558,14 +655,23 @@ class UserController extends Controller
             }
             $existingRights->update($updatedData);
 
-            $logs = Logs::create([
-                'module' => 'user',
-                'content' => "Rights has been updated by '{$sessionName}'",
-                'event' => 'update',
-                'timestamp' => $timestamp,
-            ]);
+            // Create summary log only
+            $logId = createLog(
+                'user_roles',
+                'update',
+                [
+                    'message' => "Rights updated",
+                    'updated_by' => $sessionName
+                ],
+                $roleId,
+                null,
+                null,
+                $sessionId
+            );
 
-            $existingRights->logid = $logs->id;
+            $currentLogIds = $existingRights->logid ? explode(',', $existingRights->logid) : [];
+            $currentLogIds[] = $logId;
+            $existingRights->logid = implode(',', $currentLogIds);
             $existingRights->save();
 
             return response()->json(['success' => 'Rights updated successfully']);
@@ -582,6 +688,7 @@ class UserController extends Controller
                  ->get();
         return response()->json($roles);
     }
+
     public function viewUser()
     {
         // $session = auth()->user();
@@ -602,6 +709,7 @@ class UserController extends Controller
                 ->get();
         return view('dashboard.user', compact('allroles','organizations'));
     }
+
     public function GetUserData(Request $request)
     {
         $rights = $this->rights;
@@ -733,6 +841,7 @@ class UserController extends Controller
             'id'])
             ->make(true);
     }
+
     public function AddUser(AddUserRequest $request)
     {
         $rights = $this->rights;
@@ -860,17 +969,39 @@ class UserController extends Controller
         if (empty($Users->id)) {
             return response()->json(['error' => 'Failed to create User.']);
         }
-        $logs = Logs::create([
-            'module' => 'user',
-            'content' => "'{$username}' has been added by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
-        $logId = $logs->id;
-        $Users->logid = $logs->id;
+        
+        // Get user data for logging
+        $newUserData = [
+            'name' => $username,
+            'email' => $useremail,
+            'role_id' => $userRoleId,
+            'org_id' => $userOrgId,
+            'is_employee' => $isEmployee,
+            'site_enabled' => $siteEnabled,
+            'emp_id' => $userEmpId,
+            'status' => $status,
+            'effective_timestamp' => $userEdt,
+        ];
+        
+        $logId = createLog(
+            'user_setup',
+            'insert',
+            [
+                'message' => "Data has been added",
+                'created_by' => $sessionName
+            ],
+            $Users->id,
+            null, // previous_data (null for insert)
+            $newUserData, // new_data
+            $sessionId // user_id
+        );
+        
+        $Users->logid = $logId;
         $Users->save();
+        
         return response()->json(['success' => 'User created successfully']);
     }
+
     public function UpdateUserStatus(Request $request)
     {
         $rights = $this->rights;
@@ -888,6 +1019,11 @@ class UserController extends Controller
         $sessionId = $session->id;
 
         $user = Users::find($userId);
+        
+        // Capture old status data
+        $oldStatusData = [
+            'status' => (int)$Status,
+        ];
 
         if($Status == 0)
         {
@@ -900,26 +1036,41 @@ class UserController extends Controller
             $statusLog = 'Inactive';
             $user->effective_timestamp = 0;
         }
-        // Find the role by ID
+        
+        // Update the status
         $user->status = $UpdateStatus;
         $user->last_updated = $CurrentTimestamp;
+        $user->save();
 
-        $logs = Logs::create([
-            'module' => 'user',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture new status data
+        $newStatusData = [
+            'status' => $user->status,
+        ];
+        
+        // Create log for status change
+        $logId = createLog(
+            'user_setup',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $userId,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
+        // Update user logid
         $Users = Users::where('id', $userId)->first();
         $logIds = $Users->logid ? explode(',', $Users->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $Users->logid = implode(',', $logIds);
         $Users->save();
 
-        $user->save();
         return response()->json(['success' => true, 200]);
-
     }
+
     public function UpdateUserModal($id)
     {
         $rights = $this->rights;
@@ -975,6 +1126,7 @@ class UserController extends Controller
 
         return response()->json($data);
     }
+    
     public function UpdateUser(Request $request, $id)
     {
         $rights = $this->rights;
@@ -985,8 +1137,20 @@ class UserController extends Controller
         }
         
         $user = Users::findOrFail($id);
+        
+        // Capture old data before update
+        $oldData = [
+            'name' => $user->name,
+            'email' => $user->email,
+            'role_id' => $user->role_id,
+            'org_id' => $user->org_id,
+            'emp_id' => $user->emp_id,
+            'site_enabled' => $user->site_enabled,
+            'status' => $user->status,
+            'effective_timestamp' => $user->effective_timestamp,
+        ];
+        
         $userOrg = $request->input('user_org');
-
         $oldEmail = $user->email;
         $newEmail = $request->input('user_email');
         $user->name = $request->input('user_name');
@@ -997,8 +1161,7 @@ class UserController extends Controller
         }       
         $user->emp_id = $request->input('user_emp');
         $siteEnabled = $request->input('u_siteStatus');
-        //  ($siteEnabled == 'on') ? 1 : 0
-        $user->site_enabled =$siteEnabled;
+        $user->site_enabled = $siteEnabled;
         $effective_date = $request->input('user_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
         $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
@@ -1006,9 +1169,9 @@ class UserController extends Controller
         $userName = $request->input('user_name');
 
         if ($EffectDateTime->isPast()) {
-            $status = 1; //Active
+            $status = 1;
         } else {
-             $status = 0; //Inactive
+             $status = 0;
         }
 
         $user->effective_timestamp = $effective_date;
@@ -1036,26 +1199,37 @@ class UserController extends Controller
             return response()->json(['error' => 'Failed to update User. Please try again']);
         }
 
-        $logsContent = [
-                ["content" => "Update email notification has been sent to '{$newEmail}'", "event" => "email notification"],
-                ["content" => "Data has been updated by '{$sessionName}'", "event" => "update"],
-            ];
-
-        $logIds = [];
-        foreach ($logsContent as $logData) {
-            $logs = Logs::create([
-                'module' => 'user',
-                'content' => $logData['content'],
-                'event' => $logData['event'],
-                'timestamp' => $this->currentDatetime,
-            ]);
-            $logIds[] = $logs->id;
-        }
+        // Capture new data after update
+        $newData = [
+            'name' => $user->name,
+            'email' => $user->email,
+            'role_id' => $user->role_id,
+            'org_id' => $user->org_id,
+            'emp_id' => $user->emp_id,
+            'site_enabled' => $user->site_enabled,
+            'status' => $user->status,
+            'effective_timestamp' => $user->effective_timestamp,
+        ];
+        
+        
+        $logId = createLog(
+            'user_setup',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $user->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        
 
         $UserLog = Users::where('id', $user->id)->first();
         $existingLogIds = $UserLog->logid ? explode(',', $UserLog->logid) : [];
-        $logIds = array_merge($existingLogIds, $logIds);
-        $UserLog->logid = implode(',', $logIds);
+        $existingLogIds[] = $logId;
+        $UserLog->logid = implode(',', $existingLogIds);
         $UserLog->save();
 
         return response()->json(['success' => 'User updated successfully']);

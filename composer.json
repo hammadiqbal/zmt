@@ -33,7 +33,8 @@
         "files": [
             "app/helpers/OrdinalNum.php",
             "app/helpers/PermissionValidation.php",
-            "app/helpers/GetUserName.php"
+            "app/helpers/GetUserName.php",
+            "app/helpers/LogHelper.php"
         ]
     },
     "autoload-dev": {

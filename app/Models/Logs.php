@@ -10,5 +10,14 @@ class Logs extends Model
     use HasFactory;
     protected $table = 'logs';
     public $timestamps = false;
-    protected $fillable = ['module', 'content', 'event', 'timestamp'];
+    protected $fillable = [
+        'module',
+        'event',
+        'user_id',
+        'record_id',
+        'previous_data',
+        'new_data',
+        'summary',
+        'timestamp'
+    ];
 }

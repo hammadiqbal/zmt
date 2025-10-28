@@ -696,53 +696,7 @@ $(document).ready(function() {
 });// Role and Rights
 
 
-//Logs
-$(document).ready(function() {
-    $(document).on('click', '.logs-modal', function() {
-        const logId = $(this).data('log-id');
-        const modal = $('#logs');
-        const modalBody = modal.find('.modal-body .row');
-        modalBody.empty();
-        $('#ajax-loader').show();
 
-        if (!logId) {
-            modalBody.append($('<div class="col-12 m-t-10">').text('No logs available'));
-            modal.modal('show');
-            $('#ajax-loader').hide();
-            return;
-        }
-        const url = '/viewlogs/' + logId;
-        $.ajax({
-            url: url,
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                $('#ajax-loader').hide();
-
-                if (response.length > 0) {
-                    response.forEach(log => {
-                        const moduleTitle = log.module.toUpperCase();
-                        modal.find('.modal-title').text(moduleTitle);
-
-                        const card = $('<div class="card">')
-                            .append($('<div class="card-header">').text(log.timestamp))
-                            .append($('<div class="card-body">').html(`<p class="card-text">${log.content}</p>`));
-
-                        modalBody.append($('<div class="col-12 m-t-10">').append(card));
-                    });
-                } else {
-                    modalBody.append($('<div class="col-12 m-t-10">').text('Logs not found'));
-                }
-                modal.modal('show');
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-                $('#ajax-loader').hide();
-                console.log(textStatus, errorThrown);
-            }
-        });
-    });
-});
-//Logs
 
 
 $(document).ready(function() {

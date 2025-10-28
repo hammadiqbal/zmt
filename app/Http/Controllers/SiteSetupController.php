@@ -173,14 +173,39 @@ class SiteSetupController extends Controller
                 return response()->json(['error' => 'Failed to create Site.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'site',
-                'content' => "'{$siteName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $Site->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $siteName,
+                'org_id' => $siteOrg,
+                'old_sitecode' => $oldCode,
+                'remarks' => $siteRemarks,
+                'address' => $siteaddress,
+                'province_id' => $siteprovince,
+                'division_id' => $sitedivision,
+                'district_id' => $sitedistrict,
+                'focalperson_name' => $sitepersonname,
+                'email' => $sitepersonemail,
+                'website' => $sitewebsite,
+                'gps' => $sitegps,
+                'cell_no' => $sitecell,
+                'landline_no' => $sitelandline,
+                'status' => $status,
+                'effective_timestamp' => $siteEdt,
+            ];
+            $logId = createLog(
+                'site',
+                'insert',
+                [
+                    'message' => "'{$siteName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $Site->id,
+                null,
+                $newData,
+                $sessionId
+            );
+
+            $Site->logid = $logId;
             $Site->save();
             return response()->json(['success' => 'Site created successfully']);
         }
@@ -401,15 +426,28 @@ class SiteSetupController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'site',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status change) - only status fields
+        $oldData = [
+            'status' => (int)$Status,
+        ];
+        $newData = [
+            'status' => $UpdateStatus,
+        ];
+        $logId = createLog(
+            'site',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $SiteID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $SiteLog = Site::where('id', $SiteID)->first();
         $logIds = $SiteLog->logid ? explode(',', $SiteLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $SiteLog->logid = implode(',', $logIds);
         $SiteLog->save();
 
@@ -491,6 +529,25 @@ class SiteSetupController extends Controller
             abort(403, 'Forbidden');
         }
         $Site = Site::findOrFail($id);
+        // Capture old data
+        $oldData = [
+            'name' => $Site->name,
+            'org_id' => $Site->org_id,
+            'old_sitecode' => $Site->old_sitecode,
+            'remarks' => $Site->remarks,
+            'address' => $Site->address,
+            'province_id' => $Site->province_id,
+            'division_id' => $Site->division_id,
+            'district_id' => $Site->district_id,
+            'focalperson_name' => $Site->focalperson_name,
+            'email' => $Site->email,
+            'website' => $Site->website,
+            'gps' => $Site->gps,
+            'cell_no' => $Site->cell_no,
+            'landline_no' => $Site->landline_no,
+            'status' => $Site->status,
+            'effective_timestamp' => $Site->effective_timestamp,
+        ];
         $Site->name = trim($request->input('u_site_name'));
         $Site->org_id = $request->input('u_site_org');
         $Site->old_sitecode = $request->input('u_oldcode');
@@ -533,16 +590,40 @@ class SiteSetupController extends Controller
         if (empty($Site->id)) {
             return response()->json(['error' => 'Failed to update Site. Please try again']);
         }
-        // $data = "Data has been updated by '{$sessionName}'";
-        $logs = Logs::create([
-            'module' => 'site',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'name' => $Site->name,
+            'org_id' => $Site->org_id,
+            'old_sitecode' => $Site->old_sitecode,
+            'remarks' => $Site->remarks,
+            'address' => $Site->address,
+            'province_id' => $Site->province_id,
+            'division_id' => $Site->division_id,
+            'district_id' => $Site->district_id,
+            'focalperson_name' => $Site->focalperson_name,
+            'email' => $Site->email,
+            'website' => $Site->website,
+            'gps' => $Site->gps,
+            'cell_no' => $Site->cell_no,
+            'landline_no' => $Site->landline_no,
+            'status' => $Site->status,
+            'effective_timestamp' => $Site->effective_timestamp,
+        ];
+        $logId = createLog(
+            'site',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $Site->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $SiteLog = Site::where('id', $id)->first();
         $logIds = $SiteLog->logid ? explode(',', $SiteLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $SiteLog->logid = implode(',', $logIds);
         $SiteLog->save();
 
@@ -573,6 +654,7 @@ class SiteSetupController extends Controller
 
         return response()->json($Site);
     }
+    
     public function GetSelectedSites(Request $request)
     {
         $orgId = $request->input('orgId');
