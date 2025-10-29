@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-use App\Models\Logs;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -127,14 +126,29 @@ class FinanceController extends Controller
                 return response()->json(['error' => 'Failed to create Chart Of Accounts Strategy.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'finance',
-                'content' => "'{$StrategyDesc}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $AccountStrategy->logid = $logs->id;
+            // Prepare new data for logging
+            $newAccountStrategyData = [
+                'name' => $StrategyDesc,
+                'remarks' => $Remarks,
+                'level' => $Level,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
+
+            $logId = createLog(
+                'chart_of_accounts_strategy',
+                'insert',
+                [
+                    'message' => "'{$StrategyDesc}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $AccountStrategy->id,
+                null,
+                $newAccountStrategyData,
+                $sessionId
+            );
+
+            $AccountStrategy->logid = $logId;
             $AccountStrategy->save();
             return response()->json(['success' => 'Chart Of Accounts Strategy created successfully']);
         }
@@ -263,15 +277,27 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'chart_of_accounts_strategy',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ChartOfAccountStrategyID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ChartOfAccountStrategyLog = ChartOfAccountStrategy::where('id', $ChartOfAccountStrategyID)->first();
         $logIds = $ChartOfAccountStrategyLog->logid ? explode(',', $ChartOfAccountStrategyLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ChartOfAccountStrategyLog->logid = implode(',', $logIds);
         $ChartOfAccountStrategyLog->save();
 
@@ -317,6 +343,16 @@ class FinanceController extends Controller
             abort(403, 'Forbidden');
         }
         $ChartOfAccountStrategy = ChartOfAccountStrategy::findOrFail($id);
+        
+        // Capture old data before update
+        $oldAccountStrategyData = [
+            'name' => $ChartOfAccountStrategy->name,
+            'remarks' => $ChartOfAccountStrategy->remarks,
+            'level' => $ChartOfAccountStrategy->level,
+            'status' => $ChartOfAccountStrategy->status,
+            'effective_timestamp' => $ChartOfAccountStrategy->effective_timestamp,
+        ];
+        
         $ChartOfAccountStrategy->name = $request->input('u_accountStrategy');
         $ChartOfAccountStrategy->remarks = $request->input('u_as_remarks');
         $ChartOfAccountStrategy->level = $request->input('u_as_level');
@@ -353,15 +389,33 @@ class FinanceController extends Controller
             if (empty($ChartOfAccountStrategy->id)) {
                 return response()->json(['error' => 'Failed to update Chart Of Account Strategy Details. Please try again']);
             }
-            $logs = Logs::create([
-                'module' => 'finance',
-                'content' => "Data has been updated by '{$sessionName}'",
-                'event' => 'update',
-                'timestamp' => $this->currentDatetime,
-            ]);
+            
+            // Capture new data after update
+            $newAccountStrategyData = [
+                'name' => $ChartOfAccountStrategy->name,
+                'remarks' => $ChartOfAccountStrategy->remarks,
+                'level' => $ChartOfAccountStrategy->level,
+                'status' => $ChartOfAccountStrategy->status,
+                'effective_timestamp' => $ChartOfAccountStrategy->effective_timestamp,
+            ];
+            
+            // Create log
+            $logId = createLog(
+                'chart_of_accounts_strategy',
+                'update',
+                [
+                    'message' => "Data has been updated",
+                    'updated_by' => $sessionName
+                ],
+                $ChartOfAccountStrategy->id,
+                $oldAccountStrategyData,
+                $newAccountStrategyData,
+                $sessionId
+            );
+            
             $ChartOfAccountStrategyLog = ChartOfAccountStrategy::where('id', $ChartOfAccountStrategy->id)->first();
             $logIds = $ChartOfAccountStrategyLog->logid ? explode(',', $ChartOfAccountStrategyLog->logid) : [];
-            $logIds[] = $logs->id;
+            $logIds[] = $logId;
             $ChartOfAccountStrategyLog->logid = implode(',', $logIds);
             $ChartOfAccountStrategyLog->save();
             return response()->json(['success' => 'Chart Of Account Strategy Details updated successfully']);
@@ -454,17 +508,28 @@ class FinanceController extends Controller
                 return response()->json(['error' => 'Failed to create Chart Of Accounts Strategy Setup.']);
             }
 
-            $AccountStrategyLevelName = ChartOfAccountStrategy::where('status', 1)->where('id', $AccountLevel)->pluck('name');
-            $OrgName = Organization::where('status', 1)->where('id', $Organization)->pluck('organization');
-            $logs = Logs::create([
-                'module' => 'finance',
-                'content' => "'{$AccountStrategyLevelName[0]}' has been assigned to '{$OrgName[0]}' by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
+            // Prepare new data for logging
+            $newAccountStrategySetupData = [
+                'org_id' => $Organization,
+                'account_strategy_id' => $AccountLevel,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
 
-            $logId = $logs->id;
-            $AccountStrategySetup->logid = $logs->id;
+            $logId = createLog(
+                'chart_of_accounts_strategy_setup',
+                'insert',
+                [
+                    'message' => "Account Strategy has been assigned",
+                    'created_by' => $sessionName
+                ],
+                $AccountStrategySetup->id,
+                null,
+                $newAccountStrategySetupData,
+                $sessionId
+            );
+
+            $AccountStrategySetup->logid = $logId;
             $AccountStrategySetup->save();
             return response()->json(['success' => 'Chart Of Accounts Strategy Setup added successfully']);
         }
@@ -658,15 +723,27 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'chart_of_accounts_strategy_setup',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ChartOfAccountStrategySetupID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ChartOfAccountStrategySetupLog = ChartOfAccountStrategySetup::where('id', $ChartOfAccountStrategySetupID)->first();
         $logIds = $ChartOfAccountStrategySetupLog->logid ? explode(',', $ChartOfAccountStrategySetupLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ChartOfAccountStrategySetupLog->logid = implode(',', $logIds);
         $ChartOfAccountStrategySetupLog->save();
 
@@ -719,6 +796,15 @@ class FinanceController extends Controller
             abort(403, 'Forbidden');
         }
         $ChartOfAccountStrategySetup = ChartOfAccountStrategySetup::findOrFail($id);
+        
+        // Capture old data before update
+        $oldAccountStrategySetupData = [
+            'org_id' => $ChartOfAccountStrategySetup->org_id,
+            'account_strategy_id' => $ChartOfAccountStrategySetup->account_strategy_id,
+            'status' => $ChartOfAccountStrategySetup->status,
+            'effective_timestamp' => $ChartOfAccountStrategySetup->effective_timestamp,
+        ];
+        
         $ChartOfAccountStrategySetup->org_id = $request->input('u_ass_org');
         $ChartOfAccountStrategySetup->account_strategy_id = $request->input('u_ass_level');
         $effective_date = $request->input('u_ass_edt');
@@ -745,15 +831,32 @@ class FinanceController extends Controller
         if (empty($ChartOfAccountStrategySetup->id)) {
             return response()->json(['error' => 'Failed to update Chart Of Account Strategy Setup Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newAccountStrategySetupData = [
+            'org_id' => $ChartOfAccountStrategySetup->org_id,
+            'account_strategy_id' => $ChartOfAccountStrategySetup->account_strategy_id,
+            'status' => $ChartOfAccountStrategySetup->status,
+            'effective_timestamp' => $ChartOfAccountStrategySetup->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'chart_of_accounts_strategy_setup',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ChartOfAccountStrategySetup->id,
+            $oldAccountStrategySetupData,
+            $newAccountStrategySetupData,
+            $sessionId
+        );
+        
         $ChartOfAccountStrategySetupLog = ChartOfAccountStrategySetup::where('id', $ChartOfAccountStrategySetup->id)->first();
         $logIds = $ChartOfAccountStrategySetupLog->logid ? explode(',', $ChartOfAccountStrategySetupLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ChartOfAccountStrategySetupLog->logid = implode(',', $logIds);
         $ChartOfAccountStrategySetupLog->save();
         return response()->json(['success' => 'Chart Of Account Strategy Setup Details updated successfully']);
@@ -1026,14 +1129,21 @@ class FinanceController extends Controller
 
     private function createAccountSetupLog($level, $orgName, $sessionName, $timestamp)
     {
-        $log = Logs::create([
-            'module' => 'finance',
-            'content' => "Account Level '{$level}' setup successfully completed for '{$orgName}' by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
+        $sessionId = auth()->id();
+        $logId = createLog(
+            'account_level_setup',
+            'insert',
+            [
+                'message' => "Account Level '{$level}' setup successfully completed for '{$orgName}'",
+                'created_by' => $sessionName
+            ],
+            null,
+            null,
+            ['level' => $level, 'org_name' => $orgName],
+            $sessionId
+        );
 
-        return $log->id;
+        return $logId;
     }
 
     public function GetAccountLevelOption($level, $strategyId)
@@ -1251,14 +1361,28 @@ class FinanceController extends Controller
                 return response()->json(['error' => 'Failed to create Source/Destination.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'finance',
-                'content' => "'{$TransactionSourceDestinationName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $TransactionSourceDestination->logid = $logs->id;
+            // Prepare new data for logging
+            $newTransactionSourceDestinationData = [
+                'name' => $TransactionSourceDestinationName,
+                'org_id' => $Organization,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
+
+            $logId = createLog(
+                'transaction_sources_or_destinations',
+                'insert',
+                [
+                    'message' => "'{$TransactionSourceDestinationName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $TransactionSourceDestination->id,
+                null,
+                $newTransactionSourceDestinationData,
+                $sessionId
+            );
+
+            $TransactionSourceDestination->logid = $logId;
             $TransactionSourceDestination->save();
             return response()->json(['success' => 'Transaction Source/Destination created successfully']);
         }
@@ -1400,15 +1524,27 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'transaction_sources_or_destinations',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $TransactionSourceDestinationID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $TransactionSourceDestinationLog = TransactionSourcesDestinations::where('id', $TransactionSourceDestinationID)->first();
         $logIds = $TransactionSourceDestinationLog->logid ? explode(',', $TransactionSourceDestinationLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $TransactionSourceDestinationLog->logid = implode(',', $logIds);
         $TransactionSourceDestinationLog->save();
 
@@ -1456,6 +1592,15 @@ class FinanceController extends Controller
             abort(403, 'Forbidden');
         }
         $TransactionSourceDestination = TransactionSourcesDestinations::findOrFail($id);
+        
+        // Capture old data before update
+        $oldTransactionSourceDestinationData = [
+            'name' => $TransactionSourceDestination->name,
+            'org_id' => $TransactionSourceDestination->org_id,
+            'status' => $TransactionSourceDestination->status,
+            'effective_timestamp' => $TransactionSourceDestination->effective_timestamp,
+        ];
+        
         $TransactionSourceDestination->name = $request->input('u_transactionsd');
         $orgID = $request->input('u_tsd_org');
         if (isset($orgID)) {
@@ -1484,15 +1629,32 @@ class FinanceController extends Controller
         if (empty($TransactionSourceDestination->id)) {
             return response()->json(['error' => 'Failed to update Transaction Source/Destination. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newTransactionSourceDestinationData = [
+            'name' => $TransactionSourceDestination->name,
+            'org_id' => $TransactionSourceDestination->org_id,
+            'status' => $TransactionSourceDestination->status,
+            'effective_timestamp' => $TransactionSourceDestination->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'transaction_sources_or_destinations',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $TransactionSourceDestination->id,
+            $oldTransactionSourceDestinationData,
+            $newTransactionSourceDestinationData,
+            $sessionId
+        );
+        
         $TransactionSourceDestinationLog = TransactionSourcesDestinations::where('id', $TransactionSourceDestination->id)->first();
         $logIds = $TransactionSourceDestinationLog->logid ? explode(',', $TransactionSourceDestinationLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $TransactionSourceDestinationLog->logid = implode(',', $logIds);
         $TransactionSourceDestinationLog->save();
         return response()->json(['success' => 'Transaction Source/Destination Details updated successfully']);
@@ -1573,14 +1735,28 @@ class FinanceController extends Controller
                 return response()->json(['error' => 'Failed to create Source/Destination.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'finance',
-                'content' => "'{$FinancialLedgerType}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $LedgerType->logid = $logs->id;
+            // Prepare new data for logging
+            $newLedgerTypeData = [
+                'name' => $FinancialLedgerType,
+                'org_id' => $Organization,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
+
+            $logId = createLog(
+                'financial_ledger_types',
+                'insert',
+                [
+                    'message' => "'{$FinancialLedgerType}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $LedgerType->id,
+                null,
+                $newLedgerTypeData,
+                $sessionId
+            );
+
+            $LedgerType->logid = $logId;
             $LedgerType->save();
             return response()->json(['success' => 'Financial Ledger Type created successfully']);
         }
@@ -1721,15 +1897,27 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'financial_ledger_types',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $FinancialLedgerTypeID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $FinancialLedgerTypeLog = FinancialLedgerTypes::where('id', $FinancialLedgerTypeID)->first();
         $logIds = $FinancialLedgerTypeLog->logid ? explode(',', $FinancialLedgerTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $FinancialLedgerTypeLog->logid = implode(',', $logIds);
         $FinancialLedgerTypeLog->save();
 
@@ -1802,19 +1990,44 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
+        // Capture old data before update
+        $oldLedgerTypeData = [
+            'name' => $FinancialLedgerType->name,
+            'org_id' => $FinancialLedgerType->org_id,
+            'status' => $FinancialLedgerType->status,
+            'effective_timestamp' => $FinancialLedgerType->effective_timestamp,
+        ];
+        
         $FinancialLedgerType->save();
         if (empty($FinancialLedgerType->id)) {
             return response()->json(['error' => 'Failed to update Financial Ledger Type. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newLedgerTypeData = [
+            'name' => $FinancialLedgerType->name,
+            'org_id' => $FinancialLedgerType->org_id,
+            'status' => $FinancialLedgerType->status,
+            'effective_timestamp' => $FinancialLedgerType->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'financial_ledger_types',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $FinancialLedgerType->id,
+            $oldLedgerTypeData,
+            $newLedgerTypeData,
+            $sessionId
+        );
+        
         $FinancialLedgerTypeLog = FinancialLedgerTypes::where('id', $FinancialLedgerType->id)->first();
         $logIds = $FinancialLedgerTypeLog->logid ? explode(',', $FinancialLedgerTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $FinancialLedgerTypeLog->logid = implode(',', $logIds);
         $FinancialLedgerTypeLog->save();
         return response()->json(['success' => 'Financial Ledger Type Details updated successfully']);
@@ -1884,14 +2097,28 @@ class FinanceController extends Controller
                 return response()->json(['error' => 'Failed to create Payroll Addition.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'finance',
-                'content' => "'{$PayrollAddition}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $Payroll->logid = $logs->id;
+            // Prepare new data for logging
+            $newPayrollAdditionData = [
+                'name' => $PayrollAddition,
+                'org_id' => $Organization,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
+
+            $logId = createLog(
+                'payroll_additions_setup',
+                'insert',
+                [
+                    'message' => "'{$PayrollAddition}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $Payroll->id,
+                null,
+                $newPayrollAdditionData,
+                $sessionId
+            );
+
+            $Payroll->logid = $logId;
             $Payroll->save();
             return response()->json(['success' => 'Payroll Addition created successfully']);
         }
@@ -2034,15 +2261,27 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'payroll_additions_setup',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $PayrollAdditionID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $PayrollAdditionLog = FinancialPayrollAddition::where('id', $PayrollAdditionID)->first();
         $logIds = $PayrollAdditionLog->logid ? explode(',', $PayrollAdditionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $PayrollAdditionLog->logid = implode(',', $logIds);
         $PayrollAdditionLog->save();
 
@@ -2115,23 +2354,46 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
+        // Capture old data before update
+        $oldPayrollAdditionData = [
+            'name' => $PayrollAddition->name,
+            'org_id' => $PayrollAddition->org_id,
+            'status' => $PayrollAddition->status,
+            'effective_timestamp' => $PayrollAddition->effective_timestamp,
+        ];
+        
         $PayrollAddition->save();
         if (empty($PayrollAddition->id)) {
             return response()->json(['error' => 'Failed to update Payroll Addition. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newPayrollAdditionData = [
+            'name' => $PayrollAddition->name,
+            'org_id' => $PayrollAddition->org_id,
+            'status' => $PayrollAddition->status,
+            'effective_timestamp' => $PayrollAddition->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'payroll_additions_setup',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $PayrollAddition->id,
+            $oldPayrollAdditionData,
+            $newPayrollAdditionData,
+            $sessionId
+        );
+        
         $PayrollAdditionLog = FinancialPayrollAddition::where('id', $PayrollAddition->id)->first();
         $logIds = $PayrollAdditionLog->logid ? explode(',', $PayrollAdditionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $PayrollAdditionLog->logid = implode(',', $logIds);
-        $PayrollAdditionLog
-        
-        ->save();
+        $PayrollAdditionLog->save();
         return response()->json(['success' => 'Payroll Addition Details updated successfully']);
     }
 
@@ -2199,14 +2461,28 @@ class FinanceController extends Controller
                 return response()->json(['error' => 'Failed to create Payroll Deduction.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'finance',
-                'content' => "'{$PayrollDeduction}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $Payroll->logid = $logs->id;
+            // Prepare new data for logging
+            $newPayrollDeductionData = [
+                'name' => $PayrollDeduction,
+                'org_id' => $Organization,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
+
+            $logId = createLog(
+                'payroll_deduction_setup',
+                'insert',
+                [
+                    'message' => "'{$PayrollDeduction}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $Payroll->id,
+                null,
+                $newPayrollDeductionData,
+                $sessionId
+            );
+
+            $Payroll->logid = $logId;
             $Payroll->save();
             return response()->json(['success' => 'Payroll Deduction created successfully']);
         }
@@ -2347,15 +2623,27 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-        $PayrollDeductionLog = FinancialPayrollAddition::where('id', $PayrollDeductionID)->first();
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'payroll_deduction_setup',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $PayrollDeductionID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
+        $PayrollDeductionLog = FinancialPayrollDeduction::where('id', $PayrollDeductionID)->first();
         $logIds = $PayrollDeductionLog->logid ? explode(',', $PayrollDeductionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $PayrollDeductionLog->logid = implode(',', $logIds);
         $PayrollDeductionLog->save();
 
@@ -2428,19 +2716,44 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
+        // Capture old data before update
+        $oldPayrollDeductionData = [
+            'name' => $PayrollDeduction->name,
+            'org_id' => $PayrollDeduction->org_id,
+            'status' => $PayrollDeduction->status,
+            'effective_timestamp' => $PayrollDeduction->effective_timestamp,
+        ];
+        
         $PayrollDeduction->save();
         if (empty($PayrollDeduction->id)) {
             return response()->json(['error' => 'Failed to update Payroll Deduction. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newPayrollDeductionData = [
+            'name' => $PayrollDeduction->name,
+            'org_id' => $PayrollDeduction->org_id,
+            'status' => $PayrollDeduction->status,
+            'effective_timestamp' => $PayrollDeduction->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'payroll_deduction_setup',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $PayrollDeduction->id,
+            $oldPayrollDeductionData,
+            $newPayrollDeductionData,
+            $sessionId
+        );
+        
         $PayrollDeductionLog = FinancialPayrollDeduction::where('id', $PayrollDeduction->id)->first();
         $logIds = $PayrollDeductionLog->logid ? explode(',', $PayrollDeductionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $PayrollDeductionLog->logid = implode(',', $logIds);
         $PayrollDeductionLog->save();
         return response()->json(['success' => 'Payroll Deduction Details updated successfully']);
@@ -2527,14 +2840,35 @@ class FinanceController extends Controller
                 return response()->json(['error' => 'Failed to Register Donor. Please try again']);
             }
 
-            $logs = Logs::create([
-                'module' => 'finance',
-                'content' => "Donor: '{$FocalPersonName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $RegisterDonor->logid = $logs->id;
+            // Prepare new data for logging
+            $newDonorData = [
+                'org_id' => $Org,
+                'corporate_name' => $CorporateName,
+                'type' => $DonorType,
+                'person_name' => $FocalPersonName,
+                'person_email' => $FocalPersonEmail,
+                'person_cell' => $FocalPersonCell,
+                'person_landline' => $FocalPersonLandline,
+                'address' => $Address,
+                'remarks' => $Remarks,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
+
+            $logId = createLog(
+                'donors_registration',
+                'insert',
+                [
+                    'message' => "Donor: '{$FocalPersonName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $RegisterDonor->id,
+                null,
+                $newDonorData,
+                $sessionId
+            );
+
+            $RegisterDonor->logid = $logId;
 
             $orgName = Organization::find($Org)->organization;
             $emailEdt = $request->input('donor_edt');
@@ -2707,15 +3041,27 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'donors_registration',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $DonorID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $DonorLog = DonorRegistration::where('id', $DonorID)->first();
         $logIds = $DonorLog->logid ? explode(',', $DonorLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $DonorLog->logid = implode(',', $logIds);
         $DonorLog->save();
 
@@ -2778,6 +3124,22 @@ class FinanceController extends Controller
             abort(403, 'Forbidden');
         }
         $Donor = DonorRegistration::findOrFail($id);
+        
+        // Capture old data before update
+        $oldDonorData = [
+            'org_id' => $Donor->org_id,
+            'type' => $Donor->type,
+            'corporate_name' => $Donor->corporate_name,
+            'person_name' => $Donor->person_name,
+            'person_email' => $Donor->person_email,
+            'person_cell' => $Donor->person_cell,
+            'person_landline' => $Donor->person_landline,
+            'address' => $Donor->address,
+            'remarks' => $Donor->remarks,
+            'status' => $Donor->status,
+            'effective_timestamp' => $Donor->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_donor_org');
         if (isset($orgID)) {
             $Donor->org_id = $orgID;
@@ -2813,15 +3175,39 @@ class FinanceController extends Controller
         if (empty($Donor->id)) {
             return response()->json(['error' => 'Failed to update Donor Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-        $DonorLog = FinancialPayrollDeduction::where('id', $Donor->id)->first();
+        
+        // Capture new data after update
+        $newDonorData = [
+            'org_id' => $Donor->org_id,
+            'type' => $Donor->type,
+            'corporate_name' => $Donor->corporate_name,
+            'person_name' => $Donor->person_name,
+            'person_email' => $Donor->person_email,
+            'person_cell' => $Donor->person_cell,
+            'person_landline' => $Donor->person_landline,
+            'address' => $Donor->address,
+            'remarks' => $Donor->remarks,
+            'status' => $Donor->status,
+            'effective_timestamp' => $Donor->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'donors_registration',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $Donor->id,
+            $oldDonorData,
+            $newDonorData,
+            $sessionId
+        );
+        
+        $DonorLog = DonorRegistration::where('id', $Donor->id)->first();
         $logIds = $DonorLog->logid ? explode(',', $DonorLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $DonorLog->logid = implode(',', $logIds);
         $DonorLog->save();
         return response()->json(['success' => 'Donor Details updated successfully']);
@@ -2913,14 +3299,37 @@ class FinanceController extends Controller
                 return response()->json(['error' => 'Failed to create Financial Transaction Type.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'finance',
-                'content' => "'{$Desc}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $FinancialTransactionType->logid = $logs->id;
+            // Prepare new data for logging
+            $newFinancialTransactionTypeData = [
+                'name' => $Desc,
+                'org_id' => $Organization,
+                'activity' => $ActivityType,
+                'transaction_source_id' => $Source,
+                'transaction_destination_id' => $Destination,
+                'debit_account' => $DebitAccount,
+                'credit_account' => $CeditAccount,
+                'ledger_id' => $LedgerType,
+                'amount_editable' => $AmountEditable,
+                'amount_ceiling' => $AmountCeiling,
+                'discount_allowed' => $DiscountAllowed,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
+
+            $logId = createLog(
+                'finance_transaction_types',
+                'insert',
+                [
+                    'message' => "'{$Desc}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $FinancialTransactionType->id,
+                null,
+                $newFinancialTransactionTypeData,
+                $sessionId
+            );
+
+            $FinancialTransactionType->logid = $logId;
             $FinancialTransactionType->save();
             return response()->json(['success' => 'Financial Transaction Type created successfully']);
         }
@@ -3109,15 +3518,27 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'finance_transaction_types',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $TransactionTypeLog = FinancialTransactionTypes::where('id', $ID)->first();
         $logIds = $TransactionTypeLog->logid ? explode(',', $TransactionTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $TransactionTypeLog->logid = implode(',', $logIds);
         $TransactionTypeLog->save();
 
@@ -3196,6 +3617,24 @@ class FinanceController extends Controller
             abort(403, 'Forbidden');
         }
         $TransactionType = FinancialTransactionTypes::findOrFail($id);
+        
+        // Capture old data before update
+        $oldTransactionTypeData = [
+            'name' => $TransactionType->name,
+            'org_id' => $TransactionType->org_id,
+            'activity' => $TransactionType->activity,
+            'transaction_source_id' => $TransactionType->transaction_source_id,
+            'transaction_destination_id' => $TransactionType->transaction_destination_id,
+            'debit_account' => $TransactionType->debit_account,
+            'credit_account' => $TransactionType->credit_account,
+            'ledger_id' => $TransactionType->ledger_id,
+            'amount_editable' => $TransactionType->amount_editable,
+            'amount_ceiling' => $TransactionType->amount_ceiling,
+            'discount_allowed' => $TransactionType->discount_allowed,
+            'status' => $TransactionType->status,
+            'effective_timestamp' => $TransactionType->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_ftt_org');
         if (isset($orgID)) {
             $TransactionType->org_id = $orgID;
@@ -3206,7 +3645,7 @@ class FinanceController extends Controller
         $TransactionType->transaction_source_id = $request->input('u_ftt_source');
         $TransactionType->transaction_destination_id = $request->input('u_ftt_destination');
         $TransactionType->debit_account = $request->input('u_ftt_debit');
-        $TransactionType->debit_account = $request->input('u_ftt_credit');
+        $TransactionType->credit_account = $request->input('u_ftt_credit');
         $TransactionType->ledger_id = $request->input('u_ftt_ledger');
         $TransactionType->amount_editable = $request->input('u_ftt_amounteditable');
         $TransactionType->amount_ceiling = $request->input('u_ftt_amountceiling');
@@ -3234,15 +3673,41 @@ class FinanceController extends Controller
         if (empty($TransactionType->id)) {
             return response()->json(['error' => 'Failed to update Transaction Type Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newTransactionTypeData = [
+            'name' => $TransactionType->name,
+            'org_id' => $TransactionType->org_id,
+            'activity' => $TransactionType->activity,
+            'transaction_source_id' => $TransactionType->transaction_source_id,
+            'transaction_destination_id' => $TransactionType->transaction_destination_id,
+            'debit_account' => $TransactionType->debit_account,
+            'credit_account' => $TransactionType->credit_account,
+            'ledger_id' => $TransactionType->ledger_id,
+            'amount_editable' => $TransactionType->amount_editable,
+            'amount_ceiling' => $TransactionType->amount_ceiling,
+            'discount_allowed' => $TransactionType->discount_allowed,
+            'status' => $TransactionType->status,
+            'effective_timestamp' => $TransactionType->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'finance_transaction_types',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $TransactionType->id,
+            $oldTransactionTypeData,
+            $newTransactionTypeData,
+            $sessionId
+        );
+        
         $TransactionTypeLog = FinancialTransactionTypes::where('id', $TransactionType->id)->first();
         $logIds = $TransactionTypeLog->logid ? explode(',', $TransactionTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $TransactionTypeLog->logid = implode(',', $logIds);
         $TransactionTypeLog->save();
         return response()->json(['success' => 'Transaction Type Details updated successfully']);
@@ -3328,14 +3793,36 @@ class FinanceController extends Controller
             return response()->json(['error' => 'Failed To Create This Financial Payments.']);
         }
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Receiving Transaction '{$Remarks}' has been added by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
-        $logId = $logs->id;
-        $FinancialTransaction->logid = $logs->id;
+        // Prepare new data for logging
+        $newFinancialTransactionData = [
+            'org_id' => $Organization,
+            'site_id' => $Site,
+            'transaction_type_id' => $TransactionType,
+            'payment_option' => $PaymentOption,
+            'payment_option_detail' => $PaymentOptionDetails,
+            'amount' => $Amount,
+            'discount' => $Discount,
+            'debit' => 1,
+            'credit' => 0,
+            'remarks' => $Remarks,
+            'status' => $status,
+            'effective_timestamp' => $Edt,
+        ];
+
+        $logId = createLog(
+            'finance_receiving',
+            'insert',
+            [
+                'message' => "Receiving Transaction '{$Remarks}' has been added",
+                'created_by' => $sessionName
+            ],
+            $FinancialTransaction->id,
+            null,
+            $newFinancialTransactionData,
+            $sessionId
+        );
+
+        $FinancialTransaction->logid = $logId;
         $FinancialTransaction->save();
         return response()->json(['success' => 'Financial Receiving created successfully']);
     }
@@ -3543,15 +4030,27 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'finance_receiving',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $FinanceTransactionLog = FinancialTransactions::where('id', $ID)->first();
         $logIds = $FinanceTransactionLog->logid ? explode(',', $FinanceTransactionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $FinanceTransactionLog->logid = implode(',', $logIds);
         $FinanceTransactionLog->save();
 
@@ -3626,6 +4125,21 @@ class FinanceController extends Controller
             abort(403, 'Forbidden');
         }
         $FinancialTransaction = FinancialTransactions::findOrFail($id);
+        
+        // Capture old data before update
+        $oldFinancialTransactionData = [
+            'org_id' => $FinancialTransaction->org_id,
+            'site_id' => $FinancialTransaction->site_id,
+            'transaction_type_id' => $FinancialTransaction->transaction_type_id,
+            'payment_option' => $FinancialTransaction->payment_option,
+            'payment_option_detail' => $FinancialTransaction->payment_option_detail,
+            'amount' => $FinancialTransaction->amount,
+            'discount' => $FinancialTransaction->discount,
+            'remarks' => $FinancialTransaction->remarks,
+            'status' => $FinancialTransaction->status,
+            'effective_timestamp' => $FinancialTransaction->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_fr_org');
         if (isset($orgID)) {
             $FinancialTransaction->org_id = $orgID;
@@ -3660,15 +4174,38 @@ class FinanceController extends Controller
         if (empty($FinancialTransaction->id)) {
             return response()->json(['error' => 'Failed to update Financial Receiving Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newFinancialTransactionData = [
+            'org_id' => $FinancialTransaction->org_id,
+            'site_id' => $FinancialTransaction->site_id,
+            'transaction_type_id' => $FinancialTransaction->transaction_type_id,
+            'payment_option' => $FinancialTransaction->payment_option,
+            'payment_option_detail' => $FinancialTransaction->payment_option_detail,
+            'amount' => $FinancialTransaction->amount,
+            'discount' => $FinancialTransaction->discount,
+            'remarks' => $FinancialTransaction->remarks,
+            'status' => $FinancialTransaction->status,
+            'effective_timestamp' => $FinancialTransaction->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'finance_receiving',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $FinancialTransaction->id,
+            $oldFinancialTransactionData,
+            $newFinancialTransactionData,
+            $sessionId
+        );
+        
         $FinancialTransactionLog = FinancialTransactions::where('id', $FinancialTransaction->id)->first();
         $logIds = $FinancialTransactionLog->logid ? explode(',', $FinancialTransactionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $FinancialTransactionLog->logid = implode(',', $logIds);
         $FinancialTransactionLog->save();
         return response()->json(['success' => 'Financial Receiving Details updated successfully']);
@@ -3742,14 +4279,36 @@ class FinanceController extends Controller
             return response()->json(['error' => 'Failed To Create This Financial Payment.']);
         }
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Financial Payment Transaction '{$Remarks}' has been added by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
-        $logId = $logs->id;
-        $FinancialTransaction->logid = $logs->id;
+        // Prepare new data for logging
+        $newFinancialPaymentData = [
+            'org_id' => $Organization,
+            'site_id' => $Site,
+            'transaction_type_id' => $TransactionType,
+            'payment_option' => $PaymentOption,
+            'payment_option_detail' => $PaymentOptionDetails,
+            'amount' => $Amount,
+            'discount' => $Discount,
+            'debit' => 0,
+            'credit' => 1,
+            'remarks' => $Remarks,
+            'status' => $status,
+            'effective_timestamp' => $Edt,
+        ];
+
+        $logId = createLog(
+            'finance_payment',
+            'insert',
+            [
+                'message' => "Financial Payment Transaction '{$Remarks}' has been added",
+                'created_by' => $sessionName
+            ],
+            $FinancialTransaction->id,
+            null,
+            $newFinancialPaymentData,
+            $sessionId
+        );
+
+        $FinancialTransaction->logid = $logId;
         $FinancialTransaction->save();
         return response()->json(['success' => 'Financial Payment created successfully']);
     }
@@ -3947,15 +4506,27 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'finance_receiving',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $FinanceTransactionLog = FinancialTransactions::where('id', $ID)->first();
         $logIds = $FinanceTransactionLog->logid ? explode(',', $FinanceTransactionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $FinanceTransactionLog->logid = implode(',', $logIds);
         $FinanceTransactionLog->save();
 
@@ -4031,6 +4602,21 @@ class FinanceController extends Controller
             abort(403, 'Forbidden');
         }
         $FinancialTransaction = FinancialTransactions::findOrFail($id);
+        
+        // Capture old data before update
+        $oldFinancialPaymentData = [
+            'org_id' => $FinancialTransaction->org_id,
+            'site_id' => $FinancialTransaction->site_id,
+            'transaction_type_id' => $FinancialTransaction->transaction_type_id,
+            'payment_option' => $FinancialTransaction->payment_option,
+            'payment_option_detail' => $FinancialTransaction->payment_option_detail,
+            'amount' => $FinancialTransaction->amount,
+            'discount' => $FinancialTransaction->discount,
+            'remarks' => $FinancialTransaction->remarks,
+            'status' => $FinancialTransaction->status,
+            'effective_timestamp' => $FinancialTransaction->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_fp_org');
         if (isset($orgID)) {
             $FinancialTransaction->org_id = $orgID;
@@ -4065,15 +4651,38 @@ class FinanceController extends Controller
         if (empty($FinancialTransaction->id)) {
             return response()->json(['error' => 'Failed to update Financial Payment Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newFinancialPaymentData = [
+            'org_id' => $FinancialTransaction->org_id,
+            'site_id' => $FinancialTransaction->site_id,
+            'transaction_type_id' => $FinancialTransaction->transaction_type_id,
+            'payment_option' => $FinancialTransaction->payment_option,
+            'payment_option_detail' => $FinancialTransaction->payment_option_detail,
+            'amount' => $FinancialTransaction->amount,
+            'discount' => $FinancialTransaction->discount,
+            'remarks' => $FinancialTransaction->remarks,
+            'status' => $FinancialTransaction->status,
+            'effective_timestamp' => $FinancialTransaction->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'finance_payment',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $FinancialTransaction->id,
+            $oldFinancialPaymentData,
+            $newFinancialPaymentData,
+            $sessionId
+        );
+        
         $FinancialTransactionLog = FinancialTransactions::where('id', $FinancialTransaction->id)->first();
         $logIds = $FinancialTransactionLog->logid ? explode(',', $FinancialTransactionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $FinancialTransactionLog->logid = implode(',', $logIds);
         $FinancialTransactionLog->save();
         return response()->json(['success' => 'Financial Payment Details updated successfully']);
@@ -4160,14 +4769,34 @@ class FinanceController extends Controller
             return response()->json(['error' => 'Failed To add Item Rates.']);
         }
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Cost '{$Cost}' and Billed '{$Billed}' Amount has been added by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
-        $logId = $logs->id;
-        $ItemRate->logid = $logs->id;
+        // Prepare new data for logging
+        $newItemRateData = [
+            'org_id' => $Organization,
+            'site_id' => $Site,
+            'generic_id' => $GenericId,
+            'brand_id' => $BrandId,
+            'batch_no' => $Batch,
+            'pack_size' => $PackSize,
+            'unit_cost' => $UnitCost,
+            'billed_amount' => $BilledAmount,
+            'status' => $status,
+            'effective_timestamp' => $Edt,
+        ];
+
+        $logId = createLog(
+            'item_rates',
+            'insert',
+            [
+                'message' => "Item Rates has been added",
+                'created_by' => $sessionName
+            ],
+            $ItemRate->id,
+            null,
+            $newItemRateData,
+            $sessionId
+        );
+
+        $ItemRate->logid = $logId;
         $ItemRate->save();
         return response()->json(['success' => 'Item Rates created successfully']);
     }
@@ -4328,15 +4957,27 @@ class FinanceController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'item_rates',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ItemRateLog = ItemRates::where('id', $ID)->first();
         $logIds = $ItemRateLog->logid ? explode(',', $ItemRateLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ItemRateLog->logid = implode(',', $logIds);
         $ItemRateLog->save();
 
@@ -4403,6 +5044,21 @@ class FinanceController extends Controller
             abort(403, 'Forbidden');
         }
         $ItemRate = ItemRates::findOrFail($id);
+        
+        // Capture old data before update
+        $oldItemRateData = [
+            'org_id' => $ItemRate->org_id,
+            'site_id' => $ItemRate->site_id,
+            'generic_id' => $ItemRate->generic_id,
+            'brand_id' => $ItemRate->brand_id,
+            'batch_no' => $ItemRate->batch_no,
+            'pack_size' => $ItemRate->pack_size,
+            'unit_cost' => $ItemRate->unit_cost,
+            'billed_amount' => $ItemRate->billed_amount,
+            'status' => $ItemRate->status,
+            'effective_timestamp' => $ItemRate->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_ir_org');
         if (isset($orgID)) {
             $ItemRate->org_id = $orgID;
@@ -4437,15 +5093,38 @@ class FinanceController extends Controller
         if (empty($ItemRate->id)) {
             return response()->json(['error' => 'Failed to update Item Rate Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newItemRateData = [
+            'org_id' => $ItemRate->org_id,
+            'site_id' => $ItemRate->site_id,
+            'generic_id' => $ItemRate->generic_id,
+            'brand_id' => $ItemRate->brand_id,
+            'batch_no' => $ItemRate->batch_no,
+            'pack_size' => $ItemRate->pack_size,
+            'unit_cost' => $ItemRate->unit_cost,
+            'billed_amount' => $ItemRate->billed_amount,
+            'status' => $ItemRate->status,
+            'effective_timestamp' => $ItemRate->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'item_rates',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ItemRate->id,
+            $oldItemRateData,
+            $newItemRateData,
+            $sessionId
+        );
+        
         $ItemRateLog = ItemRates::where('id', $ItemRate->id)->first();
         $logIds = $ItemRateLog->logid ? explode(',', $ItemRateLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ItemRateLog->logid = implode(',', $logIds);
         $ItemRateLog->save();
         return response()->json(['success' => 'Item Rate Details updated successfully']);
@@ -4687,14 +5366,28 @@ class FinanceController extends Controller
             return response()->json(['error' => 'Failed To Add Service Rates.']);
         }
 
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Service Rates Unit Cost: '{$UnitCost}' and Billed Amount: '{$billedAmount}' added by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
-        $logId = $logs->id;
-        $ServiceRates->logid = $logs->id;
+        // Prepare new data for logging
+        $newServiceRateData = [
+            'activated_service_id' => $ActivatedId,
+            'service_mode_id' => $ModeId,
+            'cost_price' => $UnitCost,
+            'sell_price' => $billedAmount,
+        ];
+
+        $logId = createLog(
+            'service_rates',
+            'insert',
+            [
+                'message' => "Service Rates has been added",
+                'created_by' => $sessionName
+            ],
+            $ServiceRates->id,
+            null,
+            $newServiceRateData,
+            $sessionId
+        );
+
+        $ServiceRates->logid = $logId;
         $ServiceRates->save();
         return response()->json(['success' => 'Service Rates added successfully']);
     }
@@ -4736,6 +5429,13 @@ class FinanceController extends Controller
             abort(403, 'Forbidden');
         }
         $ServiceRates = ActivatedServiceRate::findOrFail($id);
+        
+        // Capture old data before update
+        $oldServiceRateData = [
+            'cost_price' => $ServiceRates->cost_price,
+            'sell_price' => $ServiceRates->sell_price,
+        ];
+        
         $unitCost = $request->input('u_rate_unitCost');
         $billedAmount = $request->input('u_rate_billedAmount');
         if ($unitCost > $billedAmount) {
@@ -4752,15 +5452,30 @@ class FinanceController extends Controller
         if (empty($ServiceRates->id)) {
             return response()->json(['error' => 'Failed to update Service Rates. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'finance',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newServiceRateData = [
+            'cost_price' => $ServiceRates->cost_price,
+            'sell_price' => $ServiceRates->sell_price,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'service_rates',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ServiceRates->id,
+            $oldServiceRateData,
+            $newServiceRateData,
+            $sessionId
+        );
+        
         $ServiceRatesLog = ActivatedServiceRate::where('id', $ServiceRates->id)->first();
         $logIds = $ServiceRatesLog->logid ? explode(',', $ServiceRatesLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ServiceRatesLog->logid = implode(',', $logIds);
         $ServiceRatesLog->save();
         return response()->json(['success' => 'Service Rates updated successfully']);

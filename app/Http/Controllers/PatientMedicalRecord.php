@@ -98,27 +98,6 @@ class PatientMedicalRecord extends Controller
         $ICDCodes = $query->paginate(50);
         return response()->json($ICDCodes);
     }
-    // public function GetProcedureICDCodes(Request $request)
-    // {
-    //     $query = ICDCoding::where('icd_code.status', 1)
-    //     ->where('icd_code.type', 's');
-    //     if ($request->has('id')) {
-    //         $query->where('icd_code.id', $request->id);
-    //     }
-
-    //     if ($request->has('search')) {
-    //         $query->where(function ($q) use ($request) {
-    //             $q->where('icd_code.type', 's')
-    //                 ->where(function ($subQuery) use ($request) {
-    //                     $subQuery->where('icd_code.code', 'like', '%' . $request->search . '%')
-    //                         ->orWhere('icd_code.description', 'like', '%' . $request->search . '%');
-    //                 });
-    //         });
-    //     }
-    //     $ICDCodes = $query->paginate(20);
-
-    //     return response()->json($ICDCodes);
-    // }
 
     public function GetProcedureICDCodes(Request $request)
     {
@@ -237,14 +216,27 @@ class PatientMedicalRecord extends Controller
                 return response()->json(['error' => 'Failed to create Medical Code.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'patient_medical_record',
-                'content' => "Medical Code '{$Code}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $ICDCode->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'description' => $Desc,
+                'code' => $Code,
+                'type' => $CodeType,
+                'status' => $status,
+                'effective_timestamp' => $Edt,
+            ];
+            $logId = createLog(
+                'medical_coding',
+                'insert',
+                [
+                    'message' => "'{$Code}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $ICDCode->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $ICDCode->logid = $logId;
             $ICDCode->save();
             return response()->json(['success' => 'Medical Code created successfully']);
         }
@@ -390,15 +382,28 @@ class PatientMedicalRecord extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status change) only status values
+        $oldData = [
+            'status' => (int)$Status,
+        ];
+        $newData = [
+            'status' => $UpdateStatus,
+        ];
+        $logId = createLog(
+            'medical_coding',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ICDCodeID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ICDCodeLog = ICDCoding::where('id', $ICDCodeID)->first();
         $logIds = $ICDCodeLog->logid ? explode(',', $ICDCodeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ICDCodeLog->logid = implode(',', $logIds);
         $ICDCodeLog->save();
 
@@ -446,6 +451,15 @@ class PatientMedicalRecord extends Controller
         }
         $ICDCodes = ICDCoding::findOrFail($id);
 
+        // Capture old data
+        $oldData = [
+            'description' => $ICDCodes->description,
+            'code' => $ICDCodes->code,
+            'type' => $ICDCodes->type,
+            'status' => $ICDCodes->status,
+            'effective_timestamp' => $ICDCodes->effective_timestamp,
+        ];
+
         $ICDCodes->description = $request->input('uicd_desc');
         $ICDCodes->code = $request->input('uicd_code');
         $codeType = $request->input('uicd_codetype');
@@ -475,15 +489,29 @@ class PatientMedicalRecord extends Controller
         if (empty($ICDCodes->id)) {
             return response()->json(['error' => 'Failed to update ICD Code. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'description' => $ICDCodes->description,
+            'code' => $ICDCodes->code,
+            'type' => $ICDCodes->type,
+            'status' => $ICDCodes->status,
+            'effective_timestamp' => $ICDCodes->effective_timestamp,
+        ];
+        $logId = createLog(
+            'medical_coding',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ICDCodes->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ICDCodesLog = ICDCoding::where('id', $ICDCodes->id)->first();
         $logIds = $ICDCodesLog->logid ? explode(',', $ICDCodesLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ICDCodesLog->logid = implode(',', $logIds);
         $ICDCodesLog->save();
         return response()->json(['success' => 'Medical Code updated successfully']);
@@ -822,14 +850,41 @@ class PatientMedicalRecord extends Controller
             return response()->json(['error' => 'Failed to add Vital Sign.']);
         }
 
-        $logs = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => "Vital Sign for '{$MR}' were recorded by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
-        $logId = $logs->id;
-        $VitalSign->logid = $logs->id;
+        // New logging (insert)
+        $newData = [
+            'mr_code' => $MR,
+            'service_id' => $ServiceId,
+            'service_mode_id' => $ServiceModeId,
+            'billing_cc' => $BillingCCID,
+            'patient_age' => $PatientAge,
+            'sbp' => $SBP,
+            'dbp' => $DBP,
+            'pulse' => $Pulse,
+            'temp' => $Temperature,
+            'r_rate' => $RespiratoryRate,
+            'weight' => $Weight,
+            'height' => $Height,
+            'score' => $Score,
+            'o2_saturation' => $o2Saturation,
+            'bmi' => $BMI,
+            'bsa' => $BSA,
+            'nursing_notes' => $NursingNotes,
+            'status' => $status,
+            'effective_timestamp' => $Edt,
+        ];
+        $logId = createLog(
+            'patient_medical_record',
+            'insert',
+            [
+                'message' => 'Vital sign recorded',
+                'created_by' => $sessionName
+            ],
+            $VitalSign->id,
+            null,
+            $newData,
+            $sessionId
+        );
+        $VitalSign->logid = $logId;
         $VitalSign->save();
         return response()->json(['success' => 'Vital Sign added successfully']);
 
@@ -1010,15 +1065,24 @@ class PatientMedicalRecord extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change)
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'patient_medical_record',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $VitalSignID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $VitalSignLog = VitalSign::where('id', $VitalSignID)->first();
         $logIds = $VitalSignLog->logid ? explode(',', $VitalSignLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $VitalSignLog->logid = implode(',', $logIds);
         $VitalSignLog->save();
 
@@ -1081,6 +1145,24 @@ class PatientMedicalRecord extends Controller
             abort(403, 'Forbidden');
         }
         $VitalSigns = VitalSign::findOrFail($id);
+
+        // Capture old data before any changes
+        $oldData = [
+            'sbp' => $VitalSigns->sbp,
+            'dbp' => $VitalSigns->dbp,
+            'pulse' => $VitalSigns->pulse,
+            'temp' => $VitalSigns->temp,
+            'r_rate' => $VitalSigns->r_rate,
+            'weight' => $VitalSigns->weight,
+            'height' => $VitalSigns->height,
+            'score' => $VitalSigns->score,
+            'o2_saturation' => $VitalSigns->o2_saturation,
+            'bmi' => $VitalSigns->bmi,
+            'bsa' => $VitalSigns->bsa,
+            'nursing_notes' => $VitalSigns->nursing_notes,
+            'status' => $VitalSigns->status,
+            'effective_timestamp' => $VitalSigns->effective_timestamp,
+        ];
 
         // Handle null values for patients under 16
         $patientAge = $VitalSigns->patient_age;
@@ -1147,15 +1229,38 @@ class PatientMedicalRecord extends Controller
         if (empty($VitalSigns->id)) {
             return response()->json(['error' => 'Failed to update Vital Sign Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'sbp' => $VitalSigns->sbp,
+            'dbp' => $VitalSigns->dbp,
+            'pulse' => $VitalSigns->pulse,
+            'temp' => $VitalSigns->temp,
+            'r_rate' => $VitalSigns->r_rate,
+            'weight' => $VitalSigns->weight,
+            'height' => $VitalSigns->height,
+            'score' => $VitalSigns->score,
+            'o2_saturation' => $VitalSigns->o2_saturation,
+            'bmi' => $VitalSigns->bmi,
+            'bsa' => $VitalSigns->bsa,
+            'nursing_notes' => $VitalSigns->nursing_notes,
+            'status' => $VitalSigns->status,
+            'effective_timestamp' => $VitalSigns->effective_timestamp,
+        ];
+        $logId = createLog(
+            'patient_medical_record',
+            'update',
+            [
+                'message' => 'Vital sign updated',
+                'updated_by' => $sessionName
+            ],
+            $VitalSigns->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $VitalSignsLog = VitalSign::where('id', $VitalSigns->id)->first();
         $logIds = $VitalSignsLog->logid ? explode(',', $VitalSignsLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $VitalSignsLog->logid = implode(',', $logIds);
         $VitalSignsLog->save();
         return response()->json(['success' => 'Vital Sign updated successfully']);
@@ -1308,14 +1413,31 @@ class PatientMedicalRecord extends Controller
                 return response()->json(['error' => 'Failed to add Medical Diagnosis History.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'patient_medical_record',
-                'content' => "Medical Diagnosis History has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $MedicalDiagnose->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'mr_code' => $MR,
+                'service_id' => $SeviceId,
+                'service_mode_id' => $ServiceModeID,
+                'billing_cc' => $billingCC,
+                'patient_age' => $Age,
+                'icd_id' => $ICD,
+                'since_date' => $SinceData,
+                'till_date' => $TillData,
+                'status' => $status,
+            ];
+            $logId = createLog(
+                'patient_medical_record',
+                'insert',
+                [
+                    'message' => 'Medical diagnosis history added',
+                    'created_by' => $sessionName
+                ],
+                $MedicalDiagnose->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $MedicalDiagnose->logid = $logId;
             $MedicalDiagnose->save();
             return response()->json(['success' => 'Medical Diagnosis History added successfully']);
         }
@@ -1496,14 +1618,30 @@ class PatientMedicalRecord extends Controller
                 return response()->json(['error' => 'Failed to add Allergies History.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'patient_medical_record',
-                'content' => "Allergies History has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $AllergiesHistory->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'mr_code' => $MR,
+                'service_id' => $SeviceId,
+                'service_mode_id' => $ServiceModeID,
+                'billing_cc' => $billingCC,
+                'patient_age' => $Age,
+                'history' => $AllergyHistory,
+                'since_date' => $SinceData,
+                'status' => $status,
+            ];
+            $logId = createLog(
+                'patient_medical_record',
+                'insert',
+                [
+                    'message' => 'Allergies history added',
+                    'created_by' => $sessionName
+                ],
+                $AllergiesHistory->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $AllergiesHistory->logid = $logId;
             $AllergiesHistory->save();
             return response()->json(['success' => 'Allergies History added successfully']);
         }
@@ -1663,14 +1801,30 @@ class PatientMedicalRecord extends Controller
                 return response()->json(['error' => 'Failed to add Immunization History.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'patient_medical_record',
-                'content' => "Immunization History has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $ImmunizationHistory->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'mr_code' => $MR,
+                'service_id' => $SeviceId,
+                'service_mode_id' => $ServiceModeID,
+                'billing_cc' => $billingCC,
+                'patient_age' => $Age,
+                'history' => $ImmunizationHistories,
+                'date' => $Date,
+                'status' => $status,
+            ];
+            $logId = createLog(
+                'patient_medical_record',
+                'insert',
+                [
+                    'message' => 'Immunization history added',
+                    'created_by' => $sessionName
+                ],
+                $ImmunizationHistory->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $ImmunizationHistory->logid = $logId;
             $ImmunizationHistory->save();
             return response()->json(['success' => 'Immunization History added successfully']);
         }
@@ -1833,14 +1987,30 @@ class PatientMedicalRecord extends Controller
                 return response()->json(['error' => 'Failed to add Drug History.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'patient_medical_record',
-                'content' => "Drug History has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $DrugHistory->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'mr_code' => $MR,
+                'service_id' => $SeviceId,
+                'service_mode_id' => $ServiceModeID,
+                'billing_cc' => $billingCC,
+                'patient_age' => $Age,
+                'history' => $DrugHistories,
+                'dose' => $Dose,
+                'status' => $status,
+            ];
+            $logId = createLog(
+                'patient_medical_record',
+                'insert',
+                [
+                    'message' => 'Drug history added',
+                    'created_by' => $sessionName
+                ],
+                $DrugHistory->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $DrugHistory->logid = $logId;
             $DrugHistory->save();
             return response()->json(['success' => 'Drug History added successfully']);
         }
@@ -2006,14 +2176,30 @@ class PatientMedicalRecord extends Controller
                 return response()->json(['error' => 'Failed to add Past History.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'patient_medical_record',
-                'content' => "Past History has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $PastHistory->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'mr_code' => $MR,
+                'service_id' => $SeviceId,
+                'service_mode_id' => $ServiceModeID,
+                'billing_cc' => $billingCC,
+                'patient_age' => $Age,
+                'history' => $PastHistories,
+                'date' => $Date,
+                'status' => $status,
+            ];
+            $logId = createLog(
+                'patient_medical_record',
+                'insert',
+                [
+                    'message' => 'Past history added',
+                    'created_by' => $sessionName
+                ],
+                $PastHistory->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $PastHistory->logid = $logId;
             $PastHistory->save();
             return response()->json(['success' => 'Past History added successfully']);
         }
@@ -2177,14 +2363,30 @@ class PatientMedicalRecord extends Controller
                 return response()->json(['error' => 'Failed to add Obsteric History.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'patient_medical_record',
-                'content' => "Obsteric History has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $ObstericHistory->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'mr_code' => $MR,
+                'service_id' => $SeviceId,
+                'service_mode_id' => $ServiceModeID,
+                'billing_cc' => $billingCC,
+                'patient_age' => $Age,
+                'history' => $ObstericHistories,
+                'date' => $Date,
+                'status' => $status,
+            ];
+            $logId = createLog(
+                'patient_medical_record',
+                'insert',
+                [
+                    'message' => 'Obstetric history added',
+                    'created_by' => $sessionName
+                ],
+                $ObstericHistory->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $ObstericHistory->logid = $logId;
             $ObstericHistory->save();
             return response()->json(['success' => 'Obsteric History added successfully']);
         }
@@ -2346,14 +2548,30 @@ class PatientMedicalRecord extends Controller
                 return response()->json(['error' => 'Failed to add Social History.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'patient_medical_record',
-                'content' => "Social History has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $SocialHistory->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'mr_code' => $MR,
+                'service_id' => $SeviceId,
+                'service_mode_id' => $ServiceModeID,
+                'billing_cc' => $billingCC,
+                'patient_age' => $Age,
+                'history' => $SocialHistories,
+                'date' => $Date,
+                'status' => $status,
+            ];
+            $logId = createLog(
+                'patient_medical_record',
+                'insert',
+                [
+                    'message' => 'Social history added',
+                    'created_by' => $sessionName
+                ],
+                $SocialHistory->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $SocialHistory->logid = $logId;
             $SocialHistory->save();
             return response()->json(['success' => 'Social History added successfully']);
         }
@@ -2514,16 +2732,21 @@ class PatientMedicalRecord extends Controller
             $matchingReqs = $reqEpiQuery->get();
 
             if ($matchingReqs->isNotEmpty()) {
-                $log = Logs::create([
-                    'module' => 'patient_medical_record',
-                    'content' => "Status set to Inactive by '{$sessionName}'",
-                    'event' => 'update',
-                    'timestamp' => $timestamp,
-                ]);
-
                 foreach ($matchingReqs as $req) {
+                    $logId = createLog(
+                        'patient_medical_record',
+                        'status_change',
+                        [
+                            'message' => 'Status set to Inactive',
+                            'updated_by' => $sessionName
+                        ],
+                        $req->id,
+                        ['status' => 1],
+                        ['status' => 0],
+                        $sessionId
+                    );
                     $existingLogIds = $req->logid ? explode(',', $req->logid) : [];
-                    $existingLogIds[] = $log->id;
+                    $existingLogIds[] = $logId;
                     $req->status = 0;
                     $req->logid = implode(',', $existingLogIds);
                     $req->save();
@@ -2531,14 +2754,31 @@ class PatientMedicalRecord extends Controller
             }
         }
 
-        $logs = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => "Visit Based Details has been added by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
-        $logId = $logs->id;
-        $VisitBasedDetail->logid = $logs->id;
+        // New logging (insert)
+        $newData = [
+            'mr_code' => $MR,
+            'service_id' => $SeviceId,
+            'service_mode_id' => $ServiceModeID,
+            'billing_cc' => $billingCC,
+            'emp_id' => $empid,
+            'patient_age' => $Age,
+            'complaints' => $Complaints,
+            'clinical_notes' => $ClinicalNotes,
+            'summary' => $Summary,
+        ];
+        $logId = createLog(
+            'patient_medical_record',
+            'insert',
+            [
+                'message' => 'Visit based details added',
+                'created_by' => $sessionName
+            ],
+            $VisitBasedDetail->id,
+            null,
+            $newData,
+            $sessionId
+        );
+        $VisitBasedDetail->logid = $logId;
         $VisitBasedDetail->save();
         return response()->json(['success' => 'Visit Based Details added successfully']);
     }
@@ -2808,14 +3048,33 @@ class PatientMedicalRecord extends Controller
                 if (!empty($RquEPI->id)) {
                     $successCount++;
                     
-                    $logs = Logs::create([
-                        'module' => 'patient_medical_record',
-                        'content' => "Requisition For $act has been added by '{$sessionName}'",
-                        'event' => 'add',
-                        'timestamp' => $timestamp,
-                    ]);
-                    $logId = $logs->id;
-                    $RquEPI->logid = $logs->id;
+                    // New logging (insert)
+                    $newData = [
+                        'org_id' => $Org,
+                        'site_id' => $Site,
+                        'mr_code' => $MR,
+                        'service_id' => $serviceId,
+                        'service_mode_id' => $serviceModeId,
+                        'billing_cc' => $billingCC,
+                        'patient_age' => $Age,
+                        'emp_id' => $Physician,
+                        'action' => $Action,
+                        'remarks' => $Remarks,
+                        'status' => $status,
+                    ];
+                    $logId = createLog(
+                        'patient_medical_record',
+                        'insert',
+                        [
+                            'message' => "Requisition for $act added",
+                            'created_by' => $sessionName
+                        ],
+                        $RquEPI->id,
+                        null,
+                        $newData,
+                        $sessionId
+                    );
+                    $RquEPI->logid = $logId;
                     $RquEPI->save();
                 }
             }
@@ -2959,15 +3218,24 @@ class PatientMedicalRecord extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change)
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'patient_medical_record',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $RequisitionEPIID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $RequisitionEPILog = RequisitionForEPI::where('id', $RequisitionEPIID)->first();
         $logIds = $RequisitionEPILog->logid ? explode(',', $RequisitionEPILog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $RequisitionEPILog->logid = implode(',', $logIds);
         $RequisitionEPILog->save();
 
@@ -3012,6 +3280,11 @@ class PatientMedicalRecord extends Controller
         // dd($request->all());
         $RequisitionForEPI = RequisitionForEPI::findOrFail($id);
 
+        // Capture old data
+        $oldData = [
+            'remarks' => $RequisitionForEPI->remarks,
+        ];
+
         $RequisitionForEPI->remarks = $request->input('u_repi_remarks');
         // $effective_date = $request->input('u_repi_edt');
         // $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
@@ -3037,15 +3310,23 @@ class PatientMedicalRecord extends Controller
         if (empty($RequisitionForEPI->id)) {
             return response()->json(['error' => 'Failed to update Requisition For EPI Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [ 'remarks' => $RequisitionForEPI->remarks ];
+        $logId = createLog(
+            'patient_medical_record',
+            'update',
+            [
+                'message' => 'Requisition for EPI updated',
+                'updated_by' => $sessionName
+            ],
+            $RequisitionForEPI->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $RequisitionForEPILog = RequisitionForEPI::where('id', $RequisitionForEPI->id)->first();
         $logIds = $RequisitionForEPILog->logid ? explode(',', $RequisitionForEPILog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $RequisitionForEPILog->logid = implode(',', $logIds);
         $RequisitionForEPILog->save();
         return response()->json(['success' => 'Requisition For EPI updated successfully']);
@@ -3254,11 +3535,45 @@ class PatientMedicalRecord extends Controller
         $RequisitionCode = $firstSiteNameLetters.'-MDC-'.$idStr;
         $ReqMedicationConsumption->code = $RequisitionCode;
 
-        $log = Logs::create([
-            'module' => 'patient_medical_record', 'content' => "Requisition For Medication Consumption has been added by '{$sessionName}'",
-            'event' => 'add', 'timestamp' => $timestamp,
-        ]);
-        $ReqMedicationConsumption->logid = $log->id;
+        // Log full inserted data
+        $newData = [
+            'code' => $RequisitionCode,
+            'transaction_type_id' => $InvTransactionType,
+            'source_location_id' => $SourceLocation,
+            'destination_location_id' => $DestinationLocation,
+            'mr_code' => $MR,
+            'gender_id' => $Gender,
+            'age' => $Age,
+            'service_id' => $Service,
+            'org_id' => $Org,
+            'site_id' => $Site,
+            'service_mode_id' => $ServiceModeId,
+            'service_type_id' => $ServiceTypeId,
+            'service_group_id' => $ServiceGroupId,
+            'responsible_physician' => $ResponsiblePhysician,
+            'billing_cc' => $BillingCC,
+            'inv_generic_ids' => $InvGeneric,
+            'dose' => $Dose,
+            'route_ids' => $Route,
+            'frequency_ids' => $Frequency,
+            'days' => $Days,
+            'remarks' => $Remarks,
+            'status' => $status,
+            'effective_timestamp' => $Edt,
+        ];
+        $logId = createLog(
+            'patient_medical_record',
+            'insert',
+            [
+                'message' => 'Requisition for medication consumption added',
+                'created_by' => $sessionName
+            ],
+            $ReqMedicationConsumption->id,
+            null,
+            $newData,
+            $sessionId
+        );
+        $ReqMedicationConsumption->logid = $logId;
         $ReqMedicationConsumption->save();
 
         return response()->json(['success' => "Requisition for Medication Consumption added successfully"]);
@@ -3507,15 +3822,24 @@ class PatientMedicalRecord extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change)
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'patient_medical_record',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ReqMCLog = RequisitionForMedicationConsumption::where('id', $ID)->first();
         $logIds = $ReqMCLog->logid ? explode(',', $ReqMCLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ReqMCLog->logid = implode(',', $logIds);
         $ReqMCLog->save();
 
@@ -3614,6 +3938,19 @@ class PatientMedicalRecord extends Controller
 
         $ReqMC = RequisitionForMedicationConsumption::findOrFail($id);
 
+        // Capture old data before update
+        $oldData = [
+            'transaction_type_id' => $ReqMC->transaction_type_id,
+            'source_location_id' => $ReqMC->source_location_id,
+            'destination_location_id' => $ReqMC->destination_location_id,
+            'remarks' => $ReqMC->remarks,
+            'inv_generic_ids' => $ReqMC->inv_generic_ids,
+            'dose' => $ReqMC->dose,
+            'route_ids' => $ReqMC->route_ids,
+            'frequency_ids' => $ReqMC->frequency_ids,
+            'days' => $ReqMC->days,
+        ];
+
         $ReqMC->transaction_type_id = $request->input('u_rmc_transaction_type');
         $ReqMC->source_location_id = $request->input('u_rmc_source_location');
         $ReqMC->destination_location_id = $request->input('u_rmc_destination_location');
@@ -3636,16 +3973,33 @@ class PatientMedicalRecord extends Controller
         if (empty($ReqMC->id)) {
             return response()->json(['error' => 'Failed to update Requisition For Medication Consumption. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-
+        // New logging (update)
+        $newData = [
+            'transaction_type_id' => $ReqMC->transaction_type_id,
+            'source_location_id' => $ReqMC->source_location_id,
+            'destination_location_id' => $ReqMC->destination_location_id,
+            'remarks' => $ReqMC->remarks,
+            'inv_generic_ids' => $ReqMC->inv_generic_ids,
+            'dose' => $ReqMC->dose,
+            'route_ids' => $ReqMC->route_ids,
+            'frequency_ids' => $ReqMC->frequency_ids,
+            'days' => $ReqMC->days,
+        ];
+        $logId = createLog(
+            'patient_medical_record',
+            'update',
+            [
+                'message' => 'Requisition for medication consumption updated',
+                'updated_by' => $sessionName
+            ],
+            $ReqMC->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ReqMCLog = RequisitionForMedicationConsumption::where('id', $ReqMC->id)->first();
         $logIds = $ReqMCLog->logid ? explode(',', $ReqMCLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ReqMCLog->logid = implode(',', $logIds);
         $ReqMCLog->save();
         return response()->json(['success' => 'Requisition For Medication Consumption updated successfully']);
@@ -3770,16 +4124,21 @@ class PatientMedicalRecord extends Controller
             $matchingReqs = $reqEpiQuery->get();
 
             if ($matchingReqs->isNotEmpty()) {
-                $log = Logs::create([
-                    'module' => 'patient_medical_record',
-                    'content' => "Status set to Inactive by '{$sessionName}'",
-                    'event' => 'update',
-                    'timestamp' => $timestamp,
-                ]);
-
                 foreach ($matchingReqs as $req) {
+                    $logId = createLog(
+                        'patient_medical_record',
+                        'status_change',
+                        [
+                            'message' => 'Status set to Inactive',
+                            'updated_by' => $sessionName
+                        ],
+                        $req->id,
+                        ['status' => 1],
+                        ['status' => 0],
+                        $sessionId
+                    );
                     $existingLogIds = $req->logid ? explode(',', $req->logid) : [];
-                    $existingLogIds[] = $log->id;
+                    $existingLogIds[] = $logId;
                     $req->status = 0;
                     $req->logid = implode(',', $existingLogIds);
                     $req->save();
@@ -3804,11 +4163,25 @@ class PatientMedicalRecord extends Controller
             return response()->json(['error' => "Failed to add Investigation Confirmation Details."]);
         }
 
-        $log = Logs::create([
-            'module' => 'patient_medical_record', 'content' => "Investigation Confirmed by '{$sessionName}'",
-            'event' => 'add', 'timestamp' => $timestamp,
-        ]);
-        $SampleConfirmatation->logid = $log->id;
+        // New logging (insert)
+        $newData = [
+            'investigation_id' => $investigationId,
+            'investigation_confirmation_datetime' => $confirmDateTime,
+            'confirmation_remarks' => $Remarks,
+        ];
+        $logId = createLog(
+            'patient_medical_record',
+            'insert',
+            [
+                'message' => 'Investigation confirmed',
+                'created_by' => $sessionName
+            ],
+            $SampleConfirmatation->id,
+            null,
+            $newData,
+            $sessionId
+        );
+        $SampleConfirmatation->logid = $logId;
         $SampleConfirmatation->save();
 
         // $filePaths = [];
@@ -3852,13 +4225,19 @@ class PatientMedicalRecord extends Controller
             return response()->json(['error' => "Investigation record not found."]);
         }
 
-        // Create a log entry
-        $log = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => "Report added by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
+        // Create a log entry (insert)
+        $logId = createLog(
+            'patient_medical_record',
+            'insert',
+            [
+                'message' => 'Report added',
+                'created_by' => $sessionName
+            ],
+            $investigation->id,
+            null,
+            [ 'report_remarks' => $remarks ],
+            $sessionId
+        );
 
         // Handle file uploads
         $filePaths = [];
@@ -3876,12 +4255,10 @@ class PatientMedicalRecord extends Controller
 
         // Update the existing investigation record
         $existingLogIds = $investigation->logid;
-
-        $newLogId = $log->id;
         if ($existingLogIds) {
-            $logidUpdated = $existingLogIds . ',' . $newLogId;
+            $logidUpdated = $existingLogIds . ',' . $logId;
         } else {
-            $logidUpdated = $newLogId;
+            $logidUpdated = $logId;
         }
 
         // Update the existing investigation record
@@ -3895,7 +4272,6 @@ class PatientMedicalRecord extends Controller
 
         return response()->json(['success' => "Report details updated successfully"]);
     }
-
 
     public function GetInvestigationTrackingData(Request $request, $mr)
     {
@@ -4580,6 +4956,7 @@ class PatientMedicalRecord extends Controller
                                         ->first();
 
         if ($existingRecord) {
+            $oldIcd = $existingRecord->icd_id;
             $existingRecord->icd_id = $MedicalCodingIds;
             $existingRecord->user_id = $sessionId;
             $existingRecord->last_updated = $last_updated;
@@ -4599,27 +4976,45 @@ class PatientMedicalRecord extends Controller
             $logMessage = "Medical Coding mapped by '{$sessionName}'";
         }
 
-        // Create a new log entry
-        $logs = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => $logMessage,
-            'event' => 'activate',
-            'timestamp' => $timestamp,
-        ]);
-        $logId = $logs->id;
-
         if (!$existingRecord) {
-            // New record, directly set the log ID
+            // New record
+            $newData = [
+                'org_id' => $OrgId,
+                'service_id' => $ServiceId,
+                'icd_id' => $MedicalCodingIds,
+            ];
+            $logId = createLog(
+                'patient_medical_record',
+                'insert',
+                [
+                    'message' => $logMessage,
+                    'created_by' => $sessionName
+                ],
+                $ProcedureCodings->id,
+                null,
+                $newData,
+                $sessionId
+            );
             $ProcedureCodings->logid = $logId;
             $ProcedureCodings->save();
         } else {
-            // Append new log ID to the existing comma-separated log IDs
+            // Update existing mapping — include old/new icd_id
+            $oldData = [ 'icd_id' => $oldIcd ];
+            $newData = [ 'icd_id' => $existingRecord->icd_id ];
+            $logId = createLog(
+                'patient_medical_record',
+                'update',
+                [
+                    'message' => $logMessage,
+                    'updated_by' => $sessionName
+                ],
+                $existingRecord->id,
+                $oldData,
+                $newData,
+                $sessionId
+            );
             $existingLogIds = $existingRecord->logid;
-            if (!empty($existingLogIds)) {
-                $existingRecord->logid = $existingLogIds . ',' . $logId;
-            } else {
-                $existingRecord->logid = $logId;
-            }
+            $existingRecord->logid = !empty($existingLogIds) ? ($existingLogIds . ',' . $logId) : $logId;
             $existingRecord->save();
         }
 
@@ -4688,14 +5083,32 @@ class PatientMedicalRecord extends Controller
         $PatientAttachments->attachments = $fileAttachments;
         $PatientAttachments->save();
 
-        $logs = Logs::create([
-            'module' => 'patient_medical_record',
-            'content' => "Patient Attachment has been added for '{$MR}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
+        // New logging (insert)
+        $newData = [
+            'mr_code' => $MR,
+            'service_id' => $SeviceId,
+            'service_mode_id' => $ServiceModeID,
+            'billing_cc' => $billingCC,
+            'patient_age' => $Age,
+            'emp_id' => $Physician,
+            'description' => $Description,
+            'date' => $attachmentDate,
+            'attachments' => $fileAttachments,
+        ];
+        $logId = createLog(
+            'patient_medical_record',
+            'insert',
+            [
+                'message' => 'Patient attachment added',
+                'created_by' => $sessionName
+            ],
+            $PatientAttachments->id,
+            null,
+            $newData,
+            $sessionId
+        );
 
-        $PatientAttachments->logid = $logs->id;
+        $PatientAttachments->logid = $logId;
         $PatientAttachments->save();
 
         return response()->json(['success' => "Patient Attachment added successfully."]);

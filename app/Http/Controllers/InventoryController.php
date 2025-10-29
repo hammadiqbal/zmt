@@ -160,14 +160,28 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Inventory Category.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "'{$InventoryCategory}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $InventoryCategories->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $InventoryCategories->name,
+                'org_id' => $InventoryCategories->org_id,
+                'consumption_group' => $InventoryCategories->consumption_group,
+                'consumption_method' => $InventoryCategories->consumption_method,
+                'status' => $InventoryCategories->status,
+                'effective_timestamp' => $InventoryCategories->effective_timestamp,
+            ];
+            $logId = createLog(
+                'inventory_category',
+                'insert',
+                [
+                    'message' => "'{$InventoryCategory}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $InventoryCategories->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $InventoryCategories->logid = $logId;
             $InventoryCategories->save();
             return response()->json(['success' => 'Inventory Category created successfully']);
         }
@@ -321,15 +335,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status values
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'inventory_category',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $InventoryCategoryID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventoryCategoryLog = InventoryCategory::where('id', $InventoryCategoryID)->first();
         $logIds = $InventoryCategoryLog->logid ? explode(',', $InventoryCategoryLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventoryCategoryLog->logid = implode(',', $logIds);
         $InventoryCategoryLog->save();
 
@@ -384,6 +407,17 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $InventoryCategories = InventoryCategory::findOrFail($id);
+
+        // Capture old data
+        $oldData = [
+            'name' => $InventoryCategories->name,
+            'org_id' => $InventoryCategories->org_id,
+            'consumption_group' => $InventoryCategories->consumption_group,
+            'consumption_method' => $InventoryCategories->consumption_method,
+            'status' => $InventoryCategories->status,
+            'effective_timestamp' => $InventoryCategories->effective_timestamp,
+        ];
+
         $InventoryCategories->name = $request->input('u_invcat');
         $orgID = $request->input('u_ic_org');
         if (isset($orgID)) {
@@ -415,15 +449,30 @@ class InventoryController extends Controller
         if (empty($InventoryCategories->id)) {
             return response()->json(['error' => 'Failed to update Inventory Category. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'name' => $InventoryCategories->name,
+            'org_id' => $InventoryCategories->org_id,
+            'consumption_group' => $InventoryCategories->consumption_group,
+            'consumption_method' => $InventoryCategories->consumption_method,
+            'status' => $InventoryCategories->status,
+            'effective_timestamp' => $InventoryCategories->effective_timestamp,
+        ];
+        $logId = createLog(
+            'inventory_category',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $InventoryCategories->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventoryCategoryLog = InventoryCategory::where('id', $InventoryCategories->id)->first();
         $logIds = $InventoryCategoryLog->logid ? explode(',', $InventoryCategoryLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventoryCategoryLog->logid = implode(',', $logIds);
         $InventoryCategoryLog->save();
         return response()->json(['success' => 'Inventory Category updated successfully']);
@@ -495,14 +544,27 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Inventory Sub Category.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "'{$InventorySubCategory}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $InventorySubCategories->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $InventorySubCategories->name,
+                'cat_id' => $InventorySubCategories->cat_id,
+                'org_id' => $InventorySubCategories->org_id,
+                'status' => $InventorySubCategories->status,
+                'effective_timestamp' => $InventorySubCategories->effective_timestamp,
+            ];
+            $logId = createLog(
+                'inventory_subcategory',
+                'insert',
+                [
+                    'message' => "'{$InventorySubCategory}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $InventorySubCategories->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $InventorySubCategories->logid = $logId;
             $InventorySubCategories->save();
             return response()->json(['success' => 'Inventory Sub Category created successfully']);
         }
@@ -644,15 +706,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'inventory_subcategory',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $InventorySubCategoryID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventorySubCategoryLog = InventorySubCategory::where('id', $InventorySubCategoryID)->first();
         $logIds = $InventorySubCategoryLog->logid ? explode(',', $InventorySubCategoryLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventorySubCategoryLog->logid = implode(',', $logIds);
         $InventorySubCategoryLog->save();
 
@@ -702,6 +773,16 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $InventorySubCategories = InventorySubCategory::findOrFail($id);
+
+        // Capture old data
+        $oldData = [
+            'name' => $InventorySubCategories->name,
+            'cat_id' => $InventorySubCategories->cat_id,
+            'org_id' => $InventorySubCategories->org_id,
+            'status' => $InventorySubCategories->status,
+            'effective_timestamp' => $InventorySubCategories->effective_timestamp,
+        ];
+
         $InventorySubCategories->name = $request->input('u_isc_description');
         $InventorySubCategories->cat_id = $request->input('u_isc_catid');
         $orgID = $request->input('u_isc_org');
@@ -732,15 +813,29 @@ class InventoryController extends Controller
         if (empty($InventorySubCategories->id)) {
             return response()->json(['error' => 'Failed to update Inventory Sub Category. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'name' => $InventorySubCategories->name,
+            'cat_id' => $InventorySubCategories->cat_id,
+            'org_id' => $InventorySubCategories->org_id,
+            'status' => $InventorySubCategories->status,
+            'effective_timestamp' => $InventorySubCategories->effective_timestamp,
+        ];
+        $logId = createLog(
+            'inventory_subcategory',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $InventorySubCategories->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventorySubCategoryLog = InventorySubCategory::where('id', $InventorySubCategories->id)->first();
         $logIds = $InventorySubCategoryLog->logid ? explode(',', $InventorySubCategoryLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventorySubCategoryLog->logid = implode(',', $logIds);
         $InventorySubCategoryLog->save();
         return response()->json(['success' => 'Inventory Sub Category updated successfully']);
@@ -860,14 +955,28 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Inventory Type.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "'{$InventoryType}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $InventoryTypes->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $InventoryTypes->name,
+                'cat_id' => $InventoryTypes->cat_id,
+                'sub_catid' => $InventoryTypes->sub_catid,
+                'org_id' => $InventoryTypes->org_id,
+                'status' => $InventoryTypes->status,
+                'effective_timestamp' => $InventoryTypes->effective_timestamp,
+            ];
+            $logId = createLog(
+                'inventory_type',
+                'insert',
+                [
+                    'message' => "'{$InventoryType}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $InventoryTypes->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $InventoryTypes->logid = $logId;
             $InventoryTypes->save();
             return response()->json(['success' => 'Inventory Type created successfully']);
         }
@@ -1015,15 +1124,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'inventory_type',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $InventoryTypeID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventoryTypeLog = InventoryType::where('id', $InventoryTypeID)->first();
         $logIds = $InventoryTypeLog->logid ? explode(',', $InventoryTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventoryTypeLog->logid = implode(',', $logIds);
         $InventoryTypeLog->save();
 
@@ -1075,6 +1193,17 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $InventoryTypes = InventoryType::findOrFail($id);
+
+        // Capture old data
+        $oldData = [
+            'name' => $InventoryTypes->name,
+            'cat_id' => $InventoryTypes->cat_id,
+            'sub_catid' => $InventoryTypes->sub_catid,
+            'org_id' => $InventoryTypes->org_id,
+            'status' => $InventoryTypes->status,
+            'effective_timestamp' => $InventoryTypes->effective_timestamp,
+        ];
+
         $InventoryTypes->name = $request->input('u_it_description');
         $InventoryTypes->cat_id = $request->input('u_it_catid');
         $InventoryTypes->cat_id = $request->input('u_it_subcat');
@@ -1106,15 +1235,30 @@ class InventoryController extends Controller
         if (empty($InventoryTypes->id)) {
             return response()->json(['error' => 'Failed to update Inventory Type. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'name' => $InventoryTypes->name,
+            'cat_id' => $InventoryTypes->cat_id,
+            'sub_catid' => $InventoryTypes->sub_catid,
+            'org_id' => $InventoryTypes->org_id,
+            'status' => $InventoryTypes->status,
+            'effective_timestamp' => $InventoryTypes->effective_timestamp,
+        ];
+        $logId = createLog(
+            'inventory_type',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $InventoryTypes->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventoryTypeLog = InventoryType::where('id', $InventoryTypes->id)->first();
         $logIds = $InventoryTypeLog->logid ? explode(',', $InventoryTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventoryTypeLog->logid = implode(',', $logIds);
         $InventoryTypeLog->save();
         return response()->json(['success' => 'Inventory Type updated successfully']);
@@ -1199,14 +1343,30 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Inventory Generic.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "'{$InventoryGeneric}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $InventoryGenerics->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $InventoryGenerics->name,
+                'cat_id' => $InventoryGenerics->cat_id,
+                'sub_catid' => $InventoryGenerics->sub_catid,
+                'type_id' => $InventoryGenerics->type_id,
+                'org_id' => $InventoryGenerics->org_id,
+                'patient_mandatory' => $InventoryGenerics->patient_mandatory,
+                'status' => $InventoryGenerics->status,
+                'effective_timestamp' => $InventoryGenerics->effective_timestamp,
+            ];
+            $logId = createLog(
+                'inventory_generic',
+                'insert',
+                [
+                    'message' => "'{$InventoryGeneric}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $InventoryGenerics->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $InventoryGenerics->logid = $logId;
             $InventoryGenerics->save();
             return response()->json(['success' => 'Inventory Generic created successfully']);
         }
@@ -1362,15 +1522,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-        $InventoryGenericLog = InventoryType::where('id', $InventoryGenericID)->first();
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'inventory_generic',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $InventoryGenericID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        $InventoryGenericLog = InventoryGeneric::where('id', $InventoryGenericID)->first();
         $logIds = $InventoryGenericLog->logid ? explode(',', $InventoryGenericLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventoryGenericLog->logid = implode(',', $logIds);
         $InventoryGenericLog->save();
 
@@ -1428,6 +1597,18 @@ class InventoryController extends Controller
         }
         $InventoryGenerics = InventoryGeneric::findOrFail($id);
 
+        // Capture old data
+        $oldData = [
+            'name' => $InventoryGenerics->name,
+            'cat_id' => $InventoryGenerics->cat_id,
+            'sub_catid' => $InventoryGenerics->sub_catid,
+            'type_id' => $InventoryGenerics->type_id,
+            'org_id' => $InventoryGenerics->org_id,
+            'patient_mandatory' => $InventoryGenerics->patient_mandatory,
+            'status' => $InventoryGenerics->status,
+            'effective_timestamp' => $InventoryGenerics->effective_timestamp,
+        ];
+
         $InventoryGenerics->name = $request->input('u_ig_description');
         $InventoryGenerics->cat_id = $request->input('u_ig_cat');
         $InventoryGenerics->sub_catid = $request->input('u_ig_subcat');
@@ -1461,15 +1642,32 @@ class InventoryController extends Controller
         if (empty($InventoryGenerics->id)) {
             return response()->json(['error' => 'Failed to update Inventory Generic. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'name' => $InventoryGenerics->name,
+            'cat_id' => $InventoryGenerics->cat_id,
+            'sub_catid' => $InventoryGenerics->sub_catid,
+            'type_id' => $InventoryGenerics->type_id,
+            'org_id' => $InventoryGenerics->org_id,
+            'patient_mandatory' => $InventoryGenerics->patient_mandatory,
+            'status' => $InventoryGenerics->status,
+            'effective_timestamp' => $InventoryGenerics->effective_timestamp,
+        ];
+        $logId = createLog(
+            'inventory_generic',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $InventoryGenerics->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventoryGenericLog = InventoryGeneric::where('id', $InventoryGenerics->id)->first();
         $logIds = $InventoryGenericLog->logid ? explode(',', $InventoryGenericLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventoryGenericLog->logid = implode(',', $logIds);
         $InventoryGenericLog->save();
         return response()->json(['success' => 'Inventory Generic updated successfully']);
@@ -1635,14 +1833,30 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Inventory Brand.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "'{$InventoryBrand}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $InventoryBrands->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $InventoryBrands->name,
+                'cat_id' => $InventoryBrands->cat_id,
+                'sub_catid' => $InventoryBrands->sub_catid,
+                'type_id' => $InventoryBrands->type_id,
+                'generic_id' => $InventoryBrands->generic_id,
+                'org_id' => $InventoryBrands->org_id,
+                'status' => $InventoryBrands->status,
+                'effective_timestamp' => $InventoryBrands->effective_timestamp,
+            ];
+            $logId = createLog(
+                'inventory_brand',
+                'insert',
+                [
+                    'message' => "'{$InventoryBrand}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $InventoryBrands->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $InventoryBrands->logid = $logId;
             $InventoryBrands->save();
             return response()->json(['success' => 'Inventory Brand created successfully']);
         }
@@ -1802,15 +2016,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'inventory_brand',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $InventoryBrandID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventoryBrandLog = InventoryBrand::where('id', $InventoryBrandID)->first();
         $logIds = $InventoryBrandLog->logid ? explode(',', $InventoryBrandLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventoryBrandLog->logid = implode(',', $logIds);
         $InventoryBrandLog->save();
 
@@ -1870,6 +2093,19 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $InventoryBrands = InventoryBrand::findOrFail($id);
+
+        // Capture old data
+        $oldData = [
+            'name' => $InventoryBrands->name,
+            'cat_id' => $InventoryBrands->cat_id,
+            'sub_catid' => $InventoryBrands->sub_catid,
+            'type_id' => $InventoryBrands->type_id,
+            'generic_id' => $InventoryBrands->generic_id,
+            'org_id' => $InventoryBrands->org_id,
+            'status' => $InventoryBrands->status,
+            'effective_timestamp' => $InventoryBrands->effective_timestamp,
+        ];
+
         $InventoryBrands->name = $request->input('u_ib_description');
         $InventoryBrands->cat_id = $request->input('u_ib_cat');
         $InventoryBrands->sub_catid = $request->input('u_ib_subcat');
@@ -1903,15 +2139,32 @@ class InventoryController extends Controller
         if (empty($InventoryBrands->id)) {
             return response()->json(['error' => 'Failed to update Inventory Brand. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'name' => $InventoryBrands->name,
+            'cat_id' => $InventoryBrands->cat_id,
+            'sub_catid' => $InventoryBrands->sub_catid,
+            'type_id' => $InventoryBrands->type_id,
+            'generic_id' => $InventoryBrands->generic_id,
+            'org_id' => $InventoryBrands->org_id,
+            'status' => $InventoryBrands->status,
+            'effective_timestamp' => $InventoryBrands->effective_timestamp,
+        ];
+        $logId = createLog(
+            'inventory_brand',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $InventoryBrands->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventoryBrandLog = InventoryBrand::where('id', $InventoryBrands->id)->first();
         $logIds = $InventoryBrandLog->logid ? explode(',', $InventoryBrandLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventoryBrandLog->logid = implode(',', $logIds);
         $InventoryBrandLog->save();
         return response()->json(['success' => 'Inventory Brand updated successfully']);
@@ -2008,14 +2261,37 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Inventory Transaction Type.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "'{$InventoryTransactionType}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $InventoryTransactionTypes->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $InventoryTransactionTypes->name,
+                'activity_type' => $InventoryTransactionTypes->activity_type,
+                'request_mandatory' => $InventoryTransactionTypes->request_mandatory,
+                'emp_location_mandatory_request' => $InventoryTransactionTypes->emp_location_mandatory_request,
+                'source_location_type' => $InventoryTransactionTypes->source_location_type,
+                'source_action' => $InventoryTransactionTypes->source_action,
+                'destination_location_type' => $InventoryTransactionTypes->destination_location_type,
+                'destination_action' => $InventoryTransactionTypes->destination_action,
+                'source_location' => $InventoryTransactionTypes->source_location,
+                'destination_location' => $InventoryTransactionTypes->destination_location,
+                'emp_location_source_destination' => $InventoryTransactionTypes->emp_location_source_destination,
+                'transaction_expired_status' => $InventoryTransactionTypes->transaction_expired_status,
+                'org_id' => $InventoryTransactionTypes->org_id,
+                'status' => $InventoryTransactionTypes->status,
+                'effective_timestamp' => $InventoryTransactionTypes->effective_timestamp,
+            ];
+            $logId = createLog(
+                'inventory_transaction_type',
+                'insert',
+                [
+                    'message' => "'{$InventoryTransactionType}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $InventoryTransactionTypes->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $InventoryTransactionTypes->logid = $logId;
             $InventoryTransactionTypes->save();
             return response()->json(['success' => 'Inventory Transaction Type created successfully']);
         }
@@ -2223,15 +2499,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'inventory_transaction_type',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $InventoryTransactionTypeID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventoryTransactionTypeLog = InventoryTransactionType::where('id', $InventoryTransactionTypeID)->first();
         $logIds = $InventoryTransactionTypeLog->logid ? explode(',', $InventoryTransactionTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventoryTransactionTypeLog->logid = implode(',', $logIds);
         $InventoryTransactionTypeLog->save();
 
@@ -2319,6 +2604,25 @@ class InventoryController extends Controller
         }
         $InventoryTransactionTypes = InventoryTransactionType::findOrFail($id);
 
+        // Capture old data
+        $oldData = [
+            'name' => $InventoryTransactionTypes->name,
+            'activity_type' => $InventoryTransactionTypes->activity_type,
+            'request_mandatory' => $InventoryTransactionTypes->request_mandatory,
+            'emp_location_mandatory_request' => $InventoryTransactionTypes->emp_location_mandatory_request,
+            'source_location_type' => $InventoryTransactionTypes->source_location_type,
+            'source_action' => $InventoryTransactionTypes->source_action,
+            'destination_location_type' => $InventoryTransactionTypes->destination_location_type,
+            'destination_action' => $InventoryTransactionTypes->destination_action,
+            'source_location' => $InventoryTransactionTypes->source_location,
+            'destination_location' => $InventoryTransactionTypes->destination_location,
+            'emp_location_source_destination' => $InventoryTransactionTypes->emp_location_source_destination,
+            'transaction_expired_status' => $InventoryTransactionTypes->transaction_expired_status,
+            'org_id' => $InventoryTransactionTypes->org_id,
+            'status' => $InventoryTransactionTypes->status,
+            'effective_timestamp' => $InventoryTransactionTypes->effective_timestamp,
+        ];
+
         $orgID = $request->input('u_itt_org');
         if (isset($orgID)) {
             $InventoryTransactionTypes->org_id = $orgID;
@@ -2361,394 +2665,44 @@ class InventoryController extends Controller
         if (empty($InventoryTransactionTypes->id)) {
             return response()->json(['error' => 'Failed to update Inventory Transaction Type. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'name' => $InventoryTransactionTypes->name,
+            'activity_type' => $InventoryTransactionTypes->activity_type,
+            'request_mandatory' => $InventoryTransactionTypes->request_mandatory,
+            'emp_location_mandatory_request' => $InventoryTransactionTypes->emp_location_mandatory_request,
+            'source_location_type' => $InventoryTransactionTypes->source_location_type,
+            'source_action' => $InventoryTransactionTypes->source_action,
+            'destination_location_type' => $InventoryTransactionTypes->destination_location_type,
+            'destination_action' => $InventoryTransactionTypes->destination_action,
+            'source_location' => $InventoryTransactionTypes->source_location,
+            'destination_location' => $InventoryTransactionTypes->destination_location,
+            'emp_location_source_destination' => $InventoryTransactionTypes->emp_location_source_destination,
+            'transaction_expired_status' => $InventoryTransactionTypes->transaction_expired_status,
+            'org_id' => $InventoryTransactionTypes->org_id,
+            'status' => $InventoryTransactionTypes->status,
+            'effective_timestamp' => $InventoryTransactionTypes->effective_timestamp,
+        ];
+        $logId = createLog(
+            'inventory_transaction_type',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $InventoryTransactionTypes->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventoryTransactionTypeLog = InventoryTransactionType::where('id', $InventoryTransactionTypes->id)->first();
         $logIds = $InventoryTransactionTypeLog->logid ? explode(',', $InventoryTransactionTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventoryTransactionTypeLog->logid = implode(',', $logIds);
         $InventoryTransactionTypeLog->save();
         return response()->json(['success' => 'Inventory Transaction Type updated successfully']);
     }
 
-    // public function InventoryVendorRegistration()
-    // {
-    //     $colName = 'vendor_registration';
-    //     if (PermissionDenied($colName)) {
-    //         abort(403);
-    //     }
-    //     $user = auth()->user();
-    //     return view('dashboard.inventory-vendor-registration', compact('user'));
-    // }
-
-    // public function VendorRegistration(VendorRegistrationRequest $request)
-    // {
-    //     $rights = $this->rights;
-    //     $add = explode(',', $rights->vendor_registration)[0];
-    //     if($add == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-    //     $VendorDescription = trim($request->input('vendor_desc'));
-    //     $Organization = $request->input('vendor_org');
-    //     $Address = $request->input('vendor_address');
-    //     $FocalPersonName = $request->input('vendor_name');
-    //     $Email = $request->input('vendor_email');
-    //     $Cell = $request->input('vendor_cell');
-    //     $Landline = $request->input('vendor_landline');
-    //     $Remarks = $request->input('vendor_remarks');
-    //     $Edt = $request->input('vendor_edt');
-    //     $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
-    //     $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
-    //     $EffectDateTime->subMinute(1);
-    //     if ($EffectDateTime->isPast()) {
-    //         $status = 1; //Active
-    //         $emailStatus = 'Active';
-
-    //     } else {
-    //         $status = 0; //Inactive
-    //         $emailStatus = 'Inactive';
-    //     }
-
-    //     $session = auth()->user();
-    //     $sessionName = $session->name;
-    //     $sessionId = $session->id;
-
-    //     $last_updated = $this->currentDatetime;
-    //     $timestamp = $this->currentDatetime;
-    //     $logId = null;
-
-    //     $VendorRegistrationExists = VendorRegistration::where('name', $VendorDescription)
-    //     ->where('address', $Address)
-    //     ->where('org_id', $Organization)
-    //     ->where('person_email', $Email)
-    //     ->where('cell_no', $Cell)
-    //     ->exists();
-
-    //     if ($VendorRegistrationExists) {
-    //         return response()->json(['info' => 'Vendor already exists.']);
-    //     }
-    //     else
-    //     {
-    //         $Vendor = new VendorRegistration();
-    //         $Vendor->name = $VendorDescription;
-    //         $Vendor->address = $Address;
-    //         $Vendor->org_id = $Organization;
-    //         $Vendor->person_name = $FocalPersonName;
-    //         $Vendor->person_email = $Email;
-    //         $Vendor->cell_no = $Cell;
-    //         $Vendor->landline_no = $Landline;
-    //         $Vendor->remarks = $Remarks;
-    //         $Vendor->status = $status;
-    //         $Vendor->user_id = $sessionId;
-    //         $Vendor->last_updated = $last_updated;
-    //         $Vendor->timestamp = $timestamp;
-    //         $Vendor->effective_timestamp = $Edt;
-
-
-    //         try {
-    //             $emailTimestamp = Carbon::createFromTimestamp($timestamp);
-    //             $emailTimestamp = $emailTimestamp->format('l d F Y - h:i A');
-    //             $emailEdt = $request->input('vendor_edt');
-    //             $orgName = Organization::find($Organization)->organization;
-    //             if($Landline === null)
-    //             {
-    //                 $Landline = 'N/A';
-    //             }
-
-    //             Mail::to($Email)->send(new VendorRegistrationMail($VendorDescription, $Address, $orgName,
-    //             $FocalPersonName, $Email, $Cell, $Landline, $Remarks,
-    //             $emailStatus, $emailEdt, $emailTimestamp));
-
-    //             $Vendor->save();
-
-    //         }
-    //         catch (TransportExceptionInterface $ex)
-    //         {
-    //             return response()->json(['info' => 'There is an issue with email. Please try again!.']);
-    //         }
-
-    //         if (empty($Vendor->id)) {
-    //             return response()->json(['error' => 'Failed to create Vendor.']);
-    //         }
-
-    //         $logs = Logs::create([
-    //             'module' => 'inventory',
-    //             'content' => "'{$VendorDescription}' has been added by '{$sessionName}'",
-    //             'event' => 'add',
-    //             'timestamp' => $timestamp,
-    //         ]);
-    //         $logId = $logs->id;
-    //         $Vendor->logid = $logs->id;
-    //         $Vendor->save();
-    //         return response()->json(['success' => 'Vendor Registered successfully']);
-    //     }
-    // }
-
-    // public function GetVendorRegistrationData(Request $request)
-    // {
-    //     $rights = $this->rights;
-    //     $view = explode(',', $rights->vendor_registration)[1];
-    //     if($view == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-    //     $Vendors = VendorRegistration::select('vendor.*',
-    //     'organization.organization as orgName')
-    //     ->join('organization', 'organization.id', '=', 'vendor.org_id')
-    //     ->orderBy('vendor.id', 'desc');
-
-    //     $session = auth()->user();
-    //     $sessionOrg = $session->org_id;
-    //     if($sessionOrg != '0')
-    //     {
-    //         $Vendors->where('vendor.org_id', '=', $sessionOrg);
-    //     }
-    //     $Vendors = $Vendors;
-    //     // ->get()
-    //     // return DataTables::of($Vendors)
-    //     return DataTables::eloquent($Vendors)
-    //         ->filter(function ($query) use ($request) {
-    //             if ($request->has('search') && $request->search['value']) {
-    //                 $search = $request->search['value'];
-    //                 $query->where(function ($q) use ($search) {
-    //                     $q->where('vendor.name', 'like', "%{$search}%")
-    //                         ->orWhere('organization.organization', 'like', "%{$search}%")
-    //                         ->orWhere('vendor.person_name', 'like', "%{$search}%")
-    //                         ->orWhere('vendor.person_email', 'like', "%{$search}%")
-    //                         ->orWhere('vendor.cell_no', 'like', "%{$search}%")
-    //                         ->orWhere('vendor.landline_no', 'like', "%{$search}%");
-    //                 });
-    //             }
-    //         })
-    //         ->addColumn('id_raw', function ($Vendor) {
-    //             return $Vendor->id;  // Raw ID value
-    //         })
-    //         ->editColumn('id', function ($Vendor) {
-    //             $session = auth()->user();
-    //             $sessionName = $session->name;
-    //             $sessionId = $session->id;
-    //             $VendorDescription = $Vendor->name;
-    //             $effectiveDate = Carbon::createFromTimestamp($Vendor->effective_timestamp)->format('l d F Y - h:i A');
-    //             $timestamp = Carbon::createFromTimestamp($Vendor->timestamp)->format('l d F Y - h:i A');
-    //             $lastUpdated = Carbon::createFromTimestamp($Vendor->last_updated)->format('l d F Y - h:i A');
-    //             $createdByName = getUserNameById($Vendor->user_id);
-    //             $createdInfo = "
-    //                     <b>Created By:</b> " . ucwords($createdByName) . "  <br>
-    //                     <b>Effective Date&amp;Time:</b> " . $effectiveDate . " <br>
-    //                     <b>RecordedAt:</b> " . $timestamp ." <br>
-    //                     <b>LastUpdated:</b> " . $lastUpdated;
-
-    //             $idStr = str_pad($Vendor->id, 5, "0", STR_PAD_LEFT);
-    //             $ModuleCode = 'VRG';
-    //             $firstLetters = strtoupper(implode('', array_map(function($word) { return substr($word, 0, 1); }, explode(' ', $VendorDescription))));
-    //             $Code = $ModuleCode.'-'.$firstLetters.'-'.$idStr;
-
-    //             $sessionOrg = $session->org_id;
-    //             $orgName = '';
-    //             if($sessionOrg == 0)
-    //             {
-    //                 $orgName ='<b>Organization:</b> '.ucwords($Vendor->orgName).'<br>';
-    //             }
-
-    //             return $Code.'<hr class="mt-1 mb-2">'.ucwords($VendorDescription)
-    //                 . '<hr class="mt-1 mb-2">'
-    //                 . $orgName
-    //                 .'<b>Focal Person Name:</b> '.ucwords($Vendor->person_name)
-    //                 . '<hr class="mt-1 mb-2">'
-    //                 .'<b>Remarks:</b> '.ucwords($Vendor->remarks)
-    //                 . '<hr class="mt-1 mb-2">'
-    //                 . '<span class="label label-info popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $createdInfo .'">'
-    //                 . '<i class="fa fa-toggle-right"></i> View Details'
-    //                 . '</span>';
-    //         })
-    //         ->editColumn('contactDetails', function ($Vendor) {
-
-    //             return
-    //                 '<b>Email:</b> '.($Vendor->person_email)
-    //                 .'<br><b>Cell #:</b> '.ucwords($Vendor->cell_no)
-    //                 .'<br><b>Landline:</b> '.ucwords($Vendor->landline_no)
-    //                 ;
-    //         })
-    //         ->addColumn('landline', function ($Vendor) {
-    //             $Landline = $Vendor->landline_no;
-    //             if($Landline === null)
-    //             {
-    //                 $Landline = 'N/A';
-    //             }
-
-    //             return $Landline;
-    //         })
-    //         ->addColumn('action', function ($Vendor) {
-    //                 $VendorId = $Vendor->id;
-    //                 $logId = $Vendor->logid;
-    //                 $Rights = $this->rights;
-    //                 $edit = explode(',', $Rights->vendor_registration)[2];
-    //                 $actionButtons = '';
-    //                 if ($edit == 1) {
-    //                     $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 edit-vendor" data-vendor-id="'.$VendorId.'">'
-    //                     . '<i class="fa fa-edit"></i> Edit'
-    //                     . '</button>';
-    //                 }
-    //                 $actionButtons .='<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
-    //                 . '<i class="fa fa-eye"></i> View Logs'
-    //                 . '</button>';
-    //                 return $Vendor->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
-
-    //         })
-    //         ->editColumn('status', function ($Vendor) {
-    //             $rights = $this->rights;
-    //             $updateStatus = explode(',', $rights->vendor_registration)[3];
-    //             return $updateStatus == 1 ? ($Vendor->status ? '<span class="label label-success vendor_status cursor-pointer" data-id="'.$Vendor->id.'" data-status="'.$Vendor->status.'">Active</span>' : '<span class="label label-danger vendor_status cursor-pointer" data-id="'.$Vendor->id.'" data-status="'.$Vendor->status.'">Inactive</span>') : ($Vendor->status ? '<span class="label label-success">Active</span>' : '<span class="label label-danger">Inactive</span>');
-
-    //         })
-    //         ->rawColumns(['action', 'status','contactDetails',
-    //         'id'])
-    //         ->make(true);
-    // }
-
-    // public function UpdateVenderStatus(Request $request)
-    // {
-    //     $rights = $this->rights;
-    //     $UpdateStatus = explode(',', $rights->vendor_registration)[3];
-    //     if($UpdateStatus == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-    //     $VendorID = $request->input('id');
-    //     $Status = $request->input('status');
-    //     $CurrentTimestamp = $this->currentDatetime;
-    //     $Vendors = VendorRegistration::find($VendorID);
-
-    //     if($Status == 0)
-    //     {
-    //         $UpdateStatus = 1;
-    //         $statusLog = 'Active';
-    //         $Vendors->effective_timestamp = $CurrentTimestamp;
-    //     }
-    //     else{
-    //         $UpdateStatus = 0;
-    //         $statusLog = 'Inactive';
-
-    //     }
-    //     $Vendors->status = $UpdateStatus;
-    //     $Vendors->last_updated = $CurrentTimestamp;
-
-    //     $session = auth()->user();
-    //     $sessionName = $session->name;
-    //     $sessionId = $session->id;
-
-    //     $logs = Logs::create([
-    //         'module' => 'inventory',
-    //         'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-    //         'event' => 'update',
-    //         'timestamp' => $this->currentDatetime,
-    //     ]);
-    //     $VendorLog = VendorRegistration::where('id', $VendorID)->first();
-    //     $logIds = $VendorLog->logid ? explode(',', $VendorLog->logid) : [];
-    //     $logIds[] = $logs->id;
-    //     $VendorLog->logid = implode(',', $logIds);
-    //     $VendorLog->save();
-
-    //     $Vendors->save();
-    //     return response()->json(['success' => true, 200]);
-    // }
-
-    // public function UpdateVendorRegistrationModal($id)
-    // {
-    //     $rights = $this->rights;
-    //     $edit = explode(',', $rights->vendor_registration)[2];
-    //     if($edit == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-    //     $Vendors = VendorRegistration::select('vendor.*',
-    //     'organization.organization as orgName')
-    //     ->join('organization', 'organization.id', '=', 'vendor.org_id')
-    //     ->where('vendor.id', '=', $id)
-    //     ->first();
-
-    //     $effective_timestamp = $Vendors->effective_timestamp;
-    //     $effective_timestamp = Carbon::createFromTimestamp($effective_timestamp);
-    //     $effective_timestamp = $effective_timestamp->format('l d F Y - h:i A');
-
-    //     $data = [
-    //         'id' => $id,
-    //         'name' => ucwords($Vendors->name),
-    //         'address' => ucwords($Vendors->address),
-    //         'orgId' => $Vendors->org_id,
-    //         'orgName' => ucwords($Vendors->orgName),
-    //         'personName' => ucwords($Vendors->person_name),
-    //         'personEmail' => ucwords($Vendors->person_email),
-    //         'cellNo' => ucwords($Vendors->cell_no),
-    //         'landlineNo' => ucwords($Vendors->landline_no),
-    //         'remarks' => ucwords($Vendors->remarks),
-    //         'effective_timestamp' => $effective_timestamp,
-    //     ];
-    //     return response()->json($data);
-    // }
-
-    // public function UpdateVendorRegistration(Request $request, $id)
-    // {
-    //     $rights = $this->rights;
-    //     $edit = explode(',', $rights->vendor_registration)[2];
-    //     if($edit == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-    //     $Vendors = VendorRegistration::findOrFail($id);
-    //     $Vendors->name = $request->input('u_vendor_desc');
-    //     $Vendors->address = $request->input('u_vendor_address');
-    //     $orgID = $request->input('u_vendor_org');
-    //     if (isset($orgID)) {
-    //         $Vendors->org_id = $orgID;
-    //     }
-    //     $Vendors->person_name = $request->input('u_vendor_name');
-    //     $Vendors->person_email = $request->input('u_vendor_email');
-    //     $Vendors->cell_no = $request->input('u_vendor_cell');
-    //     $Vendors->landline_no = $request->input('u_vendor_landline');
-    //     $Vendors->remarks = $request->input('u_vendor_remarks');
-    //     $effective_date = $request->input('u_vendor_edt');
-    //     $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
-    //     $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
-    //     $EffectDateTime->subMinute(1);
-
-    //     if ($EffectDateTime->isPast()) {
-    //         $status = 1; //Active
-    //     } else {
-    //          $status = 0; //Inactive
-    //     }
-
-    //     $Vendors->effective_timestamp = $effective_date;
-    //     $Vendors->last_updated = $this->currentDatetime;
-    //     $Vendors->status = $status;
-
-    //     $session = auth()->user();
-    //     $sessionName = $session->name;
-    //     $sessionId = $session->id;
-
-    //     $Vendors->save();
-
-    //     if (empty($Vendors->id)) {
-    //         return response()->json(['error' => 'Failed to update Vendor Details. Please try again']);
-    //     }
-    //     $logs = Logs::create([
-    //         'module' => 'inventory',
-    //         'content' => "Data has been updated by '{$sessionName}'",
-    //         'event' => 'update',
-    //         'timestamp' => $this->currentDatetime,
-    //     ]);
-    //     $VendorLog = InventoryTransactionType::where('id', $Vendors->id)->first();
-    //     $logIds = $VendorLog->logid ? explode(',', $VendorLog->logid) : [];
-    //     $logIds[] = $logs->id;
-    //     $VendorLog->logid = implode(',', $logIds);
-    //     $VendorLog->save();
-    //     return response()->json(['success' => 'Vendor Details updated successfully']);
-    // }
 
     public function ThirdParty()
     {
@@ -2858,14 +2812,35 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Vendor/Donor.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "'{$RegistrationType} -- {$PersonName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $ThirdParty->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'org_id' => $ThirdParty->org_id,
+                'type' => $ThirdParty->type,
+                'category' => $ThirdParty->category,
+                'corporate_name' => $ThirdParty->corporate_name,
+                'prefix_id' => $ThirdParty->prefix_id,
+                'person_name' => $ThirdParty->person_name,
+                'person_email' => $ThirdParty->person_email,
+                'person_cell' => $ThirdParty->person_cell,
+                'landline' => $ThirdParty->landline,
+                'address' => $ThirdParty->address,
+                'remarks' => $ThirdParty->remarks,
+                'status' => $ThirdParty->status,
+                'effective_timestamp' => $ThirdParty->effective_timestamp,
+            ];
+            $logId = createLog(
+                'third_party',
+                'insert',
+                [
+                    'message' => "'{$RegistrationType} -- {$PersonName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $ThirdParty->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $ThirdParty->logid = $logId;
             $ThirdParty->save();
             return response()->json(['success' => $RegistrationType.' Registered successfully']);
         }
@@ -3030,15 +3005,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'third_party',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ThirdPartyID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ThirdPartyLog = ThirdPartyRegistration::where('id', $ThirdPartyID)->first();
         $logIds = $ThirdPartyLog->logid ? explode(',', $ThirdPartyLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ThirdPartyLog->logid = implode(',', $logIds);
         $ThirdPartyLog->save();
 
@@ -3095,6 +3079,23 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $ThirdParty = ThirdPartyRegistration::findOrFail($id);
+
+        // Capture old data
+        $oldData = [
+            'org_id' => $ThirdParty->org_id,
+            'type' => $ThirdParty->type,
+            'category' => $ThirdParty->category,
+            'corporate_name' => $ThirdParty->corporate_name,
+            'prefix_id' => $ThirdParty->prefix_id,
+            'person_name' => $ThirdParty->person_name,
+            'person_email' => $ThirdParty->person_email,
+            'person_cell' => $ThirdParty->person_cell,
+            'landline' => $ThirdParty->landline,
+            'address' => $ThirdParty->address,
+            'remarks' => $ThirdParty->remarks,
+            'status' => $ThirdParty->status,
+            'effective_timestamp' => $ThirdParty->effective_timestamp,
+        ];
         $orgID = $request->input('u_tp_org');
         if (isset($orgID)) {
             $ThirdParty->org_id = $orgID;
@@ -3133,15 +3134,37 @@ class InventoryController extends Controller
         if (empty($ThirdParty->id)) {
             return response()->json(['error' => 'Failed to update Vendor/Donor Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'org_id' => $ThirdParty->org_id,
+            'type' => $ThirdParty->type,
+            'category' => $ThirdParty->category,
+            'corporate_name' => $ThirdParty->corporate_name,
+            'prefix_id' => $ThirdParty->prefix_id,
+            'person_name' => $ThirdParty->person_name,
+            'person_email' => $ThirdParty->person_email,
+            'person_cell' => $ThirdParty->person_cell,
+            'landline' => $ThirdParty->landline,
+            'address' => $ThirdParty->address,
+            'remarks' => $ThirdParty->remarks,
+            'status' => $ThirdParty->status,
+            'effective_timestamp' => $ThirdParty->effective_timestamp,
+        ];
+        $logId = createLog(
+            'third_party',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $ThirdParty->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ThirdPartyLog = ThirdPartyRegistration::where('id', $ThirdParty->id)->first();
         $logIds = $ThirdPartyLog->logid ? explode(',', $ThirdPartyLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ThirdPartyLog->logid = implode(',', $logIds);
         $ThirdPartyLog->save();
         return response()->json(['success' => 'Vendor/Donor Details updated successfully']);
@@ -3214,14 +3237,27 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Consumption Group.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "'{$Desc}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $ConsumptionGroups->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'org_id' => $ConsumptionGroups->org_id,
+                'description' => $ConsumptionGroups->description,
+                'remarks' => $ConsumptionGroups->remarks,
+                'status' => $ConsumptionGroups->status,
+                'effective_timestamp' => $ConsumptionGroups->effective_timestamp,
+            ];
+            $logId = createLog(
+                'consumption_group',
+                'insert',
+                [
+                    'message' => "'{$Desc}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $ConsumptionGroups->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $ConsumptionGroups->logid = $logId;
             $ConsumptionGroups->save();
             return response()->json(['success' => 'Consumption Group Added successfully']);
         }
@@ -3361,15 +3397,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'consumption_group',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ConsumptionGroupID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ConsumptionGroupLog = ConsumptionGroup::where('id', $ConsumptionGroupID)->first();
         $logIds = $ConsumptionGroupLog->logid ? explode(',', $ConsumptionGroupLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ConsumptionGroupLog->logid = implode(',', $logIds);
         $ConsumptionGroupLog->save();
 
@@ -3447,15 +3492,36 @@ class InventoryController extends Controller
         if (empty($ConsumptionGroup->id)) {
             return response()->json(['error' => 'Failed to update Consumption Group. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'org_id' => $ConsumptionGroup->getOriginal('org_id'),
+            'description' => $ConsumptionGroup->getOriginal('description'),
+            'remarks' => $ConsumptionGroup->getOriginal('remarks'),
+            'status' => $ConsumptionGroup->getOriginal('status'),
+            'effective_timestamp' => $ConsumptionGroup->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'org_id' => $ConsumptionGroup->org_id,
+            'description' => $ConsumptionGroup->description,
+            'remarks' => $ConsumptionGroup->remarks,
+            'status' => $ConsumptionGroup->status,
+            'effective_timestamp' => $ConsumptionGroup->effective_timestamp,
+        ];
+        $logId = createLog(
+            'consumption_group',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $ConsumptionGroup->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ConsumptionGroupLog = ConsumptionGroup::where('id', $ConsumptionGroup->id)->first();
         $logIds = $ConsumptionGroupLog->logid ? explode(',', $ConsumptionGroupLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ConsumptionGroupLog->logid = implode(',', $logIds);
         $ConsumptionGroupLog->save();
         return response()->json(['success' => 'Consumption Group updated successfully']);
@@ -3533,14 +3599,28 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Consumption Method.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "'{$Desc}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $ConsumptionMethods->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'org_id' => $ConsumptionMethods->org_id,
+                'description' => $ConsumptionMethods->description,
+                'criteria' => $ConsumptionMethods->criteria,
+                'group_id' => $ConsumptionMethods->group_id,
+                'status' => $ConsumptionMethods->status,
+                'effective_timestamp' => $ConsumptionMethods->effective_timestamp,
+            ];
+            $logId = createLog(
+                'consumption_method',
+                'insert',
+                [
+                    'message' => "'{$Desc}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $ConsumptionMethods->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $ConsumptionMethods->logid = $logId;
             $ConsumptionMethods->save();
             return response()->json(['success' => 'Consumption Method Added successfully']);
         }
@@ -3683,15 +3763,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'consumption_method',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ConsumptionMethodID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ConsumptionMethodLog = ConsumptionMethod::where('id', $ConsumptionMethodID)->first();
         $logIds = $ConsumptionMethodLog->logid ? explode(',', $ConsumptionMethodLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ConsumptionMethodLog->logid = implode(',', $logIds);
         $ConsumptionMethodLog->save();
 
@@ -3772,15 +3861,38 @@ class InventoryController extends Controller
         if (empty($ConsumptionMethod->id)) {
             return response()->json(['error' => 'Failed to update Consumption Method. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
-        $ConsumptionMethodLog = ConsumptionGroup::where('id', $ConsumptionMethod->id)->first();
+        // New logging (update)
+        $oldData = [
+            'org_id' => $ConsumptionMethod->org_id,
+            'description' => $ConsumptionMethod->getOriginal('description'),
+            'criteria' => $ConsumptionMethod->getOriginal('criteria'),
+            'group_id' => $ConsumptionMethod->getOriginal('group_id'),
+            'status' => $ConsumptionMethod->getOriginal('status'),
+            'effective_timestamp' => $ConsumptionMethod->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'org_id' => $ConsumptionMethod->org_id,
+            'description' => $ConsumptionMethod->description,
+            'criteria' => $ConsumptionMethod->criteria,
+            'group_id' => $ConsumptionMethod->group_id,
+            'status' => $ConsumptionMethod->status,
+            'effective_timestamp' => $ConsumptionMethod->effective_timestamp,
+        ];
+        $logId = createLog(
+            'consumption_method',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $ConsumptionMethod->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        $ConsumptionMethodLog = ConsumptionMethod::where('id', $ConsumptionMethod->id)->first();
         $logIds = $ConsumptionMethodLog->logid ? explode(',', $ConsumptionMethodLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ConsumptionMethodLog->logid = implode(',', $logIds);
         $ConsumptionMethodLog->save();
         return response()->json(['success' => 'Consumption Method updated successfully']);
@@ -3893,14 +4005,35 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Stock Monitoring.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "Stock Monitoring has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $StockMonitoring->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'org_id' => $StockMonitoring->org_id,
+                'site_id' => $StockMonitoring->site_id,
+                'item_generic_id' => $StockMonitoring->item_generic_id,
+                'item_brand_id' => $StockMonitoring->item_brand_id,
+                'service_location_id' => $StockMonitoring->service_location_id,
+                'min_stock' => $StockMonitoring->min_stock,
+                'max_stock' => $StockMonitoring->max_stock,
+                'monthly_consumption_ceiling' => $StockMonitoring->monthly_consumption_ceiling,
+                'min_reorder_qty' => $StockMonitoring->min_reorder_qty,
+                'primary_email' => $StockMonitoring->primary_email,
+                'secondary_email' => $StockMonitoring->secondary_email,
+                'status' => $StockMonitoring->status,
+                'effective_timestamp' => $StockMonitoring->effective_timestamp,
+            ];
+            $logId = createLog(
+                'stock_monitoring',
+                'insert',
+                [
+                    'message' => 'Stock Monitoring has been added',
+                    'created_by' => $sessionName
+                ],
+                $StockMonitoring->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $StockMonitoring->logid = $logId;
             $StockMonitoring->save();
             return response()->json(['success' => 'Stock Monitoring Added successfully']);
         }
@@ -4078,15 +4211,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'stock_monitoring',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $StockMonitoringID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $StockMonitoringLog = StockMonitoring::where('id', $StockMonitoringID)->first();
         $logIds = $StockMonitoringLog->logid ? explode(',', $StockMonitoringLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $StockMonitoringLog->logid = implode(',', $logIds);
         $StockMonitoringLog->save();
 
@@ -4210,15 +4352,52 @@ class InventoryController extends Controller
         if (empty($StockMonitoring->id)) {
             return response()->json(['error' => 'Failed to update Stock Monitoring. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'org_id' => $StockMonitoring->getOriginal('org_id'),
+            'site_id' => $StockMonitoring->getOriginal('site_id'),
+            'item_generic_id' => $StockMonitoring->getOriginal('item_generic_id'),
+            'item_brand_id' => $StockMonitoring->getOriginal('item_brand_id'),
+            'service_location_id' => $StockMonitoring->getOriginal('service_location_id'),
+            'min_stock' => $StockMonitoring->getOriginal('min_stock'),
+            'max_stock' => $StockMonitoring->getOriginal('max_stock'),
+            'monthly_consumption_ceiling' => $StockMonitoring->getOriginal('monthly_consumption_ceiling'),
+            'min_reorder_qty' => $StockMonitoring->getOriginal('min_reorder_qty'),
+            'primary_email' => $StockMonitoring->getOriginal('primary_email'),
+            'secondary_email' => $StockMonitoring->getOriginal('secondary_email'),
+            'status' => $StockMonitoring->getOriginal('status'),
+            'effective_timestamp' => $StockMonitoring->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'org_id' => $StockMonitoring->org_id,
+            'site_id' => $StockMonitoring->site_id,
+            'item_generic_id' => $StockMonitoring->item_generic_id,
+            'item_brand_id' => $StockMonitoring->item_brand_id,
+            'service_location_id' => $StockMonitoring->service_location_id,
+            'min_stock' => $StockMonitoring->min_stock,
+            'max_stock' => $StockMonitoring->max_stock,
+            'monthly_consumption_ceiling' => $StockMonitoring->monthly_consumption_ceiling,
+            'min_reorder_qty' => $StockMonitoring->min_reorder_qty,
+            'primary_email' => $StockMonitoring->primary_email,
+            'secondary_email' => $StockMonitoring->secondary_email,
+            'status' => $StockMonitoring->status,
+            'effective_timestamp' => $StockMonitoring->effective_timestamp,
+        ];
+        $logId = createLog(
+            'stock_monitoring',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $StockMonitoring->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $StockMonitoringLog = StockMonitoring::where('id', $StockMonitoring->id)->first();
         $logIds = $StockMonitoringLog->logid ? explode(',', $StockMonitoringLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $StockMonitoringLog->logid = implode(',', $logIds);
         $StockMonitoringLog->save();
         return response()->json(['success' => 'Stock Monitoring updated successfully']);
@@ -4289,14 +4468,27 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Inventory Source Destination Type.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "Inventory Source Destination Type has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $InventorySourceDestinationType->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'org_id' => $InventorySourceDestinationType->org_id,
+                'name' => $InventorySourceDestinationType->name,
+                'third_party' => $InventorySourceDestinationType->third_party,
+                'status' => $InventorySourceDestinationType->status,
+                'effective_timestamp' => $InventorySourceDestinationType->effective_timestamp,
+            ];
+            $logId = createLog(
+                'inventory_source_destination_type',
+                'insert',
+                [
+                    'message' => 'Inventory Source Destination Type has been added',
+                    'created_by' => $sessionName
+                ],
+                $InventorySourceDestinationType->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $InventorySourceDestinationType->logid = $logId;
             $InventorySourceDestinationType->save();
             return response()->json(['success' => 'Inventory Source Destination Type Added successfully']);
         }
@@ -4437,15 +4629,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'inventory_source_destination_type',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $InventorySourceDestinationTypeID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventorySourceDestinationTypeLog = InventorySourceDestinationType::where('id', $InventorySourceDestinationTypeID)->first();
         $logIds = $InventorySourceDestinationTypeLog->logid ? explode(',', $InventorySourceDestinationTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventorySourceDestinationTypeLog->logid = implode(',', $logIds);
         $InventorySourceDestinationTypeLog->save();
 
@@ -4523,15 +4724,36 @@ class InventoryController extends Controller
         if (empty($InventorySourceDestinationType->id)) {
             return response()->json(['error' => 'Failed to update Inventory Source Destination Type. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'org_id' => $InventorySourceDestinationType->getOriginal('org_id'),
+            'name' => $InventorySourceDestinationType->getOriginal('name'),
+            'third_party' => $InventorySourceDestinationType->getOriginal('third_party'),
+            'status' => $InventorySourceDestinationType->getOriginal('status'),
+            'effective_timestamp' => $InventorySourceDestinationType->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'org_id' => $InventorySourceDestinationType->org_id,
+            'name' => $InventorySourceDestinationType->name,
+            'third_party' => $InventorySourceDestinationType->third_party,
+            'status' => $InventorySourceDestinationType->status,
+            'effective_timestamp' => $InventorySourceDestinationType->effective_timestamp,
+        ];
+        $logId = createLog(
+            'inventory_source_destination_type',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $InventorySourceDestinationType->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventorySourceDestinationTypeLog = InventorySourceDestinationType::where('id', $InventorySourceDestinationType->id)->first();
         $logIds = $InventorySourceDestinationTypeLog->logid ? explode(',', $InventorySourceDestinationTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventorySourceDestinationTypeLog->logid = implode(',', $logIds);
         $InventorySourceDestinationTypeLog->save();
         return response()->json(['success' => 'Inventory Source Destination Type updated successfully']);
@@ -4600,14 +4822,26 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Inventory Transaction Activity.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "Inventory Transaction Activity has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $InventoryTransactionActivity->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'org_id' => $InventoryTransactionActivity->org_id,
+                'name' => $InventoryTransactionActivity->name,
+                'status' => $InventoryTransactionActivity->status,
+                'effective_timestamp' => $InventoryTransactionActivity->effective_timestamp,
+            ];
+            $logId = createLog(
+                'inventory_transaction_activity',
+                'insert',
+                [
+                    'message' => 'Inventory Transaction Activity has been added',
+                    'created_by' => $sessionName
+                ],
+                $InventoryTransactionActivity->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $InventoryTransactionActivity->logid = $logId;
             $InventoryTransactionActivity->save();
             return response()->json(['success' => 'Inventory Transaction Activity Added successfully']);
         }
@@ -4743,15 +4977,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'inventory_transaction_activity',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $InventoryTransactionActivityID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventoryTransactionActivityLog = InventoryTransactionActivity::where('id', $InventoryTransactionActivityID)->first();
         $logIds = $InventoryTransactionActivityLog->logid ? explode(',', $InventoryTransactionActivityLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventoryTransactionActivityLog->logid = implode(',', $logIds);
         $InventoryTransactionActivityLog->save();
 
@@ -4827,15 +5070,34 @@ class InventoryController extends Controller
         if (empty($InventoryTransactionActivity->id)) {
             return response()->json(['error' => 'Failed to update Inventory Transaction Activity. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'org_id' => $InventoryTransactionActivity->getOriginal('org_id'),
+            'name' => $InventoryTransactionActivity->getOriginal('name'),
+            'status' => $InventoryTransactionActivity->getOriginal('status'),
+            'effective_timestamp' => $InventoryTransactionActivity->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'org_id' => $InventoryTransactionActivity->org_id,
+            'name' => $InventoryTransactionActivity->name,
+            'status' => $InventoryTransactionActivity->status,
+            'effective_timestamp' => $InventoryTransactionActivity->effective_timestamp,
+        ];
+        $logId = createLog(
+            'inventory_transaction_activity',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $InventoryTransactionActivity->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $InventoryTransactionActivityLog = InventoryTransactionActivity::where('id', $InventoryTransactionActivity->id)->first();
         $logIds = $InventoryTransactionActivityLog->logid ? explode(',', $InventoryTransactionActivityLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $InventoryTransactionActivityLog->logid = implode(',', $logIds);
         $InventoryTransactionActivityLog->save();
         return response()->json(['success' => 'Inventory Transaction Activity updated successfully']);
@@ -4903,14 +5165,26 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Medication Route.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "'{$MedicationRouteDescription}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $MedicationRoute->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $MedicationRoute->name,
+                'org_id' => $MedicationRoute->org_id,
+                'status' => $MedicationRoute->status,
+                'effective_timestamp' => $MedicationRoute->effective_timestamp,
+            ];
+            $logId = createLog(
+                'medication_routes',
+                'insert',
+                [
+                    'message' => "'{$MedicationRouteDescription}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $MedicationRoute->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $MedicationRoute->logid = $logId;
             $MedicationRoute->save();
             return response()->json(['success' => 'Medication Route added successfully']);
         }
@@ -5043,15 +5317,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'medication_routes',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $MedicationRouteID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $MedicationRouteLog = MedicationRoutes::where('id', $MedicationRouteID)->first();
         $logIds = $MedicationRouteLog->logid ? explode(',', $MedicationRouteLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $MedicationRouteLog->logid = implode(',', $logIds);
         $MedicationRouteLog->save();
 
@@ -5125,15 +5408,34 @@ class InventoryController extends Controller
         if (empty($MedicationRoute->id)) {
             return response()->json(['error' => 'Failed to update Medication Routes. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'name' => $MedicationRoute->getOriginal('name'),
+            'org_id' => $MedicationRoute->getOriginal('org_id'),
+            'status' => $MedicationRoute->getOriginal('status'),
+            'effective_timestamp' => $MedicationRoute->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'name' => $MedicationRoute->name,
+            'org_id' => $MedicationRoute->org_id,
+            'status' => $MedicationRoute->status,
+            'effective_timestamp' => $MedicationRoute->effective_timestamp,
+        ];
+        $logId = createLog(
+            'medication_routes',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $MedicationRoute->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $MedicationRouteLog = MedicationRoutes::where('id', $MedicationRoute->id)->first();
         $logIds = $MedicationRouteLog->logid ? explode(',', $MedicationRouteLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $MedicationRouteLog->logid = implode(',', $logIds);
         $MedicationRouteLog->save();
         return response()->json(['success' => 'Medication Routes Details updated successfully']);
@@ -5201,14 +5503,26 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Medication Frequency.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "'{$MedicationFrequencyDescription}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $MedicationFrequency->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $MedicationFrequency->name,
+                'org_id' => $MedicationFrequency->org_id,
+                'status' => $MedicationFrequency->status,
+                'effective_timestamp' => $MedicationFrequency->effective_timestamp,
+            ];
+            $logId = createLog(
+                'medication_frequency',
+                'insert',
+                [
+                    'message' => "'{$MedicationFrequencyDescription}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $MedicationFrequency->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $MedicationFrequency->logid = $logId;
             $MedicationFrequency->save();
             return response()->json(['success' => 'Medication Frequency added successfully']);
         }
@@ -5342,15 +5656,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'medication_frequency',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $MedicationFrequencyID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $MedicationFrequencyLog = MedicationFrequency::where('id', $MedicationFrequencyID)->first();
         $logIds = $MedicationFrequencyLog->logid ? explode(',', $MedicationFrequencyLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $MedicationFrequencyLog->logid = implode(',', $logIds);
         $MedicationFrequencyLog->save();
 
@@ -5424,15 +5747,34 @@ class InventoryController extends Controller
         if (empty($MedicationFrequency->id)) {
             return response()->json(['error' => 'Failed to update Medication Frequency. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'name' => $MedicationFrequency->getOriginal('name'),
+            'org_id' => $MedicationFrequency->getOriginal('org_id'),
+            'status' => $MedicationFrequency->getOriginal('status'),
+            'effective_timestamp' => $MedicationFrequency->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'name' => $MedicationFrequency->name,
+            'org_id' => $MedicationFrequency->org_id,
+            'status' => $MedicationFrequency->status,
+            'effective_timestamp' => $MedicationFrequency->effective_timestamp,
+        ];
+        $logId = createLog(
+            'medication_frequency',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $MedicationFrequency->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $MedicationFrequencyLog = MedicationFrequency::where('id', $MedicationFrequency->id)->first();
         $logIds = $MedicationFrequencyLog->logid ? explode(',', $MedicationFrequencyLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $MedicationFrequencyLog->logid = implode(',', $logIds);
         $MedicationFrequencyLog->save();
         return response()->json(['success' => 'Medication Frequency Details updated successfully']);
@@ -5679,14 +6021,40 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to add Requisition For Material Consumption.']);
         }
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Requisition has been added by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
-        $logId = $logs->id;
-        $MaterialConsumptionRequisition->logid = $logs->id;
+        // New logging (insert)
+        $newData = [
+            'org_id' => $MaterialConsumptionRequisition->org_id,
+            'site_id' => $MaterialConsumptionRequisition->site_id,
+            'transaction_type_id' => $MaterialConsumptionRequisition->transaction_type_id,
+            'source_location_id' => $MaterialConsumptionRequisition->source_location_id,
+            'destination_location_id' => $MaterialConsumptionRequisition->destination_location_id,
+            'mr_code' => $MaterialConsumptionRequisition->mr_code,
+            'patient_age' => $MaterialConsumptionRequisition->patient_age,
+            'patient_gender_id' => $MaterialConsumptionRequisition->patient_gender_id,
+            'service_id' => $MaterialConsumptionRequisition->service_id,
+            'service_mode_id' => $MaterialConsumptionRequisition->service_mode_id,
+            'billing_cc' => $MaterialConsumptionRequisition->billing_cc,
+            'physician_id' => $MaterialConsumptionRequisition->physician_id,
+            'generic_id' => $MaterialConsumptionRequisition->generic_id,
+            'qty' => $MaterialConsumptionRequisition->qty,
+            'remarks' => $MaterialConsumptionRequisition->remarks,
+            'status' => $MaterialConsumptionRequisition->status,
+            'code' => $MaterialConsumptionRequisition->code,
+            'effective_timestamp' => $MaterialConsumptionRequisition->effective_timestamp,
+        ];
+        $logId = createLog(
+            'material_consumption_requisition',
+            'insert',
+            [
+                'message' => 'Requisition has been added',
+                'created_by' => $sessionName
+            ],
+            $MaterialConsumptionRequisition->id,
+            null,
+            $newData,
+            $sessionId
+        );
+        $MaterialConsumptionRequisition->logid = $logId;
         $MaterialConsumptionRequisition->save();
         return response()->json(['success' => 'Requisition For Material Consumption added successfully']);
         // }
@@ -5948,15 +6316,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'material_consumption_requisition',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $MaterialConsumptionID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $MaterialConsumptionRequisitionLog = MaterialConsumptionRequisition::where('id', $MaterialConsumptionID)->first();
         $logIds = $MaterialConsumptionRequisitionLog->logid ? explode(',', $MaterialConsumptionRequisitionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $MaterialConsumptionRequisitionLog->logid = implode(',', $logIds);
         $MaterialConsumptionRequisitionLog->save();
 
@@ -6124,15 +6501,62 @@ class InventoryController extends Controller
         if (empty($MaterialConsumptionRequisition->id)) {
             return response()->json(['error' => 'Failed to update Requisition For material Consumption. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'org_id' => $MaterialConsumptionRequisition->getOriginal('org_id'),
+            'site_id' => $MaterialConsumptionRequisition->getOriginal('site_id'),
+            'transaction_type_id' => $MaterialConsumptionRequisition->getOriginal('transaction_type_id'),
+            'source_location_id' => $MaterialConsumptionRequisition->getOriginal('source_location_id'),
+            'destination_location_id' => $MaterialConsumptionRequisition->getOriginal('destination_location_id'),
+            'mr_code' => $MaterialConsumptionRequisition->getOriginal('mr_code'),
+            'patient_age' => $MaterialConsumptionRequisition->getOriginal('patient_age'),
+            'patient_gender_id' => $MaterialConsumptionRequisition->getOriginal('patient_gender_id'),
+            'service_id' => $MaterialConsumptionRequisition->getOriginal('service_id'),
+            'service_mode_id' => $MaterialConsumptionRequisition->getOriginal('service_mode_id'),
+            'billing_cc' => $MaterialConsumptionRequisition->getOriginal('billing_cc'),
+            'physician_id' => $MaterialConsumptionRequisition->getOriginal('physician_id'),
+            'generic_id' => $MaterialConsumptionRequisition->getOriginal('generic_id'),
+            'qty' => $MaterialConsumptionRequisition->getOriginal('qty'),
+            'remarks' => $MaterialConsumptionRequisition->getOriginal('remarks'),
+            'status' => $MaterialConsumptionRequisition->getOriginal('status'),
+            'code' => $MaterialConsumptionRequisition->getOriginal('code'),
+            'effective_timestamp' => $MaterialConsumptionRequisition->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'org_id' => $MaterialConsumptionRequisition->org_id,
+            'site_id' => $MaterialConsumptionRequisition->site_id,
+            'transaction_type_id' => $MaterialConsumptionRequisition->transaction_type_id,
+            'source_location_id' => $MaterialConsumptionRequisition->source_location_id,
+            'destination_location_id' => $MaterialConsumptionRequisition->destination_location_id,
+            'mr_code' => $MaterialConsumptionRequisition->mr_code,
+            'patient_age' => $MaterialConsumptionRequisition->patient_age,
+            'patient_gender_id' => $MaterialConsumptionRequisition->patient_gender_id,
+            'service_id' => $MaterialConsumptionRequisition->service_id,
+            'service_mode_id' => $MaterialConsumptionRequisition->service_mode_id,
+            'billing_cc' => $MaterialConsumptionRequisition->billing_cc,
+            'physician_id' => $MaterialConsumptionRequisition->physician_id,
+            'generic_id' => $MaterialConsumptionRequisition->generic_id,
+            'qty' => $MaterialConsumptionRequisition->qty,
+            'remarks' => $MaterialConsumptionRequisition->remarks,
+            'status' => $MaterialConsumptionRequisition->status,
+            'code' => $MaterialConsumptionRequisition->code,
+            'effective_timestamp' => $MaterialConsumptionRequisition->effective_timestamp,
+        ];
+        $logId = createLog(
+            'material_consumption_requisition',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $MaterialConsumptionRequisition->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $MaterialConsumptionRequisitionLog = MaterialConsumptionRequisition::where('id', $MaterialConsumptionRequisition->id)->first();
         $logIds = $MaterialConsumptionRequisitionLog->logid ? explode(',', $MaterialConsumptionRequisitionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $MaterialConsumptionRequisitionLog->logid = implode(',', $logIds);
         $MaterialConsumptionRequisitionLog->save();
         return response()->json(['success' => 'Requisition For Material Consumption updated successfully']);
@@ -6219,14 +6643,34 @@ class InventoryController extends Controller
 
 
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Requisition has been added by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
-        $logId = $logs->id;
-        $MaterialTransferRequisition->logid = $logs->id;
+        // New logging (insert)
+        $newData = [
+            'org_id' => $MaterialTransferRequisition->org_id,
+            'source_site' => $MaterialTransferRequisition->source_site,
+            'destination_site' => $MaterialTransferRequisition->destination_site,
+            'transaction_type_id' => $MaterialTransferRequisition->transaction_type_id,
+            'source_location' => $MaterialTransferRequisition->source_location,
+            'destination_location' => $MaterialTransferRequisition->destination_location,
+            'generic_id' => $MaterialTransferRequisition->generic_id,
+            'demand_qty' => $MaterialTransferRequisition->demand_qty,
+            'remarks' => $MaterialTransferRequisition->remarks,
+            'status' => $MaterialTransferRequisition->status,
+            'code' => $MaterialTransferRequisition->code,
+            'effective_timestamp' => $MaterialTransferRequisition->effective_timestamp,
+        ];
+        $logId = createLog(
+            'material_transfer_requisition',
+            'insert',
+            [
+                'message' => 'Requisition has been added',
+                'created_by' => $sessionName
+            ],
+            $MaterialTransferRequisition->id,
+            null,
+            $newData,
+            $sessionId
+        );
+        $MaterialTransferRequisition->logid = $logId;
         $MaterialTransferRequisition->save();
         return response()->json(['success' => 'Requisition For Material Transfer added successfully']);
     }
@@ -6433,15 +6877,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'material_transfer_requisition',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $RequisitionMaterialTransferLog = RequisitionForMaterialTransfer::where('id', $ID)->first();
         $logIds = $RequisitionMaterialTransferLog->logid ? explode(',', $RequisitionMaterialTransferLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $RequisitionMaterialTransferLog->logid = implode(',', $logIds);
         $RequisitionMaterialTransferLog->save();
 
@@ -6566,15 +7019,48 @@ class InventoryController extends Controller
         if (empty($MaterialTransferRequisition->id)) {
             return response()->json(['error' => 'Failed to update Requisition For Material Transfer. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'org_id' => $MaterialTransferRequisition->getOriginal('org_id'),
+            'source_site' => $MaterialTransferRequisition->getOriginal('source_site'),
+            'source_location' => $MaterialTransferRequisition->getOriginal('source_location'),
+            'destination_site' => $MaterialTransferRequisition->getOriginal('destination_site'),
+            'destination_location' => $MaterialTransferRequisition->getOriginal('destination_location'),
+            'transaction_type_id' => $MaterialTransferRequisition->getOriginal('transaction_type_id'),
+            'generic_id' => $MaterialTransferRequisition->getOriginal('generic_id'),
+            'qty' => $MaterialTransferRequisition->getOriginal('qty'),
+            'remarks' => $MaterialTransferRequisition->getOriginal('remarks'),
+            'status' => $MaterialTransferRequisition->getOriginal('status'),
+            'effective_timestamp' => $MaterialTransferRequisition->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'org_id' => $MaterialTransferRequisition->org_id,
+            'source_site' => $MaterialTransferRequisition->source_site,
+            'source_location' => $MaterialTransferRequisition->source_location,
+            'destination_site' => $MaterialTransferRequisition->destination_site,
+            'destination_location' => $MaterialTransferRequisition->destination_location,
+            'transaction_type_id' => $MaterialTransferRequisition->transaction_type_id,
+            'generic_id' => $MaterialTransferRequisition->generic_id,
+            'qty' => $MaterialTransferRequisition->qty,
+            'remarks' => $MaterialTransferRequisition->remarks,
+            'status' => $MaterialTransferRequisition->status,
+            'effective_timestamp' => $MaterialTransferRequisition->effective_timestamp,
+        ];
+        $logId = createLog(
+            'material_transfer_requisition',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $MaterialTransferRequisition->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $MaterialTransferRequisitionLog = RequisitionForMaterialTransfer::where('id', $MaterialTransferRequisition->id)->first();
         $logIds = $MaterialTransferRequisitionLog->logid ? explode(',', $MaterialTransferRequisitionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $MaterialTransferRequisitionLog->logid = implode(',', $logIds);
         $MaterialTransferRequisitionLog->save();
         return response()->json(['success' => 'Requisition For Material Transfer updated successfully']);
@@ -6719,15 +7205,33 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Purchase Order.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "Purchase Order has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
+            // New logging (insert)
+            $newData = [
+                'org_id' => $PO->org_id,
+                'site_id' => $PO->site_id,
+                'vendor_id' => $PO->vendor_id,
+                'inventory_brand_id' => $PO->inventory_brand_id,
+                'demand_qty' => $PO->demand_qty,
+                'amount' => $PO->amount,
+                'discount' => $PO->discount,
+                'remarks' => $PO->remarks,
+                'status' => $PO->status,
+                'effective_timestamp' => $PO->effective_timestamp,
+            ];
+            $logId = createLog(
+                'purchase_order',
+                'insert',
+                [
+                    'message' => 'Purchase Order has been added',
+                    'created_by' => $sessionName
+                ],
+                $PO->id,
+                null,
+                $newData,
+                $sessionId
+            );
 
-            $logId = $logs->id;
-            $PO->logid = $logs->id;
+            $PO->logid = $logId;
             $PO->save();
             return response()->json(['success' => 'Purchase Order added successfully']);
         }
@@ -7091,15 +7595,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'purchase_order',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $POID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $POLog = PurchaseOrder::where('id', $POID)->first();
         $logIds = $POLog->logid ? explode(',', $POLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $POLog->logid = implode(',', $logIds);
         $POLog->save();
         $PurchaseOrderStatus->save();
@@ -7126,15 +7639,22 @@ class InventoryController extends Controller
         $session = auth()->user();
         $sessionName = $session->name;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Purchase Order Approved By '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (approve)
+        $logId = createLog(
+            'purchase_order',
+            'approve',
+            [
+                'message' => 'Purchase Order Approved',
+                'updated_by' => $sessionName
+            ],
+            $POID,
+            null,
+            ['approval' => 1, 'approved_by' => $userId, 'approved_timestamp' => $CurrentTimestamp],
+            $session->id
+        );
         $POLog = PurchaseOrder::where('id', $POID)->first();
         $logIds = $POLog->logid ? explode(',', $POLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $POLog->logid = implode(',', $logIds);
         $POLog->save();
         $PurchaseOrder->save();
@@ -7260,15 +7780,46 @@ class InventoryController extends Controller
         if (empty($PO->id)) {
             return response()->json(['error' => 'Failed to update Purchase Order Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'org_id' => $PO->getOriginal('org_id'),
+            'site_id' => $PO->getOriginal('site_id'),
+            'vendor_id' => $PO->getOriginal('vendor_id'),
+            'inventory_brand_id' => $PO->getOriginal('inventory_brand_id'),
+            'demand_qty' => $PO->getOriginal('demand_qty'),
+            'amount' => $PO->getOriginal('amount'),
+            'discount' => $PO->getOriginal('discount'),
+            'remarks' => $PO->getOriginal('remarks'),
+            'status' => $PO->getOriginal('status'),
+            'effective_timestamp' => $PO->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'org_id' => $PO->org_id,
+            'site_id' => $PO->site_id,
+            'vendor_id' => $PO->vendor_id,
+            'inventory_brand_id' => $PO->inventory_brand_id,
+            'demand_qty' => $PO->demand_qty,
+            'amount' => $PO->amount,
+            'discount' => $PO->discount,
+            'remarks' => $PO->remarks,
+            'status' => $PO->status,
+            'effective_timestamp' => $PO->effective_timestamp,
+        ];
+        $logId = createLog(
+            'purchase_order',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $PO->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $PurchaseOrderLog = PurchaseOrder::where('id', $PO->id)->first();
         $logIds = $PurchaseOrderLog->logid ? explode(',', $PurchaseOrderLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $PurchaseOrderLog->logid = implode(',', $logIds);
         $PurchaseOrderLog->save();
         return response()->json(['success' => 'Purchase Order Details updated successfully']);
@@ -7361,15 +7912,32 @@ class InventoryController extends Controller
                 return response()->json(['error' => 'Failed to create Work Order.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'inventory',
-                'content' => "Purchase Order has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
+            // New logging (insert)
+            $newData = [
+                'org_id' => $WO->org_id,
+                'site_id' => $WO->site_id,
+                'vendor_id' => $WO->vendor_id,
+                'particulars' => $WO->particulars,
+                'amount' => $WO->amount,
+                'discount' => $WO->discount,
+                'remarks' => $WO->remarks,
+                'status' => $WO->status,
+                'effective_timestamp' => $WO->effective_timestamp,
+            ];
+            $logId = createLog(
+                'work_order',
+                'insert',
+                [
+                    'message' => 'Work Order has been added',
+                    'created_by' => $sessionName
+                ],
+                $WO->id,
+                null,
+                $newData,
+                $sessionId
+            );
 
-            $logId = $logs->id;
-            $WO->logid = $logs->id;
+            $WO->logid = $logId;
             $WO->save();
             return response()->json(['success' => 'Work Order added successfully']);
         }
@@ -7711,15 +8279,24 @@ class InventoryController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'work_order',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $WOID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $WOLog = WorkOrder::where('id', $WOID)->first();
         $logIds = $WOLog->logid ? explode(',', $WOLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $WOLog->logid = implode(',', $logIds);
         $WOLog->save();
         $WorkOrderStatus->save();
@@ -7745,15 +8322,22 @@ class InventoryController extends Controller
         $session = auth()->user();
         $sessionName = $session->name;
 
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Work Order Approved By '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (approve)
+        $logId = createLog(
+            'work_order',
+            'approve',
+            [
+                'message' => 'Work Order Approved',
+                'updated_by' => $sessionName
+            ],
+            $WOID,
+            null,
+            ['approval' => 1, 'approved_by' => $userId, 'approved_timestamp' => $CurrentTimestamp],
+            $session->id
+        );
         $WOLog = WorkOrder::where('id', $WOID)->first();
         $logIds = $WOLog->logid ? explode(',', $WOLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $WOLog->logid = implode(',', $logIds);
         $WOLog->save();
         $WorkOrder->save();
@@ -7875,259 +8459,50 @@ class InventoryController extends Controller
         if (empty($WO->id)) {
             return response()->json(['error' => 'Failed to update Work Order Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'inventory',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'org_id' => $WO->getOriginal('org_id'),
+            'site_id' => $WO->getOriginal('site_id'),
+            'vendor_id' => $WO->getOriginal('vendor_id'),
+            'particulars' => $WO->getOriginal('particulars'),
+            'amount' => $WO->getOriginal('amount'),
+            'discount' => $WO->getOriginal('discount'),
+            'remarks' => $WO->getOriginal('remarks'),
+            'status' => $WO->getOriginal('status'),
+            'effective_timestamp' => $WO->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'org_id' => $WO->org_id,
+            'site_id' => $WO->site_id,
+            'vendor_id' => $WO->vendor_id,
+            'particulars' => $WO->particulars,
+            'amount' => $WO->amount,
+            'discount' => $WO->discount,
+            'remarks' => $WO->remarks,
+            'status' => $WO->status,
+            'effective_timestamp' => $WO->effective_timestamp,
+        ];
+        $logId = createLog(
+            'work_order',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $WO->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $WorkOrderLog = WorkOrder::where('id', $WO->id)->first();
         $logIds = $WorkOrderLog->logid ? explode(',', $WorkOrderLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $WorkOrderLog->logid = implode(',', $logIds);
         $WorkOrderLog->save();
         return response()->json(['success' => 'Work Order Details updated successfully']);
     }
-
-    // public function GetTransactionTypeInventoryManagement(Request $request)
-    // {
-    //     $siteId            = $request->input('siteId');
-    //     $transactionTypeId = $request->input('transactionTypeId');
-
-    //     $user       = auth()->user();
-    //     $roleId     = $user->role_id;
-    //     $isEmployee = $user->is_employee;
-    //     $empId      = $user->emp_id;
-
-    //     $TransactionType = InventoryTransactionType::select(
-    //         'source_type.name as Source',
-    //         'destination_type.name as Destination',
-    //         'inventory_transaction_type.service_location_id',
-    //         'inventory_transaction_type.transaction_expired_status',
-    //         'inventory_transaction_type.applicable_location_to',
-    //         'inventory_transaction_type.request_location_mandatory',
-    //         'inventory_transaction_type.source_action',
-    //         'inventory_transaction_type.destination_action'
-    //     )
-    //     ->join('inventory_source_destination_type as source_type', 'source_type.id', '=', 'inventory_transaction_type.source_location_type')
-    //     ->join('inventory_source_destination_type as destination_type', 'destination_type.id', '=', 'inventory_transaction_type.destination_location_type')
-    //     ->where('inventory_transaction_type.id', '=', $transactionTypeId)
-    //     ->first();
-
-
-    //     if (! $TransactionType) {
-    //         return response()->json([
-    //             'Source'          => null,
-    //             'Destination'     => null,
-    //             'sourceData'      => [],
-    //             'destinationData' => [],
-    //         ]);
-    //     }
-
-    //     $sourceName      = strtolower($TransactionType->Source);
-    //     $destinationName = strtolower($TransactionType->Destination);
-    //     $applicableLocationTo = $TransactionType->applicable_location_to;
-
-
-    //     $serviceLocationIDs = [];
-    //     if (! empty($TransactionType->service_location_id)) {
-    //         // e.g. "1,2,3"
-    //         $serviceLocationIDs = explode(',', $TransactionType->service_location_id);
-    //         $serviceLocationIDs = array_map('trim', $serviceLocationIDs);
-    //         $serviceLocationIDs = array_filter($serviceLocationIDs);
-    //     }
-
-    //     $empServiceLocationIDs = [];
-    //     if ($roleId != 1 && $isEmployee == 1) {
-    //         // $empInv = DB::table('emp_inventory_location')
-    //         //     ->where('site_id', $siteId)
-    //         //     ->where('emp_id', $empId)
-    //         //     ->where('status', 1)
-    //         //     ->first();
-    //         $empInvQuery = DB::table('emp_inventory_location')
-    //             ->where('emp_id', $empId)
-    //             ->where('status', 1);
-
-    //         if (!empty($siteId)) {
-    //             $empInvQuery->where('site_id', $siteId);
-    //         }
-
-    //         $empInv = $empInvQuery->first();
-
-    //         if ($empInv && !empty($empInv->service_location_id)) {
-    //             $decoded = json_decode($empInv->service_location_id, true);
-    //             if (!is_array($decoded)) {
-    //                 $decoded = [];
-    //             } else {
-    //                 $flattened = [];
-    //                 array_walk_recursive($decoded, function($val) use (&$flattened) {
-    //                     $flattened[] = (string) $val;
-    //                 });
-    //                 $decoded = $flattened;
-    //             }
-    //             $empServiceLocationIDs = $decoded;
-    //         }
-    //     }
-
-    //     if (empty($serviceLocationIDs)) {
-    //         return response()->json([
-    //             'success'     => false,
-    //             'message'     => 'Currently no locations are activated for you. Please contact the administrator.',
-    //         ], 200);
-    //     }
-
-    //     // Prepare final arrays
-    //     $sourceData      = [];
-    //     $destinationData = [];
-
-    //     if (stripos($sourceName, 'location') !== false) {
-    //         $srcQuery = DB::table('service_location')
-    //             ->where('service_location.status', 1)
-    //             ->select('service_location.id', 'service_location.name')
-    //             ->orderBy('service_location.name', 'asc');
-
-    //         if ($applicableLocationTo === 'source') {
-    //             if(count($empServiceLocationIDs) > 0) {
-    //                 $srcQuery->whereIn('service_location.id', array_intersect($serviceLocationIDs, $empServiceLocationIDs));
-    //             }
-    //             else {
-    //                 $srcQuery->whereIn('service_location.id', $serviceLocationIDs);
-    //             }
-    //         }
-    //         else {
-    //             if (count($empServiceLocationIDs) > 0) {
-    //                 $srcQuery->whereIn('service_location.id', $empServiceLocationIDs);
-    //             }
-    //         }
-
-    //         $sourceData = $srcQuery->get();
-
-    //     }
-    //     elseif ($sourceName === 'vendor') {
-    //         $sourceData = DB::table('third_party')
-    //             ->select('id', 'person_name')
-    //             ->where('type', 'v')
-    //             ->orderBy('person_name', 'asc')
-    //             ->get();
-    //     }
-    //     elseif ($sourceName === 'donor') {
-    //         $sourceData = DB::table('third_party')
-    //             ->select('id', 'person_name')
-    //             ->where('type', 'd')
-    //             ->orderBy('person_name', 'asc')
-    //             ->get();
-    //     }
-    //     elseif ($sourceName === 'patient') {
-    //         // $sourceData = DB::table('patient_inout as pio')
-    //         //     ->join('patient as p', 'p.mr_code', '=', 'pio.mr_code')
-    //         //     ->select(
-    //         //         'pio.mr_code as id',
-    //         //         DB::raw("CONCAT(pio.mr_code, ' - ', p.name) as patient_name")
-    //         //     )
-    //         //     ->where('pio.status', 1)
-    //         //     ->where('pio.site_id', $siteId)
-    //         //     ->orderBy('p.name', 'asc')
-    //         //     ->get();
-
-    //         $query = DB::table('patient_inout as pio')
-    //             ->join('patient as p', 'p.mr_code', '=', 'pio.mr_code')
-    //             ->select(
-    //                 'pio.mr_code as id',
-    //                 DB::raw("CONCAT(pio.mr_code, ' - ', p.name) as patient_name")
-    //             )
-    //             ->where('pio.status', 1)
-    //             ->orderBy('p.name', 'asc');
-
-    //         if (!empty($siteId)) {
-    //             $query->where('pio.site_id', $siteId);
-    //         }
-
-    //         $sourceData = $query->get();
-
-    //     }
-
-    //     // DESTINATION
-    //     if (stripos($destinationName, 'location') !== false) {
-    //     // if ($destinationName === 'inventory location') {
-    //         $destQuery = DB::table('service_location')
-    //             ->where('service_location.status', 1)
-    //             ->select('service_location.id', 'service_location.name')
-    //             ->orderBy('service_location.name', 'asc');
-
-
-    //         if ($applicableLocationTo === 'destination') {
-    //             if(count($empServiceLocationIDs) > 0) {
-    //                 $destQuery->whereIn('service_location.id', array_intersect($serviceLocationIDs, $empServiceLocationIDs));
-    //             }
-    //             else {
-    //                 $destQuery->whereIn('service_location.id', $serviceLocationIDs);
-    //             }
-    //         }
-    //         else {
-    //             if (count($empServiceLocationIDs) > 0) {
-    //                 $destQuery->whereIn('service_location.id', $empServiceLocationIDs);
-    //             }
-    //         }
-
-
-    //         $destinationData = $destQuery->get();
-    //     }
-    //     elseif ($destinationName === 'vendor') {
-    //         $destinationData = DB::table('third_party')
-    //             ->select('id', 'person_name')
-    //             ->where('type', 'v')
-    //             ->orderBy('person_name', 'asc')
-    //             ->get();
-    //     }
-    //     elseif ($destinationName === 'donor') {
-    //         $destinationData = DB::table('third_party')
-    //             ->select('id', 'person_name')
-    //             ->where('type', 'd')
-    //             ->orderBy('person_name', 'asc')
-    //             ->get();
-    //     }
-    //     elseif ($destinationName === 'patient') {
-    //         // $destinationData = DB::table('patient_inout as pio')
-    //         //     ->join('patient as p', 'p.mr_code', '=', 'pio.mr_code')
-    //         //     ->select(
-    //         //         'pio.mr_code as id',
-    //         //         DB::raw("CONCAT(pio.mr_code, ' - ', p.name) as patient_name")
-    //         //     )
-    //         //     ->where('pio.status', 1)
-    //         //     ->where('pio.site_id', $siteId)
-    //         //     ->orderBy('p.name', 'asc')
-    //         //     ->get();
-
-    //         $query = DB::table('patient_inout as pio')
-    //             ->join('patient as p', 'p.mr_code', '=', 'pio.mr_code')
-    //             ->select(
-    //                 'pio.mr_code as id',
-    //                 DB::raw("CONCAT(pio.mr_code, ' - ', p.name) as patient_name")
-    //             )
-    //             ->where('pio.status', 1)
-    //             ->orderBy('p.name', 'asc');
-
-    //         if (!empty($siteId)) {
-    //             $query->where('pio.site_id', $siteId);
-    //         }
-
-    //         $destinationData = $query->get();
-    //     }
-    //             // dd($sourceData, $destinationData, $applicableLocationTo);
-
-    //     return response()->json([
-    //         'Source'          => $TransactionType->Source,
-    //         'Destination'     => $TransactionType->Destination,
-    //         'sourceData'      => $sourceData,
-    //         'destinationData' => $destinationData,
-    //         'LocationMandatory' => $TransactionType->request_location_mandatory,
-    //         'transaction_expired_status' => $TransactionType->transaction_expired_status,
-    //         'source_action' => $TransactionType->source_action,
-    //         'destination_action' => $TransactionType->destination_action,
-    //     ]);
-    // }
-
-     public function GetTransactionTypeInventoryManagement(Request $request)
+    
+    public function GetTransactionTypeInventoryManagement(Request $request)
     {
         $siteId            = $request->input('siteId');
         $transactionTypeId = $request->input('transactionTypeId');
@@ -8537,14 +8912,31 @@ class InventoryController extends Controller
         }
 
         // Log creation
-        $logs = Logs::create([
-            'module'    => 'inventory',
-            'content'   => "External Transaction has been added by '{$sessionName}'",
-            'event'     => 'add',
-            'timestamp' => $timestampNow,
-        ]);
+        // New logging (insert)
+        $newData = [
+            'org_id' => $ExternalTransaction->org_id,
+            'site_id' => $ExternalTransaction->site_id,
+            'transaction_type_id' => $ExternalTransaction->transaction_type_id,
+            'source' => $ExternalTransaction->source,
+            'destination' => $ExternalTransaction->destination,
+            'remarks' => $ExternalTransaction->remarks ?? null,
+            'status' => $ExternalTransaction->status,
+            'effective_timestamp' => $ExternalTransaction->effective_timestamp,
+        ];
+        $logId = createLog(
+            'external_transaction',
+            'insert',
+            [
+                'message' => 'External Transaction has been added',
+                'created_by' => $sessionName
+            ],
+            $ExternalTransaction->id,
+            null,
+            $newData,
+            $sessionId
+        );
 
-        $ExternalTransaction->logid = $logs->id;
+        $ExternalTransaction->logid = $logId;
         $ExternalTransaction->save();
 
         // $rule = DB::table('inventory_transaction_type')
@@ -10405,43 +10797,6 @@ class InventoryController extends Controller
         }
 
         if ($source === 'material') {
-                // $mat = MaterialConsumptionRequisition::from('material_consumption_requisition as m')
-                // ->select([
-                //     'm.*',
-                //     'o.organization                as org_name',
-                //     's.name                        as site_name',
-                //     'p.name                        as patient_name',
-                //     'itt.name                      as transaction_type_name',
-                //     'sl.name                       as location_name',
-                //     'sm.name                       as service_mode_name',
-                //     'sv.name                       as service_name',
-                //     'e.name                        as physician_name',
-                //     'bcc.name                      as billing_cc_name',
-                //     'sg.name                       as service_group_name',
-                //     'st.name                       as service_type_name',
-                //     'im.transaction_qty            as issuedQty',
-
-                //     'ib.site_balance              as maxQty'  // Added this line
-                // ])
-                // ->join('organization                as o',   'o.id',  '=', 'm.org_id')
-                // ->join('org_site                    as s',   's.id',  '=', 'm.site_id')
-                // ->leftJoin('patient                   as p',   'p.mr_code', '=', 'm.mr_code')
-                // ->join('inventory_transaction_type  as itt', 'itt.id',     '=', 'm.transaction_type_id')
-                // ->leftJoin('service_location            as sl',   'sl.id',  '=', 'm.inv_location_id')
-                // ->leftJoin('service_mode                as sm',   'sm.id',  '=', 'm.service_mode_id')
-                // ->leftJoin('services                    as sv',   'sv.id',  '=', 'm.service_id')
-                // ->leftJoin('service_group               as sg',   'sg.id',  '=', 'sv.group_id')
-                // ->leftJoin('service_type                as st',   'st.id',  '=', 'sg.type_id')
-                // ->leftJoin('employee                    as e',   'e.id',  '=', 'm.physician_id')
-                // ->leftJoin  ('costcenter                  as bcc', 'bcc.id',     '=', 'm.billing_cc')
-                // ->leftJoin  ('inventory_management as im', 'im.ref_document_no',     '=', 'm.code')
-                // ->leftJoin(DB::raw('(SELECT * FROM inventory_balance ORDER BY id DESC LIMIT 1) as ib'), function($join) {
-                //     $join->on('ib.generic_id', '=', 'im.inv_generic_id')
-                //         ->on('ib.brand_id', '=', 'im.brand_id')
-                //         ->on('ib.batch_no', '=', 'im.batch_no');
-                // })
-                // ->where('m.id', $id)
-                // ->first();
 
                 $mat = MaterialConsumptionRequisition::from('material_consumption_requisition as m')
                 ->select([
@@ -11203,14 +11558,20 @@ class InventoryController extends Controller
         // }
 
         if ($success) {
-            $logs = Logs::create([
-                'module' => 'inventory management',
-                'content' => $remarkText,
-                'event' => 'add',
-                'timestamp' => now()->timestamp,
-            ]);
+            $logId = createLog(
+                'inventory_management',
+                'insert',
+                [
+                    'message' => $remarkText,
+                    'created_by' => auth()->user()->name ?? 'system'
+                ],
+                $inventory->id ?? null,
+                null,
+                null,
+                auth()->id() ?? 0
+            );
 
-            $inventory->logid = $logs->id;
+            $inventory->logid = $logId;
             $inventory->save();
 
             return response()->json([
@@ -12522,528 +12883,7 @@ class InventoryController extends Controller
         return view('dashboard.material_management.consumption', compact('user','RequisitionNonMandatory','costcenters','MedicationRoutes','MedicationFrequencies'));
     }
 
-    // public function GetConsumptionData(Request $request)
-    // {
-    //     $rights = $this->rights;
-    //     $view = explode(',', $rights->consumption)[1];
-    //     if ($view == 0) {
-    //         abort(403, 'Forbidden');
-    //     }
-
-    //     // Base query (unchanged logic)
-    //     $IssuedData = DB::table('inventory_management as im')
-    //         ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
-    //         ->join('inventory_source_destination_type as isdt_src', 'isdt_src.id', '=', 'itt.source_location_type')
-    //         ->join('inventory_source_destination_type as isdt_dest', 'isdt_dest.id', '=', 'itt.destination_location_type')
-    //         ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'itt.activity_type')
-    //         ->join('organization', 'organization.id', '=', 'im.org_id')
-    //         ->join('org_site', 'org_site.id', '=', 'im.site_id')
-    //         ->leftJoin('patient', 'patient.mr_code', '=', 'im.mr_code')
-    //         ->leftJoin('employee', 'employee.id', '=', 'im.resp_physician')
-    //         ->leftJoin('service_mode', 'service_mode.id', '=', 'im.service_mode_id')
-    //         ->leftJoin('services', 'services.id', '=', 'im.service_id')
-    //         ->leftJoin('service_group', 'service_group.id', '=', 'services.group_id')
-    //         ->leftJoin('service_type', 'service_type.id', '=', 'service_group.type_id')
-    //         ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'im.billing_cc')
-    //         ->where(function ($query) {
-    //             $query->where('ita.name', 'like', '%issue%')
-    //                 ->orWhere('ita.name', 'like', '%dispense%');
-    //         })
-    //         ->where('itt.name', 'like', '%issue%')
-    //         ->select(
-    //             // shared im fields
-    //             'im.id', 'im.transaction_type_id', 'im.status', 'im.org_id', 'im.site_id',
-    //             'im.effective_timestamp', 'im.timestamp', 'im.last_updated', 'im.logid',
-
-    //             // converted im fields
-    //             DB::raw("CONVERT(im.dose USING utf8mb4) COLLATE utf8mb4_unicode_ci as dose"),
-    //             DB::raw("CONVERT(im.route_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as route_id"),
-    //             DB::raw("CONVERT(im.frequency_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as frequency_id"),
-    //             DB::raw("CONVERT(im.duration USING utf8mb4) COLLATE utf8mb4_unicode_ci as days"),
-    //             DB::raw("CONVERT(im.ref_document_no USING utf8mb4) COLLATE utf8mb4_unicode_ci as referenceNumber"),
-    //             DB::raw("CONVERT(im.mr_code USING utf8mb4) COLLATE utf8mb4_unicode_ci as mr_code"),
-    //             DB::raw("CONVERT(im.brand_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as brand_id"),
-    //             DB::raw("CONVERT(im.batch_no USING utf8mb4) COLLATE utf8mb4_unicode_ci as batch_no"),
-    //             DB::raw("CONVERT(im.expiry_date USING utf8mb4) COLLATE utf8mb4_unicode_ci as expiry_date"),
-    //             DB::raw("CONVERT(im.demand_qty USING utf8mb4) COLLATE utf8mb4_unicode_ci as demand_qty"),
-    //             DB::raw("CONVERT(isdt_src.name USING utf8mb4) COLLATE utf8mb4_unicode_ci as sourceTypeName"),
-    //             DB::raw("CONVERT(isdt_dest.name USING utf8mb4) COLLATE utf8mb4_unicode_ci as destinationTypeName"),
-    //             DB::raw("CONVERT(im.transaction_qty USING utf8mb4) COLLATE utf8mb4_unicode_ci as transaction_qty"),
-    //             DB::raw("CONVERT(im.inv_generic_id USING utf8mb4) COLLATE utf8mb4_unicode_ci as inv_generic_ids"),
-    //             DB::raw("CONVERT(im.source USING utf8mb4) COLLATE utf8mb4_unicode_ci as Source"),
-    //             DB::raw("CONVERT(im.destination USING utf8mb4) COLLATE utf8mb4_unicode_ci as Destination"),
-    //             DB::raw("CONVERT(im.remarks USING utf8mb4) COLLATE utf8mb4_unicode_ci as remarks"),
-    //             DB::raw("CONVERT('inventory' USING utf8mb4) COLLATE utf8mb4_unicode_ci as source"),
-
-    //             // joined names
-    //             DB::raw('patient.name as patientName'),
-    //             DB::raw('employee.name as Physician'),
-    //             DB::raw('organization.organization as OrgName'),
-    //             DB::raw('org_site.name as SiteName'),
-    //             DB::raw('services.name as serviceName'),
-    //             DB::raw('service_mode.name as serviceMode'),
-    //             DB::raw('billingCC.name as billingCC'),
-    //             DB::raw('service_group.name as serviceGroup'),
-    //             DB::raw('service_type.name as serviceType'),
-    //             DB::raw('itt.name as TransactionType')
-    //         );
-
-    //     // Session-site filter (unchanged)
-    //     if ($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
-    //         $sessionSiteIds = $this->assignedSites;
-    //         if (!empty($sessionSiteIds)) {
-    //             $IssuedData->whereIn('org_site.id', $sessionSiteIds);
-    //         }
-    //     }
-
-    //     $IssuedData = $IssuedData->get();
-
-    //     return DataTables::of(collect($IssuedData))
-    //         ->addColumn('id_raw', fn($row) => $row->id)
-    //         ->editColumn('id', function ($row) {
-    //             // ---- cache service_location names to avoid N+1
-    //             static $locNameCache = []; // [id => name]
-
-    //             $getLocName = function ($id) use (&$locNameCache) {
-    //                 $id = (int) $id;
-    //                 if ($id <= 0) return null;
-    //                 if (!array_key_exists($id, $locNameCache)) {
-    //                     $locNameCache[$id] = DB::table('service_location')->where('id', $id)->value('name');
-    //                 }
-    //                 return $locNameCache[$id];
-    //             };
-
-    //             $timestamp     = \Carbon\Carbon::createFromTimestamp($row->timestamp)->format('l d F Y - h:i A');
-    //             $effectiveDate = \Carbon\Carbon::createFromTimestamp($row->effective_timestamp)->format('l d F Y - h:i A');
-    //             $RequisitionCode = empty($row->referenceNumber) ? 'Ref: N/A' : 'Ref: ' . $row->referenceNumber;
-
-    //             $Location = '';
-    //             // Source location name only if source type is a location
-    //             if (!empty($row->sourceTypeName) && str_contains(mb_strtolower($row->sourceTypeName), 'location')) {
-    //                 $srcName = $getLocName($row->Source);
-    //                 if ($srcName) {
-    //                     $Location .= '<b>Source Location</b>: ' . ucwords($srcName) . '<br>';
-    //                 }
-    //             }
-    //             // Destination location name only if destination type is a location
-    //             if (!empty($row->destinationTypeName) && str_contains(mb_strtolower($row->destinationTypeName), 'location')) {
-    //                 $dstName = $getLocName($row->Destination);
-    //                 if ($dstName) {
-    //                     $Location .= '<b>Destination Location</b>: ' . ucwords($dstName) . '<br>';
-    //                 }
-    //             }
-
-    //             return $RequisitionCode
-    //                 . '<hr class="mt-1 mb-2">'
-    //                 .  (ucwords($row->TransactionType) ?? 'N/A') . '<br>'
-    //                 .  $Location
-    //                 . '<b>Site</b>: ' . ($row->SiteName ?? 'N/A') . '<br>'
-    //                 . '<b>Issue Date </b>: ' . $timestamp . '<br>'
-    //                 . '<b>Effective Date </b>: ' . $effectiveDate . '<br>'
-    //                 . '<b>Remarks</b>: ' . ($row->remarks ?: 'N/A');
-    //         })
-    //         ->editColumn('patientDetails', function ($row) {
-    //             if (empty($row->mr_code)) return 'N/A';
-
-    //             return '<b>MR#:</b> '.$row->mr_code.'<br>'.$row->patientName.'<hr class="mt-1 mb-2">'
-    //                 .'<b>Service Mode</b>: '.$row->serviceMode.'<br>'
-    //                 .'<b>Service Group</b>: '.$row->serviceGroup.'<br>'
-    //                 .'<b>Service</b>: '.$row->serviceName.'<br>'
-    //                 .'<b>Responsible Physician</b>: '.$row->Physician.'<br>'
-    //                 .'<b>Billing CC</b>: '.$row->billingCC;
-    //         })
-    //         ->editColumn('InventoryDetails', function ($row) {
-    //             // --------- STATIC CACHES (request lifetime) ----------
-    //             static $rightsRespond = null;
-
-    //             static $genericNameCache = [];      // [generic_id => name]
-    //             static $brandNameCache   = [];      // [brand_id => name]
-    //             static $locNameCache     = [];      // [location_id => name]
-
-    //             static $respondedByRefCache = [];   // [ref => [generic_id => SUM(transaction_qty)]] (consumption)
-    //             static $imRefMapCache = [];        // [ref => [generic_id => ['brand_id','batch_no','expiry_date']]]
-    //             static $balanceCache  = [];        // ["org|site|generic|brand|batch|locsKey" => ['orgBalance','siteBalance','locBalanceJson']]
-
-    //             // rights
-    //             if ($rightsRespond === null) {
-    //                 $Rights = $this->rights;
-    //                 $rightsRespond = (int) explode(',', $Rights->consumption)[0];
-    //             }
-
-    //             // helpers
-    //             $getBrandName = function ($brandId) use (&$brandNameCache) {
-    //                 $brandId = (int) $brandId;
-    //                 if ($brandId <= 0) return '';
-    //                 if (!array_key_exists($brandId, $brandNameCache)) {
-    //                     $brandNameCache[$brandId] = (string) (DB::table('inventory_brand')->where('id', $brandId)->value('name') ?? '');
-    //                 }
-    //                 return $brandNameCache[$brandId];
-    //             };
-
-    //             $getLocName = function ($id) use (&$locNameCache) {
-    //                 $id = (int) $id;
-    //                 if ($id <= 0) return null;
-    //                 if (!array_key_exists($id, $locNameCache)) {
-    //                     $locNameCache[$id] = DB::table('service_location')->where('id', $id)->value('name');
-    //                 }
-    //                 return $locNameCache[$id];
-    //             };
-
-    //             // Collect ALL relevant locations (Source and Destination) if they are of type "Location"
-    //             $preferredLocations = [];
-    //             if (!empty($row->sourceTypeName) && str_contains(mb_strtolower($row->sourceTypeName), 'location')) {
-    //                 $name = $getLocName($row->Source);
-    //                 if ($name) $preferredLocations[] = $name;
-    //             }
-    //             if (!empty($row->destinationTypeName) && str_contains(mb_strtolower($row->destinationTypeName), 'location')) {
-    //                 $name = $getLocName($row->Destination);
-    //                 if ($name) $preferredLocations[] = $name;
-    //             }
-    //             $preferredLocations = array_values(array_unique(array_filter($preferredLocations)));
-
-    //             $getRespondedConsumption = function ($ref) use (&$respondedByRefCache) {
-    //                 if (empty($ref)) return [];
-    //                 if (!array_key_exists($ref, $respondedByRefCache)) {
-    //                     $respondedByRefCache[$ref] = DB::table('inventory_management as im')
-    //                         ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
-    //                         ->where('im.ref_document_no', $ref)
-    //                         ->where('itt.name', 'like', '%consumption%')
-    //                         ->groupBy('im.inv_generic_id')
-    //                         ->select('im.inv_generic_id', DB::raw('SUM(im.transaction_qty) as total_qty'))
-    //                         ->pluck('total_qty', 'im.inv_generic_id')
-    //                         ->toArray();
-    //                 }
-    //                 return $respondedByRefCache[$ref];
-    //             };
-
-    //             $getIMRefConsumptionMap = function ($ref) use (&$imRefMapCache) {
-    //                 if (empty($ref)) return [];
-    //                 if (!array_key_exists($ref, $imRefMapCache)) {
-    //                     $rows = DB::table('inventory_management as im')
-    //                         ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
-    //                         ->where('im.ref_document_no', $ref)
-    //                         ->where('itt.name', 'like', '%consumption%')
-    //                         ->select('im.inv_generic_id', 'im.brand_id', 'im.batch_no', 'im.expiry_date')
-    //                         ->get();
-    //                     $map = [];
-    //                     foreach ($rows as $r) {
-    //                         $map[(int) $r->inv_generic_id] = [
-    //                             'brand_id'    => $r->brand_id,
-    //                             'batch_no'    => $r->batch_no,
-    //                             'expiry_date' => $r->expiry_date,
-    //                         ];
-    //                     }
-    //                     $imRefMapCache[$ref] = $map;
-    //                 }
-    //                 return $imRefMapCache[$ref];
-    //             };
-
-    //             $getBalances = function (
-    //                 $orgId,
-    //                 $siteId,
-    //                 $genericId,
-    //                 $brandId = null,
-    //                 $batchNo = null,
-    //                 array $preferredLocationsArg = [] // optional: limit to these location NAMES (e.g., Source/Destination)
-    //             ) use (&$balanceCache, $getLocName) {
-
-    //                 // cache key
-    //                 $brandKey = ($brandId === null) ? '*' : $brandId;
-    //                 $batchKey = ($batchNo === null) ? '*' : $batchNo;
-    //                 $locKey   = implode('|', array_map(fn($n) => mb_strtolower(trim($n)), $preferredLocationsArg));
-    //                 $cacheKey = "{$orgId}|{$siteId}|{$genericId}|{$brandKey}|{$batchKey}|{$locKey}";
-    //                 if (isset($balanceCache[$cacheKey])) return $balanceCache[$cacheKey];
-
-    //                 // default response
-    //                 $result = [
-    //                     'orgBalance'  => 'N/A',
-    //                     'siteBalance' => 'N/A',
-    //                     'locBalance'  => '[]',
-    //                 ];
-
-    //                 // We only show balances when we know the EXACT brand+batch (same logic as your initial code).
-    //                 if ($brandId !== null && $batchNo !== null) {
-    //                     // ORG (latest row, no location filter — matches initial logic)
-    //                     $orgBal = DB::table('inventory_balance')
-    //                         ->where('org_id', $orgId)
-    //                         ->where('generic_id', $genericId)
-    //                         ->where('brand_id', $brandId)
-    //                         ->where('batch_no', $batchNo)
-    //                         ->orderBy('id', 'desc')
-    //                         ->value('org_balance');
-
-    //                     // SITE (latest row for this site)
-    //                     $siteBal = DB::table('inventory_balance')
-    //                         ->where('org_id', $orgId)
-    //                         ->where('site_id', $siteId)
-    //                         ->where('generic_id', $genericId)
-    //                         ->where('brand_id', $brandId)
-    //                         ->where('batch_no', $batchNo)
-    //                         ->orderBy('id', 'desc')
-    //                         ->value('site_balance');
-
-    //                     // PER-LOCATION (latest record per location_id with balance > 0), same as initial code
-    //                     $rows = DB::table('inventory_balance')
-    //                         ->where('org_id', $orgId)
-    //                         ->where('site_id', $siteId)
-    //                         ->where('generic_id', $genericId)
-    //                         ->where('brand_id', $brandId)
-    //                         ->where('batch_no', $batchNo)
-    //                         ->whereNotNull('location_id')
-    //                         ->orderBy('id', 'desc')
-    //                         ->get();
-
-    //                     // keep only the latest row per location_id
-    //                     $latestPerLoc = [];
-    //                     foreach ($rows as $r) {
-    //                         if (!isset($latestPerLoc[$r->location_id])) {
-    //                             $latestPerLoc[$r->location_id] = $r; // first seen is latest because of desc order
-    //                         }
-    //                     }
-
-    //                     // optionally restrict to preferred location names (if provided)
-    //                     $nameFilter = null;
-    //                     if (!empty($preferredLocationsArg)) {
-    //                         $nameFilter = [];
-    //                         foreach ($preferredLocationsArg as $nm) {
-    //                             $nm = mb_strtolower(trim($nm));
-    //                             if ($nm !== '') $nameFilter[$nm] = true;
-    //                         }
-    //                     }
-
-    //                     $locEntries = [];
-    //                     foreach ($latestPerLoc as $locId => $r) {
-    //                         $bal = (float)($r->location_balance ?? 0);
-    //                         if ($bal <= 0) continue;
-
-    //                         $locName = $getLocName($locId) ?? 'Unknown';
-    //                         if ($nameFilter) {
-    //                             $key = mb_strtolower(trim($locName));
-    //                             if (!isset($nameFilter[$key])) continue; // skip if not in preferred list
-    //                         }
-    //                         $locEntries[] = $locName . ': ' . $bal;
-    //                     }
-
-    //                     $result = [
-    //                         'orgBalance'  => $orgBal ?? 'N/A',
-    //                         'siteBalance' => $siteBal ?? 'N/A',
-    //                         'locBalance'  => htmlspecialchars(json_encode(array_values($locEntries)), ENT_QUOTES, 'UTF-8'),
-    //                     ];
-    //                 }
-
-    //                 // cache & return
-    //                 return $balanceCache[$cacheKey] = $result;
-    //             };
-
-    //             // ---------- row processing ----------
-    //             $tableRows = '';
-
-    //             // generics
-    //             $genericIds = array_filter(array_map('intval', explode(',', (string) $row->inv_generic_ids)));
-    //             // prefill generic names cache
-    //             $missing = array_values(array_diff($genericIds, array_keys($genericNameCache)));
-    //             if ($missing) {
-    //                 $fetched = InventoryGeneric::whereIn('id', $missing)->pluck('name', 'id')->toArray();
-    //                 foreach ($fetched as $gid => $name) $genericNameCache[(int)$gid] = $name;
-    //                 foreach ($missing as $gid) if (!isset($genericNameCache[$gid])) $genericNameCache[$gid] = 'N/A';
-    //             }
-
-    //             $dose         = !empty($row->dose)         ? explode(',', (string) $row->dose) : [];
-    //             $routeIds     = !empty($row->route_id)     ? explode(',', (string) $row->route_id) : [];
-    //             $frequencyIds = !empty($row->frequency_id) ? explode(',', (string) $row->frequency_id) : [];
-    //             $days         = !empty($row->days)         ? explode(',', (string) $row->days) : [];
-
-    //             $isMedication = (!empty($row->dose) || !empty($row->route_id) || !empty($row->frequency_id) || !empty($row->days));
-    //             $count = max(count($genericIds), count($dose), count($routeIds), count($frequencyIds), count($days));
-
-    //             // responded qty per generic for CONSUMPTION
-    //             $respondedEntriesDetails = !empty($row->referenceNumber)
-    //                 ? $getRespondedConsumption($row->referenceNumber)
-    //                 : [];
-
-    //             // brand/batch/expiry per generic for this reference (consumption only)
-    //             $refMap = !empty($row->referenceNumber)
-    //                 ? $getIMRefConsumptionMap($row->referenceNumber)
-    //                 : [];
-
-    //             // loop rows
-    //             for ($i = 0; $i < $count; $i++) {
-    //                 $bg = $i % 2 === 0 ? '#f9f9f9' : '#ffffff';
-
-    //                 $currentGenericId = (int) ($genericIds[$i] ?? 0);
-
-    //                 // quantities
-    //                 $currentIssuedQty    = (float) ($row->transaction_qty ?? 0);
-    //                 $currentRespondedQty = (float) ($respondedEntriesDetails[$currentGenericId] ?? 0);
-
-    //                 // defaults (tooltip)
-    //                 $brandName  = '';
-    //                 $batchNo    = '';
-    //                 $expiryDate = '';
-    //                 $balances   = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A', 'locBalance' => '[]'];
-
-    //                 if ($currentRespondedQty > 0 && !empty($row->referenceNumber)) {
-    //                     // SPECIFIC item (brand/batch) + its balances
-    //                     $itemData = $refMap[$currentGenericId] ?? null;
-    //                     if ($itemData) {
-    //                         $brandName  = $getBrandName($itemData['brand_id']);
-    //                         $batchNo    = $itemData['batch_no'];
-    //                         $expiryDate = is_numeric($itemData['expiry_date'])
-    //                             ? \Carbon\Carbon::createFromTimestamp($itemData['expiry_date'])->format('d-M-Y')
-    //                             : $itemData['expiry_date'];
-
-    //                         $balances = $getBalances(
-    //                             $row->org_id,
-    //                             $row->site_id,
-    //                             $currentGenericId,
-    //                             $itemData['brand_id'],
-    //                             $itemData['batch_no'],
-    //                             $preferredLocations        // BOTH source & destination names supported
-    //                         );
-    //                     }
-    //                 } 
-    //                 else {
-    //                     // ---------- PRE-RESPONSE BALANCES (derive brand/batch from any IM line for this ref+generic) ----------
-    //                     $imLine = DB::table('inventory_management')
-    //                         ->where('ref_document_no', $row->referenceNumber)
-    //                         ->where('inv_generic_id', $currentGenericId)
-    //                         ->select('brand_id', 'batch_no')
-    //                         ->orderBy('id', 'desc')
-    //                         ->first();
-
-    //                     // default
-    //                     $balances = ['orgBalance' => 'N/A', 'siteBalance' => 'N/A', 'locBalance' => '[]'];
-
-    //                     if ($imLine) {
-    //                         // ORG balance for this brand+batch
-    //                         $orgBalance = DB::table('inventory_balance')
-    //                             ->where('org_id', $row->org_id)
-    //                             ->where('generic_id', $currentGenericId)
-    //                             ->where('brand_id', $imLine->brand_id)
-    //                             ->where('batch_no', $imLine->batch_no)
-    //                             ->orderBy('id', 'desc')
-    //                             ->value('org_balance') ?? 'N/A';
-
-    //                         // SITE balance for this brand+batch
-    //                         $siteBalance = DB::table('inventory_balance')
-    //                             ->where('org_id', $row->org_id)
-    //                             ->where('site_id', $row->site_id)
-    //                             ->where('generic_id', $currentGenericId)
-    //                             ->where('brand_id', $imLine->brand_id)
-    //                             ->where('batch_no', $imLine->batch_no)
-    //                             ->orderBy('id', 'desc')
-    //                             ->value('site_balance') ?? 'N/A';
-
-    //                         // LOCATION balances (latest per location_id for this brand+batch)
-    //                         $locLatest = InventoryBalance::where('org_id', $row->org_id)
-    //                             ->where('site_id', $row->site_id)
-    //                             ->where('generic_id', $currentGenericId)
-    //                             ->where('brand_id', $imLine->brand_id)
-    //                             ->where('batch_no', $imLine->batch_no)
-    //                             ->whereNotNull('location_id')
-    //                             ->orderBy('id', 'desc')
-    //                             ->get()
-    //                             ->groupBy('location_id')
-    //                             ->map(function ($records) {
-    //                                 return $records->first(); // already latest due to desc order
-    //                             });
-
-    //                         // filter to preferred locations (source/destination) if provided
-    //                         $needles = array_map(fn($n) => mb_strtolower(trim($n)), $preferredLocations ?? []);
-    //                         $locEntries = [];
-    //                         foreach ($locLatest as $locId => $rec) {
-    //                             $bal = (float)($rec->location_balance ?? 0);
-    //                             if ($bal <= 0) continue;
-
-    //                             $locName = DB::table('service_location')->where('id', $locId)->value('name') ?? 'Unknown';
-    //                             if (!empty($needles)) {
-    //                                 $key = mb_strtolower(trim($locName));
-    //                                 if (!in_array($key, $needles, true)) continue;
-    //                             }
-    //                             $locEntries[] = $locName . ': ' . $bal;
-    //                         }
-
-    //                         $balances = [
-    //                             'orgBalance'  => $orgBalance,
-    //                             'siteBalance' => $siteBalance,
-    //                             'locBalance'  => htmlspecialchars(json_encode(array_values($locEntries)), ENT_QUOTES, 'UTF-8'),
-    //                         ];
-    //                     }
-    //                 }
-    //                 // --- Status/Action logic (unchanged) ---
-    //                 if ($currentRespondedQty > 0) {
-    //                     if ($currentRespondedQty == $currentIssuedQty) {
-    //                         $status = 'Consumed';
-    //                         $statusClass = 'success';
-    //                         $actionBtn = 'N/A';
-    //                     } else {
-    //                         $status = 'Partially Consumed';
-    //                         $statusClass = 'info';
-    //                         $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
-    //                             data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id="' . $brandName . '"
-    //                             data-batch-no="' . $batchNo . '" data-expiry="'.$expiryDate.'"
-    //                             data-issue-qty="'.$row->transaction_qty.'">Respond</a>';
-    //                     }
-    //                 } else {
-    //                     $status = 'Pending';
-    //                     $statusClass = 'warning';
-    //                     // brand/batch/expiry intentionally blank before first response
-    //                     $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
-    //                         data-id="'. $row->id.'" data-generic-id="' . $currentGenericId . '" data-brand-id=""
-    //                         data-batch-no="" data-expiry=""
-    //                         data-issue-qty="'.$row->transaction_qty.'">Respond</a>';
-    //                 }
-
-    //                 if ($rightsRespond != 1) {
-    //                     $actionBtn = '<code>Unauthorized Access</code>';
-    //                 }
-
-    //                 // build row
-    //                 $tableRows .= '<tr style="background-color:'.$bg.';cursor:pointer;" class="balance-row"
-    //                                 data-expiry="'.$expiryDate.'"
-    //                                 data-brand="'.$brandName.'"
-    //                                 data-batch="'.$batchNo.'"
-    //                                 data-loc-balance="'.$balances['locBalance'].'"
-    //                                 data-org-balance="'.$balances['orgBalance'].'"
-    //                                 data-site-balance="'.$balances['siteBalance'].'">';
-
-    //                 $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($genericNameCache[$currentGenericId] ?? 'N/A').'</td>';
-
-    //                 if (!$isMedication) {
-    //                     $tableRows .= '<td style="padding:8px;border:1px solid #ccc;">'.($row->demand_qty ?? 'N/A').'</td>';
-    //                 }
-
-    //                 $tableRows .= '<td style="padding: 5px 1;border: 1px solid #ccc;">'.($row->transaction_qty ?? 0).'</td>';
-    //                 $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$currentRespondedQty.'</td>';
-    //                 $tableRows .= '<td style="padding: 5px 15px;border: 1px solid #ccc;">'.$actionBtn.'</td>
-    //                             <td style="padding:8px;border:1px solid #ccc;">
-    //                                 <span class="label label-'.$statusClass.'">'.$status.'</span>
-    //                             </td>
-    //                             </tr>';
-    //             }
-
-    //             // header (unchanged layout)
-    //             $tableHeader = '<tr>'
-    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic</th>';
-
-    //             if (!$isMedication) {
-    //                 $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Demand Qty</th>';
-    //             }
-
-    //             $tableHeader .= '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Issued Qty</th>'
-    //                         . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Transaction Qty</th>'
-    //                         . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
-    //                         . '<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
-    //                         . '</tr>';
-
-    //             return '<table style="width:100%;border-collapse:collapse;font-size:13px;" class="table table-bordered">'
-    //                 .'<thead style="background-color:#e2e8f0;color:#000;">'.$tableHeader.'</thead>'
-    //                 .'<tbody>'.$tableRows.'</tbody></table>';
-    //         })
-    //         ->rawColumns(['id_raw', 'id', 'patientDetails', 'InventoryDetails'])
-    //         ->make(true);
-    // }
-
+    
     public function GetConsumptionData(Request $request)
     {
         $rights = $this->rights;
@@ -13426,7 +13266,7 @@ class InventoryController extends Controller
                 $tableRows = '';
 
                 $genericIds = array_filter(array_map('intval', explode(',', (string) $row->inv_generic_ids)));
-                static $genericNameCache = [];
+                // static $genericNameCache = [];
                 $missing = array_values(array_diff($genericIds, array_keys($genericNameCache)));
                 if ($missing) {
                     $fetched = InventoryGeneric::whereIn('id', $missing)->pluck('name', 'id')->toArray();
@@ -14092,14 +13932,20 @@ class InventoryController extends Controller
         }
 
         if ($success) {
-            $logs = Logs::create([
-                'module' => 'inventory management',
-                'content' => $remarkText,
-                'event' => 'add',
-                'timestamp' => now()->timestamp,
-            ]);
+            $logId = createLog(
+                'inventory_management',
+                'insert',
+                [
+                    'message' => $remarkText,
+                    'created_by' => auth()->user()->name ?? 'system'
+                ],
+                $inventory->id ?? null,
+                null,
+                null,
+                auth()->id() ?? 0
+            );
 
-            $inventory->logid = $logs->id;
+            $inventory->logid = $logId;
             $inventory->save();
 
             return response()->json([
@@ -14163,466 +14009,7 @@ class InventoryController extends Controller
         return view('dashboard.material_management.return', compact('user','RequisitionNonMandatory','costcenters','MedicationRoutes','MedicationFrequencies'));
     }
 
-    // public function GetReturnData(Request $request)
-    // {
-    //     $rights = $this->rights;
-    //     $view = explode(',', $rights->inventory_return)[1];
-    //     if ($view == 0) abort(403, 'Forbidden');
-
-    //     // ---------- Base issued/dispensed query ----------
-    //     $issuedDispensed = DB::table('inventory_management as im')
-    //         ->join('inventory_transaction_type as itt', 'itt.id', '=', 'im.transaction_type_id')
-    //         ->join('inventory_source_destination_type as isdt', 'isdt.id', '=', 'itt.destination_location_type')
-    //         ->join('inventory_transaction_activity as ita', 'ita.id', '=', 'itt.activity_type')
-    //         ->join('organization', 'organization.id', '=', 'im.org_id')
-    //         ->join('org_site', 'org_site.id', '=', 'im.site_id')
-    //         ->leftJoin('patient', 'patient.mr_code', '=', 'im.mr_code')
-    //         ->leftJoin('employee', 'employee.id', '=', 'im.resp_physician')
-    //         ->leftJoin('service_mode', 'service_mode.id', '=', 'im.service_mode_id')
-    //         ->leftJoin('services', 'services.id', '=', 'im.service_id')
-    //         ->leftJoin('service_group', 'service_group.id', '=', 'services.group_id')
-    //         ->leftJoin('service_type', 'service_type.id', '=', 'service_group.type_id')
-    //         ->leftJoin('costcenter as billingCC', 'billingCC.id', '=', 'im.billing_cc')
-    //         ->where(function ($q) {
-    //             $q->where('ita.name', 'like', '%issue%')
-    //             ->orWhere('ita.name', 'like', '%dispense%');
-    //         })
-    //         ->select(
-    //             'im.*',
-    //             'itt.name as transaction_type',
-    //             'isdt.name as sourceDestinationName',
-    //             'ita.name as activity_type',
-    //             DB::raw('patient.name as patientName'),
-    //             DB::raw('employee.name as Physician'),
-    //             DB::raw('organization.organization as OrgName'),
-    //             DB::raw('org_site.name as SiteName'),
-    //             DB::raw('services.name as serviceName'),
-    //             DB::raw('service_mode.name as serviceMode'),
-    //             DB::raw('billingCC.name as billingCC'),
-    //             DB::raw('service_group.name as serviceGroup'),
-    //             DB::raw('service_type.name as serviceType')
-    //         );
-
-    //     // session site filter
-    //     if ($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
-    //         $sessionSiteIds = $this->assignedSites;
-    //         if (!empty($sessionSiteIds)) {
-    //             $issuedDispensed->whereIn('org_site.id', $sessionSiteIds);
-    //         }
-    //     }
-
-    //     // ---------- Computed columns (consumed, returned, remaining) ----------
-    //     $issuedDispensed = $issuedDispensed->addSelect([
-    //         DB::raw('(SELECT COALESCE(SUM(im2.transaction_qty),0)
-    //                 FROM inventory_management im2
-    //                 INNER JOIN inventory_transaction_type itt2 ON itt2.id = im2.transaction_type_id
-    //                 INNER JOIN inventory_transaction_activity ita2 ON ita2.id = itt2.activity_type
-    //                 WHERE im2.ref_document_no = im.ref_document_no
-    //                 AND im2.inv_generic_id   = im.inv_generic_id
-    //                 AND im2.batch_no         = im.batch_no
-    //                 AND im2.brand_id         = im.brand_id
-    //                 AND ita2.name LIKE "%consumption%") AS consumed_qty'),
-
-    //         DB::raw('(SELECT COALESCE(SUM(im3.transaction_qty),0)
-    //                 FROM inventory_management im3
-    //                 INNER JOIN inventory_transaction_type itt3 ON itt3.id = im3.transaction_type_id
-    //                 INNER JOIN inventory_transaction_activity ita3 ON ita3.id = itt3.activity_type
-    //                 WHERE im3.ref_document_no = im.ref_document_no
-    //                 AND im3.inv_generic_id   = im.inv_generic_id
-    //                 AND im3.batch_no         = im.batch_no
-    //                 AND im3.brand_id         = im.brand_id
-    //                 AND ita3.name LIKE "%return%") AS returned_qty'),
-
-    //         DB::raw('(im.transaction_qty - (SELECT COALESCE(SUM(im4.transaction_qty),0)
-    //                 FROM inventory_management im4
-    //                 INNER JOIN inventory_transaction_type itt4 ON itt4.id = im4.transaction_type_id
-    //                 INNER JOIN inventory_transaction_activity ita4 ON ita4.id = itt4.activity_type
-    //                 WHERE im4.ref_document_no = im.ref_document_no
-    //                 AND im4.inv_generic_id   = im.inv_generic_id
-    //                 AND im4.batch_no         = im.batch_no
-    //                 AND im4.brand_id         = im.brand_id
-    //                 AND ita4.name LIKE "%consumption%")) AS remaining_qty'),
-    //     ]);
-
-    //     // ---------- Wrap as subquery for server-side pagination ----------
-    //     // $finalQuery = DB::table(DB::raw("({$issuedDispensed->toSql()}) as filtered_results"))
-    //     //     ->mergeBindings($issuedDispensed)
-    //     //     ->where('remaining_qty', '>', 0);
-    //     $finalQuery = DB::query()
-    //         ->fromSub($issuedDispensed, 'u')
-    //         ->where('remaining_qty', '>', 0);
-
-    //     // ---------- DataTables rendering ----------
-    //     return DataTables::query($finalQuery)
-    //         // Filters (explicit + DataTables global/column)
-    //         ->filter(function ($query) use ($request) {
-    //             // Explicit params (pass from your UI as needed)
-    //             $from   = $request->input('from_date');     // 'YYYY-MM-DD'
-    //             $to     = $request->input('to_date');       // 'YYYY-MM-DD'
-    //             $orgIds = (array) $request->input('org_ids', []);
-    //             $siteIds= (array) $request->input('site_ids', []);
-    //             $ttIds  = (array) $request->input('transaction_type_ids', []);
-
-    //             $ref      = trim((string) $request->input('reference')); // ref_document_no
-    //             $mr       = trim((string) $request->input('mr_code'));
-    //             $patient  = trim((string) $request->input('patient'));
-    //             $phys     = trim((string) $request->input('physician'));
-    //             $service  = trim((string) $request->input('service'));
-    //             $svcMode  = trim((string) $request->input('service_mode'));
-    //             $svcGroup = trim((string) $request->input('service_group'));
-    //             $billing  = trim((string) $request->input('billing_cc'));
-    //             $siteName = trim((string) $request->input('site_name'));
-    //             $remarks  = trim((string) $request->input('remarks'));
-    //             $srcDst   = trim((string) $request->input('location_type')); // e.g., "location" (matches sourceDestinationName)
-    //             $generic  = trim((string) $request->input('generic_name'));  // search generic via inv_generic_id→name
-
-    //             if ($from) {
-    //                 $query->where('u.timestamp', '>=', \Carbon\Carbon::parse($from)->startOfDay()->timestamp);
-    //             }
-    //             if ($to) {
-    //                 $query->where('u.timestamp', '<=', \Carbon\Carbon::parse($to)->endOfDay()->timestamp);
-    //             }
-    //             if (!empty($orgIds))  { $query->whereIn('u.org_id', $orgIds); }
-    //             if (!empty($siteIds)) { $query->whereIn('u.site_id', $siteIds); }
-    //             if (!empty($ttIds))   { $query->whereIn('u.transaction_type_id', $ttIds); }
-
-    //             if ($ref)      { $query->where('u.ref_document_no', 'like', "%{$ref}%"); }
-    //             if ($mr)       { $query->where('u.mr_code', 'like', "%{$mr}%"); }
-    //             if ($patient)  { $query->where('u.patientName', 'like', "%{$patient}%"); }
-    //             if ($phys)     { $query->where('u.Physician', 'like', "%{$phys}%"); }
-    //             if ($service)  { $query->where('u.serviceName', 'like', "%{$service}%"); }
-    //             if ($svcMode)  { $query->where('u.serviceMode', 'like', "%{$svcMode}%"); }
-    //             if ($svcGroup) { $query->where('u.serviceGroup', 'like', "%{$svcGroup}%"); }
-    //             if ($billing)  { $query->where('u.billingCC', 'like', "%{$billing}%"); }
-    //             if ($siteName) { $query->where('u.SiteName', 'like', "%{$siteName}%"); }
-    //             if ($remarks)  { $query->where('u.remarks', 'like', "%{$remarks}%"); }
-    //             if ($srcDst)   { $query->where('u.sourceDestinationName', 'like', "%{$srcDst}%"); }
-
-    //             // Generic name filter: matches current inv_generic_id to inventory_generic.name
-    //             if ($generic) {
-    //                 $g = "%{$generic}%";
-    //                 $query->whereRaw("
-    //                     EXISTS (
-    //                     SELECT 1
-    //                     FROM inventory_generic ig
-    //                     WHERE ig.id = u.inv_generic_id
-    //                         AND ig.name LIKE ?
-    //                     )", [$g]
-    //                 );
-    //             }
-
-    //             // DataTables global search
-    //             $global = trim((string) data_get($request->input('search'), 'value'));
-    //             if ($global !== '') {
-    //                 $g = "%{$global}%";
-    //                 $query->where(function ($qq) use ($g) {
-    //                     $qq->orWhere('u.ref_document_no', 'like', $g)
-    //                     ->orWhere('u.patientName', 'like', $g)
-    //                     ->orWhere('u.Physician', 'like', $g)
-    //                     ->orWhere('u.OrgName', 'like', $g)
-    //                     ->orWhere('u.SiteName', 'like', $g)
-    //                     ->orWhere('u.serviceName', 'like', $g)
-    //                     ->orWhere('u.serviceMode', 'like', $g)
-    //                     ->orWhere('u.billingCC', 'like', $g)
-    //                     ->orWhere('u.serviceGroup', 'like', $g)
-    //                     ->orWhere('u.serviceType', 'like', $g)
-    //                     ->orWhere('u.transaction_type', 'like', $g)
-    //                     ->orWhere('u.sourceDestinationName', 'like', $g)
-    //                     ->orWhere('u.mr_code', 'like', $g)
-    //                     ->orWhere('u.remarks', 'like', $g)
-    //                     // generic name
-    //                     ->orWhereRaw("
-    //                         EXISTS (
-    //                             SELECT 1
-    //                             FROM inventory_generic ig
-    //                             WHERE ig.id = u.inv_generic_id
-    //                             AND ig.name LIKE ?
-    //                         )", [$g]
-    //                     );
-    //                 });
-    //             }
-
-    //             // Column-specific search (if you send columns[x][search][value])
-    //             foreach ((array)$request->input('columns', []) as $col) {
-    //                 $name  = data_get($col, 'data');
-    //                 $value = trim((string) data_get($col, 'search.value'));
-    //                 if ($value === '') continue;
-
-    //                 switch ($name) {
-    //                     case 'ref_document_no':  $query->where('u.ref_document_no', 'like', "%{$value}%"); break;
-    //                     case 'mr_code':          $query->where('u.mr_code', 'like', "%{$value}%"); break;
-    //                     case 'patientName':      $query->where('u.patientName', 'like', "%{$value}%"); break;
-    //                     case 'Physician':        $query->where('u.Physician', 'like', "%{$value}%"); break;
-    //                     case 'SiteName':         $query->where('u.SiteName', 'like', "%{$value}%"); break;
-    //                     case 'OrgName':          $query->where('u.OrgName', 'like', "%{$value}%"); break;
-    //                     case 'serviceName':      $query->where('u.serviceName', 'like', "%{$value}%"); break;
-    //                     case 'serviceMode':      $query->where('u.serviceMode', 'like', "%{$value}%"); break;
-    //                     case 'serviceGroup':     $query->where('u.serviceGroup', 'like', "%{$value}%"); break;
-    //                     case 'serviceType':      $query->where('u.serviceType', 'like', "%{$value}%"); break;
-    //                     case 'transaction_type': $query->where('u.transaction_type', 'like', "%{$value}%"); break;
-    //                     case 'sourceDestinationName':
-    //                                             $query->where('u.sourceDestinationName', 'like', "%{$value}%"); break;
-    //                     case 'remarks':          $query->where('u.remarks', 'like', "%{$value}%"); break;
-    //                     case 'generic':
-    //                         $g = "%{$value}%";
-    //                         $query->whereRaw("
-    //                             EXISTS (
-    //                             SELECT 1 FROM inventory_generic ig
-    //                             WHERE ig.id = u.inv_generic_id
-    //                                 AND ig.name LIKE ?
-    //                             )", [$g]
-    //                         );
-    //                         break;
-    //                     default:
-    //                         // ignore others
-    //                         break;
-    //                 }
-    //             }
-    //         })
-    //         ->addColumn('return_raw', fn($row) => $row->id)
-    //         ->addColumn('id_raw', fn($row) => $row->id)
-
-    //         // ----- Left column -----
-    //         ->editColumn('id', function ($row) {
-    //             static $locNameCache = [];
-
-    //             $getLocName = function ($id) use (&$locNameCache) {
-    //                 $id = (int)$id;
-    //                 if ($id <= 0) return null;
-    //                 if (!array_key_exists($id, $locNameCache)) {
-    //                     $locNameCache[$id] = DB::table('service_location')->where('id', $id)->value('name');
-    //                 }
-    //                 return $locNameCache[$id];
-    //             };
-
-    //             $timestamp     = \Carbon\Carbon::createFromTimestamp($row->timestamp)->format('l d F Y - h:i A');
-    //             $effectiveDate = \Carbon\Carbon::createFromTimestamp($row->effective_timestamp)->format('l d F Y - h:i A');
-    //             $RequisitionCode = 'Ref: ' . ($row->ref_document_no ?? 'N/A');
-
-    //             $locationHtml = '';
-    //             if (!empty($row->sourceDestinationName) && str_contains(strtolower($row->sourceDestinationName), 'location')) {
-    //                 $destName = $getLocName($row->destination) ?? 'N/A';
-    //                 $locationHtml = '<b>Location</b>: ' . ucwords($destName) . '<br>';
-    //             }
-
-    //             return sprintf(
-    //                 '%s<hr class="mt-1 mb-2">%s<br>%s<b>Site</b>: %s<br><b>Issue Date </b>: %s<br><b>Effective Date </b>: %s<br><b>Remarks</b>: %s',
-    //                 $RequisitionCode,
-    //                 ucwords($row->transaction_type ?? 'N/A'),
-    //                 $locationHtml,
-    //                 $row->SiteName ?? 'N/A',
-    //                 $timestamp,
-    //                 $effectiveDate,
-    //                 $row->remarks ?: 'N/A'
-    //             );
-    //         })
-
-    //         // ----- Middle column -----
-    //         ->editColumn('patientDetails', function ($row) {
-    //             if (empty($row->mr_code)) return 'N/A';
-    //             return sprintf(
-    //                 '<b>MR#:</b> %s<br>%s<hr class="mt-1 mb-2"><b>Service Mode</b>: %s<br><b>Service Group</b>: %s<br><b>Service</b>: %s<br><b>Responsible Physician</b>: %s<br><b>Billing CC</b>: %s',
-    //                 $row->mr_code,
-    //                 $row->patientName,
-    //                 $row->serviceMode,
-    //                 $row->serviceGroup,
-    //                 $row->serviceName,
-    //                 $row->Physician,
-    //                 $row->billingCC
-    //             );
-    //         })
-
-    //         // ----- Right column (table with balances + actions) -----
-    //         ->editColumn('InventoryDetails', function ($row) {
-    //             // ---- Static caches across rows (per request) ----
-    //             static $rightsRespond = null;
-    //             static $genericNameCache = [];  // [id => name]
-    //             static $brandNameCache   = [];  // [id => name]
-    //             static $locNameCache     = [];  // [id => name]
-    //             static $balanceCache     = [];  // ["org|site|gen|brand|batch" => ['org','site','locJson']]
-
-    //             if ($rightsRespond === null) {
-    //                 $Rights = $this->rights;
-    //                 $rightsRespond = (int) explode(',', $Rights->inventory_return)[0];
-    //             }
-
-    //             // helpers
-    //             $getGenericName = function ($id) use (&$genericNameCache) {
-    //                 $id = (int)$id;
-    //                 if ($id <= 0) return 'N/A';
-    //                 if (!array_key_exists($id, $genericNameCache)) {
-    //                     $genericNameCache[$id] = InventoryGeneric::where('id', $id)->value('name') ?? 'N/A';
-    //                 }
-    //                 return $genericNameCache[$id];
-    //             };
-    //             $getBrandName = function ($id) use (&$brandNameCache) {
-    //                 $id = (int)$id;
-    //                 if ($id <= 0) return '';
-    //                 if (!array_key_exists($id, $brandNameCache)) {
-    //                     $brandNameCache[$id] = DB::table('inventory_brand')->where('id', $id)->value('name') ?? '';
-    //                 }
-    //                 return $brandNameCache[$id];
-    //             };
-    //             $getLocName = function ($id) use (&$locNameCache) {
-    //                 $id = (int)$id;
-    //                 if ($id <= 0) return null;
-    //                 if (!array_key_exists($id, $locNameCache)) {
-    //                     $locNameCache[$id] = DB::table('service_location')->where('id', $id)->value('name');
-    //                 }
-    //                 return $locNameCache[$id];
-    //             };
-
-    //             $getBalances = function ($orgId, $siteId, $genericId, $brandId, $batchNo) use (&$balanceCache, $getLocName) {
-    //                 $key = "{$orgId}|{$siteId}|{$genericId}|{$brandId}|{$batchNo}";
-    //                 if (isset($balanceCache[$key])) return $balanceCache[$key];
-
-    //                 // ORG balance (latest row)
-    //                 $orgBal = DB::table('inventory_balance')
-    //                     ->where('org_id', $orgId)
-    //                     ->where('generic_id', $genericId)
-    //                     ->where('brand_id', $brandId)
-    //                     ->where('batch_no', $batchNo)
-    //                     ->orderBy('id', 'desc')
-    //                     ->value('org_balance') ?? 'N/A';
-
-    //                 // SITE balance (latest row for this site)
-    //                 $siteBal = DB::table('inventory_balance')
-    //                     ->where('org_id', $orgId)
-    //                     ->where('site_id', $siteId)
-    //                     ->where('generic_id', $genericId)
-    //                     ->where('brand_id', $brandId)
-    //                     ->where('batch_no', $batchNo)
-    //                     ->orderBy('id', 'desc')
-    //                     ->value('site_balance') ?? 'N/A';
-
-    //                 // LOCATION balances (latest per location_id for this brand+batch)
-    //                 $locRows = DB::table('inventory_balance')
-    //                     ->where('org_id', $orgId)
-    //                     ->where('site_id', $siteId)
-    //                     ->where('generic_id', $genericId)
-    //                     ->where('brand_id', $brandId)
-    //                     ->where('batch_no', $batchNo)
-    //                     ->whereNotNull('location_id')
-    //                     ->orderBy('id', 'desc')
-    //                     ->get();
-
-    //                 $latestPerLoc = [];
-    //                 foreach ($locRows as $r) {
-    //                     if (!isset($latestPerLoc[$r->location_id])) $latestPerLoc[$r->location_id] = $r; // first = latest
-    //                 }
-
-    //                 $locEntries = [];
-    //                 foreach ($latestPerLoc as $locId => $r) {
-    //                     $bal = (float)($r->location_balance ?? 0);
-    //                     if ($bal <= 0) continue;
-    //                     $name = $getLocName($locId) ?? 'Unknown';
-    //                     $locEntries[] = $name . ': ' . $bal;
-    //                 }
-
-    //                 return $balanceCache[$key] = [
-    //                     'orgBalance'  => $orgBal,
-    //                     'siteBalance' => $siteBal,
-    //                     'locBalance'  => htmlspecialchars(json_encode(array_values($locEntries)), ENT_QUOTES, 'UTF-8'),
-    //                 ];
-    //             };
-
-    //             // ----- Row data -----
-    //             $genericId  = (int)$row->inv_generic_id;
-    //             $brandId    = (int)$row->brand_id;
-    //             $batchNo    = $row->batch_no;
-    //             $brandName  = $getBrandName($brandId);
-    //             $expiryDate = is_numeric($row->expiry_date)
-    //                 ? \Carbon\Carbon::createFromTimestamp($row->expiry_date)->format('d-M-Y')
-    //                 : $row->expiry_date;
-
-    //             $balances = $getBalances($row->org_id, $row->site_id, $genericId, $brandId, $batchNo);
-
-    //             // returned_qty is aliased in SQL; keep a safe fallback to return_qty if present
-    //             $returnQty     = property_exists($row, 'returned_qty') ? (float)$row->returned_qty : (float)($row->return_qty ?? 0);
-    //             $remainingQty  = (float)($row->remaining_qty ?? 0);
-    //             $issuedQty     = (float)($row->transaction_qty ?? 0);
-    //             $availableForReturn = $remainingQty - $returnQty;
-
-    //             // Status / Action
-    //             if ($returnQty > 0) {
-    //                 if ($returnQty == $remainingQty) {
-    //                     $status = 'Returned';
-    //                     $statusClass = 'success';
-    //                     $actionBtn = 'N/A';
-    //                 } else {
-    //                     $status = 'Partially Returned';
-    //                     $statusClass = 'info';
-    //                     $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
-    //                         data-id="'. $row->id .'"
-    //                         data-generic-id="'. $genericId .'"
-    //                         data-brand-id="'. $brandName .'"
-    //                         data-batch-no="'. $batchNo .'"
-    //                         data-expiry="'. $expiryDate .'"
-    //                         data-issue-qty="'. $remainingQty .'">Return</a>';
-    //                 }
-    //             } else {
-    //                 $status = 'Available for Return';
-    //                 $statusClass = 'inverse';
-    //                 $actionBtn = '<a href="javascript:void(0);" class="btn btn-sm btn-primary respond-btn"
-    //                     data-id="'. $row->id .'"
-    //                     data-generic-id="'. $genericId .'"
-    //                     data-brand-id="'. $brandName .'"
-    //                     data-batch-no="'. $batchNo .'"
-    //                     data-expiry="'. $expiryDate .'"
-    //                     data-issue-qty="'. $remainingQty .'">Return</a>';
-    //             }
-
-    //             if ($rightsRespond != 1) $actionBtn = '<code>Unauthorized Access</code>';
-
-    //             // Single-row details table
-    //             $rowHtml = sprintf(
-    //                 '<tr style="background-color:#f9f9f9;cursor:pointer;" class="balance-row"
-    //                     data-expiry="%s"
-    //                     data-brand="%s"
-    //                     data-batch="%s"
-    //                     data-loc-balance="%s"
-    //                     data-org-balance="%s"
-    //                     data-site-balance="%s">
-    //                     <td style="padding:8px;border:1px solid #ccc;">%s</td>
-    //                     <td style="padding:8px;border:1px solid #ccc;">%s</td>
-    //                     <td style="padding:8px;border:1px solid #ccc;">%s</td>
-    //                     <td style="padding:8px;border:1px solid #ccc;">%s</td>
-    //                     <td style="padding:5px 15px;border:1px solid #ccc;">%s</td>
-    //                     <td style="padding:8px;border:1px solid #ccc;"><span class="label label-%s">%s</span></td>
-    //                 </tr>',
-    //                 e($expiryDate),
-    //                 e($brandName),
-    //                 e($batchNo),
-    //                 $balances['locBalance'],
-    //                 e($balances['orgBalance']),
-    //                 e($balances['siteBalance']),
-    //                 e($getGenericName($genericId)),
-    //                 $issuedQty,
-    //                 $returnQty,
-    //                 $availableForReturn,
-    //                 $actionBtn,
-    //                 $statusClass,
-    //                 $status
-    //             );
-
-    //             $header = '<tr>'
-    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Generic</th>'
-    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Issued Qty</th>'
-    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Return Qty</th>'
-    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Available for Return</th>'
-    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Action</th>'
-    //                 .'<th style="padding:8px;border:1px solid #ccc;text-align:left;">Status</th>'
-    //                 .'</tr>';
-
-    //             return '<table style="width:100%;border-collapse:collapse;font-size:13px;" class="table table-bordered">'
-    //                 .'<thead style="background-color:#e2e8f0;color:#000;">'.$header.'</thead>'
-    //                 .'<tbody>'.$rowHtml.'</tbody></table>';
-    //         })
-
-    //         ->rawColumns(['id_raw','id','patientDetails','InventoryDetails'])
-    //         ->make(true);
-    // }
-
+    
     public function GetReturnData(Request $request)
     {
         $rights = $this->rights;
@@ -15617,14 +15004,20 @@ class InventoryController extends Controller
         }
 
         if ($success) {
-            $logs = Logs::create([
-                'module' => 'inventory management',
-                'content' => $remarkText,
-                'event' => 'add',
-                'timestamp' => now()->timestamp,
-            ]);
+            $logId = createLog(
+                'inventory_management',
+                'insert',
+                [
+                    'message' => $remarkText,
+                    'created_by' => auth()->user()->name ?? 'system'
+                ],
+                $inventory->id ?? null,
+                null,
+                null,
+                auth()->id() ?? 0
+            );
 
-            $inventory->logid = $logs->id;
+            $inventory->logid = $logId;
             $inventory->save();
 
             return response()->json([
@@ -15638,310 +15031,7 @@ class InventoryController extends Controller
             ]);
         }
     }
-
-
-    // public function InventoryManagement()
-    // {
-    //     $colName = 'inventory_management';
-    //     if (PermissionDenied($colName)) {
-    //         abort(403);
-    //     }
-    //     $user = auth()->user();
-    //     $Categories = InventoryCategory::where('status', 1)->get();
-    //     return view('dashboard.inventory-management', compact('user','Categories'));
-    // }
-
-    // public function AddInventoryManagement(InventoryManagementRequest $request)
-    // {
-    //     $rights = $this->rights;
-    //     $add = explode(',', $rights->inventory_management)[0];
-    //     if($add == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-    //     $TransactionTypeID = $request->input('im_transactiontype');
-    //     $Organization = $request->input('im_org');
-    //     $Site = $request->input('im_site');
-    //     $BrandId = $request->input('im_brand');
-    //     $BatchNo = $request->input('im_batch_no');
-    //     $ExpiryDate = $request->input('im_expiry');
-    //     $ExpiryDate = Carbon::createFromFormat('Y-m-d', $ExpiryDate)->timestamp;
-    //     $Rate = $request->input('im_rate');
-    //     $Qty = $request->input('im_qty');
-    //     $ReferenceDocument = $request->input('im_reference_document');
-    //     $Origin = $request->input('im_origin');
-    //     $Destination = $request->input('im_destination');
-    //     $Edt = $request->input('im_edt');
-
-    //     $Edt = Carbon::createFromFormat('l d F Y - h:i A', $Edt)->timestamp;
-    //     $EffectDateTime = Carbon::createFromTimestamp($Edt)->setTimezone('Asia/Karachi');
-    //     $EffectDateTime->subMinute(1);
-    //     if ($EffectDateTime->isPast()) {
-    //         $status = 1; //Active
-    //     } else {
-    //         $status = 0; //Inactive
-    //     }
-
-    //     $session = auth()->user();
-    //     $sessionName = $session->name;
-    //     $sessionId = $session->id;
-
-    //     $last_updated = $this->currentDatetime;
-    //     $timestamp = $this->currentDatetime;
-    //     $logId = null;
-    //     $InventoryExist = false;
-    //     $transactionTypes = InventoryTransactionType::select('transaction_type', 'name')
-    //     ->where('id', $TransactionTypeID)
-    //     ->first();
-    //     $transactionType = $transactionTypes->transaction_type;
-    //     $transactionName = $transactionTypes->name;
-    //     $OriginType = null;
-    //     $DestinationType = null;
-    //     $documentType = null;
-    //     $Balance = InventoryBalance::where('org_id', $Organization)
-    //     ->where('site_id', $Site)
-    //     ->where('brand_id', $BrandId)
-    //     ->first();
-    //     if($transactionType == 'opening balance')
-    //     {
-    //         $Title = $transactionName.' added';
-    //         $query = InventoryManagement::where('org_id', $Organization)
-    //         ->where('site_id', $Site)
-    //         ->where('brand_id', $BrandId);
-    //         if ($EffectDateTime->isPast()) {
-    //             $status = 1;
-    //             $query->where('status', 1);
-    //         }
-    //         $InventoryExist = $query->exists();
-
-    //         if ($Balance) {
-    //             $updatedOrgBalance = $Balance->org_balance + $Qty;
-    //             $updatedSiteBalance = $Balance->site_balance + $Qty;
-    //             $Balance->org_balance = $updatedOrgBalance;
-    //             $Balance->site_balance = $updatedSiteBalance;
-    //             $Balance->last_updated = $this->currentDatetime;
-    //         } else {
-    //             $Balance = new InventoryBalance();
-    //             $Balance->org_id = $Organization;
-    //             $Balance->site_id = $Site;
-    //             $Balance->brand_id = $BrandId;
-    //             $Balance->org_balance = $Qty;
-    //             $Balance->site_balance = $Qty;
-    //             $Balance->status = $status;
-    //             $Balance->last_updated = $this->currentDatetime;
-    //         }
-    //     }
-    //     else if($transactionType == 'addition')
-    //     {
-    //         $Title = ucwords($transactionName).' added';
-    //         $OriginType = 'vendor';
-    //         $DestinationType = 'org_site';
-    //         $documentType = 'open_text';
-    //         if ($Balance) {
-    //             $updatedOrgBalance = $Balance->org_balance + $Qty;
-    //             $updatedSiteBalance = $Balance->site_balance + $Qty;
-    //             $Balance->org_balance = $updatedOrgBalance;
-    //             $Balance->site_balance = $updatedSiteBalance;
-    //             $Balance->last_updated = $this->currentDatetime;
-    //         } else {
-    //             $Balance = new InventoryBalance();
-    //             $Balance->org_id = $Organization;
-    //             $Balance->site_id = $Site;
-    //             $Balance->brand_id = $BrandId;
-    //             $Balance->org_balance = $Qty;
-    //             $Balance->site_balance = $Qty;
-    //             $Balance->status = $status;
-    //             $Balance->last_updated = $this->currentDatetime;
-    //         }
-    //     }
-    //     else if($transactionType == 'reduction')
-    //     {
-    //         $Title = ucwords($transactionName);
-    //         $OriginType = 'org_site';
-    //         $DestinationType = 'vendor';
-    //         $documentType = 'inventory_management';
-    //         if ($Balance) {
-    //             if($Balance->site_balance < $Qty)
-    //             {
-    //                 return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
-    //             }
-    //             $updatedOrgBalance = $Balance->org_balance - $Qty;
-    //             $updatedSiteBalance = $Balance->site_balance - $Qty;
-    //             $Balance->org_balance = $updatedOrgBalance;
-    //             $Balance->site_balance = $updatedSiteBalance;
-    //             $Balance->last_updated = $this->currentDatetime;
-    //         } else {
-    //             return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
-    //         }
-    //     }
-    //     else if($transactionType == 'transfer')
-    //     {
-    //         $Title = ucwords($transactionName).' completed';
-    //         $OriginType = 'org_site';
-    //         $DestinationType = 'org_site';
-    //         if ($Balance) {
-    //             $updatedOrgBalance = $Balance->org_balance - $Qty;
-    //             $updatedSiteBalance = $Balance->site_balance - $Qty;
-    //             $Balance->org_balance = $updatedOrgBalance;
-    //             $Balance->site_balance = $updatedSiteBalance;
-    //             $Balance->last_updated = $this->currentDatetime;
-    //         } else {
-    //             return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
-    //         }
-
-    //         $DestinationBalance = InventoryBalance::where('org_id', $Organization)
-    //         ->where('site_id', $Destination)
-    //         ->where('brand_id', $BrandId)
-    //         ->first();
-    //         if ($DestinationBalance) {
-    //             $updatedOrgBalance = $DestinationBalance->org_balance + $Qty;
-    //             $updatedSiteBalance = $DestinationBalance->site_balance + $Qty;
-    //             $DestinationBalance->org_balance = $updatedOrgBalance;
-    //             $DestinationBalance->site_balance = $updatedSiteBalance;
-    //             $DestinationBalance->last_updated = $this->currentDatetime;
-    //             $DestinationBalance->save();
-    //         } else {
-    //             $DestinationBalance = new InventoryBalance();
-    //             $DestinationBalance->org_id = $Organization;
-    //             $DestinationBalance->site_id = $Destination;
-    //             $DestinationBalance->brand_id = $BrandId;
-    //             $DestinationBalance->org_balance = $Qty;
-    //             $DestinationBalance->site_balance = $Qty;
-    //             $DestinationBalance->status = $status;
-    //             $DestinationBalance->last_updated = $this->currentDatetime;
-    //             $DestinationBalance->save();
-    //         }
-    //     }
-    //     else if($transactionType == 'general consumption')
-    //     {
-    //         $Title = ucwords($transactionName).' added';
-    //         $OriginType = 'org_site';
-    //         $documentType = 'material_consumption_requisition';
-    //         if ($Balance) {
-    //             if($Balance->site_balance < $Qty)
-    //             {
-    //                 return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
-    //             }
-    //             $updatedOrgBalance = $Balance->org_balance - $Qty;
-    //             $updatedSiteBalance = $Balance->site_balance - $Qty;
-    //             $Balance->org_balance = $updatedOrgBalance;
-    //             $Balance->site_balance = $updatedSiteBalance;
-    //             $Balance->last_updated = $this->currentDatetime;
-    //         } else {
-    //             return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
-    //         }
-
-    //     }
-    //     else if($transactionType == 'patient consumption')
-    //     {
-    //         $Title = ucwords($transactionName).' completed';
-    //         $OriginType = 'vendor';
-    //         $DestinationType = 'patient';
-    //         $documentType = 'material_consumption_requisition';
-    //         if ($Balance) {
-    //             if($Balance->site_balance < $Qty)
-    //             {
-    //                 return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
-    //             }
-    //             $updatedOrgBalance = $Balance->org_balance - $Qty;
-    //             $updatedSiteBalance = $Balance->site_balance - $Qty;
-    //             $Balance->org_balance = $updatedOrgBalance;
-    //             $Balance->site_balance = $updatedSiteBalance;
-    //             $Balance->last_updated = $this->currentDatetime;
-    //         } else {
-    //             return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
-    //         }
-    //     }
-    //     else if($transactionType == 'reversal')
-    //     {
-    //         $Title = ucwords($transactionName);
-    //         $InventoryManagement = InventoryManagement::select('from', 'from_type', 'to', 'to_type')
-    //         ->where('id', $ReferenceDocument)
-    //         ->first();
-    //         $Destination = $InventoryManagement->from;
-    //         $DestinationType = $InventoryManagement->from_type;
-    //         $Origin = $InventoryManagement->to;
-    //         $OriginType = $InventoryManagement->to_type;
-    //         $documentType = 'inventory_management';
-
-    //         $OriginBalance = InventoryBalance::where('org_id', $Organization)
-    //         ->where('site_id', $Origin)
-    //         ->where('brand_id', $BrandId)
-    //         ->first();
-    //         if ($OriginBalance) {
-    //             $updatedOrgBalance = $OriginBalance->org_balance - $Qty;
-    //             $updatedSiteBalance = $OriginBalance->site_balance - $Qty;
-    //             $OriginBalance->org_balance = $updatedOrgBalance;
-    //             $OriginBalance->site_balance = $updatedSiteBalance;
-    //             $OriginBalance->last_updated = $this->currentDatetime;
-    //             $OriginBalance->save();
-    //         }
-    //         else {
-    //             return response()->json(['info' => 'Insufficient Inventory available at the specified site.']);
-    //         }
-
-    //     }
-    //     if ($InventoryExist) {
-    //         return response()->json(['info' => 'Opening Balance already exists for this Organization, Site, and Brand.']);
-    //     }
-    //     else
-    //     {
-    //         $Inventory = new InventoryManagement();
-    //         $Inventory->transaction_type_id = $TransactionTypeID;
-    //         $Inventory->org_id = $Organization;
-    //         $Inventory->site_id = $Site;
-    //         $Inventory->brand_id = $BrandId;
-    //         $Inventory->batch_no = $BatchNo;
-    //         $Inventory->expiry_date = $ExpiryDate;
-    //         $Inventory->rate = $Rate;
-    //         $Inventory->qty = $Qty;
-    //         $Inventory->document_no = $ReferenceDocument;
-    //         $Inventory->document_type = $documentType;
-    //         $Inventory->from = $Origin;
-    //         $Inventory->from_type = $OriginType;
-    //         $Inventory->to = $Destination;
-    //         $Inventory->to_type = $DestinationType;
-    //         $Inventory->status = $status;
-    //         $Inventory->user_id = $sessionId;
-    //         $Inventory->last_updated = $last_updated;
-    //         $Inventory->timestamp = $timestamp;
-    //         $Inventory->effective_timestamp = $Edt;
-    //         $Inventory->save();
-
-    //         if (empty($Inventory->id)) {
-    //             return response()->json(['error' => 'Failed to Add Inventory.']);
-    //         }
-
-    //         $logs = Logs::create([
-    //             'module' => 'inventory',
-    //             'content' => "Inventory has been added by '{$sessionName}'",
-    //             'event' => 'add',
-    //             'timestamp' => $timestamp,
-    //         ]);
-
-    //         $logId = $logs->id;
-    //         $Inventory->logid = $logs->id;
-    //         $Inventory->save();
-    //         $Balance->save();
-    //         return response()->json(['success' => ''.$Title.' successfully']);
-    //     }
-    // }
-
-    // public function GetPreviousTransactions(Request $request)
-    // {
-    //     if ($request->has('brandId'))
-    //     {
-    //         $brandId = $request->input('brandId');
-    //         $PreviousTransactions = InventoryManagement::select('inventory_management.id', 'organization.code')
-    //         ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'inventory_management.transaction_type_id')
-    //         ->join('organization', 'organization.id', '=', 'inventory_management.org_id')
-    //         ->where('inventory_management.brand_id', $brandId)
-    //         ->whereNotIn('inventory_transaction_type.transaction_type', ['opening balance'])
-    //         ->get();
-    //     }
-    //     return response()->json($PreviousTransactions);
-    // }
-
+    
     public function GetOrgItemGeneric(Request $request)
     {
         if ($request->has('orgId'))
@@ -16006,252 +15096,4 @@ class InventoryController extends Controller
         }
         return response()->json([]);
     }
-
-
-    // public function UpdateInventoryManagementModal($id)
-    // {
-    //     $rights = $this->rights;
-    //     $edit = explode(',', $rights->inventory_management)[2];
-    //     if($edit == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-    //     $ManageInventories = InventoryManagement::select('inventory_management.*',
-    //     'inventory_transaction_type.name as TransactionTypeName',
-    //     'inventory_transaction_type.transaction_type as TransactionType',
-    //     'organization.organization as orgName',
-    //     'organization.code as orgCode',
-    //     'org_site.name as siteName',
-    //     'inventory_brand.name as brandName',
-    //     'inventory_category.name as catName',
-    //     'inventory_subcategory.name as subCatName',
-    //     'inventory_type.name as invTypeName',
-    //     'inventory_generic.name as genericName')
-    //     ->join('inventory_transaction_type', 'inventory_transaction_type.id', '=', 'inventory_management.transaction_type_id')
-    //     ->join('organization', 'organization.id', '=', 'inventory_management.org_id')
-    //     ->join('org_site', 'org_site.id', '=', 'inventory_management.site_id')
-    //     ->join('inventory_brand', 'inventory_brand.id', '=', 'inventory_management.brand_id')
-    //     ->join('inventory_category', 'inventory_category.id', '=', 'inventory_brand.cat_id')
-    //     ->join('inventory_subcategory', 'inventory_subcategory.id', '=', 'inventory_brand.sub_catid')
-    //     ->join('inventory_type', 'inventory_type.id', '=', 'inventory_brand.type_id')
-    //     ->join('inventory_generic', 'inventory_generic.id', '=', 'inventory_brand.generic_id')
-    //     ->where('inventory_management.id', '=', $id)
-    //     ->first();
-
-    //     $documentType = $ManageInventories->document_type;
-    //     $document = 'N/A';
-    //     $documentNo = $ManageInventories->document_no;
-
-    //     if(!is_null($documentType) && $documentType != 'opex_text')
-    //     {
-    //         if($documentType == 'material_consumption_requisition')
-    //         {
-    //             $document = DB::table($documentType)->where('id', $documentNo)->value('remarks');
-    //         }
-    //         elseif($documentType == 'inventory_management')
-    //         {
-    //             $document = InventoryManagement::select('inventory_management.id',
-    //             'organization.code as orgCode')
-    //             ->join('organization', 'organization.id', '=', 'inventory_management.org_id')
-    //             ->where('inventory_management.id', '=', $documentNo)
-    //             ->first();
-    //             $OrgCode = $document->orgCode;
-    //             $Code = $OrgCode.'-00000'.$documentNo;
-    //             $document = $Code;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         $document = $ManageInventories->document_no ? $ManageInventories->document_no : 'N/A';
-    //     }
-
-    //     $Orgin = $ManageInventories->from;
-    //     if (!is_null($Orgin)) {
-    //         $OrginTable = $ManageInventories->from_type;
-    //         $originName = DB::table($OrginTable)->where('id', $Orgin)->value('name');
-    //     }
-    //     else{
-    //         $originName = 'N/A';
-    //     }
-    //     $Destination = $ManageInventories->to;
-    //     if (!is_null($Destination)) {
-    //         $DestinationTable = $ManageInventories->to_type;
-    //         if($DestinationTable == 'patient')
-    //         {
-    //             $destinationName = DB::table($DestinationTable)->where('mr_code', $Destination)->value('mr_code');
-    //         }
-    //         else{
-    //             $destinationName = DB::table($DestinationTable)->where('id', $Destination)->value('name');
-    //         }
-    //     }
-    //     else{
-    //         $destinationName = 'N/A';
-    //     }
-
-    //     $effective_timestamp = $ManageInventories->effective_timestamp;
-    //     $effective_timestamp = Carbon::createFromTimestamp($effective_timestamp);
-    //     $effective_timestamp = $effective_timestamp->format('l d F Y - h:i A');
-    //     $expiryDate = Carbon::createFromTimestamp($ManageInventories->expiry_date);
-
-    //     $data = [
-    //         'id' => $id,
-    //         'orgId' => $ManageInventories->org_id,
-    //         'orgName' => ucwords($ManageInventories->orgName),
-    //         'siteId' => $ManageInventories->site_id,
-    //         'siteName' => ucwords($ManageInventories->siteName),
-    //         'transactionTypeId' => ($ManageInventories->transaction_type_id),
-    //         'TransactionTypeName' => ucwords($ManageInventories->TransactionTypeName),
-    //         'TransactionType' => ($ManageInventories->TransactionType),
-    //         'brandId' => ucwords($ManageInventories->brand_id),
-    //         'brandName' => ucwords($ManageInventories->brandName),
-    //         'batchNo' => ucwords($ManageInventories->batch_no),
-    //         'expiryDate' => $expiryDate,
-    //         'rate' => $ManageInventories->rate,
-    //         'qty' => $ManageInventories->qty,
-    //         'documentId' => $documentNo,
-    //         'document' => $document,
-    //         'document_type' => $ManageInventories->document_type,
-    //         'OriginName' => $originName,
-    //         'OriginId' => $Orgin,
-    //         'DestinationName' => $destinationName,
-    //         'DestinationId' => $Destination,
-    //         'effective_timestamp' => $effective_timestamp,
-    //     ];
-    //     return response()->json($data);
-    // }
-
-    // public function UpdateInventoryManagement(Request $request, $id)
-    // {
-    //     $rights = $this->rights;
-    //     $edit = explode(',', $rights->inventory_management)[2];
-    //     if($edit == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-    //     $ManageInventory = InventoryManagement::findOrFail($id);
-    //     $TransactionTypeId = $request->input('u_im_transactiontype');
-    //     $Site = $request->input('u_im_site');
-    //     $Brand = $request->input('u_im_brand');
-    //     $BatchNo = $request->input('u_im_batch_no');
-    //     $ExpiryDate = $request->input('u_im_expirydate');
-    //     $ExpiryDate = Carbon::createFromFormat('Y-m-d', $ExpiryDate)->timestamp;
-    //     $Rate = $request->input('u_im_rate');
-    //     $Qty = $request->input('u_im_qty');
-    //     $Document = $request->input('u_im_reference_document');
-    //     $Origin = $request->input('u_im_origin');
-    //     $Destination = $request->input('u_im_destination');
-    //     $effective_date = $request->input('u_im_edt');
-    //     $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
-    //     $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
-    //     $EffectDateTime->subMinute(1);
-
-    //     if ($EffectDateTime->isPast()) {
-    //         $status = 1; //Active
-    //     } else {
-    //          $status = 0; //Inactive
-    //     }
-
-    //     $transactionTypes = InventoryTransactionType::select('transaction_type', 'name')
-    //     ->where('id', $TransactionTypeId)
-    //     ->first();
-    //     $transactionType = $transactionTypes->transaction_type;
-    //     $transactionName = $transactionTypes->name;
-    //     $OriginType = null;
-    //     $DestinationType = null;
-    //     $documentType = null;
-    //     if($transactionType == 'opening balance')
-    //     {
-    //         $Title = $transactionName.' updated';
-    //     }
-    //     else if($transactionType == 'addition')
-    //     {
-    //         $Title = ucwords($transactionName).' updated';
-    //         $OriginType = 'vendor';
-    //         $DestinationType = 'org_site';
-    //         $documentType = 'open_text';
-    //     }
-    //     else if($transactionType == 'reduction')
-    //     {
-    //         $Title = ucwords($transactionName);
-    //         $OriginType = 'org_site';
-    //         $DestinationType = 'vendor';
-    //         $documentType = 'inventory_management';
-    //     }
-    //     else if($transactionType == 'transfer')
-    //     {
-    //         $Title = ucwords($transactionName).' updated';
-    //         $OriginType = 'org_site';
-    //         $DestinationType = 'org_site';
-    //     }
-    //     else if($transactionType == 'general consumption')
-    //     {
-    //         $Title = ucwords($transactionName).' updated';
-    //         $OriginType = 'org_site';
-    //         $documentType = 'material_consumption_requisition';
-    //     }
-    //     else if($transactionType == 'patient consumption')
-    //     {
-    //         $Title = ucwords($transactionName).' updated';
-    //         $OriginType = 'vendor';
-    //         $DestinationType = 'patient';
-    //         $documentType = 'material_consumption_requisition';
-    //     }
-    //     else if($transactionType == 'reversal')
-    //     {
-    //         $Title = ucwords($transactionName);
-    //         $InventoryManagement = InventoryManagement::select('from', 'from_type', 'to', 'to_type')
-    //         ->where('id', $Document)
-    //         ->first();
-    //         $Destination = $InventoryManagement->from;
-    //         $DestinationType = $InventoryManagement->from_type;
-    //         $Origin = $InventoryManagement->to;
-    //         $OriginType = $InventoryManagement->to_type;
-    //         $documentType = 'inventory_management';
-    //     }
-
-    //     $session = auth()->user();
-    //     $sessionName = $session->name;
-    //     $sessionId = $session->id;
-
-    //     $ManageInventory->transaction_type_id = $TransactionTypeId;
-    //     $orgID = $request->input('u_im_org');
-    //     if (isset($orgID)) {
-    //         $ManageInventory->org_id = $orgID;
-    //     }
-    //     $ManageInventory->site_id = $Site;
-    //     $ManageInventory->brand_id = $Brand;
-    //     $ManageInventory->batch_no = $BatchNo;
-    //     $ManageInventory->expiry_date = $ExpiryDate;
-    //     $ManageInventory->rate = $Rate;
-    //     $ManageInventory->qty = $Qty;
-    //     $ManageInventory->document_no = $Document;
-    //     $ManageInventory->document_type = $documentType;
-    //     $ManageInventory->from = $Origin;
-    //     $ManageInventory->from_type = $OriginType;
-    //     $ManageInventory->to = $Destination;
-    //     $ManageInventory->to_type = $DestinationType;
-    //     $ManageInventory->status = $status;
-    //     $ManageInventory->user_id = $sessionId;
-    //     $ManageInventory->last_updated = $this->currentDatetime;
-    //     $ManageInventory->effective_timestamp = $effective_date;
-
-    //     $ManageInventory->save();
-
-    //     if (empty($ManageInventory->id)) {
-    //         return response()->json(['error' => 'Failed to update Inventory Details. Please try again']);
-    //     }
-    //     $logs = Logs::create([
-    //         'module' => 'inventory',
-    //         'content' => "Data has been updated by '{$sessionName}'",
-    //         'event' => 'update',
-    //         'timestamp' => $this->currentDatetime,
-    //     ]);
-    //     $ManageInventoryLog = InventoryManagement::where('id', $ManageInventory->id)->first();
-    //     $logIds = $ManageInventoryLog->logid ? explode(',', $ManageInventoryLog->logid) : [];
-    //     $logIds[] = $logs->id;
-    //     $ManageInventoryLog->logid = implode(',', $logIds);
-    //     $ManageInventoryLog->save();
-    //     return response()->json(['success' => ''.$Title.' successfully']);
-    // }
-
 }

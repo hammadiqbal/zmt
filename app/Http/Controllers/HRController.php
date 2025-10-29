@@ -150,14 +150,25 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to create Gender.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "'{$GenderName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $Gender->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $Gender->name,
+                'status' => $Gender->status,
+                'effective_timestamp' => $Gender->effective_timestamp,
+            ];
+            $logId = createLog(
+                'employee_gender',
+                'insert',
+                [
+                    'message' => "'{$GenderName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $Gender->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $Gender->logid = $logId;
             $Gender->save();
             return response()->json(['success' => 'Gender created successfully']);
         }
@@ -277,15 +288,24 @@ class HRController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'employee_gender',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $GenderID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $GenderLog = EmployeeGender::where('id', $GenderID)->first();
         $logIds = $GenderLog->logid ? explode(',', $GenderLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $GenderLog->logid = implode(',', $logIds);
         $GenderLog->save();
 
@@ -351,15 +371,32 @@ class HRController extends Controller
         if (empty($Gender->id)) {
             return response()->json(['error' => 'Failed to update Gender. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'name' => $Gender->getOriginal('name'),
+            'status' => $Gender->getOriginal('status'),
+            'effective_timestamp' => $Gender->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'name' => $Gender->name,
+            'status' => $Gender->status,
+            'effective_timestamp' => $Gender->effective_timestamp,
+        ];
+        $logId = createLog(
+            'employee_gender',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $Gender->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $GenderLog = EmployeeGender::where('id', $Gender->id)->first();
         $logIds = $GenderLog->logid ? explode(',', $GenderLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $GenderLog->logid = implode(',', $logIds);
         $GenderLog->save();
         return response()->json(['success' => 'Gender updated successfully']);
@@ -423,14 +460,25 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to create Prefix.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "'{$PrefixName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $Prefix->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $Prefix->name,
+                'status' => $Prefix->status,
+                'effective_timestamp' => $Prefix->effective_timestamp,
+            ];
+            $logId = createLog(
+                'prefix',
+                'insert',
+                [
+                    'message' => "'{$PrefixName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $Prefix->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $Prefix->logid = $logId;
             $Prefix->save();
             return response()->json(['success' => 'Prefix created successfully']);
         }
@@ -545,15 +593,24 @@ class HRController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'prefix',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $PrefixID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $PrefixLog = PrefixSetup::where('id', $PrefixID)->first();
         $logIds = $PrefixLog->logid ? explode(',', $PrefixLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $PrefixLog->logid = implode(',', $logIds);
         $PrefixLog->save();
 
@@ -619,223 +676,38 @@ class HRController extends Controller
         if (empty($Prefix->id)) {
             return response()->json(['error' => 'Failed to update Prefix. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'name' => $Prefix->getOriginal('name'),
+            'status' => $Prefix->getOriginal('status'),
+            'effective_timestamp' => $Prefix->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'name' => $Prefix->name,
+            'status' => $Prefix->status,
+            'effective_timestamp' => $Prefix->effective_timestamp,
+        ];
+        $logId = createLog(
+            'prefix',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $Prefix->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $PrefixLog = PrefixSetup::where('id', $Prefix->id)->first();
         $logIds = $PrefixLog->logid ? explode(',', $PrefixLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $PrefixLog->logid = implode(',', $logIds);
         $PrefixLog->save();
         return response()->json(['success' => 'Prefix updated successfully']);
     }
 
-    // public function AddPrefix(PrefixSetupRequest $request)
-    // {
-    //     $rights = $this->rights;
-    //     $add = explode(',', $rights->prefix_setup)[0];
-    //     if($add == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
 
-    //     $prefix_name = trim($request->input('prefix_name'));
-    //     $effective_date = $request->input('effective_timestamp');
-    //     $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
-    //     $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
-    //     $EffectDateTime->subMinute(1);
-
-    //     if ($EffectDateTime->isPast()) {
-    //         $status = 1; // Active
-    //     } else {
-    //         $status = 0; // Inactive
-    //     }
-
-    //     $session = auth()->user();
-    //     $sessionName = $session->name;
-    //     $sessionId = $session->id;
-
-    //     $last_updated = $this->currentDatetime;
-    //     $timestamp = $this->currentDatetime;
-
-    //     // Create log entry
-    //     $logs = Logs::create([
-    //         'module' => 'hr',
-    //         'content' => "Prefix has been inserted by '{$sessionName}'",
-    //         'event' => 'insert',
-    //         'timestamp' => $timestamp,
-    //     ]);
-
-    //     $prefix = PrefixSetup::create([
-    //         'name' => $prefix_name,
-    //         'user_id' => $sessionId,
-    //         'logid' => $logs->id,
-    //         'status' => $status,
-    //         'effective_timestamp' => $effective_date,
-    //         'timestamp' => $timestamp,
-    //         'last_updated' => $last_updated
-    //     ]);
-
-    //     if (empty($prefix->id)) {
-    //         return response()->json(['error' => 'Failed to add prefix. Please try again']);
-    //     }
-
-    //     return response()->json(['success' => 'Prefix added successfully']);
-    // }
-
-    // public function GetPrefixData(Request $request)
-    // {
-    //     $rights = $this->rights;
-    //     $view = explode(',', $rights->prefix_setup)[1];
-    //     if($view == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-
-    //     $data = PrefixSetup::select('*');
-
-    //     return DataTables::of($data)
-    //         ->addIndexColumn()
-    //         ->addColumn('action', function($row) use ($rights){
-    //             $btn = '';
-    //             $edit = explode(',', $rights->prefix_setup)[2];
-    //             $updateStatus = explode(',', $rights->prefix_setup)[3];
-
-    //             if($edit == 1) {
-    //                 $btn .= '<button type="button" data-id="'.$row->id.'" class="btn btn-primary btn-sm edit-prefix"><i class="fas fa-edit"></i></button> ';
-    //             }
-
-    //             if($updateStatus == 1) {
-    //                 if($row->status == 1) {
-    //                     $btn .= '<button type="button" data-id="'.$row->id.'" data-status="0" class="btn btn-danger btn-sm update-status"><i class="fas fa-times"></i></button>';
-    //                 } else {
-    //                     $btn .= '<button type="button" data-id="'.$row->id.'" data-status="1" class="btn btn-success btn-sm update-status"><i class="fas fa-check"></i></button>';
-    //                 }
-    //             }
-
-    //             return $btn;
-    //         })
-    //         ->rawColumns(['action'])
-    //         ->make(true);
-    // }
-
-    // public function UpdatePrefixStatus(Request $request)
-    // {
-    //     $rights = $this->rights;
-    //     $updateStatus = explode(',', $rights->prefix_setup)[3];
-    //     if($updateStatus == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-
-    //     $id = $request->input('id');
-    //     $status = $request->input('status');
-
-    //     $prefix = PrefixSetup::find($id);
-    //     if(!$prefix) {
-    //         return response()->json(['error' => 'Prefix not found']);
-    //     }
-
-    //     $session = auth()->user();
-    //     $sessionName = $session->name;
-
-    //     $prefix->status = $status;
-    //     $prefix->last_updated = $this->currentDatetime;
-
-    //     if($prefix->save()) {
-    //         $logs = Logs::create([
-    //             'module' => 'hr',
-    //             'content' => "Status has been updated by '{$sessionName}'",
-    //             'event' => 'update',
-    //             'timestamp' => $this->currentDatetime,
-    //         ]);
-
-    //         $logIds = $prefix->logid ? explode(',', $prefix->logid) : [];
-    //         $logIds[] = $logs->id;
-    //         $prefix->logid = implode(',', $logIds);
-    //         $prefix->save();
-
-    //         return response()->json(['success' => 'Status updated successfully']);
-    //     }
-
-    //     return response()->json(['error' => 'Failed to update status']);
-    // }
-
-    // public function UpdatePrefixModal($id)
-    // {
-    //     $rights = $this->rights;
-    //     $edit = explode(',', $rights->prefix_setup)[2];
-    //     if($edit == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-
-    //     $prefix = PrefixSetup::find($id);
-    //     $prefixName = ucwords($prefix->name);
-    //     $effective_timestamp = $prefix->effective_timestamp;
-    //     $effective_timestamp = Carbon::createFromTimestamp($effective_timestamp);
-    //     $effective_timestamp = $effective_timestamp->format('l d F Y - h:i A');
-
-    //     $data = [
-    //         'id' => $id,
-    //         'name' => $prefixName,
-    //         'effective_timestamp' => $effective_timestamp,
-    //     ];
-
-    //     return response()->json($data);
-    // }
-
-    // public function UpdatePrefix(Request $request, $id)
-    // {
-    //     $rights = $this->rights;
-    //     $edit = explode(',', $rights->prefix_setup)[2];
-    //     if($edit == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-
-    //     $prefix = PrefixSetup::findOrFail($id);
-
-    //     $prefix->name = $request->input('u_prefix');
-    //     $effective_date = $request->input('u_effective_timestamp');
-    //     $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
-    //     $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
-    //     $EffectDateTime->subMinute(1);
-
-    //     if ($EffectDateTime->isPast()) {
-    //         $status = 1; // Active
-    //     } else {
-    //         $status = 0; // Inactive
-    //     }
-
-    //     $prefix->effective_timestamp = $effective_date;
-    //     $prefix->status = $status;
-    //     $prefix->last_updated = $this->currentDatetime;
-
-    //     if($prefix->save()) {
-    //         $session = auth()->user();
-    //         $sessionName = $session->name;
-
-    //         $logs = Logs::create([
-    //             'module' => 'hr',
-    //             'content' => "Data has been updated by '{$sessionName}'",
-    //             'event' => 'update',
-    //             'timestamp' => $this->currentDatetime,
-    //         ]);
-
-    //         $logIds = $prefix->logid ? explode(',', $prefix->logid) : [];
-    //         $logIds[] = $logs->id;
-    //         $prefix->logid = implode(',', $logIds);
-    //         $prefix->save();
-
-    //         return response()->json(['success' => 'Prefix updated successfully']);
-    //     }
-
-    //     return response()->json(['error' => 'Failed to update prefix']);
-    // }
 
     public function GetSelectedEmpStatus(Request $request)
     {
@@ -905,14 +777,25 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to create Employee Status.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "'{$empStatus}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $EmpStatus->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $EmpStatus->name,
+                'status' => $EmpStatus->status,
+                'effective_timestamp' => $EmpStatus->effective_timestamp,
+            ];
+            $logId = createLog(
+                'employee_status',
+                'insert',
+                [
+                    'message' => "'{$empStatus}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $EmpStatus->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $EmpStatus->logid = $logId;
             $EmpStatus->save();
             return response()->json(['success' => 'Employee Status created successfully']);
         }
@@ -1033,15 +916,24 @@ class HRController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'employee_status',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $empStatusID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $EmpStatusLog = EmployeeStatus::where('id', $empStatusID)->first();
         $logIds = $EmpStatusLog->logid ? explode(',', $EmpStatusLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmpStatusLog->logid = implode(',', $logIds);
         $EmpStatusLog->save();
 
@@ -1107,15 +999,32 @@ class HRController extends Controller
         if (empty($empStatus->id)) {
             return response()->json(['error' => 'Failed to update Employee Status. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'name' => $empStatus->getOriginal('name'),
+            'status' => $empStatus->getOriginal('status'),
+            'effective_timestamp' => $empStatus->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'name' => $empStatus->name,
+            'status' => $empStatus->status,
+            'effective_timestamp' => $empStatus->effective_timestamp,
+        ];
+        $logId = createLog(
+            'employee_status',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $empStatus->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $empStatusLog = EmployeeStatus::where('id', $empStatus->id)->first();
         $logIds = $empStatusLog->logid ? explode(',', $empStatusLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $empStatusLog->logid = implode(',', $logIds);
         $empStatusLog->save();
         return response()->json(['success' => 'Employee Status updated successfully']);
@@ -1197,14 +1106,26 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to create Employee Working Status.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "'{$WorkingStatus}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $EmpWorkingStatus->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $EmpWorkingStatus->name,
+                'job_continue' => $EmpWorkingStatus->job_continue,
+                'status' => $EmpWorkingStatus->status,
+                'effective_timestamp' => $EmpWorkingStatus->effective_timestamp,
+            ];
+            $logId = createLog(
+                'employee_working_status',
+                'insert',
+                [
+                    'message' => "'{$WorkingStatus}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $EmpWorkingStatus->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $EmpWorkingStatus->logid = $logId;
             $EmpWorkingStatus->save();
             return response()->json(['success' => 'Employee Working Status created successfully']);
         }
@@ -1329,15 +1250,24 @@ class HRController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'employee_working_status',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $workingStatusID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $WorkingStatusLog = EmployeeWorkingStatus::where('id', $workingStatusID)->first();
         $logIds = $WorkingStatusLog->logid ? explode(',', $WorkingStatusLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $WorkingStatusLog->logid = implode(',', $logIds);
         $WorkingStatusLog->save();
 
@@ -1411,15 +1341,34 @@ class HRController extends Controller
         if (empty($workingStatus->id)) {
             return response()->json(['error' => 'Failed to update Employee Working Status. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'name' => $workingStatus->getOriginal('name'),
+            'job_continue' => $workingStatus->getOriginal('job_continue'),
+            'status' => $workingStatus->getOriginal('status'),
+            'effective_timestamp' => $workingStatus->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'name' => $workingStatus->name,
+            'job_continue' => $workingStatus->job_continue,
+            'status' => $workingStatus->status,
+            'effective_timestamp' => $workingStatus->effective_timestamp,
+        ];
+        $logId = createLog(
+            'employee_working_status',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $workingStatus->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $WorkingStatusLog = EmployeeWorkingStatus::where('id', $workingStatus->id)->first();
         $logIds = $WorkingStatusLog->logid ? explode(',', $WorkingStatusLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $WorkingStatusLog->logid = implode(',', $logIds);
         $WorkingStatusLog->save();
         return response()->json(['success' => 'Employee Working Status updated successfully']);
@@ -1493,14 +1442,25 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to create Employee Qualification Level.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "'{$empQualification}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $EmpQualification->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $EmpQualification->name,
+                'status' => $EmpQualification->status,
+                'effective_timestamp' => $EmpQualification->effective_timestamp,
+            ];
+            $logId = createLog(
+                'employee_qualification_level',
+                'insert',
+                [
+                    'message' => "'{$empQualification}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $EmpQualification->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $EmpQualification->logid = $logId;
             $EmpQualification->save();
             return response()->json(['success' => 'Employee Qualification Level created successfully']);
         }
@@ -1622,15 +1582,24 @@ class HRController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'employee_qualification_level',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $empQualificationID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $EmployeeQualificationLog = EmployeeQualificationLevel::where('id', $empQualificationID)->first();
         $logIds = $EmployeeQualificationLog->logid ? explode(',', $EmployeeQualificationLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmployeeQualificationLog->logid = implode(',', $logIds);
         $EmployeeQualificationLog->save();
 
@@ -1696,15 +1665,32 @@ class HRController extends Controller
         if (empty($EmployeeQualification->id)) {
             return response()->json(['error' => 'Failed to update Employee Qualification Level. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'name' => $EmployeeQualification->getOriginal('name'),
+            'status' => $EmployeeQualification->getOriginal('status'),
+            'effective_timestamp' => $EmployeeQualification->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'name' => $EmployeeQualification->name,
+            'status' => $EmployeeQualification->status,
+            'effective_timestamp' => $EmployeeQualification->effective_timestamp,
+        ];
+        $logId = createLog(
+            'employee_qualification_level',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $EmployeeQualification->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $EmployeeQualificationLog = EmployeeQualificationLevel::where('id', $EmployeeQualification->id)->first();
-        $logIds = $EmployeeQualification->logid ? explode(',', $EmployeeQualification->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds = $EmployeeQualificationLog->logid ? explode(',', $EmployeeQualificationLog->logid) : [];
+        $logIds[] = $logId;
         $EmployeeQualificationLog->logid = implode(',', $logIds);
         $EmployeeQualificationLog->save();
         return response()->json(['success' => 'Employee Qualification Level updated successfully']);
@@ -1776,14 +1762,26 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to create Employee Cadre.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "'{$empCadre}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $EmpCadre->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $EmpCadre->name,
+                'org_id' => $EmpCadre->org_id,
+                'status' => $EmpCadre->status,
+                'effective_timestamp' => $EmpCadre->effective_timestamp,
+            ];
+            $logId = createLog(
+                'employee_cadre',
+                'insert',
+                [
+                    'message' => "'{$empCadre}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $EmpCadre->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $EmpCadre->logid = $logId;
             $EmpCadre->save();
             return response()->json(['success' => 'Employee Cadre created successfully']);
         }
@@ -1926,15 +1924,24 @@ class HRController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'employee_cadre',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $empCadreID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $EmployeeCadreLog = EmployeeCadre::where('id', $empCadreID)->first();
         $logIds = $EmployeeCadreLog->logid ? explode(',', $EmployeeCadreLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmployeeCadreLog->logid = implode(',', $logIds);
         $EmployeeCadreLog->save();
 
@@ -2011,15 +2018,34 @@ class HRController extends Controller
         if (empty($EmployeeCadre->id)) {
             return response()->json(['error' => 'Failed to update Employee Cadre. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'name' => $EmployeeCadre->getOriginal('name'),
+            'org_id' => $EmployeeCadre->getOriginal('org_id'),
+            'status' => $EmployeeCadre->getOriginal('status'),
+            'effective_timestamp' => $EmployeeCadre->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'name' => $EmployeeCadre->name,
+            'org_id' => $EmployeeCadre->org_id,
+            'status' => $EmployeeCadre->status,
+            'effective_timestamp' => $EmployeeCadre->effective_timestamp,
+        ];
+        $logId = createLog(
+            'employee_cadre',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $EmployeeCadre->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $EmployeeCadreLog = EmployeeCadre::where('id', $EmployeeCadre->id)->first();
         $logIds = $EmployeeCadre->logid ? explode(',', $EmployeeCadre->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmployeeCadreLog->logid = implode(',', $logIds);
         $EmployeeCadreLog->save();
         return response()->json(['success' => 'Employee Cadre updated successfully']);
@@ -2100,14 +2126,27 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to create Employee Position.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "'{$empPosition}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $EmpPosition->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $EmpPosition->name,
+                'org_id' => $EmpPosition->org_id,
+                'cadre_id' => $EmpPosition->cadre_id,
+                'status' => $EmpPosition->status,
+                'effective_timestamp' => $EmpPosition->effective_timestamp,
+            ];
+            $logId = createLog(
+                'employee_position',
+                'insert',
+                [
+                    'message' => "'{$empPosition}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $EmpPosition->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $EmpPosition->logid = $logId;
             $EmpPosition->save();
             return response()->json(['success' => 'Employee Position created successfully']);
         }
@@ -2264,15 +2303,24 @@ class HRController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'employee_position',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+                $empPositionID,
+                $oldData,
+                $newData,
+                $sessionId
+        );
         $EmployeePositionLog = EmployeePosition::where('id', $empPositionID)->first();
         $logIds = $EmployeePositionLog->logid ? explode(',', $EmployeePositionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmployeePositionLog->logid = implode(',', $logIds);
         $EmployeePositionLog->save();
 
@@ -2356,15 +2404,36 @@ class HRController extends Controller
         if (empty($EmployeePosition->id)) {
             return response()->json(['error' => 'Failed to update Employee Position. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'name' => $EmployeePosition->getOriginal('name'),
+            'org_id' => $EmployeePosition->getOriginal('org_id'),
+            'cadre_id' => $EmployeePosition->getOriginal('cadre_id'),
+            'status' => $EmployeePosition->getOriginal('status'),
+            'effective_timestamp' => $EmployeePosition->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'name' => $EmployeePosition->name,
+            'org_id' => $EmployeePosition->org_id,
+            'cadre_id' => $EmployeePosition->cadre_id,
+            'status' => $EmployeePosition->status,
+            'effective_timestamp' => $EmployeePosition->effective_timestamp,
+        ];
+        $logId = createLog(
+            'employee_position',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $EmployeePosition->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $EmployeePositionLog = EmployeePosition::where('id', $EmployeePosition->id)->first();
         $logIds = $EmployeePosition->logid ? explode(',', $EmployeePosition->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmployeePositionLog->logid = implode(',', $logIds);
         $EmployeePositionLog->save();
         return response()->json(['success' => 'Employee Position updated successfully']);
@@ -2667,14 +2736,34 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to create Employee.']);
         }
 
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "'{$Name}' has been added by '{$sessionName}'",
-            'event' => 'add',
-            'timestamp' => $timestamp,
-        ]);
-        $logId = $logs->id;
-        $Employee->logid = $logs->id;
+        // New logging (insert)
+        $newData = [
+            'name' => $Employee->name,
+            'prefix_id' => $Employee->prefix_id,
+            'gender_id' => $Employee->gender_id,
+            'org_id' => $Employee->org_id,
+            'site_id' => $Employee->site_id,
+            'cc_id' => $Employee->cc_id,
+            'cadre_id' => $Employee->cadre_id,
+            'position_id' => $Employee->position_id,
+            'email' => $Employee->email,
+            'mobile_no' => $Employee->mobile_no,
+            'status' => $Employee->status,
+            'effective_timestamp' => $Employee->effective_timestamp,
+        ];
+        $logId = createLog(
+            'employee',
+            'insert',
+            [
+                'message' => "'{$Name}' has been added",
+                'created_by' => $sessionName
+            ],
+            $Employee->id,
+            null,
+            $newData,
+            $sessionId
+        );
+        $Employee->logid = $logId;
         $Employee->save();
         return response()->json(['success' => 'Employee created successfully']);
 
@@ -2950,15 +3039,24 @@ class HRController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'employee',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $EmployeeID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $EmployeeLog = Employee::where('id', $EmployeeID)->first();
         $logIds = $EmployeeLog->logid ? explode(',', $EmployeeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmployeeLog->logid = implode(',', $logIds);
         $EmployeeLog->save();
 
@@ -3464,16 +3562,46 @@ class HRController extends Controller
         if (empty($Employee->id)) {
             return response()->json(['error' => 'Failed to update Employee. Please try again']);
         }
-        // $data = "Data has been updated by '{$sessionName}'";
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'name' => $Employee->getOriginal('name'),
+            'email' => $Employee->getOriginal('email'),
+            'mobile_no' => $Employee->getOriginal('mobile_no'),
+            'org_id' => $Employee->getOriginal('org_id'),
+            'site_id' => $Employee->getOriginal('site_id'),
+            'cc_id' => $Employee->getOriginal('cc_id'),
+            'cadre_id' => $Employee->getOriginal('cadre_id'),
+            'position_id' => $Employee->getOriginal('position_id'),
+            'status' => $Employee->getOriginal('status'),
+            'effective_timestamp' => $Employee->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'name' => $Employee->name,
+            'email' => $Employee->email,
+            'mobile_no' => $Employee->mobile_no,
+            'org_id' => $Employee->org_id,
+            'site_id' => $Employee->site_id,
+            'cc_id' => $Employee->cc_id,
+            'cadre_id' => $Employee->cadre_id,
+            'position_id' => $Employee->position_id,
+            'status' => $Employee->status,
+            'effective_timestamp' => $Employee->effective_timestamp,
+        ];
+        $logId = createLog(
+            'employee',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $Employee->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $EmployeeLog = Employee::where('id', $id)->first();
         $logIds = $EmployeeLog->logid ? explode(',', $EmployeeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmployeeLog->logid = implode(',', $logIds);
         $EmployeeLog->save();
 
@@ -3606,14 +3734,27 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to Add Employee Salary! Please Try Again.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'salary',
-                'content' => "Employee Salary Rs '{$totalSalary}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $EmpSalary->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'emp_id' => $EmpSalary->emp_id,
+                'additions_total' => $totalAdditions,
+                'deductions_total' => $totalDeductions,
+                'status' => $EmpSalary->status,
+                'effective_timestamp' => $EmpSalary->effective_timestamp,
+            ];
+            $logId = createLog(
+                'employee_salary',
+                'insert',
+                [
+                    'message' => "Employee Salary Rs '{$totalSalary}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $EmpSalary->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $EmpSalary->logid = $logId;
             $EmpSalary->save();
             return response()->json(['success' => 'Employee Salary added successfully']);
         }
@@ -3837,15 +3978,24 @@ class HRController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'employee_salary',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $salaryId,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $EmployeeSalaryLog = EmployeeSalary::where('id', $salaryId)->first();
         $logIds = $EmployeeSalaryLog->logid ? explode(',', $EmployeeSalaryLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmployeeSalaryLog->logid = implode(',', $logIds);
         $EmployeeSalaryLog->save();
 
@@ -3908,61 +4058,7 @@ class HRController extends Controller
         return response()->json($data);
     }
 
-    // public function UpdateEmployeeSalary(Request $request, $id)
-    // {
-    //     $rights = $this->rights;
-    //     $edit = explode(',', $rights->employee_salary_setup)[2];
-    //     if($edit == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-    //     $EmployeeSalary = EmployeeSalary::findOrFail($id);
 
-    //     $EmployeeOldSalary = decrypt($EmployeeSalary->salary);
-    //     $EmployeeOldSalary = number_format($EmployeeOldSalary,2);
-
-    //     $EmployeeNewSalary = $request->input('uempSalary');
-    //     $EmployeeNewSalary = number_format($EmployeeNewSalary,2);
-
-    //     $EmployeeSalary->salary = encrypt(trim($request->input('uempSalary')));
-    //     $effective_date = $request->input('usalary_edt');
-    //     $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
-    //     $EffectDateTime = Carbon::createFromTimestamp($effective_date)->setTimezone('Asia/Karachi');
-    //     $EffectDateTime->subMinute(1);
-
-    //     if ($EffectDateTime->isPast()) {
-    //         $status = 1; //Active
-    //     } else {
-    //          $status = 0; //Inactive
-    //     }
-
-    //     $EmployeeSalary->effective_timestamp = $effective_date;
-    //     $EmployeeSalary->last_updated = $this->currentDatetime;
-    //     $EmployeeSalary->status = $status;
-
-    //     $session = auth()->user();
-    //     $sessionName = $session->name;
-    //     $sessionId = $session->id;
-
-    //     $EmployeeSalary->save();
-
-    //     if (empty($EmployeeSalary->id)) {
-    //         return response()->json(['error' => 'Failed to update Employee Salary. Please try again']);
-    //     }
-    //     $logs = Logs::create([
-    //         'module' => 'salary',
-    //         'content' => "The salary was revised from Rs {$EmployeeOldSalary} To Rs
-    //                      {$EmployeeNewSalary} by '{$sessionName}'",
-    //         'event' => 'update',
-    //         'timestamp' => $this->currentDatetime,
-    //     ]);
-    //     $EmployeeSalaryLog = EmployeeSalary::where('id', $EmployeeSalary->id)->first();
-    //     $logIds = $EmployeeSalary->logid ? explode(',', $EmployeeSalary->logid) : [];
-    //     $logIds[] = $logs->id;
-    //     $EmployeeSalaryLog->logid = implode(',', $logIds);
-    //     $EmployeeSalaryLog->save();
-    //     return response()->json(['success' => 'Employee Salary updated successfully']);
-    // }
 
     public function UpdateEmployeeSalary(Request $request, $id)
     {
@@ -4072,17 +4168,31 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee Salary. Please try again']);
         }
 
-        // Log the changes
-        $logs = Logs::create([
-            'module' => 'salary',
-            'content' => "The salary was revised from Rs {$EmployeeOldSalary} to Rs {$EmployeeNewSalary}. Total Additions: Rs " . number_format($totalAdditions, 2) . ", Total Deductions: Rs " . number_format($totalDeductions, 2) . " by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'additions_total' => (float)str_replace(',', '', $EmployeeOldSalary) + $totaloldDeductions, // not exact, include for reference
+            'deductions_total' => $totaloldDeductions,
+        ];
+        $newData = [
+            'additions_total' => $totalAdditions,
+            'deductions_total' => $totalDeductions,
+        ];
+        $logId = createLog(
+            'employee_salary',
+            'update',
+            [
+                'message' => "Salary revised from Rs {$EmployeeOldSalary} to Rs {$EmployeeNewSalary}",
+                'updated_by' => $sessionName
+            ],
+            $EmployeeSalary->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
 
         $EmployeeSalaryLog = EmployeeSalary::where('id', $EmployeeSalary->id)->first();
         $logIds = $EmployeeSalary->logid ? explode(',', $EmployeeSalary->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmployeeSalaryLog->logid = implode(',', $logIds);
         $EmployeeSalaryLog->save();
 
@@ -4175,13 +4285,23 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to Add Employee Qualification! Please Try Again.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "Qualification has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
+            $logId = createLog(
+                'employee_qualification',
+                'insert',
+                [
+                    'message' => 'Qualification has been added',
+                    'created_by' => $sessionName
+                ],
+                $EmpQualification->id,
+                null,
+                [
+                    'emp_id' => $empId,
+                    'levelid' => $EmpQualification->levelid,
+                    'qualification_date' => $EmpQualification->qualification_date,
+                    'name' => $EmpQualification->name,
+                ],
+                $sessionId
+            );
             $currentLogIds = DB::table('employee')->where('id', $empId)->value('logid');
 
             $newLogIds = empty($currentLogIds) ? $logId : $currentLogIds . ',' . $logId;
@@ -4298,13 +4418,28 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee Qualification. Please try again']);
         }
 
-        $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "Qualification has been updated by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $this->currentDatetime,
-            ]);
-        $logId = $logs->id;
+        $oldData = [
+            'levelid' => $EmpQualificationSetup->getOriginal('levelid'),
+            'qualification_date' => $EmpQualificationSetup->getOriginal('qualification_date'),
+            'name' => $EmpQualificationSetup->getOriginal('name'),
+        ];
+        $newData = [
+            'levelid' => $EmpQualificationSetup->levelid,
+            'qualification_date' => $EmpQualificationSetup->qualification_date,
+            'name' => $EmpQualificationSetup->name,
+        ];
+        $logId = createLog(
+            'employee_qualification',
+            'update',
+            [
+                'message' => 'Qualification has been updated',
+                'updated_by' => $sessionName
+            ],
+            $EmpQualificationSetup->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $currentLogIds = DB::table('employee')->where('id', $empId)->value('logid');
 
         $newLogIds = empty($currentLogIds) ? $logId : $currentLogIds . ',' . $logId;
@@ -4409,13 +4544,25 @@ class HRController extends Controller
             $EmpDocuments->documents = $fileAttachments;
             $EmpDocuments->save();
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "Employee Documents has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $EmpDocuments->logid = $logs->id;
+            $logId = createLog(
+                'employee_documents',
+                'insert',
+                [
+                    'message' => 'Employee Documents have been added',
+                    'created_by' => $sessionName
+                ],
+                $EmpDocuments->id,
+                null,
+                [
+                    'emp_id' => $EmpDocuments->emp_id,
+                    'document_desc' => $EmpDocuments->document_desc,
+                    'documents' => $EmpDocuments->documents,
+                    'status' => $EmpDocuments->status,
+                    'effective_timestamp' => $EmpDocuments->effective_timestamp,
+                ],
+                $sessionId
+            );
+            $EmpDocuments->logid = $logId;
             $EmpDocuments->save();
 
             return response()->json(['success' => 'Employee Documents added successfully']);
@@ -4553,15 +4700,24 @@ class HRController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'employee_documents',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $EmployeeDocumentLog = EmployeeDocuments::where('id', $ID)->first();
         $logIds = $EmployeeDocumentLog->logid ? explode(',', $EmployeeDocumentLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmployeeDocumentLog->logid = implode(',', $logIds);
         $EmployeeDocumentLog->save();
 
@@ -4763,13 +4919,24 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to Add Employee Medical License! Please Try Again.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "Medical License has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
+            $logId = createLog(
+                'employee_medical_license',
+                'insert',
+                [
+                    'message' => 'Medical License has been added',
+                    'created_by' => $sessionName
+                ],
+                $EmployeeMedicalLicense->id,
+                null,
+                [
+                    'emp_id' => $empId,
+                    'name' => $EmployeeMedicalLicense->name,
+                    'ref_no' => $EmployeeMedicalLicense->ref_no,
+                    'expire_date' => $EmployeeMedicalLicense->expire_date,
+                    'status' => $EmployeeMedicalLicense->status,
+                ],
+                $sessionId
+            );
             $currentLogIds = DB::table('employee')->where('id', $empId)->value('logid');
 
             $newLogIds = empty($currentLogIds) ? $logId : $currentLogIds . ',' . $logId;
@@ -4902,13 +5069,30 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee Medical License. Please try again']);
         }
 
-        $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "Employee Medical License has been updated by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $this->currentDatetime,
-            ]);
-        $logId = $logs->id;
+        $oldData = [
+            'name' => $EmpMedicalLicense->getOriginal('name'),
+            'ref_no' => $EmpMedicalLicense->getOriginal('ref_no'),
+            'expire_date' => $EmpMedicalLicense->getOriginal('expire_date'),
+            'status' => $EmpMedicalLicense->getOriginal('status'),
+        ];
+        $newData = [
+            'name' => $EmpMedicalLicense->name,
+            'ref_no' => $EmpMedicalLicense->ref_no,
+            'expire_date' => $EmpMedicalLicense->expire_date,
+            'status' => $EmpMedicalLicense->status,
+        ];
+        $logId = createLog(
+            'employee_medical_license',
+            'update',
+            [
+                'message' => 'Employee Medical License has been updated',
+                'updated_by' => $sessionName
+            ],
+            $EmpMedicalLicense->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $currentLogIds = DB::table('employee')->where('id', $empId)->value('logid');
 
         $newLogIds = empty($currentLogIds) ? $logId : $currentLogIds . ',' . $logId;
@@ -5083,13 +5267,27 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to Allocate Cost Center to this Employee! Please Try Again.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "Cost Center has been allocated by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
+            $logId = createLog(
+                'employee_cost_center',
+                'insert',
+                [
+                    'message' => 'Cost Center has been allocated',
+                    'created_by' => $sessionName
+                ],
+                $EmployeeCC->id,
+                null,
+                [
+                    'emp_id' => $empId,
+                    'org_id' => $EmployeeCC->org_id,
+                    'headcount_site_id' => $EmployeeCC->headcount_site_id,
+                    'site_id' => $EmployeeCC->site_id,
+                    'cc_id' => $EmployeeCC->cc_id,
+                    'percentage' => $EmployeeCC->percentage,
+                    'status' => $EmployeeCC->status,
+                    'effective_timestamp' => $EmployeeCC->effective_timestamp,
+                ],
+                $sessionId
+            );
             $currentLogIds = DB::table('employee')->where('id', $empId)->value('logid');
 
             $newLogIds = empty($currentLogIds) ? $logId : $currentLogIds . ',' . $logId;
@@ -5278,13 +5476,32 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee Cost Center. Please try again']);
         }
 
-        $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "Employee Cost Center has been updated by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $this->currentDatetime,
-            ]);
-        $logId = $logs->id;
+        $oldData = [
+            'site_id' => $EmpCostCenter->getOriginal('site_id'),
+            'cc_id' => $EmpCostCenter->getOriginal('cc_id'),
+            'percentage' => $EmpCostCenter->getOriginal('percentage'),
+            'effective_timestamp' => $EmpCostCenter->getOriginal('effective_timestamp'),
+            'status' => $EmpCostCenter->getOriginal('status'),
+        ];
+        $newData = [
+            'site_id' => $EmpCostCenter->site_id,
+            'cc_id' => $EmpCostCenter->cc_id,
+            'percentage' => $EmpCostCenter->percentage,
+            'effective_timestamp' => $EmpCostCenter->effective_timestamp,
+            'status' => $EmpCostCenter->status,
+        ];
+        $logId = createLog(
+            'employee_cost_center',
+            'update',
+            [
+                'message' => 'Employee Cost Center has been updated',
+                'updated_by' => $sessionName
+            ],
+            $EmpCostCenter->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $currentLogIds = DB::table('employee')->where('id', $empId)->value('logid');
 
         $newLogIds = empty($currentLogIds) ? $logId : $currentLogIds . ',' . $logId;
@@ -5363,14 +5580,26 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to Allocate Service to Employee.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "Service Allocated by '{$sessionName}'",
-                'event' => 'activate',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $EmployeeServiceAllocation->logid = $logs->id;
+            $logId = createLog(
+                'employee_service_allocation',
+                'activate',
+                [
+                    'message' => 'Service Allocated',
+                    'created_by' => $sessionName
+                ],
+                $EmployeeServiceAllocation->id,
+                null,
+                [
+                    'emp_id' => $EmployeeServiceAllocation->emp_id,
+                    'org_id' => $EmployeeServiceAllocation->org_id,
+                    'site_id' => $EmployeeServiceAllocation->site_id,
+                    'service_id' => $EmployeeServiceAllocation->service_id,
+                    'status' => $EmployeeServiceAllocation->status,
+                    'effective_timestamp' => $EmployeeServiceAllocation->effective_timestamp,
+                ],
+                $sessionId
+            );
+            $EmployeeServiceAllocation->logid = $logId;
             $EmployeeServiceAllocation->save();
             return response()->json(['success' => 'Service Allocated successfully']);
         }
@@ -5554,15 +5783,24 @@ class HRController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'employee_service_allocation',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $EmployeeServiceAllocationID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $EmployeeServiceAllocationLog = EmployeeServiceAllocation::where('id', $EmployeeServiceAllocationID)->first();
         $logIds = $EmployeeServiceAllocationLog->logid ? explode(',', $EmployeeServiceAllocationLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmployeeServiceAllocationLog->logid = implode(',', $logIds);
         $EmployeeServiceAllocationLog->save();
 
@@ -5658,15 +5896,32 @@ class HRController extends Controller
         if (empty($EmployeeServiceAllocation->id)) {
             return response()->json(['error' => 'Employee Service Allocation Failed. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'hr',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $oldData = [
+            'service_id' => $EmployeeServiceAllocation->getOriginal('service_id'),
+            'status' => $EmployeeServiceAllocation->getOriginal('status'),
+            'effective_timestamp' => $EmployeeServiceAllocation->getOriginal('effective_timestamp'),
+        ];
+        $newData = [
+            'service_id' => $EmployeeServiceAllocation->service_id,
+            'status' => $EmployeeServiceAllocation->status,
+            'effective_timestamp' => $EmployeeServiceAllocation->effective_timestamp,
+        ];
+        $logId = createLog(
+            'employee_service_allocation',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $EmployeeServiceAllocation->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $EmployeeServiceAllocationLog = EmployeeServiceAllocation::where('id', $EmployeeServiceAllocation->id)->first();
         $logIds = $EmployeeServiceAllocationLog->logid ? explode(',', $EmployeeServiceAllocationLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $EmployeeServiceAllocationLog->logid = implode(',', $logIds);
         $EmployeeServiceAllocationLog->save();
         return response()->json(['success' => 'Service Allocated updated successfully']);
@@ -5764,13 +6019,26 @@ class HRController extends Controller
                 return response()->json(['error' => 'Failed to Allocate Inventory location to Employee.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "Inventory Location Allocated by '{$sessionName}'",
-                'event' => 'activate',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
+            $logId = createLog(
+                'employee_location_allocation',
+                'activate',
+                [
+                    'message' => 'Inventory Location Allocated',
+                    'created_by' => $sessionName
+                ],
+                $EmployeeInvLocationAllocation->id,
+                null,
+                [
+                    'emp_id' => $EmployeeInvLocationAllocation->emp_id,
+                    'org_id' => $EmployeeInvLocationAllocation->org_id,
+                    'site_id' => $EmployeeInvLocationAllocation->site_id,
+                    'location_site' => $EmployeeInvLocationAllocation->location_site,
+                    'service_location_id' => $EmployeeInvLocationAllocation->service_location_id,
+                    'status' => $EmployeeInvLocationAllocation->status,
+                    'effective_timestamp' => $EmployeeInvLocationAllocation->effective_timestamp,
+                ],
+                $sessionId
+            );
             $currentLogIds = DB::table('employee')->where('id', $Employee)->value('logid');
             $newLogIds = empty($currentLogIds) ? $logId : $currentLogIds . ',' . $logId;
             DB::table('employee')->where('id', $Employee)->update(['logid' => $newLogIds]);
@@ -5938,13 +6206,30 @@ class HRController extends Controller
             return response()->json(['error' => '"Failed to update Inventory Location Allocation. Please try again."']);
         }
 
-        $logs = Logs::create([
-                'module' => 'hr',
-                'content' => "Employee Location Allocation has been updated by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $this->currentDatetime,
-            ]);
-        $logId = $logs->id;
+        $oldData = [
+            'location_site' => $EmpLocationAllocation->getOriginal('location_site'),
+            'service_location_id' => $EmpLocationAllocation->getOriginal('service_location_id'),
+            'effective_timestamp' => $EmpLocationAllocation->getOriginal('effective_timestamp'),
+            'status' => $EmpLocationAllocation->getOriginal('status'),
+        ];
+        $newData = [
+            'location_site' => $EmpLocationAllocation->location_site,
+            'service_location_id' => $EmpLocationAllocation->service_location_id,
+            'effective_timestamp' => $EmpLocationAllocation->effective_timestamp,
+            'status' => $EmpLocationAllocation->status,
+        ];
+        $logId = createLog(
+            'employee_location_allocation',
+            'update',
+            [
+                'message' => 'Employee Location Allocation has been updated',
+                'updated_by' => $sessionName
+            ],
+            $EmpLocationAllocation->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $currentLogIds = DB::table('employee')->where('id', $empId)->value('logid');
 
         $newLogIds = empty($currentLogIds) ? $logId : $currentLogIds . ',' . $logId;
@@ -5954,169 +6239,5 @@ class HRController extends Controller
     }
 
 
-    // public function GetAllocatedEmpLocation()
-    // {
-    //     $rights = $this->rights;
-    //     $view = explode(',', $rights->employee_inventory_location_allocation)[1];
-    //     if($view == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-    //     $EmployeeLocationAllocations = EmployeeLocationAllocation::select('emp_inventory_location.*',
-    //     'employee.name as empName','organization.organization as orgName','org_site.name as siteName')
-    //     ->join('employee', 'employee.id', '=', 'emp_inventory_location.emp_id')
-    //     ->join('organization', 'organization.id', '=', 'emp_inventory_location.org_id')
-    //     ->join('org_site', 'org_site.id', '=', 'emp_inventory_location.site_id')
-    //     ->orderBy('employee.id', 'desc');
-
-    //     $session = auth()->user();
-    //     $sessionOrg = $session->org_id;
-    //     if($sessionOrg != '0')
-    //     {
-    //         $EmployeeLocationAllocations->where('emp_inventory_location.org_id', '=', $sessionOrg);
-    //     }
-    //     $EmployeeLocationAllocations = $EmployeeLocationAllocations->get();
-
-    //     return DataTables::of($EmployeeLocationAllocations)
-    //         ->addColumn('id_raw', function ($EmployeeLocationAllocation) {
-    //             return $EmployeeLocationAllocation->id;  // Raw ID value
-    //         })
-    //         ->editColumn('id', function ($EmployeeLocationAllocation) {
-    //             $session = auth()->user();
-    //             $sessionName = $session->name;
-    //             $sessionId = $session->id;
-    //             $EmployeeName = ucwords($EmployeeLocationAllocation->empName);
-
-    //             $effectiveDate = Carbon::createFromTimestamp($EmployeeLocationAllocation->effective_timestamp)->format('l d F Y - h:i A');
-    //             $timestamp = Carbon::createFromTimestamp($EmployeeLocationAllocation->timestamp)->format('l d F Y - h:i A');
-    //             $lastUpdated = Carbon::createFromTimestamp($EmployeeLocationAllocation->last_updated)->format('l d F Y - h:i A');
-    //             $createdByName = getUserNameById($EmployeeLocationAllocation->user_id);
-    //             $createdInfo = "
-    //                     <b>Created By:</b> " . ucwords($createdByName) . "  <br>
-    //                     <b>Effective Date&amp;Time:</b> " . $effectiveDate . " <br>
-    //                     <b>RecordedAt:</b> " . $timestamp ." <br>
-    //                     <b>LastUpdated:</b> " . $lastUpdated;
-
-    //             $sessionOrg = $session->org_id;
-    //             $orgName = '';
-    //             if($sessionOrg == 0)
-    //             {
-    //                 $orgName ='<hr class="mt-1 mb-1"><b>Organization:</b> '.ucwords($EmployeeLocationAllocation->orgName);
-    //             }
-    //             $siteName = $EmployeeLocationAllocation->siteName;
-
-    //             return $EmployeeName.$orgName
-    //                 . '<hr class="mt-1 mb-2">'
-    //                 .'<b>Site: </b>'.$siteName
-    //                 . '<hr class="mt-1 mb-2">'
-    //                 . '<span class="label label-info popoverTrigger" style="cursor: pointer;" data-container="body"  data-toggle="popover" data-placement="right" data-html="true" data-content="'. $createdInfo .'">'
-    //                 . '<i class="fa fa-toggle-right"></i> View Details'
-    //                 . '</span>';
-    //         })
-    //         ->editColumn('allocatioLocations', function ($EmployeeLocationAllocation) {
-    //             $locationSiteIds = explode(',', $EmployeeLocationAllocation->location_site);
-    //             $allocatedLocationIds = collect(json_decode($EmployeeLocationAllocation->service_location_id, true))
-    //                 ->flatten()
-    //                 ->toArray();
-    //             $sites = DB::table('org_site')
-    //                 ->whereIn('id', $locationSiteIds)
-    //                 ->pluck('name', 'id');
-    //             $locations = DB::table('service_location')
-    //                 ->whereIn('id', $allocatedLocationIds)
-    //                 ->pluck('name', 'id');
-    //             $formattedData = '<table style="border-collapse: collapse; width: 100%;">';
-    //             $formattedData .= '<tr>';
-    //             $formattedData .= '<th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Site</th>';
-    //             $formattedData .= '<th style="padding: 5px 15px 5px 5px;border: 1px solid grey;">Service Locations</th>';
-    //             $formattedData .= '</tr>';
-    //             foreach ($locationSiteIds as $index => $siteId) {
-    //                 $formattedData .= '<tr>';
-    //                 $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;">' . ucwords($sites[$siteId] ?? 'N/A') . '</td>';
-    //                 $siteLocations = json_decode($EmployeeLocationAllocation->service_location_id, true)[$index] ?? [];
-    //                 $formattedData .= '<td style="padding: 5px 15px 5px 5px;border: 1px solid grey;"><ul style="margin: 0; padding-left: 20px;">';
-    //                 foreach ($siteLocations as $locationId) {
-    //                     $formattedData .= '<li>' . ucwords($locations[$locationId] ?? 'N/A') . '</li>';
-    //                 }
-    //                 $formattedData .= '</ul></td>';
-    //                 $formattedData .= '</tr>';
-    //             }
-    //             $formattedData .= '</table>';
-    //             return $formattedData;
-    //         })
-    //         ->addColumn('action', function ($EmployeeLocationAllocation) {
-    //                 $EmployeeLocationAllocationId = $EmployeeLocationAllocation->id;
-    //                 $logId = $EmployeeLocationAllocation->logid;
-    //                 $Rights = $this->rights;
-    //                 $edit = explode(',', $Rights->employee_inventory_location_allocation)[2];
-    //                 $actionButtons = '';
-    //                 if ($edit == 1) {
-    //                     $actionButtons .= '<button type="button" class="btn btn-outline-danger mr-2 edit-serviceallocation" data-serviceallocation-id="'.$EmployeeLocationAllocationId.'">'
-    //                     . '<i class="fa fa-edit"></i> Edit'
-    //                     . '</button>';
-    //                 }
-    //                 $actionButtons .= '<button type="button" class="btn btn-outline-info logs-modal" data-log-id="'.$logId.'">'
-    //                 . '<i class="fa fa-eye"></i> View Logs'
-    //                 . '</button>';
-
-    //                 return $EmployeeLocationAllocation->status ? $actionButtons : '<span class="font-weight-bold">Status must be Active to perform any action.</span>';
-
-    //         })
-    //         ->editColumn('status', function ($EmployeeLocationAllocation) {
-    //             $rights = $this->rights;
-    //             $updateStatus = explode(',', $rights->employee_inventory_location_allocation)[3];
-    //             return $updateStatus == 1 ? ($EmployeeLocationAllocation->status ? '<span class="label label-success emplocation_status cursor-pointer" data-id="'.$EmployeeLocationAllocation->id.'" data-status="'.$EmployeeLocationAllocation->status.'">Active</span>' : '<span class="label label-danger emplocation_status cursor-pointer" data-id="'.$EmployeeLocationAllocation->id.'" data-status="'.$EmployeeLocationAllocation->status.'">Inactive</span>') : ($EmployeeLocationAllocation->status ? '<span class="label label-success">Active</span>' : '<span class="label label-danger">Inactive</span>');
-
-    //         })
-    //         ->rawColumns(['action', 'status', 'allocatioLocations',
-    //         'id'])
-    //         ->make(true);
-    // }
-
-    // public function UpdateAllocatedEmpLocationStatus(Request $request)
-    // {
-    //     $rights = $this->rights;
-    //     $UpdateStatus = explode(',', $rights->employee_inventory_location_allocation)[3];
-    //     if($UpdateStatus == 0)
-    //     {
-    //         abort(403, 'Forbidden');
-    //     }
-    //     $EmployeeLocationAllocationID = $request->input('id');
-    //     $Status = $request->input('status');
-    //     $CurrentTimestamp = $this->currentDatetime;
-    //     $EmployeeLocationAllocation = EmployeeLocationAllocation::find($EmployeeLocationAllocationID);
-
-    //     if($Status == 0)
-    //     {
-    //         $UpdateStatus = 1;
-    //         $statusLog = 'Active';
-    //         $EmployeeLocationAllocation->effective_timestamp = $CurrentTimestamp;
-    //     }
-    //     else{
-    //         $UpdateStatus = 0;
-    //         $statusLog = 'Inactive';
-
-    //     }
-    //     $EmployeeLocationAllocation->status = $UpdateStatus;
-    //     $EmployeeLocationAllocation->last_updated = $CurrentTimestamp;
-
-    //     $session = auth()->user();
-    //     $sessionName = $session->name;
-    //     $sessionId = $session->id;
-
-    //     $logs = Logs::create([
-    //         'module' => 'hr',
-    //         'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-    //         'event' => 'update',
-    //         'timestamp' => $this->currentDatetime,
-    //     ]);
-    //     $EmployeeLocationAllocationLog = EmployeeLocationAllocation::where('id', $EmployeeLocationAllocationID)->first();
-    //     $logIds = $EmployeeLocationAllocationLog->logid ? explode(',', $EmployeeLocationAllocationLog->logid) : [];
-    //     $logIds[] = $logs->id;
-    //     $EmployeeLocationAllocationLog->logid = implode(',', $logIds);
-    //     $EmployeeLocationAllocationLog->save();
-
-    //     $EmployeeLocationAllocation->save();
-    //     return response()->json(['success' => true, 200]);
-    // }
 
 }

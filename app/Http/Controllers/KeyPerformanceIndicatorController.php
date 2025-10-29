@@ -113,14 +113,26 @@ class KeyPerformanceIndicatorController extends Controller
                 return response()->json(['error' => 'Failed to create KPI Group.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'kpi',
-                'content' => "'{$KGName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $KPIGroup->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'code' => $KPIGroup->code,
+                'name' => $KPIGroup->name,
+                'status' => $KPIGroup->status,
+                'effective_timestamp' => $KPIGroup->effective_timestamp,
+            ];
+            $logId = createLog(
+                'kpi_group',
+                'insert',
+                [
+                    'message' => "'{$KGName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $KPIGroup->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $KPIGroup->logid = $logId;
             $KPIGroup->save();
             return response()->json(['success' => 'KPI Group created successfully']);
         }
@@ -232,15 +244,24 @@ class KeyPerformanceIndicatorController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'kpi',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'kpi_group',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $KPIGroupID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $KPIGroupLog = KPIGroups::where('id', $KPIGroupID)->first();
         $logIds = $KPIGroupLog->logid ? explode(',', $KPIGroupLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $KPIGroupLog->logid = implode(',', $logIds);
         $KPIGroupLog->save();
 
@@ -281,6 +302,15 @@ class KeyPerformanceIndicatorController extends Controller
         }
 
         $KPIGroups = KPIGroups::findOrFail($id);
+
+        // Capture old data
+        $oldData = [
+            'code' => $KPIGroups->code,
+            'name' => $KPIGroups->name,
+            'status' => $KPIGroups->status,
+            'effective_timestamp' => $KPIGroups->effective_timestamp,
+        ];
+
         $KPIGroups->name = $request->input('u_kg');
         $effective_date = $request->input('u_kg_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
@@ -306,15 +336,29 @@ class KeyPerformanceIndicatorController extends Controller
         if (empty($KPIGroups->id)) {
             return response()->json(['error' => 'Failed to update KPI Group. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'kpi',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+
+        // New logging (update)
+        $newData = [
+            'code' => $KPIGroups->code,
+            'name' => $KPIGroups->name,
+            'status' => $KPIGroups->status,
+            'effective_timestamp' => $KPIGroups->effective_timestamp,
+        ];
+        $logId = createLog(
+            'kpi_group',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $KPIGroups->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $KPIGroupLog = KPIGroups::where('id', $KPIGroups->id)->first();
         $logIds = $KPIGroupLog->logid ? explode(',', $KPIGroupLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $KPIGroupLog->logid = implode(',', $logIds);
         $KPIGroupLog->save();
         return response()->json(['success' => 'KPI Group updated successfully']);
@@ -385,14 +429,26 @@ class KeyPerformanceIndicatorController extends Controller
                 return response()->json(['error' => 'Failed to create KPI Dimension.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'kpi',
-                'content' => "'{$KDName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $KPIDimension->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'code' => $KPIDimension->code,
+                'name' => $KPIDimension->name,
+                'status' => $KPIDimension->status,
+                'effective_timestamp' => $KPIDimension->effective_timestamp,
+            ];
+            $logId = createLog(
+                'kpi_dimension',
+                'insert',
+                [
+                    'message' => "'{$KDName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $KPIDimension->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $KPIDimension->logid = $logId;
             $KPIDimension->save();
             return response()->json(['success' => 'KPI Dimension created successfully']);
         }
@@ -504,15 +560,24 @@ class KeyPerformanceIndicatorController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'kpi',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'kpi_dimension',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $KPIDimensionID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $KPIDimensionLog = KPIDimensions::where('id', $KPIDimensionID)->first();
         $logIds = $KPIDimensionLog->logid ? explode(',', $KPIDimensionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $KPIDimensionLog->logid = implode(',', $logIds);
         $KPIDimensionLog->save();
 
@@ -552,6 +617,15 @@ class KeyPerformanceIndicatorController extends Controller
             abort(403, 'Forbidden');
         }
         $KPIDimensions = KPIDimensions::findOrFail($id);
+
+        // Capture old data
+        $oldData = [
+            'code' => $KPIDimensions->code,
+            'name' => $KPIDimensions->name,
+            'status' => $KPIDimensions->status,
+            'effective_timestamp' => $KPIDimensions->effective_timestamp,
+        ];
+
         $KPIDimensions->name = $request->input('u_kd');
         $effective_date = $request->input('u_kd_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
@@ -577,15 +651,28 @@ class KeyPerformanceIndicatorController extends Controller
         if (empty($KPIDimensions->id)) {
             return response()->json(['error' => 'Failed to update KPI Dimension. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'kpi',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'code' => $KPIDimensions->code,
+            'name' => $KPIDimensions->name,
+            'status' => $KPIDimensions->status,
+            'effective_timestamp' => $KPIDimensions->effective_timestamp,
+        ];
+        $logId = createLog(
+            'kpi_dimension',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $KPIDimensions->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $KPIDimensionLog = KPIDimensions::where('id', $KPIDimensions->id)->first();
         $logIds = $KPIDimensionLog->logid ? explode(',', $KPIDimensionLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $KPIDimensionLog->logid = implode(',', $logIds);
         $KPIDimensionLog->save();
         return response()->json(['success' => 'KPI Dimension updated successfully']);
@@ -662,14 +749,28 @@ class KeyPerformanceIndicatorController extends Controller
                 return response()->json(['error' => 'Failed to create KPI Type.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'kpi',
-                'content' => "'{$KTName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $KPIType->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'code' => $KPIType->code,
+                'name' => $KPIType->name,
+                'group_id' => $KPIType->group_id,
+                'dimension_id' => $KPIType->dimension_id,
+                'status' => $KPIType->status,
+                'effective_timestamp' => $KPIType->effective_timestamp,
+            ];
+            $logId = createLog(
+                'kpi_types',
+                'insert',
+                [
+                    'message' => "'{$KTName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $KPIType->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $KPIType->logid = $logId;
             $KPIType->save();
             return response()->json(['success' => 'KPI Type created successfully']);
         }
@@ -793,15 +894,24 @@ class KeyPerformanceIndicatorController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'kpi',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'kpi_types',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $KPITypeID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $KPITypeLog = KPITypes::where('id', $KPITypeID)->first();
         $logIds = $KPITypeLog->logid ? explode(',', $KPITypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $KPITypeLog->logid = implode(',', $logIds);
         $KPITypeLog->save();
 
@@ -875,6 +985,17 @@ class KeyPerformanceIndicatorController extends Controller
             abort(403, 'Forbidden');
         }
         $KPITypes = KPITypes::findOrFail($id);
+
+        // Capture old data
+        $oldData = [
+            'code' => $KPITypes->code,
+            'name' => $KPITypes->name,
+            'group_id' => $KPITypes->group_id,
+            'dimension_id' => $KPITypes->dimension_id,
+            'status' => $KPITypes->status,
+            'effective_timestamp' => $KPITypes->effective_timestamp,
+        ];
+
         $KPITypes->name = $request->input('u_kt');
         $KPITypes->group_id = $request->input('u_kt_group');
         $KPITypes->dimension_id = $request->input('u_kt_dimension');
@@ -902,15 +1023,30 @@ class KeyPerformanceIndicatorController extends Controller
         if (empty($KPITypes->id)) {
             return response()->json(['error' => 'Failed to update KPI Type. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'kpi',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'code' => $KPITypes->code,
+            'name' => $KPITypes->name,
+            'group_id' => $KPITypes->group_id,
+            'dimension_id' => $KPITypes->dimension_id,
+            'status' => $KPITypes->status,
+            'effective_timestamp' => $KPITypes->effective_timestamp,
+        ];
+        $logId = createLog(
+            'kpi_types',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $KPITypes->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $KPITypeLog = KPITypes::where('id', $KPITypes->id)->first();
         $logIds = $KPITypeLog->logid ? explode(',', $KPITypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $KPITypeLog->logid = implode(',', $logIds);
         $KPITypeLog->save();
         return response()->json(['success' => 'KPI Type updated successfully']);
@@ -979,14 +1115,26 @@ class KeyPerformanceIndicatorController extends Controller
                 return response()->json(['error' => 'Failed to create KPI.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'kpi',
-                'content' => "'{$KPIName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $KPI->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'name' => $KPI->name,
+                'type_id' => $KPI->type_id,
+                'status' => $KPI->status,
+                'effective_timestamp' => $KPI->effective_timestamp,
+            ];
+            $logId = createLog(
+                'kpi_setup',
+                'insert',
+                [
+                    'message' => "'{$KPIName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $KPI->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $KPI->logid = $logId;
             $KPI->save();
             return response()->json(['success' => 'KPI created successfully']);
         }
@@ -1122,15 +1270,24 @@ class KeyPerformanceIndicatorController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'kpi',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'kpi_setup',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $KPIID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $KPILog = KPI::where('id', $KPIID)->first();
         $logIds = $KPILog->logid ? explode(',', $KPILog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $KPILog->logid = implode(',', $logIds);
         $KPILog->save();
 
@@ -1188,6 +1345,15 @@ class KeyPerformanceIndicatorController extends Controller
             abort(403, 'Forbidden');
         }
         $KPI = KPI::findOrFail($id);
+
+        // Capture old data
+        $oldData = [
+            'name' => $KPI->name,
+            'type_id' => $KPI->type_id,
+            'status' => $KPI->status,
+            'effective_timestamp' => $KPI->effective_timestamp,
+        ];
+
         $KPI->name = $request->input('u_kpi');
         $KPI->type_id = $request->input('u_kpi_type');
         $effective_date = $request->input('u_kpi_edt');
@@ -1221,15 +1387,28 @@ class KeyPerformanceIndicatorController extends Controller
         if (empty($KPI->id)) {
             return response()->json(['error' => 'Failed to update KPI. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'kpi',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'name' => $KPI->name,
+            'type_id' => $KPI->type_id,
+            'status' => $KPI->status,
+            'effective_timestamp' => $KPI->effective_timestamp,
+        ];
+        $logId = createLog(
+            'kpi_setup',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $KPI->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $KPILog = KPI::where('id', $KPI->id)->first();
         $logIds = $KPILog->logid ? explode(',', $KPILog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $KPILog->logid = implode(',', $logIds);
         $KPILog->save();
         return response()->json(['success' => 'KPI updated successfully']);
@@ -1314,14 +1493,28 @@ class KeyPerformanceIndicatorController extends Controller
                 return response()->json(['error' => 'Failed to Activate KPI.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'kpi',
-                'content' => "kpi activated by '{$sessionName}'",
-                'event' => 'activate',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $KPIActivation->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'kpi_id' => $KPIActivation->kpi_id,
+                'org_id' => $KPIActivation->org_id,
+                'site_id' => $KPIActivation->site_id,
+                'cc_id' => $KPIActivation->cc_id,
+                'status' => $KPIActivation->status,
+                'effective_timestamp' => $KPIActivation->effective_timestamp,
+            ];
+            $logId = createLog(
+                'kpi_activation',
+                'insert',
+                [
+                    'message' => 'kpi activated',
+                    'created_by' => $sessionName
+                ],
+                $KPIActivation->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $KPIActivation->logid = $logId;
             $KPIActivation->save();
             return response()->json(['success' => 'KPI Activated successfully']);
         }
@@ -1486,15 +1679,24 @@ class KeyPerformanceIndicatorController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'kpi',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'kpi_activation',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ActivatekpiID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ActivatekpiLog = KPIActivation::where('id', $ActivatekpiID)->first();
         $logIds = $ActivatekpiLog->logid ? explode(',', $ActivatekpiLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ActivatekpiLog->logid = implode(',', $logIds);
         $ActivatekpiLog->save();
 
@@ -1565,6 +1767,17 @@ class KeyPerformanceIndicatorController extends Controller
             abort(403, 'Forbidden');
         }
         $ActivatedKPI = KPIActivation::findOrFail($id);
+
+        // Capture old data
+        $oldData = [
+            'kpi_id' => $ActivatedKPI->kpi_id,
+            'org_id' => $ActivatedKPI->org_id,
+            'site_id' => $ActivatedKPI->site_id,
+            'cc_id' => $ActivatedKPI->cc_id,
+            'status' => $ActivatedKPI->status,
+            'effective_timestamp' => $ActivatedKPI->effective_timestamp,
+        ];
+
         $orgID = $request->input('u_korg');
         if (isset($orgID)) {
             $ActivatedKPI->org_id = $orgID;
@@ -1596,15 +1809,30 @@ class KeyPerformanceIndicatorController extends Controller
         if (empty($ActivatedKPI->id)) {
             return response()->json(['error' => 'KPI Activation Update Failed. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'kpi',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'kpi_id' => $ActivatedKPI->kpi_id,
+            'org_id' => $ActivatedKPI->org_id,
+            'site_id' => $ActivatedKPI->site_id,
+            'cc_id' => $ActivatedKPI->cc_id,
+            'status' => $ActivatedKPI->status,
+            'effective_timestamp' => $ActivatedKPI->effective_timestamp,
+        ];
+        $logId = createLog(
+            'kpi_activation',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $ActivatedKPI->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ActivatedKPILog = KPIActivation::where('id', $ActivatedKPI->id)->first();
         $logIds = $ActivatedKPILog->logid ? explode(',', $ActivatedKPILog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ActivatedKPILog->logid = implode(',', $logIds);
         $ActivatedKPILog->save();
         return response()->json(['success' => 'KPI Activation updated successfully']);

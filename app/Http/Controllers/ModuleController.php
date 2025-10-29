@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Logs;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Auth;
@@ -66,7 +65,6 @@ class ModuleController extends Controller
 
         $last_updated = $this->currentDatetime;
         $timestamp = $this->currentDatetime;
-        $logId = null;
 
         $ModuleExists = Modules::where('name', $Name)
         ->Where('parent', $Parent)
@@ -88,14 +86,26 @@ class ModuleController extends Controller
                 return response()->json(['error' => 'Failed to create Module.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'module',
-                'content' => "Module Name '{$Name}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $Module->logid = $logs->id;
+            // Prepare new data for logging
+            $newModuleData = [
+                'name' => $moduleName,
+                'parent' => $Parent,
+            ];
+
+            $logId = createLog(
+                'modules',
+                'insert',
+                [
+                    'message' => "'{$Name}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $Module->id,
+                null,
+                $newModuleData,
+                $sessionId
+            );
+
+            $Module->logid = $logId;
             $Module->save();
             return response()->json(['success' => 'Module created successfully']);
         }

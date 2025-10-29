@@ -187,14 +187,39 @@ class OrgSetupController extends Controller
                 return response()->json(['error' => 'Failed to create Organization.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'organization',
-                'content' => "'{$orgName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $Organization->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'code' => $Organization->code,
+                'organization' => $Organization->organization,
+                'remarks' => $Organization->remarks,
+                'headoffice_address' => $Organization->headoffice_address,
+                'province_id' => $Organization->province_id,
+                'division_id' => $Organization->division_id,
+                'district_id' => $Organization->district_id,
+                'focalperson_name' => $Organization->focalperson_name,
+                'email' => $Organization->email,
+                'website' => $Organization->website,
+                'gps' => $Organization->gps,
+                'cell_no' => $Organization->cell_no,
+                'landline_no' => $Organization->landline_no,
+                'logo' => $Organization->logo,
+                'banner' => $Organization->banner,
+                'status' => $Organization->status,
+                'effective_timestamp' => $Organization->effective_timestamp,
+            ];
+            $logId = createLog(
+                'organization_setup',
+                'insert',
+                [
+                    'message' => "'{$orgName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $Organization->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $Organization->logid = $logId;
             $Organization->save();
             return response()->json(['success' => 'Organization created successfully']);
 
@@ -344,15 +369,24 @@ class OrgSetupController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'organization',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'organization_setup',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $OrganizationID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $OrganizationLog = Organization::where('id', $OrganizationID)->first();
         $logIds = $OrganizationLog->logid ? explode(',', $OrganizationLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $OrganizationLog->logid = implode(',', $logIds);
         $OrganizationLog->save();
 
@@ -502,6 +536,28 @@ class OrgSetupController extends Controller
             abort(403, 'Forbidden');
         }
         $Organization = Organization::findOrFail($id);
+
+        // Capture old data
+        $oldData = [
+            'code' => $Organization->code,
+            'organization' => $Organization->organization,
+            'remarks' => $Organization->remarks,
+            'headoffice_address' => $Organization->headoffice_address,
+            'province_id' => $Organization->province_id,
+            'division_id' => $Organization->division_id,
+            'district_id' => $Organization->district_id,
+            'focalperson_name' => $Organization->focalperson_name,
+            'email' => $Organization->email,
+            'website' => $Organization->website,
+            'gps' => $Organization->gps,
+            'cell_no' => $Organization->cell_no,
+            'landline_no' => $Organization->landline_no,
+            'logo' => $Organization->logo,
+            'banner' => $Organization->banner,
+            'status' => $Organization->status,
+            'effective_timestamp' => $Organization->effective_timestamp,
+        ];
+
         $Organization->organization = trim($request->input('u_org_name'));
         $Organization->remarks = trim($request->input('u_org_remarks'));
 
@@ -563,16 +619,41 @@ class OrgSetupController extends Controller
         if (empty($Organization->id)) {
             return response()->json(['error' => 'Failed to update Organization. Please try again']);
         }
-        // $data = "Data has been updated by '{$sessionName}'";
-        $logs = Logs::create([
-            'module' => 'organization',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'code' => $Organization->code,
+            'organization' => $Organization->organization,
+            'remarks' => $Organization->remarks,
+            'headoffice_address' => $Organization->headoffice_address,
+            'province_id' => $Organization->province_id,
+            'division_id' => $Organization->division_id,
+            'district_id' => $Organization->district_id,
+            'focalperson_name' => $Organization->focalperson_name,
+            'email' => $Organization->email,
+            'website' => $Organization->website,
+            'gps' => $Organization->gps,
+            'cell_no' => $Organization->cell_no,
+            'landline_no' => $Organization->landline_no,
+            'logo' => $Organization->logo,
+            'banner' => $Organization->banner,
+            'status' => $Organization->status,
+            'effective_timestamp' => $Organization->effective_timestamp,
+        ];
+        $logId = createLog(
+            'organization_setup',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $Organization->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $OrganizationLog = Organization::where('id', $id)->first();
         $logIds = $OrganizationLog->logid ? explode(',', $OrganizationLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $OrganizationLog->logid = implode(',', $logIds);
         $OrganizationLog->save();
 
@@ -683,14 +764,32 @@ class OrgSetupController extends Controller
                 return response()->json(['error' => 'Failed to create Referral Site.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'site',
-                'content' => "'{$Description}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $ReferralSite->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'org_id' => $ReferralSite->org_id,
+                'name' => $ReferralSite->name,
+                'province_id' => $ReferralSite->province_id,
+                'division_id' => $ReferralSite->division_id,
+                'district_id' => $ReferralSite->district_id,
+                'cell' => $ReferralSite->cell,
+                'landline' => $ReferralSite->landline,
+                'remarks' => $ReferralSite->remarks,
+                'status' => $ReferralSite->status,
+                'effective_timestamp' => $ReferralSite->effective_timestamp,
+            ];
+            $logId = createLog(
+                'referral_site',
+                'insert',
+                [
+                    'message' => "'{$Description}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $ReferralSite->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $ReferralSite->logid = $logId;
             $ReferralSite->save();
             return response()->json(['success' => 'Referral Site Added successfully']);
         }
@@ -842,15 +941,24 @@ class OrgSetupController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'referral_site',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status values
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'referral_site',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ReferralSiteID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $ReferralSiteLog = ReferralSite::where('id', $ReferralSiteID)->first();
         $logIds = $ReferralSiteLog->logid ? explode(',', $ReferralSiteLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ReferralSiteLog->logid = implode(',', $logIds);
         $ReferralSiteLog->save();
 
@@ -907,7 +1015,21 @@ class OrgSetupController extends Controller
         }
 
         $ReferralSite = ReferralSite::findOrFail($id);
-        
+
+        // Capture old data
+        $oldData = [
+            'org_id' => $ReferralSite->org_id,
+            'name' => $ReferralSite->name,
+            'province_id' => $ReferralSite->province_id,
+            'division_id' => $ReferralSite->division_id,
+            'district_id' => $ReferralSite->district_id,
+            'cell' => $ReferralSite->cell,
+            'landline' => $ReferralSite->landline,
+            'remarks' => $ReferralSite->remarks,
+            'status' => $ReferralSite->status,
+            'effective_timestamp' => $ReferralSite->effective_timestamp,
+        ];
+
         $ReferralSite->org_id = $request->input('u_rf_org');
         $ReferralSite->name = trim($request->input('u_rf_desc'));
         $ReferralSite->province_id = $request->input('u_rf_province');
@@ -940,16 +1062,35 @@ class OrgSetupController extends Controller
             return response()->json(['error' => 'Failed to update Referral Site. Please try again']);
         }
 
-        $logs = Logs::create([
-            'module' => 'referral_site',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'org_id' => $ReferralSite->org_id,
+            'name' => $ReferralSite->name,
+            'province_id' => $ReferralSite->province_id,
+            'division_id' => $ReferralSite->division_id,
+            'district_id' => $ReferralSite->district_id,
+            'cell' => $ReferralSite->cell,
+            'landline' => $ReferralSite->landline,
+            'remarks' => $ReferralSite->remarks,
+            'status' => $ReferralSite->status,
+            'effective_timestamp' => $ReferralSite->effective_timestamp,
+        ];
+        $logId = createLog(
+            'referral_site',
+            'update',
+            [
+                'message' => 'Data has been updated',
+                'updated_by' => $sessionName
+            ],
+            $ReferralSite->id,
+            $oldData,
+            $newData,
+            $session->id
+        );
 
         $ReferralSiteLog = ReferralSite::where('id', $id)->first();
         $logIds = $ReferralSiteLog->logid ? explode(',', $ReferralSiteLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ReferralSiteLog->logid = implode(',', $logIds);
         $ReferralSiteLog->save();
 

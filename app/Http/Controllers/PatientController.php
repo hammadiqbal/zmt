@@ -355,14 +355,49 @@ class PatientController extends Controller
             if (empty($Patient->id)) {
                 return response()->json(['error' => 'Failed to create Patient.']);
             }
-            $logs = Logs::create([
-                'module' => 'patient',
-                'content' => "'{$Name}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $Patient->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'mr_code' => $Patient->mr_code,
+                'name' => $Patient->name,
+                'guardian' => $Patient->guardian,
+                'guardian_relation' => $Patient->guardian_relation,
+                'next_of_kin' => $Patient->next_of_kin,
+                'relation' => $Patient->relation,
+                'language' => $Patient->language,
+                'religion' => $Patient->religion,
+                'marital_status' => $Patient->marital_status,
+                'gender_id' => $Patient->gender_id,
+                'dob' => $Patient->dob,
+                'org_id' => $Patient->org_id,
+                'site_id' => $Patient->site_id,
+                'address' => $Patient->address,
+                'house_no' => $Patient->house_no,
+                'province_id' => $Patient->province_id,
+                'division_id' => $Patient->division_id,
+                'district_id' => $Patient->district_id,
+                'cnic' => $Patient->cnic,
+                'family_no' => $Patient->family_no,
+                'cell_no' => $Patient->cell_no,
+                'additional_cellno' => $Patient->additional_cellno,
+                'landline' => $Patient->landline,
+                'email' => $Patient->email,
+                'img' => $Patient->img,
+                'status' => $Patient->status,
+                'effective_timestamp' => $Patient->effective_timestamp,
+            ];
+            $logId = createLog(
+                'patient',
+                'insert',
+                [
+                    'message' => "'{$Name}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $Patient->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $Patient->logid = $logId;
             $Patient->save();
             return response()->json([
                 'success' => 'Please select an appropriate action from the options below:',
@@ -650,15 +685,24 @@ class PatientController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'patient',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status values
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'patient',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $PatientID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $PatientRegistrationLog = PatientRegistration::where('id', $PatientID)->first();
         $logIds = $PatientRegistrationLog->logid ? explode(',', $PatientRegistrationLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $PatientRegistrationLog->logid = implode(',', $logIds);
         $PatientRegistrationLog->save();
 
@@ -906,6 +950,37 @@ class PatientController extends Controller
             return response()->json(['error' => 'Both Next of Kin and Relation must be filled, or both must be blank.']);
         }
         $Patient = PatientRegistration::findOrFail($id);
+
+        // Capture old data before update
+        $oldData = [
+            'name' => $Patient->name,
+            'guardian' => $Patient->guardian,
+            'guardian_relation' => $Patient->guardian_relation,
+            'next_of_kin' => $Patient->next_of_kin,
+            'relation' => $Patient->relation,
+            'old_mrcode' => $Patient->old_mrcode,
+            'gender_id' => $Patient->gender_id,
+            'language' => $Patient->language,
+            'religion' => $Patient->religion,
+            'marital_status' => $Patient->marital_status,
+            'org_id' => $Patient->org_id,
+            'site_id' => $Patient->site_id,
+            'province_id' => $Patient->province_id,
+            'division_id' => $Patient->division_id,
+            'district_id' => $Patient->district_id,
+            'cnic' => $Patient->cnic,
+            'family_no' => $Patient->family_no,
+            'cell_no' => $Patient->cell_no,
+            'additional_cellno' => $Patient->additional_cellno,
+            'landline' => $Patient->landline,
+            'email' => $Patient->email,
+            'house_no' => $Patient->house_no,
+            'address' => $Patient->address,
+            'img' => $Patient->img,
+            'dob' => $Patient->dob,
+            'status' => $Patient->status,
+            'effective_timestamp' => $Patient->effective_timestamp,
+        ];
         $Patient->name = $request->input('up_name');
         $Patient->guardian = $request->input('up_guardianName');
         $Patient->guardian_relation = strtolower($request->input('up_guardianRelation'));
@@ -973,15 +1048,51 @@ class PatientController extends Controller
         if (empty($Patient->id)) {
             return response()->json(['error' => 'Failed to update Patient Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'patient',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'name' => $Patient->name,
+            'guardian' => $Patient->guardian,
+            'guardian_relation' => $Patient->guardian_relation,
+            'next_of_kin' => $Patient->next_of_kin,
+            'relation' => $Patient->relation,
+            'old_mrcode' => $Patient->old_mrcode,
+            'gender_id' => $Patient->gender_id,
+            'language' => $Patient->language,
+            'religion' => $Patient->religion,
+            'marital_status' => $Patient->marital_status,
+            'org_id' => $Patient->org_id,
+            'site_id' => $Patient->site_id,
+            'province_id' => $Patient->province_id,
+            'division_id' => $Patient->division_id,
+            'district_id' => $Patient->district_id,
+            'cnic' => $Patient->cnic,
+            'family_no' => $Patient->family_no,
+            'cell_no' => $Patient->cell_no,
+            'additional_cellno' => $Patient->additional_cellno,
+            'landline' => $Patient->landline,
+            'email' => $Patient->email,
+            'house_no' => $Patient->house_no,
+            'address' => $Patient->address,
+            'img' => $Patient->img,
+            'dob' => $Patient->dob,
+            'status' => $Patient->status,
+            'effective_timestamp' => $Patient->effective_timestamp,
+        ];
+        $logId = createLog(
+            'patient',
+            'update',
+            [
+                'message' => 'Patient details updated',
+                'updated_by' => $sessionName
+            ],
+            $Patient->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $PatientLog = PatientRegistration::where('id', $Patient->id)->first();
         $logIds = $PatientLog->logid ? explode(',', $PatientLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $PatientLog->logid = implode(',', $logIds);
         $PatientLog->save();
         return response()->json(['success' => ' Patient Details updated successfully']);
@@ -1168,14 +1279,36 @@ class PatientController extends Controller
             $Transaction->save();
 
 
-            $logs = Logs::create([
-                'module' => 'patient',
-                'content' => "Patient Arrival Details added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $PatientArrivalDeparture->logid = $logs->id;
+            // New logging (insert)
+            $newData = [
+                'org_id' => $PatientArrivalDeparture->org_id,
+                'site_id' => $PatientArrivalDeparture->site_id,
+                'service_location_id' => $PatientArrivalDeparture->service_location_id,
+                'schedule_id' => $PatientArrivalDeparture->schedule_id,
+                'mr_code' => $PatientArrivalDeparture->mr_code,
+                'service_id' => $PatientArrivalDeparture->service_id,
+                'service_mode_id' => $PatientArrivalDeparture->service_mode_id,
+                'billing_cc' => $PatientArrivalDeparture->billing_cc,
+                'emp_id' => $PatientArrivalDeparture->emp_id,
+                'patient_status' => $PatientArrivalDeparture->patient_status,
+                'patient_priority' => $PatientArrivalDeparture->patient_priority,
+                'remarks' => $PatientArrivalDeparture->remarks,
+                'status' => $PatientArrivalDeparture->status,
+                'service_start_time' => $PatientArrivalDeparture->service_start_time,
+            ];
+            $logId = createLog(
+                'patient',
+                'insert',
+                [
+                    'message' => 'Patient arrival details added',
+                    'created_by' => $sessionName
+                ],
+                $PatientArrivalDeparture->id,
+                null,
+                $newData,
+                $sessionId
+            );
+            $PatientArrivalDeparture->logid = $logId;
             $PatientArrivalDeparture->save();
             return response()->json(['success' => 'Patient Arrival Details added successfully']);
         }
@@ -2426,15 +2559,24 @@ class PatientController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'patient',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (status_change) — only status values
+        $oldData = ['status' => (int)$Status];
+        $newData = ['status' => $UpdateStatus];
+        $logId = createLog(
+            'patient',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $PatientArrivalDepartureID,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $PatientArrivalDepartureLog = PatientArrivalDeparture::where('id', $PatientArrivalDepartureID)->first();
         $logIds = $PatientArrivalDepartureLog->logid ? explode(',', $PatientArrivalDepartureLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $PatientArrivalDepartureLog->logid = implode(',', $logIds);
         $PatientArrivalDepartureLog->save();
 
@@ -2519,31 +2661,43 @@ class PatientController extends Controller
                     $matchingReqs = $reqEpiQuery->get();
 
                     if ($matchingReqs->isNotEmpty()) {
-                        $log = Logs::create([
-                            'module' => 'patient_medical_record',
-                            'content' => "Status set to Inactive by '{$sessionName}'",
-                            'event' => 'update',
-                            'timestamp' => $CurrentTimestamp,
-                        ]);
-
                         foreach ($matchingReqs as $req) {
+                            $statusLogId = createLog(
+                                'patient_medical_record',
+                                'status_change',
+                                [
+                                    'message' => 'Status set to Inactive',
+                                    'updated_by' => $sessionName
+                                ],
+                                $req->id,
+                                ['status' => 1],
+                                ['status' => 0],
+                                $sessionId
+                            );
                             $existingLogIds = $req->logid ? explode(',', $req->logid) : [];
-                            $existingLogIds[] = $log->id;
+                            $existingLogIds[] = $statusLogId;
                             $req->status = 0;
                             $req->logid = implode(',', $existingLogIds);
                             $req->save();
                         }
                     }
                 }
-                $logs = Logs::create([
-                    'module' => 'patient',
-                    'content' => "End Date&Time ('{$ServiceEnd}') added by '{$sessionName}'",
-                    'event' => 'update',
-                    'timestamp' => $CurrentTimestamp,
-                ]);
+                // Log update for this arrival (capture minimal old/new)
+                $updateLogId = createLog(
+                    'patient',
+                    'update',
+                    [
+                        'message' => "End Date&Time ('{$ServiceEnd}') added",
+                        'updated_by' => $sessionName
+                    ],
+                    $arrival->id,
+                    null,
+                    [ 'service_end_time' => $arrival->service_end_time, 'status' => $arrival->status ],
+                    $sessionId
+                );
 
                 $logIds = $arrival->logid ? explode(',', $arrival->logid) : [];
-                $logIds[] = $logs->id;
+                $logIds[] = $updateLogId;
                 $arrival->logid = implode(',', $logIds);
                 $arrival->save();
             }
@@ -2555,15 +2709,21 @@ class PatientController extends Controller
             $PatientArrivalDeparture->last_updated = $CurrentTimestamp;
             $PatientArrivalDeparture->save();
 
-            $logs = Logs::create([
-                'module' => 'patient',
-                'content' => "End Date&Time ('{$ServiceEnd}') added by '{$sessionName}'",
-                'event' => 'update',
-                'timestamp' => $CurrentTimestamp,
-            ]);
+            $updateLogId = createLog(
+                'patient',
+                'update',
+                [
+                    'message' => "End Date&Time ('{$ServiceEnd}') added",
+                    'updated_by' => $sessionName
+                ],
+                $PatientArrivalDeparture->id,
+                null,
+                [ 'service_end_time' => $PatientArrivalDeparture->service_end_time, 'status' => $PatientArrivalDeparture->status ],
+                $sessionId
+            );
 
             $logIds = $PatientArrivalDeparture->logid ? explode(',', $PatientArrivalDeparture->logid) : [];
-            $logIds[] = $logs->id;
+            $logIds[] = $updateLogId;
             $PatientArrivalDeparture->logid = implode(',', $logIds);
             if($PatientArrivalDeparture->save())
             {
@@ -2577,16 +2737,21 @@ class PatientController extends Controller
                 $matchingReqs = $reqEpiQuery->get();
 
                 if ($matchingReqs->isNotEmpty()) {
-                    $log = Logs::create([
-                        'module' => 'patient_medical_record',
-                        'content' => "Status set to Inactive by '{$sessionName}'",
-                        'event' => 'update',
-                        'timestamp' => $CurrentTimestamp,
-                    ]);
-
                     foreach ($matchingReqs as $req) {
+                        $statusLogId = createLog(
+                            'patient_medical_record',
+                            'status_change',
+                            [
+                                'message' => 'Status set to Inactive',
+                                'updated_by' => $sessionName
+                            ],
+                            $req->id,
+                            ['status' => 1],
+                            ['status' => 0],
+                            $sessionId
+                        );
                         $existingLogIds = $req->logid ? explode(',', $req->logid) : [];
-                        $existingLogIds[] = $log->id;
+                        $existingLogIds[] = $statusLogId;
                         $req->status = 0;
                         $req->logid = implode(',', $existingLogIds);
                         $req->save();
@@ -2711,6 +2876,16 @@ class PatientController extends Controller
             abort(403, 'Forbidden');
         }
         $PatientArrivalDeparture = PatientArrivalDeparture::findOrFail($id);
+
+        // Capture old data before update
+        $oldData = [
+            'service_id' => $PatientArrivalDeparture->service_id,
+            'service_mode_id' => $PatientArrivalDeparture->service_mode_id,
+            'billing_cc' => $PatientArrivalDeparture->billing_cc,
+            'service_start_time' => $PatientArrivalDeparture->service_start_time,
+            'service_end_time' => $PatientArrivalDeparture->service_end_time,
+            'status' => $PatientArrivalDeparture->status,
+        ];
         $PatientArrivalDeparture->service_id = $request->input('u_pio_service');
         $PatientArrivalDeparture->service_mode_id = $request->input('u_pio_serviceMode');
         $PatientArrivalDeparture->billing_cc = $request->input('u_pio_billingCC');
@@ -2756,15 +2931,30 @@ class PatientController extends Controller
         if (empty($PatientArrivalDeparture->id)) {
             return response()->json(['error' => 'Failed to update Patient Arrival & Departure Details. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'patient',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // New logging (update)
+        $newData = [
+            'service_id' => $PatientArrivalDeparture->service_id,
+            'service_mode_id' => $PatientArrivalDeparture->service_mode_id,
+            'billing_cc' => $PatientArrivalDeparture->billing_cc,
+            'service_start_time' => $PatientArrivalDeparture->service_start_time,
+            'service_end_time' => $PatientArrivalDeparture->service_end_time,
+            'status' => $PatientArrivalDeparture->status,
+        ];
+        $logId = createLog(
+            'patient',
+            'update',
+            [
+                'message' => 'Patient arrival & departure updated',
+                'updated_by' => $sessionName
+            ],
+            $PatientArrivalDeparture->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
         $PatientArrivalDepartureLog = PatientArrivalDeparture::where('id', $PatientArrivalDeparture->id)->first();
         $logIds = $PatientArrivalDepartureLog->logid ? explode(',', $PatientArrivalDepartureLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $PatientArrivalDepartureLog->logid = implode(',', $logIds);
         $PatientArrivalDepartureLog->save();
         return response()->json(['success' => ' Patient Arrival & Departure Details updated successfully']);

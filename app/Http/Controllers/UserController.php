@@ -978,7 +978,6 @@ class UserController extends Controller
             'org_id' => $userOrgId,
             'is_employee' => $isEmployee,
             'site_enabled' => $siteEnabled,
-            'emp_id' => $userEmpId,
             'status' => $status,
             'effective_timestamp' => $userEdt,
         ];
@@ -1144,7 +1143,6 @@ class UserController extends Controller
             'email' => $user->email,
             'role_id' => $user->role_id,
             'org_id' => $user->org_id,
-            'emp_id' => $user->emp_id,
             'site_enabled' => $user->site_enabled,
             'status' => $user->status,
             'effective_timestamp' => $user->effective_timestamp,
@@ -1205,7 +1203,6 @@ class UserController extends Controller
             'email' => $user->email,
             'role_id' => $user->role_id,
             'org_id' => $user->org_id,
-            'emp_id' => $user->emp_id,
             'site_enabled' => $user->site_enabled,
             'status' => $user->status,
             'effective_timestamp' => $user->effective_timestamp,

@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\DB;
-use App\Models\Logs;
 use App\Models\CCType;
 use App\Models\CostCenter;
 use App\Models\Service;
@@ -106,14 +105,30 @@ class CostCenterController extends Controller
                 return response()->json(['error' => 'Failed to create Cost Center Type.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'cost center',
-                'content' => "'{$CCtype}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $CostCenterType->logid = $logs->id;
+            // Prepare new data for logging
+            $newCostCenterTypeData = [
+                'type' => $CCtype,
+                'remarks' => $remarks,
+                'ordering' => $OrderingCC,
+                'performing' => $PerformingCC,
+                'status' => $status,
+                'effective_timestamp' => $CCTEdt,
+            ];
+
+            $logId = createLog(
+                'cost_center_types',
+                'insert',
+                [
+                    'message' => "'{$CCtype}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $CostCenterType->id,
+                null,
+                $newCostCenterTypeData,
+                $sessionId
+            );
+
+            $CostCenterType->logid = $logId;
             $CostCenterType->save();
             return response()->json(['success' => 'Cost Center Type created successfully']);
         }
@@ -236,15 +251,27 @@ class CostCenterController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'cost center',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'cost_center_types',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $CCTypeID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $CCTypeLog = CCType::where('id', $CCTypeID)->first();
         $logIds = $CCTypeLog->logid ? explode(',', $CCTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $CCTypeLog->logid = implode(',', $logIds);
         $CCTypeLog->save();
 
@@ -294,6 +321,17 @@ class CostCenterController extends Controller
             abort(403, 'Forbidden');
         }
         $CCType = CCType::findOrFail($id);
+        
+        // Capture old data before update
+        $oldCCTypeData = [
+            'type' => $CCType->type,
+            'ordering' => $CCType->ordering,
+            'performing' => $CCType->performing,
+            'remarks' => $CCType->remarks,
+            'status' => $CCType->status,
+            'effective_timestamp' => $CCType->effective_timestamp,
+        ];
+        
         $CCType->type = $request->input('u_ccType');
         $CCType->ordering = $request->input('u_ordering');
         $CCType->performing = $request->input('u_performing');
@@ -322,15 +360,34 @@ class CostCenterController extends Controller
         if (empty($CCType->id)) {
             return response()->json(['error' => 'Failed to update Cost Center Type. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'cost center',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newCCTypeData = [
+            'type' => $CCType->type,
+            'ordering' => $CCType->ordering,
+            'performing' => $CCType->performing,
+            'remarks' => $CCType->remarks,
+            'status' => $CCType->status,
+            'effective_timestamp' => $CCType->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'cost_center_types',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $CCType->id,
+            $oldCCTypeData,
+            $newCCTypeData,
+            $sessionId
+        );
+        
         $CCTypeLog = CCType::where('id', $CCType->id)->first();
         $logIds = $CCTypeLog->logid ? explode(',', $CCTypeLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $CCTypeLog->logid = implode(',', $logIds);
         $CCTypeLog->save();
         return response()->json(['success' => 'Cost Center Type updated successfully']);
@@ -405,14 +462,29 @@ class CostCenterController extends Controller
                 return response()->json(['error' => 'Failed to create Cost Center.']);
             }
 
-            $logs = Logs::create([
-                'module' => 'cost center',
-                'content' => "'{$ccName}' has been added by '{$sessionName}'",
-                'event' => 'add',
-                'timestamp' => $timestamp,
-            ]);
-            $logId = $logs->id;
-            $CostCenter->logid = $logs->id;
+            // Prepare new data for logging
+            $newCostCenterData = [
+                'code' => $Code,
+                'name' => $ccName,
+                'cc_type' => $ccType,
+                'status' => $status,
+                'effective_timestamp' => $CCEdt,
+            ];
+
+            $logId = createLog(
+                'cost_center_setup',
+                'insert',
+                [
+                    'message' => "'{$ccName}' has been added",
+                    'created_by' => $sessionName
+                ],
+                $CostCenter->id,
+                null,
+                $newCostCenterData,
+                $sessionId
+            );
+
+            $CostCenter->logid = $logId;
             $CostCenter->save();
             return response()->json(['success' => 'Cost Center created successfully']);
         }
@@ -560,15 +632,27 @@ class CostCenterController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'cost center',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'cost_center_setup',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $CostCenterID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $CostCenterLog = CostCenter::where('id', $CostCenterID)->first();
         $logIds = $CostCenterLog->logid ? explode(',', $CostCenterLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $CostCenterLog->logid = implode(',', $logIds);
         $CostCenterLog->save();
 
@@ -732,6 +816,15 @@ class CostCenterController extends Controller
             abort(403, 'Forbidden');
         }
         $CostCenters = CostCenter::findOrFail($id);
+        
+        // Capture old data before update
+        $oldCostCenterData = [
+            'name' => $CostCenters->name,
+            'cc_type' => $CostCenters->cc_type,
+            'status' => $CostCenters->status,
+            'effective_timestamp' => $CostCenters->effective_timestamp,
+        ];
+        
         $CostCenters->name = $request->input('cc_name');
         $CostCenters->cc_type = $request->input('u_ccType');
         $effective_date = $request->input('u_cc_edt');
@@ -758,15 +851,32 @@ class CostCenterController extends Controller
         if (empty($CostCenters->id)) {
             return response()->json(['error' => 'Failed to update Cost Center. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'cost center',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newCostCenterData = [
+            'name' => $CostCenters->name,
+            'cc_type' => $CostCenters->cc_type,
+            'status' => $CostCenters->status,
+            'effective_timestamp' => $CostCenters->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'cost_center_setup',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $CostCenters->id,
+            $oldCostCenterData,
+            $newCostCenterData,
+            $sessionId
+        );
+        
         $CostCenterLog = CostCenter::where('id', $CostCenters->id)->first();
         $logIds = $CostCenterLog->logid ? explode(',', $CostCenterLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $CostCenterLog->logid = implode(',', $logIds);
         $CostCenterLog->save();
         return response()->json(['success' => 'Cost Center updated successfully']);
@@ -922,14 +1032,29 @@ class CostCenterController extends Controller
                     return response()->json(['error' => 'Failed to Activate Cost Center.']);
                 }
 
-                $logs = Logs::create([
-                    'module' => 'cost center',
-                    'content' => "Cost Center activated by '{$sessionName}'",
-                    'event' => 'activate',
-                    'timestamp' => $timestamp,
-                ]);
-                $logId = $logs->id;
-                $ActivateCC->logid = $logs->id;
+                // Prepare new data for logging
+                $newActivateCCData = [
+                    'org_id' => $ccOrg,
+                    'site_id' => $ccSite,
+                    'cc_id' => $ccName,
+                    'status' => $status,
+                    'effective_timestamp' => $Edt,
+                ];
+
+                $logId = createLog(
+                    'cost_center_activation',
+                    'insert',
+                    [
+                        'message' => "Cost Center activated",
+                        'created_by' => $sessionName
+                    ],
+                    $ActivateCC->id,
+                    null,
+                    $newActivateCCData,
+                    $sessionId
+                );
+
+                $ActivateCC->logid = $logId;
                 $ActivateCC->save();
                 // $activatedCount++;
             }
@@ -1095,15 +1220,27 @@ class CostCenterController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $logs = Logs::create([
-            'module' => 'cost center',
-            'content' => "Status updated to '{$statusLog}' by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        // Capture old and new status data
+        $oldStatusData = ['status' => (int)$Status];
+        $newStatusData = ['status' => $UpdateStatus];
+
+        // Create log for status change
+        $logId = createLog(
+            'cost_center_activation',
+            'status_change',
+            [
+                'message' => "Status updated to '{$statusLog}'",
+                'updated_by' => $sessionName
+            ],
+            $ActivateCCID,
+            $oldStatusData,
+            $newStatusData,
+            $sessionId
+        );
+
         $ActivateCCLog = ActivateCC::where('id', $ActivateCCID)->first();
         $logIds = $ActivateCCLog->logid ? explode(',', $ActivateCCLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ActivateCCLog->logid = implode(',', $logIds);
         $ActivateCCLog->save();
 
@@ -1177,6 +1314,16 @@ class CostCenterController extends Controller
             abort(403, 'Forbidden');
         }
         $ActivatedCC = ActivateCC::findOrFail($id);
+        
+        // Capture old data before update
+        $oldActivateCCData = [
+            'org_id' => $ActivatedCC->org_id,
+            'site_id' => $ActivatedCC->site_id,
+            'cc_id' => $ActivatedCC->cc_id,
+            'status' => $ActivatedCC->status,
+            'effective_timestamp' => $ActivatedCC->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_ccorg');
 
         if (isset($orgID)) {
@@ -1208,15 +1355,33 @@ class CostCenterController extends Controller
         if (empty($ActivatedCC->id)) {
             return response()->json(['error' => 'Cost Center Activation Failed. Please try again']);
         }
-        $logs = Logs::create([
-            'module' => 'cost center',
-            'content' => "Data has been updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        
+        // Capture new data after update
+        $newActivateCCData = [
+            'org_id' => $ActivatedCC->org_id,
+            'site_id' => $ActivatedCC->site_id,
+            'cc_id' => $ActivatedCC->cc_id,
+            'status' => $ActivatedCC->status,
+            'effective_timestamp' => $ActivatedCC->effective_timestamp,
+        ];
+        
+        // Create log
+        $logId = createLog(
+            'cost_center_activation',
+            'update',
+            [
+                'message' => "Data has been updated",
+                'updated_by' => $sessionName
+            ],
+            $ActivatedCC->id,
+            $oldActivateCCData,
+            $newActivateCCData,
+            $sessionId
+        );
+        
         $ActivatedCCLog = ActivateCC::where('id', $ActivatedCC->id)->first();
         $logIds = $ActivatedCCLog->logid ? explode(',', $ActivatedCCLog->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $ActivatedCCLog->logid = implode(',', $logIds);
         $ActivatedCCLog->save();
         return response()->json(['success' => 'Cost Center Activation updated successfully']);

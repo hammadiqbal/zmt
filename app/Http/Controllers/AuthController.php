@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
-use App\Models\Logs;
 use App\Models\Users;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -179,15 +178,20 @@ class AuthController extends Controller
                     'sites' => $employeeSiteIds,
                 ]);
 
-                $logs = Logs::create([
-                    'module' => 'login',
-                    'content' => "'{$user->name}' has successfully logged in.",
-                    'event' => 'login',
-                    'timestamp' => $this->currentDatetime,
-                ]);
+                $logId = createLog(
+                    'login',
+                    'login',
+                    [
+                        'message' => "'{$user->name}' has successfully logged in.",
+                    ],
+                    $user->id,
+                    null,
+                    null,
+                    $user->id
+                );
                 $Users = Users::where('id', $user->id)->first();
                 $logIds = $Users->logid ? explode(',', $Users->logid) : [];
-                $logIds[] = $logs->id;
+                $logIds[] = $logId;
                 $Users->logid = implode(',', $logIds);
                 $Users->save();
 
@@ -234,16 +238,21 @@ class AuthController extends Controller
         $CurrentTimestamp = $this->currentDatetime;
 
 
-        $logs = Logs::create([
-            'module' => 'profile',
-            'content' => "Password Updated by '{$sessionName}'",
-            'event' => 'update',
-            'timestamp' => $this->currentDatetime,
-        ]);
+        $logId = createLog(
+            'profile',
+            'update',
+            [
+                'message' => "Password Updated by '{$sessionName}'",
+            ],
+            $sessionId,
+            null,
+            null,
+            $sessionId
+        );
 
         $Users = Users::where('id', $sessionId)->first();
         $logIds = $Users->logid ? explode(',', $Users->logid) : [];
-        $logIds[] = $logs->id;
+        $logIds[] = $logId;
         $Users->logid = implode(',', $logIds);
         $Users->save();
 
@@ -264,15 +273,20 @@ class AuthController extends Controller
         if ($session !== null) {
             $sessionName = $session->name;
             $sessionId = $session->id;
-            $logs = Logs::create([
-                'module' => 'logout',
-                'content' => "'{$session->name}' has successfully logged out.",
-                'event' => 'logout',
-                'timestamp' => $this->currentDatetime,
-            ]);
-            $Users = Users::where('id', $session->id)->first();
+            $logId = createLog(
+                'logout',
+                'logout',
+                [
+                    'message' => "'{$sessionName}' has successfully logged out.",
+                ],
+                $sessionId,
+                null,
+                null,
+                $sessionId
+            );
+            $Users = Users::where('id', $sessionId)->first();
             $logIds = $Users->logid ? explode(',', $Users->logid) : [];
-            $logIds[] = $logs->id;
+            $logIds[] = $logId;
             $Users->logid = implode(',', $logIds);
             $Users->save();
             Auth::logout();
