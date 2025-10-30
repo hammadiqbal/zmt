@@ -502,12 +502,13 @@ class CostCenterController extends Controller
 
         $CostCenters = CostCenter::select('costcenter.*', 'cc_type.type',
         'cc_type.ordering as orderingStatus','cc_type.performing as performingStatus')
-        ->join('cc_type', 'cc_type.id', '=', 'costcenter.cc_type')
-        ->orderBy('costcenter.id', 'desc');
+        ->join('cc_type', 'cc_type.id', '=', 'costcenter.cc_type');
 
         if ($request->has('cc_type') && $request->cc_type != '' && $request->cc_type != 'Loading...') {
             $CostCenters->where('costcenter.cc_type', $request->cc_type);
         }
+        $CostCenters ->orderBy('costcenter.id', 'desc');
+
         // ->get();
 
         // return DataTables::of($CostCenters)

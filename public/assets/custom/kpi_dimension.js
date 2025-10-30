@@ -160,12 +160,12 @@ $(document).ready(function() {
                 $('#ajax-loader').show();
             },
             success: function(response,textStatus, xhr) {
-            var status = xhr.status;
+                var status = xhr.status;
                 if(status == 200)
                 {
                     $('#view-kpidimension').DataTable().ajax.reload();
                 }
-                },
+            },
                 error: function(xhr, status, error) {
                     console.log(error);
             }

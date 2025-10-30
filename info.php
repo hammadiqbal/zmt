@@ -1,5 +1,4 @@
-Having issue while fetching large report into an email.
-
+before activation new logs module is tested, need to start testing from activations 
 
 .........................................................................
 check before upload to hosting

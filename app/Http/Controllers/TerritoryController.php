@@ -470,6 +470,7 @@ class TerritoryController extends Controller
         if ($request->has('province') && $request->province != '' && $request->province != 'Loading...') {
             $Divisions->where('division.province_id', $request->province);
         }
+        $Divisions->orderBy('id', 'desc');
         // ->get();
         // return DataTables::of($Divisions)
         return DataTables::eloquent($Divisions)
@@ -563,6 +564,7 @@ class TerritoryController extends Controller
         if ($request->has('division') && $request->division != '' && $request->division != 'Loading...') {
             $Districts->where('district.division_id', $request->division);
         }
+        $Districts->orderBy('id', 'desc');
         // ->get();
         // return DataTables::of($Districts)
         return DataTables::eloquent($Districts)

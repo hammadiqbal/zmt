@@ -194,6 +194,15 @@ $(document).ready(function() {
             }else if (label === 'Org Id') {
                 label = 'Organization';
             }
+            else if (label === 'District Id') {
+                label = 'District';
+            }
+            else if (label === 'Province Id') {
+                label = 'Province';
+            }
+            else if (label === 'Division Id') {
+                label = 'Division';
+            }
             
             row.append($('<th style="width:40%">').text(label));
             row.append($('<td>').text(data[key] === null || data[key] === '' ? '-' : data[key]));

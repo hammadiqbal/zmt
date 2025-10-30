@@ -236,7 +236,7 @@ class SiteSetupController extends Controller
         {
             $Sites->where('org_site.org_id', '=', $sessionOrg);
         }
-        $Sites = $Sites;
+        $Sites = $Sites->orderByDesc('id');
         
         // ->get()
         // return DataTables::of($Sites)

@@ -133,6 +133,10 @@ class LogController extends Controller
                 elseif ($lowerKey === 'service_mode_id') {
                     $transformedValue = $this->transformServiceModeId($value);
                 }
+                // Handle cc_type (Cost Center Type ID to name)
+                elseif ($lowerKey === 'cc_type') {
+                    $transformedValue = $this->transformCcTypeId($value);
+                }
                 // Handle billing_cc
                 elseif ($lowerKey === 'billing_cc') {
                     $transformedValue = $this->transformCostCenterId($value);
@@ -161,6 +165,18 @@ class LogController extends Controller
                 elseif ($lowerKey === 'type_id') {
                     $transformedValue = $this->transformTypeId($value);
                 }
+                // Handle kpi_group id
+                elseif ($lowerKey === 'kpi_group') {
+                    $transformedValue = $this->transformKpiGroupId($value);
+                }
+                // Handle kpi_dimension id
+                elseif ($lowerKey === 'kpi_dimension') {
+                    $transformedValue = $this->transformKpiDimensionId($value);
+                }
+                // Handle kpi_type id
+                elseif ($lowerKey === 'kpi_type') {
+                    $transformedValue = $this->transformKpiTypeId($value);
+                }
                 // Handle group_id
                 elseif ($lowerKey === 'group_id') {
                     $transformedValue = $this->transformGroupId($value);
@@ -170,7 +186,7 @@ class LogController extends Controller
                     $transformedValue = $this->transformUnitId($value);
                 }
                 // Handle charge (0/1 to No/Yes)
-                elseif ($lowerKey === 'charge') {
+                elseif ($lowerKey === 'charge' || $lowerKey === 'ordering' || $lowerKey === 'performing' || $lowerKey === 'inventory_status') {
                     $transformedValue = $this->transformBoolean($value);
                 }
                 // Handle division_id
@@ -567,6 +583,94 @@ class LogController extends Controller
         
         // Fallback: just return the ID without prefix
         return is_numeric($serviceModeId) ? $serviceModeId : ucwords(strtolower($serviceModeId));
+    }
+
+    /**
+     * Get KPI group name from kpi_group id
+     */
+    private function transformKpiGroupId($groupId)
+    {
+        if (!$groupId || $groupId === 0 || $groupId === '0') {
+            return 'N/A';
+        }
+        
+        $group = DB::table('kpi_group')->where('id', $groupId)->first();
+        if ($group && isset($group->name)) {
+            return ucwords(strtolower($group->name));
+        }
+        
+        if (is_string($groupId) && !is_numeric($groupId)) {
+            return ucwords(strtolower($groupId));
+        }
+        
+        return is_numeric($groupId) ? $groupId : ucwords(strtolower($groupId));
+    }
+
+    /**
+     * Get KPI dimension name from kpi_dimension id
+     */
+    private function transformKpiDimensionId($dimensionId)
+    {
+        if (!$dimensionId || $dimensionId === 0 || $dimensionId === '0') {
+            return 'N/A';
+        }
+        
+        $dimension = DB::table('kpi_dimension')->where('id', $dimensionId)->first();
+        if ($dimension && isset($dimension->name)) {
+            return ucwords(strtolower($dimension->name));
+        }
+        
+        if (is_string($dimensionId) && !is_numeric($dimensionId)) {
+            return ucwords(strtolower($dimensionId));
+        }
+        
+        return is_numeric($dimensionId) ? $dimensionId : ucwords(strtolower($dimensionId));
+    }
+
+    /**
+     * Get KPI type name from kpi_type id
+     */
+    private function transformKpiTypeId($typeId)
+    {
+        if (!$typeId || $typeId === 0 || $typeId === '0') {
+            return 'N/A';
+        }
+        
+        $type = DB::table('kpi_type')->where('id', $typeId)->first();
+        if ($type && isset($type->name)) {
+            return ucwords(strtolower($type->name));
+        }
+        
+        if (is_string($typeId) && !is_numeric($typeId)) {
+            return ucwords(strtolower($typeId));
+        }
+        
+        return is_numeric($typeId) ? $typeId : ucwords(strtolower($typeId));
+    }
+
+    /**
+     * Get cost center type name from cc_type
+     */
+    private function transformCcTypeId($ccTypeId)
+    {
+        if (!$ccTypeId || $ccTypeId === 0 || $ccTypeId === '0') {
+            return 'N/A';
+        }
+        
+        // Try to find cost center type by ID
+        $ccType = DB::table('cc_type')->where('id', $ccTypeId)->first();
+        
+        if ($ccType && isset($ccType->type)) {
+            return ucwords(strtolower($ccType->type));
+        }
+        
+        // If not found by ID, check if it's already a type name string
+        if (is_string($ccTypeId) && !is_numeric($ccTypeId)) {
+            return ucwords(strtolower($ccTypeId));
+        }
+        
+        // Fallback: just return the ID without prefix
+        return is_numeric($ccTypeId) ? $ccTypeId : ucwords(strtolower($ccTypeId));
     }
 
     /**

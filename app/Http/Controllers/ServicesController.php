@@ -826,7 +826,7 @@ class ServicesController extends Controller
         {
             abort(403, 'Forbidden');
         }
-        $ServiceUnits = ServiceUnit::select('*')->orderBy('id', 'asc');
+        $ServiceUnits = ServiceUnit::select('*')->orderBy('id', 'desc');
         // ->get()
         // return DataTables::of($ServiceUnits)
         return DataTables::eloquent($ServiceUnits)

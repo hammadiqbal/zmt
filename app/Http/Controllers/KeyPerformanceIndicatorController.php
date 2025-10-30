@@ -753,8 +753,8 @@ class KeyPerformanceIndicatorController extends Controller
             $newData = [
                 'code' => $KPIType->code,
                 'name' => $KPIType->name,
-                'group_id' => $KPIType->group_id,
-                'dimension_id' => $KPIType->dimension_id,
+                'kpi_group' => $KPIType->group_id,
+                'kpi_dimension' => $KPIType->dimension_id,
                 'status' => $KPIType->status,
                 'effective_timestamp' => $KPIType->effective_timestamp,
             ];
@@ -990,8 +990,8 @@ class KeyPerformanceIndicatorController extends Controller
         $oldData = [
             'code' => $KPITypes->code,
             'name' => $KPITypes->name,
-            'group_id' => $KPITypes->group_id,
-            'dimension_id' => $KPITypes->dimension_id,
+            'kpi_group' => $KPITypes->group_id,
+            'kpi_dimension' => $KPITypes->dimension_id,
             'status' => $KPITypes->status,
             'effective_timestamp' => $KPITypes->effective_timestamp,
         ];
@@ -1027,8 +1027,8 @@ class KeyPerformanceIndicatorController extends Controller
         $newData = [
             'code' => $KPITypes->code,
             'name' => $KPITypes->name,
-            'group_id' => $KPITypes->group_id,
-            'dimension_id' => $KPITypes->dimension_id,
+            'kpi_group' => $KPITypes->group_id,
+            'kpi_dimension' => $KPITypes->dimension_id,
             'status' => $KPITypes->status,
             'effective_timestamp' => $KPITypes->effective_timestamp,
         ];
@@ -1118,7 +1118,7 @@ class KeyPerformanceIndicatorController extends Controller
             // New logging (insert)
             $newData = [
                 'name' => $KPI->name,
-                'type_id' => $KPI->type_id,
+                'kpi_type' => $KPI->type_id,
                 'status' => $KPI->status,
                 'effective_timestamp' => $KPI->effective_timestamp,
             ];
@@ -1349,7 +1349,7 @@ class KeyPerformanceIndicatorController extends Controller
         // Capture old data
         $oldData = [
             'name' => $KPI->name,
-            'type_id' => $KPI->type_id,
+            'kpi_type' => $KPI->type_id,
             'status' => $KPI->status,
             'effective_timestamp' => $KPI->effective_timestamp,
         ];
@@ -1375,22 +1375,24 @@ class KeyPerformanceIndicatorController extends Controller
         $sessionName = $session->name;
         $sessionId = $session->id;
 
-        $KPI->save();
-
-        $KPIExists = KPI::where('name', $KPI->name)
+        $KPIExists = KPI::where('name', $request->input('u_kpi'))
+        ->where('type_id', $request->input('u_kpi_type'))
         ->exists();
 
         if ($KPIExists) {
             return response()->json(['info' => 'KPI already exists.']);
         }
 
+        $KPI->save();
+
         if (empty($KPI->id)) {
             return response()->json(['error' => 'Failed to update KPI. Please try again']);
         }
+        
         // New logging (update)
         $newData = [
             'name' => $KPI->name,
-            'type_id' => $KPI->type_id,
+            'kpi_type' => $KPI->type_id,
             'status' => $KPI->status,
             'effective_timestamp' => $KPI->effective_timestamp,
         ];

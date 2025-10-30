@@ -97,7 +97,7 @@
                                                                     <select class="form-control selecter p-0" name="province" id="province_name" style="color:#222d32">
                                                                         <option selected disabled value=' '>Select Province</option>
                                                                         @foreach ($ProvinceData as $Province)
-                                                                        <option value="{{ $Province['province_id'] }}"> {{ $Province['province_name'] }}</option>
+                                                                        <option value="{{ $Province['id'] }}"> {{ $Province['name'] }}</option>
                                                                         @endforeach
                                                                     </select>
                                                                 </div>

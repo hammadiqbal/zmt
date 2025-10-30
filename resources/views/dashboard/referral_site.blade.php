@@ -276,7 +276,7 @@
                                         <div class="row">
                                             <input type="hidden" class="form-control u_rf-id" name="u_rf-id">
 
-                                            @if($user->org_id == 0)
+                                            @if($user->org_id != 0)
                                             <div class="col-md-6">
                                                 <div class="form-group row">
                                                     <div class="col-md-12">
@@ -288,6 +288,22 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            {{-- @else
+                                            <div class="col-md-6">
+                                                <div class="form-group row">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group has-custom m-b-5">
+                                                            <label class="control-label">Organization</label>
+                                                            <select class="form-control selecter p-0" name="u_rf_org" id="u_rf_org" style="color:#222d32">
+                                                                <option selected disabled value=' '>Select Organization</option>
+                                                                @foreach ($Organizations as $Organization)
+                                                                    <option value="{{ $Organization['id'] }}"> {{ $Organization['organization'] }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div> --}}
                                             @endif
 
                                             <div class="col-md-6">
