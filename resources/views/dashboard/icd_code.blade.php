@@ -85,7 +85,7 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Enter Medical Descripton</label>
-                                                                    <textarea class="form-control" placeholder="Medical Description..." rows="3" name="icd_desc" spellcheck="false"></textarea>
+                                                                    <textarea class="form-control" placeholder="Medical Description..." rows="3" name="icd_desc" ></textarea>
                                                                 </div>
                                                                 <span class="text-danger" id="icd_desc_error"></span>
                                                             </div>
@@ -97,7 +97,7 @@
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <label class="control-label">Enter Medical Code</label>
-                                                                    <input type="text" class="form-control input-sm" placeholder="Medical Code.." name="icd_code" id="input01">
+                                                                    <input type="text" class="form-control input-sm" placeholder="Medical Code.." name="icd_code" >
                                                                 </div>
                                                                 <span class="text-danger" id="icd_code_error"></span>
                                                             </div>
@@ -178,7 +178,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <form id="update_icdcode">
-                @csrf
+                    @csrf
                     <div class="modal-body">
                         <!-- Row -->
                         <div class="row">
@@ -190,7 +190,7 @@
                                                 <div class="form-group">
                                                     <input type="hidden" class="form-control icd-id" name="icd-id">
                                                     <label class="control-label">Update Medical Description</label>
-                                                    <textarea class="form-control" rows="3" name="uicd_desc" required id="uicd_desc" spellcheck="false"></textarea>
+                                                    <textarea class="form-control" rows="3" name="uicd_desc" required id="uicd_desc"></textarea>
                                                 </div>
                                             </div>
 

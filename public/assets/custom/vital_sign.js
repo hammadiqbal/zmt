@@ -1,6 +1,8 @@
 
 // Vital Signs
 $(document).ready(function() {
+    initializeMRSearch('#vs_mr', null);
+
     var typingTimer;
     var doneTypingInterval = 200;
     var minLength = 7;

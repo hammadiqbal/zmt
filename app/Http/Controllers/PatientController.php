@@ -135,11 +135,21 @@ class PatientController extends Controller
     public function OrganizationPatient(Request $request)
     {
         $orgId = $request->input('orgId');
-
+        $siteId = $request->input('siteId');
+        $search = $request->input('search', '');
+        $page = $request->input('page', 1);
+        $limit = 10; 
+        $offset = ($page - 1) * $limit;
 
         $baseQuery = PatientRegistration::select('mr_code', 'name', 'cell_no')
-        ->where('status', 1)
-        ->where('org_id', $orgId);
+        ->where('status', 1);
+
+        // Filter by organization or site (site takes precedence if both provided)
+        if ($siteId) {
+            $baseQuery->where('site_id', $siteId);
+        } elseif ($orgId) {
+            $baseQuery->where('org_id', $orgId);
+        } 
 
         if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
             $sessionSiteIds = $this->assignedSites;
@@ -147,12 +157,22 @@ class PatientController extends Controller
                 $baseQuery->whereIn('site_id', $sessionSiteIds);
             }
         }
+
+        if (!empty($search)) {
+            $baseQuery->where(function($query) use ($search) {
+                $query->where('mr_code', 'like', '%' . $search . '%')
+                    ->orWhere('name', 'like', '%' . $search . '%')
+                    ->orWhere('cell_no', 'like', '%' . $search . '%');
+            });
+        }
+
         $baseQuery->orderByDesc('id'); 
-        $PatientMRCode = $baseQuery->get()->map(function ($row) {
+        
+        $PatientMRCode = $baseQuery->offset($offset)->limit($limit)->get()->map(function ($row) {
             $row->name = ucwords($row->name);
             return $row;
         });
-        // $PatientMRCode = $baseQuery->get();
+        
         return response()->json($PatientMRCode);
     }
 
@@ -1110,16 +1130,16 @@ class PatientController extends Controller
         // $UserorgId = $user->org_id;
         // $orgCode = Organization::where('id', $UserorgId)->value('code');
         $Organizations = Organization::select('id', 'organization')->where('status', 1)->get();
-        $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc');
-        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
-            $sessionSiteIds = $this->assignedSites;
-            if(!empty($sessionSiteIds)) {
-                $Patients->whereIn('site_id', $sessionSiteIds);
-            }
-        }
-        $Patients = $Patients->get();
+        // $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc');
+        // if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+        //     $sessionSiteIds = $this->assignedSites;
+        //     if(!empty($sessionSiteIds)) {
+        //         $Patients->whereIn('site_id', $sessionSiteIds);
+        //     }
+        // }
+        // $Patients = $Patients->get();
 
-        return view('dashboard.patient-inout', compact('user','Organizations','Patients'));
+        return view('dashboard.patient-inout', compact('user','Organizations'));
     }
 
     public function AddPatientArrival(PatientArrivalDepartureRequest $request)

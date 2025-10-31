@@ -188,7 +188,6 @@ $(document).ready(function() {
     //Update ICD Code Modal
     $(document).on('click', '.edit-icdcode', function() {
         var icdId = $(this).data('icd-code');
-        $('#edit-icdcode').modal('show');
         var url = '/medicalrecord/updateicdcode/' + icdId;
         $('#ajax-loader').show();
         $.ajax({
@@ -270,9 +269,9 @@ $(document).ready(function() {
                         confirmButtonText: 'OK'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            $('#edit-icdcode').modal('hide');
                             $('#view-icdcode').DataTable().ajax.reload();
                             $('#update_icdcode')[0].reset();
+                            $('#edit-icdcode').modal('hide');
                             $('.text-danger').hide();
                         }
                     });

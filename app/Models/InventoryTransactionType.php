@@ -14,7 +14,6 @@ class InventoryTransactionType extends Model
         'name',
         'activity_type',
         'request_mandatory',
-        'request_location_mandatory',
         'emp_location_mandatory_request',
         'source_location_type',
         'source_action',

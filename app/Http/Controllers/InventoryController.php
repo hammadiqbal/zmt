@@ -996,8 +996,7 @@ class InventoryController extends Controller
         'organization.organization as orgName')
         ->join('inventory_category', 'inventory_category.id', '=', 'inventory_type.cat_id')
         ->join('inventory_subcategory', 'inventory_subcategory.id', '=', 'inventory_type.sub_catid')
-        ->join('organization', 'organization.id', '=', 'inventory_type.org_id')
-        ->orderBy('inventory_type.id', 'desc');
+        ->join('organization', 'organization.id', '=', 'inventory_type.org_id');
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
@@ -1011,7 +1010,7 @@ class InventoryController extends Controller
         if ($request->has('subcat') && $request->subcat != '' && $request->subcat != 'Loading...') {
             $InventoryTypes->where('inventory_type.sub_catid', $request->subcat);
         }
-        $InventoryTypes = $InventoryTypes;
+        $InventoryTypes = $InventoryTypes->orderBy('inventory_type.id', 'desc');;
         // ->get()
         // return DataTables::of($InventoryTypes)
         return DataTables::eloquent($InventoryTypes)
@@ -1206,7 +1205,7 @@ class InventoryController extends Controller
 
         $InventoryTypes->name = $request->input('u_it_description');
         $InventoryTypes->cat_id = $request->input('u_it_catid');
-        $InventoryTypes->cat_id = $request->input('u_it_subcat');
+        $InventoryTypes->sub_catid = $request->input('u_it_subcat');
         $orgID = $request->input('u_it_org');
         if (isset($orgID)) {
             $InventoryTypes->org_id = $orgID;
@@ -1387,8 +1386,7 @@ class InventoryController extends Controller
         ->join('inventory_category', 'inventory_category.id', '=', 'inventory_generic.cat_id')
         ->join('inventory_subcategory', 'inventory_subcategory.id', '=', 'inventory_generic.sub_catid')
         ->join('inventory_type', 'inventory_type.id', '=', 'inventory_generic.type_id')
-        ->join('organization', 'organization.id', '=', 'inventory_generic.org_id')
-        ->orderBy('inventory_type.id', 'desc');
+        ->join('organization', 'organization.id', '=', 'inventory_generic.org_id');
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
@@ -1406,7 +1404,8 @@ class InventoryController extends Controller
         if ($request->has('type') && $request->type != '' && $request->type != 'Loading...') {
             $InventoryGenerics->where('inventory_generic.type_id', $request->type);
         }
-        $InventoryGenerics = $InventoryGenerics;
+        
+        $InventoryGenerics = $InventoryGenerics->orderBy('inventory_generic.id', 'desc');
         // ->get()
         // return DataTables::of($InventoryGenerics)
         return DataTables::eloquent($InventoryGenerics)
@@ -2266,7 +2265,7 @@ class InventoryController extends Controller
                 'name' => $InventoryTransactionTypes->name,
                 'activity_type' => $InventoryTransactionTypes->activity_type,
                 'request_mandatory' => $InventoryTransactionTypes->request_mandatory,
-                'emp_location_mandatory_request' => $InventoryTransactionTypes->emp_location_mandatory_request,
+                'emp_location_check' => $InventoryTransactionTypes->emp_location_mandatory_request,
                 'source_location_type' => $InventoryTransactionTypes->source_location_type,
                 'source_action' => $InventoryTransactionTypes->source_action,
                 'destination_location_type' => $InventoryTransactionTypes->destination_location_type,
@@ -2609,7 +2608,7 @@ class InventoryController extends Controller
             'name' => $InventoryTransactionTypes->name,
             'activity_type' => $InventoryTransactionTypes->activity_type,
             'request_mandatory' => $InventoryTransactionTypes->request_mandatory,
-            'emp_location_mandatory_request' => $InventoryTransactionTypes->emp_location_mandatory_request,
+            'emp_location_check' => $InventoryTransactionTypes->emp_location_mandatory_request,
             'source_location_type' => $InventoryTransactionTypes->source_location_type,
             'source_action' => $InventoryTransactionTypes->source_action,
             'destination_location_type' => $InventoryTransactionTypes->destination_location_type,
@@ -2670,7 +2669,7 @@ class InventoryController extends Controller
             'name' => $InventoryTransactionTypes->name,
             'activity_type' => $InventoryTransactionTypes->activity_type,
             'request_mandatory' => $InventoryTransactionTypes->request_mandatory,
-            'emp_location_mandatory_request' => $InventoryTransactionTypes->emp_location_mandatory_request,
+            'emp_location_check' => $InventoryTransactionTypes->emp_location_mandatory_request,
             'source_location_type' => $InventoryTransactionTypes->source_location_type,
             'source_action' => $InventoryTransactionTypes->source_action,
             'destination_location_type' => $InventoryTransactionTypes->destination_location_type,
@@ -2815,8 +2814,8 @@ class InventoryController extends Controller
             // New logging (insert)
             $newData = [
                 'org_id' => $ThirdParty->org_id,
-                'type' => $ThirdParty->type,
-                'category' => $ThirdParty->category,
+                'thirdparty_type' => $ThirdParty->type,
+                'thirdparty_category' => $ThirdParty->category,
                 'corporate_name' => $ThirdParty->corporate_name,
                 'prefix_id' => $ThirdParty->prefix_id,
                 'person_name' => $ThirdParty->person_name,
@@ -3083,8 +3082,8 @@ class InventoryController extends Controller
         // Capture old data
         $oldData = [
             'org_id' => $ThirdParty->org_id,
-            'type' => $ThirdParty->type,
-            'category' => $ThirdParty->category,
+            'thirdparty_type' => $ThirdParty->type,
+            'thirdparty_category' => $ThirdParty->category,
             'corporate_name' => $ThirdParty->corporate_name,
             'prefix_id' => $ThirdParty->prefix_id,
             'person_name' => $ThirdParty->person_name,
@@ -3137,8 +3136,8 @@ class InventoryController extends Controller
         // New logging (update)
         $newData = [
             'org_id' => $ThirdParty->org_id,
-            'type' => $ThirdParty->type,
-            'category' => $ThirdParty->category,
+            'thirdparty_type' => $ThirdParty->type,
+            'thirdpartycategory' => $ThirdParty->category,
             'corporate_name' => $ThirdParty->corporate_name,
             'prefix_id' => $ThirdParty->prefix_id,
             'person_name' => $ThirdParty->person_name,
@@ -3461,6 +3460,16 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $ConsumptionGroup = ConsumptionGroup::findOrFail($id);
+        
+        // Capture old data BEFORE modifying
+        $oldData = [
+            'org_id' => $ConsumptionGroup->org_id,
+            'description' => $ConsumptionGroup->description,
+            'remarks' => $ConsumptionGroup->remarks,
+            'status' => $ConsumptionGroup->status,
+            'effective_timestamp' => $ConsumptionGroup->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_cg_org');
 
         if (isset($orgID)) {
@@ -3493,13 +3502,6 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to update Consumption Group. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'org_id' => $ConsumptionGroup->getOriginal('org_id'),
-            'description' => $ConsumptionGroup->getOriginal('description'),
-            'remarks' => $ConsumptionGroup->getOriginal('remarks'),
-            'status' => $ConsumptionGroup->getOriginal('status'),
-            'effective_timestamp' => $ConsumptionGroup->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'org_id' => $ConsumptionGroup->org_id,
             'description' => $ConsumptionGroup->description,
@@ -3604,7 +3606,7 @@ class InventoryController extends Controller
                 'org_id' => $ConsumptionMethods->org_id,
                 'description' => $ConsumptionMethods->description,
                 'criteria' => $ConsumptionMethods->criteria,
-                'group_id' => $ConsumptionMethods->group_id,
+                'consumption_group' => $ConsumptionMethods->group_id,
                 'status' => $ConsumptionMethods->status,
                 'effective_timestamp' => $ConsumptionMethods->effective_timestamp,
             ];
@@ -3830,6 +3832,17 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $ConsumptionMethod = ConsumptionMethod::findOrFail($id);
+        
+        // Capture old data BEFORE modifying
+        $oldData = [
+            'org_id' => $ConsumptionMethod->org_id,
+            'description' => $ConsumptionMethod->description,
+            'criteria' => $ConsumptionMethod->criteria,
+            'consumption_group' => $ConsumptionMethod->group_id,
+            'status' => $ConsumptionMethod->status,
+            'effective_timestamp' => $ConsumptionMethod->effective_timestamp,
+        ];
+        
         $orgID= $request->input('u_cm_org');
         if (isset($orgID)) {
             $ConsumptionMethod->org_id = $orgID;
@@ -3862,19 +3875,11 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to update Consumption Method. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'org_id' => $ConsumptionMethod->org_id,
-            'description' => $ConsumptionMethod->getOriginal('description'),
-            'criteria' => $ConsumptionMethod->getOriginal('criteria'),
-            'group_id' => $ConsumptionMethod->getOriginal('group_id'),
-            'status' => $ConsumptionMethod->getOriginal('status'),
-            'effective_timestamp' => $ConsumptionMethod->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'org_id' => $ConsumptionMethod->org_id,
             'description' => $ConsumptionMethod->description,
             'criteria' => $ConsumptionMethod->criteria,
-            'group_id' => $ConsumptionMethod->group_id,
+            'consumption_group' => $ConsumptionMethod->group_id,
             'status' => $ConsumptionMethod->status,
             'effective_timestamp' => $ConsumptionMethod->effective_timestamp,
         ];
@@ -4009,8 +4014,8 @@ class InventoryController extends Controller
             $newData = [
                 'org_id' => $StockMonitoring->org_id,
                 'site_id' => $StockMonitoring->site_id,
-                'item_generic_id' => $StockMonitoring->item_generic_id,
-                'item_brand_id' => $StockMonitoring->item_brand_id,
+                'generic_id' => $StockMonitoring->item_generic_id,
+                'brand_id' => $StockMonitoring->item_brand_id,
                 'service_location_id' => $StockMonitoring->service_location_id,
                 'min_stock' => $StockMonitoring->min_stock,
                 'max_stock' => $StockMonitoring->max_stock,
@@ -4292,6 +4297,24 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $StockMonitoring = StockMonitoring::findOrFail($id);
+        
+        // Capture old data BEFORE modifying
+        $oldData = [
+            'org_id' => $StockMonitoring->org_id,
+            'site_id' => $StockMonitoring->site_id,
+            'generic_id' => $StockMonitoring->item_generic_id,
+            'brand_id' => $StockMonitoring->item_brand_id,
+            'service_location_id' => $StockMonitoring->service_location_id,
+            'min_stock' => $StockMonitoring->min_stock,
+            'max_stock' => $StockMonitoring->max_stock,
+            'monthly_consumption_ceiling' => $StockMonitoring->monthly_consumption_ceiling,
+            'min_reorder_qty' => $StockMonitoring->min_reorder_qty,
+            'primary_email' => $StockMonitoring->primary_email,
+            'secondary_email' => $StockMonitoring->secondary_email,
+            'status' => $StockMonitoring->status,
+            'effective_timestamp' => $StockMonitoring->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_sm_org');
 
         if (isset($orgID)) {
@@ -4353,26 +4376,11 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to update Stock Monitoring. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'org_id' => $StockMonitoring->getOriginal('org_id'),
-            'site_id' => $StockMonitoring->getOriginal('site_id'),
-            'item_generic_id' => $StockMonitoring->getOriginal('item_generic_id'),
-            'item_brand_id' => $StockMonitoring->getOriginal('item_brand_id'),
-            'service_location_id' => $StockMonitoring->getOriginal('service_location_id'),
-            'min_stock' => $StockMonitoring->getOriginal('min_stock'),
-            'max_stock' => $StockMonitoring->getOriginal('max_stock'),
-            'monthly_consumption_ceiling' => $StockMonitoring->getOriginal('monthly_consumption_ceiling'),
-            'min_reorder_qty' => $StockMonitoring->getOriginal('min_reorder_qty'),
-            'primary_email' => $StockMonitoring->getOriginal('primary_email'),
-            'secondary_email' => $StockMonitoring->getOriginal('secondary_email'),
-            'status' => $StockMonitoring->getOriginal('status'),
-            'effective_timestamp' => $StockMonitoring->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'org_id' => $StockMonitoring->org_id,
             'site_id' => $StockMonitoring->site_id,
-            'item_generic_id' => $StockMonitoring->item_generic_id,
-            'item_brand_id' => $StockMonitoring->item_brand_id,
+            'generic_id' => $StockMonitoring->item_generic_id,
+            'brand_id' => $StockMonitoring->item_brand_id,
             'service_location_id' => $StockMonitoring->service_location_id,
             'min_stock' => $StockMonitoring->min_stock,
             'max_stock' => $StockMonitoring->max_stock,
@@ -4693,6 +4701,16 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $InventorySourceDestinationType = InventorySourceDestinationType::findOrFail($id);
+        
+        // Capture old data BEFORE modifying
+        $oldData = [
+            'org_id' => $InventorySourceDestinationType->org_id,
+            'name' => $InventorySourceDestinationType->name,
+            'third_party' => $InventorySourceDestinationType->third_party,
+            'status' => $InventorySourceDestinationType->status,
+            'effective_timestamp' => $InventorySourceDestinationType->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_invsdt_org');
 
         if (isset($orgID)) {
@@ -4725,13 +4743,6 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to update Inventory Source Destination Type. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'org_id' => $InventorySourceDestinationType->getOriginal('org_id'),
-            'name' => $InventorySourceDestinationType->getOriginal('name'),
-            'third_party' => $InventorySourceDestinationType->getOriginal('third_party'),
-            'status' => $InventorySourceDestinationType->getOriginal('status'),
-            'effective_timestamp' => $InventorySourceDestinationType->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'org_id' => $InventorySourceDestinationType->org_id,
             'name' => $InventorySourceDestinationType->name,
@@ -5040,6 +5051,15 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $InventoryTransactionActivity = InventoryTransactionActivity::findOrFail($id);
+        
+        // Capture old data BEFORE modifying
+        $oldData = [
+            'org_id' => $InventoryTransactionActivity->org_id,
+            'name' => $InventoryTransactionActivity->name,
+            'status' => $InventoryTransactionActivity->status,
+            'effective_timestamp' => $InventoryTransactionActivity->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_invta_org');
 
         if (isset($orgID)) {
@@ -5071,12 +5091,6 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to update Inventory Transaction Activity. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'org_id' => $InventoryTransactionActivity->getOriginal('org_id'),
-            'name' => $InventoryTransactionActivity->getOriginal('name'),
-            'status' => $InventoryTransactionActivity->getOriginal('status'),
-            'effective_timestamp' => $InventoryTransactionActivity->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'org_id' => $InventoryTransactionActivity->org_id,
             'name' => $InventoryTransactionActivity->name,
@@ -5379,6 +5393,15 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $MedicationRoute = MedicationRoutes::findOrFail($id);
+        
+        // Capture old data BEFORE modifying
+        $oldData = [
+            'name' => $MedicationRoute->name,
+            'org_id' => $MedicationRoute->org_id,
+            'status' => $MedicationRoute->status,
+            'effective_timestamp' => $MedicationRoute->effective_timestamp,
+        ];
+        
         $MedicationRoute->name = $request->input('u_medicationroute');
         $orgID = $request->input('u_medicationroute_org');
         if (isset($orgID)) {
@@ -5409,12 +5432,6 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to update Medication Routes. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'name' => $MedicationRoute->getOriginal('name'),
-            'org_id' => $MedicationRoute->getOriginal('org_id'),
-            'status' => $MedicationRoute->getOriginal('status'),
-            'effective_timestamp' => $MedicationRoute->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'name' => $MedicationRoute->name,
             'org_id' => $MedicationRoute->org_id,
@@ -5718,6 +5735,15 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $MedicationFrequency = MedicationFrequency::findOrFail($id);
+        
+        // Capture old data BEFORE modifying
+        $oldData = [
+            'name' => $MedicationFrequency->name,
+            'org_id' => $MedicationFrequency->org_id,
+            'status' => $MedicationFrequency->status,
+            'effective_timestamp' => $MedicationFrequency->effective_timestamp,
+        ];
+        
         $MedicationFrequency->name = $request->input('u_medicationfrequency');
         $orgID = $request->input('u_medicationfrequency_org');
         if (isset($orgID)) {
@@ -5748,12 +5774,6 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to update Medication Frequency. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'name' => $MedicationFrequency->getOriginal('name'),
-            'org_id' => $MedicationFrequency->getOriginal('org_id'),
-            'status' => $MedicationFrequency->getOriginal('status'),
-            'effective_timestamp' => $MedicationFrequency->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'name' => $MedicationFrequency->name,
             'org_id' => $MedicationFrequency->org_id,
@@ -6115,7 +6135,7 @@ class InventoryController extends Controller
                 $Requisitions->whereIn('org_site.id', $sessionSiteIds);
             }
         }
-        $Requisitions = $Requisitions->get();
+        $Requisitions = $Requisitions->orderBy('material_consumption_requisition.id', 'desc')->get();
         return DataTables::of($Requisitions)
         // return DataTables::eloquent($Requisitions)
             // ->filter(function ($query) use ($request) {
@@ -6417,6 +6437,29 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $MaterialConsumptionRequisition = MaterialConsumptionRequisition::findOrFail($id);
+        
+        // Capture old data BEFORE modifying
+        $oldData = [
+            'org_id' => $MaterialConsumptionRequisition->org_id,
+            'site_id' => $MaterialConsumptionRequisition->site_id,
+            'transaction_type_id' => $MaterialConsumptionRequisition->transaction_type_id,
+            'source_location_id' => $MaterialConsumptionRequisition->source_location_id,
+            'destination_location_id' => $MaterialConsumptionRequisition->destination_location_id,
+            'mr_code' => $MaterialConsumptionRequisition->mr_code,
+            'patient_age' => $MaterialConsumptionRequisition->patient_age,
+            'patient_gender_id' => $MaterialConsumptionRequisition->patient_gender_id,
+            'service_id' => $MaterialConsumptionRequisition->service_id,
+            'service_mode_id' => $MaterialConsumptionRequisition->service_mode_id,
+            'billing_cc' => $MaterialConsumptionRequisition->billing_cc,
+            'physician_id' => $MaterialConsumptionRequisition->physician_id,
+            'generic_id' => $MaterialConsumptionRequisition->generic_id,
+            'qty' => $MaterialConsumptionRequisition->qty,
+            'remarks' => $MaterialConsumptionRequisition->remarks,
+            'status' => $MaterialConsumptionRequisition->status,
+            'code' => $MaterialConsumptionRequisition->code,
+            'effective_timestamp' => $MaterialConsumptionRequisition->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_mc_org');
         if (isset($orgID)) {
             $MaterialConsumptionRequisition->org_id = $orgID;
@@ -6502,26 +6545,6 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to update Requisition For material Consumption. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'org_id' => $MaterialConsumptionRequisition->getOriginal('org_id'),
-            'site_id' => $MaterialConsumptionRequisition->getOriginal('site_id'),
-            'transaction_type_id' => $MaterialConsumptionRequisition->getOriginal('transaction_type_id'),
-            'source_location_id' => $MaterialConsumptionRequisition->getOriginal('source_location_id'),
-            'destination_location_id' => $MaterialConsumptionRequisition->getOriginal('destination_location_id'),
-            'mr_code' => $MaterialConsumptionRequisition->getOriginal('mr_code'),
-            'patient_age' => $MaterialConsumptionRequisition->getOriginal('patient_age'),
-            'patient_gender_id' => $MaterialConsumptionRequisition->getOriginal('patient_gender_id'),
-            'service_id' => $MaterialConsumptionRequisition->getOriginal('service_id'),
-            'service_mode_id' => $MaterialConsumptionRequisition->getOriginal('service_mode_id'),
-            'billing_cc' => $MaterialConsumptionRequisition->getOriginal('billing_cc'),
-            'physician_id' => $MaterialConsumptionRequisition->getOriginal('physician_id'),
-            'generic_id' => $MaterialConsumptionRequisition->getOriginal('generic_id'),
-            'qty' => $MaterialConsumptionRequisition->getOriginal('qty'),
-            'remarks' => $MaterialConsumptionRequisition->getOriginal('remarks'),
-            'status' => $MaterialConsumptionRequisition->getOriginal('status'),
-            'code' => $MaterialConsumptionRequisition->getOriginal('code'),
-            'effective_timestamp' => $MaterialConsumptionRequisition->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'org_id' => $MaterialConsumptionRequisition->org_id,
             'site_id' => $MaterialConsumptionRequisition->site_id,
@@ -6992,6 +7015,22 @@ class InventoryController extends Controller
         }
 
         $MaterialTransferRequisition = RequisitionForMaterialTransfer::findOrFail($id);
+        
+        // Capture old data BEFORE modifying
+        $oldData = [
+            'org_id' => $MaterialTransferRequisition->org_id,
+            'source_site' => $MaterialTransferRequisition->source_site,
+            'source_location' => $MaterialTransferRequisition->source_location,
+            'destination_site' => $MaterialTransferRequisition->destination_site,
+            'destination_location' => $MaterialTransferRequisition->destination_location,
+            'transaction_type_id' => $MaterialTransferRequisition->transaction_type_id,
+            'generic_id' => $MaterialTransferRequisition->generic_id,
+            'qty' => $MaterialTransferRequisition->qty,
+            'remarks' => $MaterialTransferRequisition->remarks,
+            'status' => $MaterialTransferRequisition->status,
+            'effective_timestamp' => $MaterialTransferRequisition->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_rmt_org');
         if (isset($orgID)) {
             $MaterialTransferRequisition->org_id = $orgID;
@@ -7020,19 +7059,6 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to update Requisition For Material Transfer. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'org_id' => $MaterialTransferRequisition->getOriginal('org_id'),
-            'source_site' => $MaterialTransferRequisition->getOriginal('source_site'),
-            'source_location' => $MaterialTransferRequisition->getOriginal('source_location'),
-            'destination_site' => $MaterialTransferRequisition->getOriginal('destination_site'),
-            'destination_location' => $MaterialTransferRequisition->getOriginal('destination_location'),
-            'transaction_type_id' => $MaterialTransferRequisition->getOriginal('transaction_type_id'),
-            'generic_id' => $MaterialTransferRequisition->getOriginal('generic_id'),
-            'qty' => $MaterialTransferRequisition->getOriginal('qty'),
-            'remarks' => $MaterialTransferRequisition->getOriginal('remarks'),
-            'status' => $MaterialTransferRequisition->getOriginal('status'),
-            'effective_timestamp' => $MaterialTransferRequisition->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'org_id' => $MaterialTransferRequisition->org_id,
             'source_site' => $MaterialTransferRequisition->source_site,
@@ -7189,7 +7215,7 @@ class InventoryController extends Controller
             $PO->org_id = $Organization;
             $PO->site_id = $Site;
             $PO->vendor_id = $Vendor;
-            $PO->inventory_brand_id = $Brand;
+            $PO->brand_id = $Brand;
             $PO->demand_qty = $Qty;
             $PO->amount = $Amount;
             $PO->discount = $Discount;
@@ -7729,6 +7755,21 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $PO = PurchaseOrder::findOrFail($id);
+        
+        // Capture old data BEFORE modifying
+        $oldData = [
+            'org_id' => $PO->org_id,
+            'site_id' => $PO->site_id,
+            'vendor_id' => $PO->vendor_id,
+            'brand_id' => $PO->inventory_brand_id,
+            'demand_qty' => $PO->demand_qty,
+            'amount' => $PO->amount,
+            'discount' => $PO->discount,
+            'remarks' => $PO->remarks,
+            'status' => $PO->status,
+            'effective_timestamp' => $PO->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_po_org');
         if (isset($orgID)) {
             $PO->org_id = $orgID;
@@ -7781,23 +7822,11 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to update Purchase Order Details. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'org_id' => $PO->getOriginal('org_id'),
-            'site_id' => $PO->getOriginal('site_id'),
-            'vendor_id' => $PO->getOriginal('vendor_id'),
-            'inventory_brand_id' => $PO->getOriginal('inventory_brand_id'),
-            'demand_qty' => $PO->getOriginal('demand_qty'),
-            'amount' => $PO->getOriginal('amount'),
-            'discount' => $PO->getOriginal('discount'),
-            'remarks' => $PO->getOriginal('remarks'),
-            'status' => $PO->getOriginal('status'),
-            'effective_timestamp' => $PO->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'org_id' => $PO->org_id,
             'site_id' => $PO->site_id,
             'vendor_id' => $PO->vendor_id,
-            'inventory_brand_id' => $PO->inventory_brand_id,
+            'brand_id' => $PO->inventory_brand_id,
             'demand_qty' => $PO->demand_qty,
             'amount' => $PO->amount,
             'discount' => $PO->discount,
@@ -8411,6 +8440,20 @@ class InventoryController extends Controller
             abort(403, 'Forbidden');
         }
         $WO = WorkOrder::findOrFail($id);
+        
+        // Capture old data BEFORE modifying
+        $oldData = [
+            'org_id' => $WO->org_id,
+            'site_id' => $WO->site_id,
+            'vendor_id' => $WO->vendor_id,
+            'particulars' => $WO->particulars,
+            'amount' => $WO->amount,
+            'discount' => $WO->discount,
+            'remarks' => $WO->remarks,
+            'status' => $WO->status,
+            'effective_timestamp' => $WO->effective_timestamp,
+        ];
+        
         $orgID = $request->input('u_wo_org');
         if (isset($orgID)) {
             $WO->org_id = $orgID;
@@ -8460,17 +8503,6 @@ class InventoryController extends Controller
             return response()->json(['error' => 'Failed to update Work Order Details. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'org_id' => $WO->getOriginal('org_id'),
-            'site_id' => $WO->getOriginal('site_id'),
-            'vendor_id' => $WO->getOriginal('vendor_id'),
-            'particulars' => $WO->getOriginal('particulars'),
-            'amount' => $WO->getOriginal('amount'),
-            'discount' => $WO->getOriginal('discount'),
-            'remarks' => $WO->getOriginal('remarks'),
-            'status' => $WO->getOriginal('status'),
-            'effective_timestamp' => $WO->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'org_id' => $WO->org_id,
             'site_id' => $WO->site_id,

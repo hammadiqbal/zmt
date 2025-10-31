@@ -121,8 +121,16 @@ class LogController extends Controller
                 elseif ($lowerKey === 'site_id') {
                     $transformedValue = $this->transformSiteId($value);
                 }
+                // Handle prefix_id
+                elseif ($lowerKey === 'prefix_id') {
+                    $transformedValue = $this->transformPrefixId($value);
+                }
+                // Handle gender_id
+                elseif ($lowerKey === 'gender_id') {
+                    $transformedValue = $this->transformGenderId($value);
+                }
                 // Handle service_location_id
-                elseif ($lowerKey === 'service_location_id') {
+                elseif ($lowerKey === 'service_location_id' || $lowerKey === 'location_id') {
                     $transformedValue = $this->transformServiceLocationId($value);
                 }
                 // Handle service_id
@@ -138,7 +146,7 @@ class LogController extends Controller
                     $transformedValue = $this->transformCcTypeId($value);
                 }
                 // Handle billing_cc
-                elseif ($lowerKey === 'billing_cc') {
+                elseif ($lowerKey === 'billing_cc' || $lowerKey === 'cc_id') {
                     $transformedValue = $this->transformCostCenterId($value);
                 }
                 // Handle schedule_id
@@ -157,6 +165,9 @@ class LogController extends Controller
                 elseif ($lowerKey === 'servicemode_ids') {
                     $transformedValue = $this->transformCommaSeparatedIds($value, 'service_mode');
                 }
+                elseif ($lowerKey === 'icd_id' || $lowerKey === 'complaints') {
+                    $transformedValue = $this->transformMedicalCodeIds($value);
+                }
                 // Handle province_id
                 elseif ($lowerKey === 'province_id') {
                     $transformedValue = $this->transformProvinceId($value);
@@ -164,6 +175,13 @@ class LogController extends Controller
                 // Handle type_id
                 elseif ($lowerKey === 'type_id') {
                     $transformedValue = $this->transformTypeId($value);
+                }
+                // Handle icd_type (s=Symptom, p=Procedure, d=Diagnosis)
+                elseif ($lowerKey === 'icd_type') {
+                    $transformedValue = $this->transformIcdType($value);
+                }
+                elseif ($lowerKey === 'action') {
+                    $transformedValue = $this->transformReqEPI($value);
                 }
                 // Handle kpi_group id
                 elseif ($lowerKey === 'kpi_group') {
@@ -177,16 +195,101 @@ class LogController extends Controller
                 elseif ($lowerKey === 'kpi_type') {
                     $transformedValue = $this->transformKpiTypeId($value);
                 }
+                elseif ($lowerKey === 'kpi_id') {
+                    $transformedValue = $this->transformKpi($value);
+                }
+                elseif ($lowerKey === 'cadre_id') {
+                    $transformedValue = $this->transformCadre($value);
+                }
+                // Handle position_id
+                elseif ($lowerKey === 'position_id') {
+                    $transformedValue = $this->transformPositionId($value);
+                }
                 // Handle group_id
                 elseif ($lowerKey === 'group_id') {
                     $transformedValue = $this->transformGroupId($value);
                 }
-                // Handle unit_id
                 elseif ($lowerKey === 'unit_id') {
                     $transformedValue = $this->transformUnitId($value);
                 }
+                // Handle consumption_group
+                elseif ($lowerKey === 'consumption_group') {
+                    $transformedValue = $this->transformConsumptionGroupId($value);
+                }
+                // Handle consumption_method
+                elseif ($lowerKey === 'consumption_method') {
+                    $transformedValue = $this->transformConsumptionMethodId($value);
+                }
+                // Handle cat_id (inventory category)
+                elseif ($lowerKey === 'cat_id' || $lowerKey === 'category_id') {
+                    $transformedValue = $this->transformCatId($value);
+                }
+                // Handle sub_catid (inventory subcategory)
+                elseif ($lowerKey === 'sub_catid' || $lowerKey === 'sub_category_id') {
+                    $transformedValue = $this->transformSubCatId($value);
+                }
+                // Handle generic_id (inventory generic)
+                elseif ($lowerKey === 'generic_id') {
+                    $transformedValue = $this->transformGenericId($value);
+                }
+                // Handle brand_id (inventory brand)
+                elseif ($lowerKey === 'brand_id') {
+                    $transformedValue = $this->transformBrandId($value);
+                }
+                // Handle activity_type (inventory transaction activity)
+                elseif ($lowerKey === 'activity_type') {
+                    $transformedValue = $this->transformActivityType($value);
+                }
+                // Handle source_location_type (inventory source destination type)
+                elseif ($lowerKey === 'source_location_type') {
+                    $transformedValue = $this->transformSourceDestinationType($value);
+                }
+                // Handle destination_location_type (inventory source destination type)
+                elseif ($lowerKey === 'destination_location_type') {
+                    $transformedValue = $this->transformSourceDestinationType($value);
+                }
+                // Handle source_action (a=Add, s=Subtract, r=Reversal, n=Not Applicable)
+                elseif ($lowerKey === 'source_action') {
+                    $transformedValue = $this->transformActionType($value);
+                }
+                // Handle destination_action (a=Add, s=Subtract, r=Reversal, n=Not Applicable)
+                elseif ($lowerKey === 'destination_action') {
+                    $transformedValue = $this->transformActionType($value);
+                }
+                // Handle source_location (comma-separated service location IDs)
+                elseif ($lowerKey === 'source_location') {
+                    $transformedValue = $this->transformCommaSeparatedIds($value, 'service_location');
+                }
+                // Handle destination_location (comma-separated service location IDs)
+                elseif ($lowerKey === 'destination_location') {
+                    $transformedValue = $this->transformCommaSeparatedIds($value, 'service_location');
+                }
+                // Handle emp_location_check (s=Source, d=Destination, n=Not Applicable)
+                elseif ($lowerKey === 'emp_location_check') {
+                    $transformedValue = $this->transformEmpLocationType($value);
+                }
+                // Handle emp_location_source_destination (s=Source, d=Destination, n=Not Applicable)
+                elseif ($lowerKey === 'emp_location_source_destination') {
+                    $transformedValue = $this->transformEmpLocationType($value);
+                }
+                // Handle thirdparty_type (v=Vendor, d=Donor)
+                elseif ($lowerKey === 'thirdparty_type' || $lowerKey === 'third_party_type') {
+                    $transformedValue = $this->transformThirdPartyType($value);
+                }
+                // Handle thirdpartycategory (c=Corporate, i=Individual)
+                elseif ($lowerKey === 'thirdpartycategory' || $lowerKey === 'third_party_category' || $lowerKey === 'thirdparty_category') {
+                    $transformedValue = $this->transformThirdPartyCategory($value);
+                }
+                // Handle vendor_id (third party vendor)
+                elseif ($lowerKey === 'vendor_id') {
+                    $transformedValue = $this->transformVendorId($value);
+                }
+                // Handle patient_mandatory (y/n to Yes/No)
+                elseif ($lowerKey === 'patient_mandatory' || $lowerKey === 'third_party' || $lowerKey === 'request_mandatory' || $lowerKey === 'transaction_expired_status') {
+                    $transformedValue = $this->transformYesNo($value);
+                }
                 // Handle charge (0/1 to No/Yes)
-                elseif ($lowerKey === 'charge' || $lowerKey === 'ordering' || $lowerKey === 'performing' || $lowerKey === 'inventory_status') {
+                elseif ($lowerKey === 'charge' || $lowerKey === 'ordering' || $lowerKey === 'performing' || $lowerKey === 'inventory_status' || $lowerKey === 'mandatory' || $lowerKey === 'job_continue') {
                     $transformedValue = $this->transformBoolean($value);
                 }
                 // Handle division_id
@@ -205,14 +308,21 @@ class LogController extends Controller
                 elseif ($lowerKey === 'site_enabled') {
                     $transformedValue = $this->transformBoolean($value);
                 }
+                elseif ($lowerKey === 'icd_id') {
+                    $transformedValue = $this->transformMedicalCodes($value);
+                }
                 // Handle effective_timestamp
-                elseif ($lowerKey === 'effective_timestamp') {
+                elseif ($lowerKey === 'effective_timestamp' || $lowerKey === 'service_start_time' || $lowerKey === 'investigation_confirmation_datetime') {
                     if (is_numeric($value) && $value > 0) {
                         $transformedValue = Carbon::createFromTimestamp($value)->format('l d F Y - h:i:s A');
                     } else {
                         $transformedValue = 'Not Set';
                     }
                 }
+                elseif ($lowerKey === 'start_timestamp' || $lowerKey === 'end_timestamp') {
+                    $transformedValue = Carbon::createFromTimestamp($value)->format('h:i A ');
+                }
+
                 // Handle email - keep original format
                 elseif ($lowerKey === 'email') {
                     $transformedValue = $value;
@@ -225,6 +335,7 @@ class LogController extends Controller
                 else {
                     $transformedValue = $this->transformStatusValues($value);
                 }
+                
                 
                 $transformed[$key] = $transformedValue;
             }
@@ -257,6 +368,26 @@ class LogController extends Controller
         } elseif ($value === 1 || $value === '1') {
             return 'Yes';
         }
+        return $value;
+    }
+
+    /**
+     * Transform patient_mandatory y/n to Yes/No
+     */
+    private function transformYesNo($value)
+    {
+        if ($value === null || $value === '') {
+            return 'N/A';
+        }
+        
+        $value = is_string($value) ? strtolower(trim($value)) : $value;
+        
+        if ($value === 'y' || $value === 'yes') {
+            return 'Yes';
+        } elseif ($value === 'n' || $value === 'no') {
+            return 'No';
+        }
+        
         return $value;
     }
 
@@ -410,8 +541,10 @@ class LogController extends Controller
         return is_numeric($districtId) ? $districtId : ucwords(strtolower($districtId));
     }
 
+  
+
     /**
-     * Get service type name from type_id
+     * Get service type or inventory type name from type_id
      */
     private function transformTypeId($typeId)
     {
@@ -419,20 +552,67 @@ class LogController extends Controller
             return 'N/A';
         }
         
-        // Try to find service type by ID
+        // First try to find inventory type by ID
+        $inventoryType = DB::table('inventory_type')->where('id', $typeId)->first();
+        
+        if ($inventoryType && isset($inventoryType->name)) {
+            return ucwords(strtolower($inventoryType->name));
+        }
+        
+        // If not found, try to find service type by ID
         $serviceType = DB::table('service_type')->where('id', $typeId)->first();
         
         if ($serviceType) {
             return ucwords(strtolower($serviceType->name));
         }
         
-        // If not found by ID, check if it's already a service type name string
+        // If not found by ID, check if it's already a type name string
         if (is_string($typeId) && !is_numeric($typeId)) {
             return ucwords(strtolower($typeId));
         }
         
         // Fallback: just return the ID without prefix
         return is_numeric($typeId) ? $typeId : ucwords(strtolower($typeId));
+    }
+
+    /**
+     * Transform ICD type short code to readable text
+     * s => Symptom, p => Procedure, d => Diagnosis
+     */
+    private function transformIcdType($value)
+    {
+        if ($value === null || $value === '') {
+            return 'N/A';
+        }
+        $v = is_string($value) ? strtolower(trim($value)) : $value;
+        if ($v === 's') {
+            return 'Symptom';
+        }
+        if ($v === 'p') {
+            return 'Procedure';
+        }
+        if ($v === 'd') {
+            return 'Diagnosis';
+        }
+        return is_string($value) ? ucwords(strtolower($value)) : $value;
+    }
+    
+     private function transformReqEPI($value)
+    {
+        if ($value === null || $value === '') {
+            return 'N/A';
+        }
+        $v = is_string($value) ? strtolower(trim($value)) : $value;
+        if ($v === 'e') {
+            return 'Encounter';
+        }
+        if ($v === 'p') {
+            return 'Procedure';
+        }
+        if ($v === 'i') {
+            return 'Investigation';
+        }
+        return is_string($value) ? ucwords(strtolower($value)) : $value;
     }
 
     /**
@@ -483,6 +663,327 @@ class LogController extends Controller
         
         // Fallback: just return the ID without prefix
         return is_numeric($unitId) ? $unitId : ucwords(strtolower($unitId));
+    }
+
+    /**
+     * Get consumption group name from consumption_group ID
+     */
+    private function transformConsumptionGroupId($consumptionGroupId)
+    {
+        if (!$consumptionGroupId || $consumptionGroupId === 0 || $consumptionGroupId === '0') {
+            return 'N/A';
+        }
+        
+        // Try to find consumption group by ID
+        $consumptionGroup = DB::table('consumption_group')->where('id', $consumptionGroupId)->first();
+        
+        if ($consumptionGroup && isset($consumptionGroup->description)) {
+            return ucwords(strtolower($consumptionGroup->description));
+        }
+        
+        // If not found by ID, check if it's already a consumption group name string
+        if (is_string($consumptionGroupId) && !is_numeric($consumptionGroupId)) {
+            return ucwords(strtolower($consumptionGroupId));
+        }
+        
+        // Fallback: just return the ID without prefix
+        return is_numeric($consumptionGroupId) ? $consumptionGroupId : ucwords(strtolower($consumptionGroupId));
+    }
+
+    /**
+     * Get consumption method name from consumption_method ID
+     */
+    private function transformConsumptionMethodId($consumptionMethodId)
+    {
+        if (!$consumptionMethodId || $consumptionMethodId === 0 || $consumptionMethodId === '0') {
+            return 'N/A';
+        }
+        
+        // Try to find consumption method by ID
+        $consumptionMethod = DB::table('consumption_method')->where('id', $consumptionMethodId)->first();
+        
+        if ($consumptionMethod && isset($consumptionMethod->description)) {
+            return ucwords(strtolower($consumptionMethod->description));
+        }
+        
+        // If not found by ID, check if it's already a consumption method name string
+        if (is_string($consumptionMethodId) && !is_numeric($consumptionMethodId)) {
+            return ucwords(strtolower($consumptionMethodId));
+        }
+        
+        // Fallback: just return the ID without prefix
+        return is_numeric($consumptionMethodId) ? $consumptionMethodId : ucwords(strtolower($consumptionMethodId));
+    }
+
+    /**
+     * Get inventory category name from cat_id
+     */
+    private function transformCatId($catId)
+    {
+        if (!$catId || $catId === 0 || $catId === '0') {
+            return 'N/A';
+        }
+        
+        // Try to find inventory category by ID
+        $category = DB::table('inventory_category')->where('id', $catId)->first();
+        
+        if ($category && isset($category->name)) {
+            return ucwords(strtolower($category->name));
+        }
+        
+        // If not found by ID, check if it's already a category name string
+        if (is_string($catId) && !is_numeric($catId)) {
+            return ucwords(strtolower($catId));
+        }
+        
+        // Fallback: just return the ID without prefix
+        return is_numeric($catId) ? $catId : ucwords(strtolower($catId));
+    }
+
+    /**
+     * Get inventory subcategory name from sub_catid
+     */
+    private function transformSubCatId($subCatId)
+    {
+        if (!$subCatId || $subCatId === 0 || $subCatId === '0') {
+            return 'N/A';
+        }
+        
+        // Try to find inventory subcategory by ID
+        $subCategory = DB::table('inventory_subcategory')->where('id', $subCatId)->first();
+        
+        if ($subCategory && isset($subCategory->name)) {
+            return ucwords(strtolower($subCategory->name));
+        }
+        
+        // If not found by ID, check if it's already a subcategory name string
+        if (is_string($subCatId) && !is_numeric($subCatId)) {
+            return ucwords(strtolower($subCatId));
+        }
+        
+        // Fallback: just return the ID without prefix
+        return is_numeric($subCatId) ? $subCatId : ucwords(strtolower($subCatId));
+    }
+
+    /**
+     * Get inventory generic name from generic_id
+     */
+    private function transformGenericId($genericId)
+    {
+        if (!$genericId || $genericId === 0 || $genericId === '0') {
+            return 'N/A';
+        }
+        
+        // Try to find inventory generic by ID
+        $generic = DB::table('inventory_generic')->where('id', $genericId)->first();
+        
+        if ($generic && isset($generic->name)) {
+            return ucwords(strtolower($generic->name));
+        }
+        
+        // If not found by ID, check if it's already a generic name string
+        if (is_string($genericId) && !is_numeric($genericId)) {
+            return ucwords(strtolower($genericId));
+        }
+        
+        // Fallback: just return the ID without prefix
+        return is_numeric($genericId) ? $genericId : ucwords(strtolower($genericId));
+    }
+
+    /**
+     * Get inventory brand name from brand_id
+     */
+    private function transformBrandId($brandId)
+    {
+        if (!$brandId || $brandId === 0 || $brandId === '0') {
+            return 'N/A';
+        }
+        
+        // Try to find inventory brand by ID
+        $brand = DB::table('inventory_brand')->where('id', $brandId)->first();
+        
+        if ($brand && isset($brand->name)) {
+            return ucwords(strtolower($brand->name));
+        }
+        
+        // If not found by ID, check if it's already a brand name string
+        if (is_string($brandId) && !is_numeric($brandId)) {
+            return ucwords(strtolower($brandId));
+        }
+        
+        // Fallback: just return the ID without prefix
+        return is_numeric($brandId) ? $brandId : ucwords(strtolower($brandId));
+    }
+
+    /**
+     * Get inventory transaction activity name from activity_type
+     */
+    private function transformActivityType($activityTypeId)
+    {
+        if (!$activityTypeId || $activityTypeId === 0 || $activityTypeId === '0') {
+            return 'N/A';
+        }
+        
+        // Try to find inventory transaction activity by ID
+        $activity = DB::table('inventory_transaction_activity')->where('id', $activityTypeId)->first();
+        
+        if ($activity && isset($activity->name)) {
+            return ucwords(strtolower($activity->name));
+        }
+        
+        // If not found by ID, check if it's already an activity name string
+        if (is_string($activityTypeId) && !is_numeric($activityTypeId)) {
+            return ucwords(strtolower($activityTypeId));
+        }
+        
+        // Fallback: just return the ID without prefix
+        return is_numeric($activityTypeId) ? $activityTypeId : ucwords(strtolower($activityTypeId));
+    }
+
+    /**
+     * Get inventory source destination type name from source/destination location type
+     */
+    private function transformSourceDestinationType($typeId)
+    {
+        if (!$typeId || $typeId === 0 || $typeId === '0') {
+            return 'N/A';
+        }
+        
+        // Try to find inventory source destination type by ID
+        $type = DB::table('inventory_source_destination_type')->where('id', $typeId)->first();
+        
+        if ($type && isset($type->name)) {
+            return ucwords(strtolower($type->name));
+        }
+        
+        // If not found by ID, check if it's already a type name string
+        if (is_string($typeId) && !is_numeric($typeId)) {
+            return ucwords(strtolower($typeId));
+        }
+        
+        // Fallback: just return the ID without prefix
+        return is_numeric($typeId) ? $typeId : ucwords(strtolower($typeId));
+    }
+
+    /**
+     * Transform action type codes to readable text
+     * a => Add, s => Subtract, r => Reversal, n => Not Applicable
+     */
+    private function transformActionType($value)
+    {
+        if ($value === null || $value === '') {
+            return 'N/A';
+        }
+        
+        $v = is_string($value) ? strtolower(trim($value)) : $value;
+        
+        $actionMap = [
+            'a' => 'Add',
+            's' => 'Subtract',
+            'r' => 'Reversal',
+            'n' => 'Not Applicable'
+        ];
+        
+        return $actionMap[$v] ?? ucwords(strtolower($value));
+    }
+
+    /**
+     * Transform employee location type codes to readable text
+     * s => Source, d => Destination, n => Not Applicable
+     */
+    private function transformEmpLocationType($value)
+    {
+        if ($value === null || $value === '') {
+            return 'N/A';
+        }
+        
+        $v = is_string($value) ? strtolower(trim($value)) : $value;
+        
+        $locationMap = [
+            's' => 'Source',
+            'd' => 'Destination',
+            'n' => 'Not Applicable'
+        ];
+        
+        return $locationMap[$v] ?? ucwords(strtolower($value));
+    }
+
+    /**
+     * Transform third party type codes to readable text
+     * v => Vendor, d => Donor
+     */
+    private function transformThirdPartyType($value)
+    {
+        if ($value === null || $value === '') {
+            return 'N/A';
+        }
+        
+        $v = is_string($value) ? strtolower(trim($value)) : $value;
+        
+        $typeMap = [
+            'v' => 'Vendor',
+            'd' => 'Donor'
+        ];
+        
+        return $typeMap[$v] ?? ucwords(strtolower($value));
+    }
+
+    /**
+     * Transform third party category codes to readable text
+     * c => Corporate, i => Individual
+     */
+    private function transformThirdPartyCategory($value)
+    {
+        if ($value === null || $value === '') {
+            return 'N/A';
+        }
+        
+        $v = is_string($value) ? strtolower(trim($value)) : $value;
+        
+        $categoryMap = [
+            'c' => 'Corporate',
+            'i' => 'Individual'
+        ];
+        
+        return $categoryMap[$v] ?? ucwords(strtolower($value));
+    }
+
+    /**
+     * Get vendor name from vendor_id (third_party table)
+     */
+    private function transformVendorId($vendorId)
+    {
+        if (!$vendorId || $vendorId === 0 || $vendorId === '0') {
+            return 'N/A';
+        }
+        
+        // Try to find vendor in third_party table by ID
+        $vendor = DB::table('third_party')->where('id', $vendorId)->first();
+        
+        if ($vendor) {
+            // Return corporate name if exists, otherwise person name
+            if (!empty($vendor->corporate_name)) {
+                return ucwords(strtolower($vendor->corporate_name));
+            } elseif (!empty($vendor->person_name)) {
+                // Get prefix if available
+                $prefix = '';
+                if (!empty($vendor->prefix_id)) {
+                    $prefixRecord = DB::table('prefix')->where('id', $vendor->prefix_id)->first();
+                    if ($prefixRecord && !empty($prefixRecord->name)) {
+                        $prefix = ucwords(strtolower($prefixRecord->name)) . ' ';
+                    }
+                }
+                return $prefix . ucwords(strtolower($vendor->person_name));
+            }
+        }
+        
+        // If not found by ID, check if it's already a vendor name string
+        if (is_string($vendorId) && !is_numeric($vendorId)) {
+            return ucwords(strtolower($vendorId));
+        }
+        
+        // Fallback: just return the ID without prefix
+        return is_numeric($vendorId) ? $vendorId : ucwords(strtolower($vendorId));
     }
 
     /**
@@ -543,21 +1044,42 @@ class LogController extends Controller
         if (!$serviceId || $serviceId === 0 || $serviceId === '0') {
             return 'N/A';
         }
-        
-        // Try to find service by ID
-        $service = DB::table('services')->where('id', $serviceId)->first();
-        
-        if ($service) {
-            return ucwords(strtolower($service->name));
+
+        // Handle comma-separated IDs
+        if (is_string($serviceId) && strpos($serviceId, ',') !== false) {
+            $ids = explode(',', $serviceId);
+            $names = [];
+
+            foreach ($ids as $id) {
+                $id = trim($id);
+                if ($id === '' || $id === '0') {
+                    continue;
+                }
+
+                $record = DB::table('services')->where('id', $id)->first();
+                if ($record) {
+                    $names[] = ucwords(strtolower($record->name));
+                } else {
+                    $names[] = $id;
+                }
+            }
+
+            return implode(', ', $names);
         }
-        
+
         // If not found by ID, check if it's already a service name string
         if (is_string($serviceId) && !is_numeric($serviceId)) {
             return ucwords(strtolower($serviceId));
         }
-        
-        // Fallback: just return the ID without prefix
-        return is_numeric($serviceId) ? $serviceId : ucwords(strtolower($serviceId));
+
+        // Single ID
+        $service = DB::table('services')->where('id', $serviceId)->first();
+        if ($service) {
+            return ucwords(strtolower($service->name));
+        }
+
+        // Fallback
+        return $serviceId;
     }
 
     /**
@@ -606,6 +1128,69 @@ class LogController extends Controller
         return is_numeric($groupId) ? $groupId : ucwords(strtolower($groupId));
     }
 
+    private function transformPrefixId($id)
+    {
+        if (!$id || $id === 0 || $id === '0') {
+            return 'N/A';
+        }
+        $prefix = DB::table('prefix')->where('id', $id)->first();
+        if ($prefix && isset($prefix->name)) {
+            return ucwords(strtolower($prefix->name));
+        }
+        if (is_string($id) && !is_numeric($id)) {
+            return ucwords(strtolower($id));
+        }
+        return is_numeric($id) ? $id : ucwords(strtolower($id));
+    }
+
+    private function transformGenderId($id)
+    {
+        if (!$id || $id === 0 || $id === '0') {
+            return 'N/A';
+        }
+        $gender = DB::table('gender')->where('id', $id)->first();
+        if ($gender && isset($gender->name)) {
+            return ucwords(strtolower($gender->name));
+        }
+        if (is_string($id) && !is_numeric($id)) {
+            return ucwords(strtolower($id));
+        }
+        return is_numeric($id) ? $id : ucwords(strtolower($id));
+    }
+
+    private function transformPositionId($id)
+    {
+        if (!$id || $id === 0 || $id === '0') {
+            return 'N/A';
+        }
+        $position = DB::table('emp_position')->where('id', $id)->first();
+        if ($position && isset($position->name)) {
+            return ucwords(strtolower($position->name));
+        }
+        if (is_string($id) && !is_numeric($id)) {
+            return ucwords(strtolower($id));
+        }
+        return is_numeric($id) ? $id : ucwords(strtolower($id));
+    }
+
+    private function transformCadre($id)
+    {
+        if (!$id || $id === 0 || $id === '0') {
+            return 'N/A';
+        }
+        
+        $Cadre = DB::table('emp_cadre')->where('id', $id)->first();
+        if ($Cadre && isset($Cadre->name)) {
+            return ucwords(strtolower($Cadre->name));
+        }
+        
+        if (is_string($id) && !is_numeric($id)) {
+            return ucwords(strtolower($id));
+        }
+        
+        return is_numeric($id) ? $id : ucwords(strtolower($id));
+    }
+
     /**
      * Get KPI dimension name from kpi_dimension id
      */
@@ -648,6 +1233,24 @@ class LogController extends Controller
         return is_numeric($typeId) ? $typeId : ucwords(strtolower($typeId));
     }
 
+    private function transformKpi($id)
+    {
+        if (!$id || $id === 0 || $id === '0') {
+            return 'N/A';
+        }
+        
+        $kpi = DB::table('kpi')->where('id', $id)->first();
+        if ($kpi && isset($kpi->name)) {
+            return ucwords(strtolower($kpi->name));
+        }
+        
+        if (is_string($id) && !is_numeric($id)) {
+            return ucwords(strtolower($id));
+        }
+        
+        return is_numeric($id) ? $id : ucwords(strtolower($id));
+    }
+
     /**
      * Get cost center type name from cc_type
      */
@@ -672,6 +1275,8 @@ class LogController extends Controller
         // Fallback: just return the ID without prefix
         return is_numeric($ccTypeId) ? $ccTypeId : ucwords(strtolower($ccTypeId));
     }
+
+
 
     /**
      * Get cost center name from billing_cc
@@ -768,4 +1373,67 @@ class LogController extends Controller
         // Fallback
         return $value;
     }
+
+    private function transformMedicalCodeIds($value)
+    {
+        if (!$value || $value === '' || $value === 0 || $value === '0') {
+            return 'N/A';
+        }
+        $tableName = 'icd_code';
+        
+        // If it's already a single non-numeric string without commas, return as-is
+        if (is_string($value) && !is_numeric($value) && strpos($value, ',') === false) {
+            return $value;
+        }
+        
+        // Handle comma-separated IDs
+        if (is_string($value) && strpos($value, ',') !== false) {
+            $ids = explode(',', $value);
+            $lines = [];
+            
+            foreach ($ids as $id) {
+                $id = trim($id);
+                if ($id === '' || $id === '0') {
+                    continue;
+                }
+                
+                $record = DB::table($tableName)->where('id', $id)->first();
+                if ($record) {
+                    $code = isset($record->code) ? $record->code : null;
+                    $description = isset($record->description) ? ucwords(strtolower($record->description)) : null;
+                    if ($code && $description) {
+                        $lines[] = $code . ' - ' . $description;
+                    } elseif ($code) {
+                        $lines[] = $code;
+                    } elseif ($description) {
+                        $lines[] = $description;
+                    } else {
+                        $lines[] = $id;
+                    }
+                } else {
+                    $lines[] = $id;
+                }
+            }
+            
+            return implode("\n", $lines);
+        }
+        
+        // Single ID
+        $record = DB::table($tableName)->where('id', $value)->first();
+        if ($record) {
+            $code = isset($record->code) ? $record->code : null;
+            $description = isset($record->description) ? ucwords(strtolower($record->description)) : null;
+            if ($code && $description) {
+                return $code . ' - ' . $description;
+            } elseif ($code) {
+                return $code;
+            } elseif ($description) {
+                return $description;
+            }
+        }
+        
+        // Fallback
+        return $value;
+    }
+
 }

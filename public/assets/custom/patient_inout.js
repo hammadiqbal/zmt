@@ -10,28 +10,25 @@ $(document).ready(function() {
             });
         });  
 
-        fetchOrgPatient(filterOrgId, '#pad_mrno', function(data) {
-            $('#pad_mrno').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', false);
-            // $.each(data, function(key, value) {
-            //     $('#pad_mrno').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name + '</option>');
-            // });
-            $.each(data, function(key, value) {
-                $('#pad_mrno').append(
-                    '<option value="' + value.mr_code + '">' +
-                        value.mr_code + ' - ' + value.name +
-                        (value.cell_no ? ' - ' + value.cell_no : '') +
-                    '</option>'
-                );
-            });
-        });
+        // Initialize MR number dropdown with AJAX search
+        initializeMRSearch('#pad_mrno', filterOrgId);
     }
     else{
         $('#pad_site').html("<option selected disabled value=''>Select Site</option>").prop('disabled',true);
         OrgChangeSites('#pad_org', '#pad_site', null);
         
         $('#pad_mrno').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', true);
-        OrgChangeMRCode('#pad_org', '#pad_mrno', null);
+        // Use new AJAX-based MR code handler
+        $('#pad_org').on('change', function() {
+            var orgId = $(this).val();
+            if (orgId) {
+                initializeMRSearch('#pad_mrno', orgId);
+            } else {
+                $('#pad_mrno').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', true);
+            }
+        });
     }
+
 
     //Open Patient Arrival & Departure Setup
     function getEncryptedParams() {
@@ -351,21 +348,31 @@ $(document).ready(function() {
         // Call on page load
         updateDateFilterState();
 
-    $('#pad_site, #pad_mrno').on('change', function () {
-          // Check if site or MR number is selected
-          var siteSelected = $('#pad_site').val() && $('#pad_site').val() !== '' && $('#pad_site').val() !== 'Select Site';
-          var mrSelected = $('#pad_mrno').val() && $('#pad_mrno').val() !== '' && $('#pad_mrno').val() !== 'Select MR #';
-          
-          if (siteSelected || mrSelected) {
-              // If site or MR is selected, unselect date filter but keep it enabled
-              $('#pad_date_filter').val('').prop('disabled', false).change();
-          } else {
-              // If neither site nor MR is selected, enable date filter and set to today
-              $('#pad_date_filter').val('today').prop('disabled', false);
-          }
-          
-          viewpatientArrivalDeparture.ajax.reload();  
-      });
+    // Handle change events for site and MR number (using event delegation for Select2)
+    $('#pad_site').on('change', function () {
+        handleFilterChange();
+    });
+
+    // Handle Select2 change event for MR number
+    $(document).on('change', '#pad_mrno', function () {
+        handleFilterChange();
+    });
+
+    function handleFilterChange() {
+        // Check if site or MR number is selected
+        var siteSelected = $('#pad_site').val() && $('#pad_site').val() !== '' && $('#pad_site').val() !== 'Select Site';
+        var mrSelected = $('#pad_mrno').val() && $('#pad_mrno').val() !== '' && $('#pad_mrno').val() !== 'Select MR #';
+        
+        if (siteSelected || mrSelected) {
+            // If site or MR is selected, unselect date filter but keep it enabled
+            $('#pad_date_filter').val('').prop('disabled', false).change();
+        } else {
+            // If neither site nor MR is selected, enable date filter and set to today
+            $('#pad_date_filter').val('today').prop('disabled', false);
+        }
+        
+        viewpatientArrivalDeparture.ajax.reload();  
+    }
 
      // Handle date filter selection
      $('#pad_date_filter').on('change', function() {
@@ -374,7 +381,12 @@ $(document).ready(function() {
 
      $('.clearFilter').on('click', function () {
          $('#pad_site').val($('#pad_site option:first').val()).change();
-         $('#pad_mrno').val($('#pad_mrno option:first').val()).change();
+         // Clear Select2 dropdown
+         if ($('#pad_mrno').hasClass('select2-hidden-accessible')) {
+             $('#pad_mrno').val(null).trigger('change');
+         } else {
+             $('#pad_mrno').val($('#pad_mrno option:first').val()).change();
+         }
          $('#pad_date_filter').val('today').prop('disabled', false).change();
          viewpatientArrivalDeparture.ajax.reload();   
      });

@@ -1,6 +1,8 @@
 
 //Encounters And Procedures
 $(document).ready(function() {
+    initializeMRSearch('#ep_mr', null);
+
     var typingTimer;
     var doneTypingInterval = 200;
     var minLength = 7;

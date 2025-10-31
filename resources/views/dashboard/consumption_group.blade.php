@@ -87,7 +87,7 @@
                                                         </select>
                                                     </div>
                                                     @else
-                                                    <div class="col-md-6">
+                                                    <div class="col-md-12">
                                                         <div class="form-group row">
                                                             <div class="col-md-12">
                                                                 <div class="form-group has-custom m-b-5">
@@ -105,17 +105,6 @@
                                                     </div>
                                                     @endif
 
-                                                    <div class="col-md-6">
-                                                        <div class="form-group row">
-                                                            <div class="col-md-12">
-                                                                <div class="form-group has-custom m-b-5">
-                                                                    <label class="control-label">Effective Date&Time</label>
-                                                                    <input type="text" id="date-format" name="cg_edt" class="form-control input06" placeholder="Select Effective Date & Time">
-                                                                </div>
-                                                                <span class="text-danger" id="cg_edt_error"></span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
 
                                                     <div class="col-md-12">
                                                         <div class="form-group row">
@@ -137,6 +126,19 @@
                                                                     <textarea class="form-control" placeholder="Enter Remarks" rows="2" name="cg_remarks" spellcheck="false"></textarea>
                                                                 </div>
                                                                 <span class="text-danger" id="cg_remarks_error"></span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    
+                                                    <div class="col-md-12">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group has-custom m-b-5">
+                                                                    <label class="control-label">Effective Date&Time</label>
+                                                                    <input type="text" id="date-format" name="cg_edt" class="form-control input06" placeholder="Select Effective Date & Time">
+                                                                </div>
+                                                                <span class="text-danger" id="cg_edt_error"></span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -198,7 +200,7 @@
                                         <div class="row">
                                             <input type="hidden" class="form-control u_cg-id" name="u_cg-id">
                                             @if($user->org_id == 0)
-                                            <div class="col-md-6">
+                                            <div class="col-md-12">
                                                 <div class="form-group">
                                                     <label class="control-label">Update Organization</label>
                                                     <select class="form-control selecter p-0" id="u_cg_org" required name="u_cg_org" style="color:#222d32">
@@ -207,13 +209,7 @@
                                             </div>
                                             @endif
 
-                                            <div class="col-md-6">
-                                                <div class="form-group">
-                                                    <label class="control-label">Update Effective Date&Time</label>
-                                                    <input type="text" name="u_cg_edt" id="date-format1" required class="form-control input06 dt uedt">
-                                                </div>
-                                            </div>
-                                          
+                                        
 
                                             <div class="col-md-12">
                                                 <div class="form-group row m-b-5">
@@ -237,7 +233,13 @@
                                                 </div>
                                             </div>
 
-
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label class="control-label">Update Effective Date&Time</label>
+                                                    <input type="text" name="u_cg_edt" id="date-format1" required class="form-control input06 dt uedt">
+                                                </div>
+                                            </div>
+                                          
                                            
 
                                         </div>

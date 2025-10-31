@@ -346,6 +346,14 @@ class HRController extends Controller
         }
         $Gender = EmployeeGender::findOrFail($id);
 
+        // Capture old values BEFORE making any changes so logs have correct old data
+        $oldData = [
+            'name' => $Gender->name,
+            'status' => $Gender->status,
+            'effective_timestamp' => $Gender->effective_timestamp,
+        ];
+
+        // Apply updates
         $Gender->name = $request->input('u_eg');
         $effective_date = $request->input('u_eg_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
@@ -371,12 +379,7 @@ class HRController extends Controller
         if (empty($Gender->id)) {
             return response()->json(['error' => 'Failed to update Gender. Please try again']);
         }
-        // New logging (update)
-        $oldData = [
-            'name' => $Gender->getOriginal('name'),
-            'status' => $Gender->getOriginal('status'),
-            'effective_timestamp' => $Gender->getOriginal('effective_timestamp'),
-        ];
+        // Prepare new values AFTER save
         $newData = [
             'name' => $Gender->name,
             'status' => $Gender->status,
@@ -651,6 +654,14 @@ class HRController extends Controller
         }
         $Prefix = PrefixSetup::findOrFail($id);
 
+        // Capture old values BEFORE making any changes
+        $oldData = [
+            'name' => $Prefix->name,
+            'status' => $Prefix->status,
+            'effective_timestamp' => $Prefix->effective_timestamp,
+        ];
+
+        // Apply incoming updates
         $Prefix->name = $request->input('u_prefix');
         $effective_date = $request->input('u_effective_timestamp');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
@@ -676,12 +687,7 @@ class HRController extends Controller
         if (empty($Prefix->id)) {
             return response()->json(['error' => 'Failed to update Prefix. Please try again']);
         }
-        // New logging (update)
-        $oldData = [
-            'name' => $Prefix->getOriginal('name'),
-            'status' => $Prefix->getOriginal('status'),
-            'effective_timestamp' => $Prefix->getOriginal('effective_timestamp'),
-        ];
+        // Prepare new values AFTER save
         $newData = [
             'name' => $Prefix->name,
             'status' => $Prefix->status,
@@ -974,6 +980,13 @@ class HRController extends Controller
         }
         $empStatus = EmployeeStatus::findOrFail($id);
 
+        // Capture old values before applying updates
+        $oldData = [
+            'name' => $empStatus->name,
+            'status' => $empStatus->status,
+            'effective_timestamp' => $empStatus->effective_timestamp,
+        ];
+
         $empStatus->name = $request->input('u_es');
         $effective_date = $request->input('u_es_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
@@ -1000,11 +1013,6 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee Status. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'name' => $empStatus->getOriginal('name'),
-            'status' => $empStatus->getOriginal('status'),
-            'effective_timestamp' => $empStatus->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'name' => $empStatus->name,
             'status' => $empStatus->status,
@@ -1309,6 +1317,14 @@ class HRController extends Controller
         }
         $workingStatus = EmployeeWorkingStatus::findOrFail($id);
 
+        // Capture old values before applying updates
+        $oldData = [
+            'name' => $workingStatus->name,
+            'job_continue' => $workingStatus->job_continue,
+            'status' => $workingStatus->status,
+            'effective_timestamp' => $workingStatus->effective_timestamp,
+        ];
+
         $workingStatus->name = $request->input('u_ews');
         $jobContinue = $request->input('u_jobcontinue');
         if ($jobContinue  == 'on') {
@@ -1342,12 +1358,6 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee Working Status. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'name' => $workingStatus->getOriginal('name'),
-            'job_continue' => $workingStatus->getOriginal('job_continue'),
-            'status' => $workingStatus->getOriginal('status'),
-            'effective_timestamp' => $workingStatus->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'name' => $workingStatus->name,
             'job_continue' => $workingStatus->job_continue,
@@ -1640,6 +1650,13 @@ class HRController extends Controller
         }
         $EmployeeQualification = EmployeeQualificationLevel::findOrFail($id);
 
+        // Capture old values before applying updates
+        $oldData = [
+            'name' => $EmployeeQualification->name,
+            'status' => $EmployeeQualification->status,
+            'effective_timestamp' => $EmployeeQualification->effective_timestamp,
+        ];
+
         $EmployeeQualification->name = $request->input('u_eql');
         $effective_date = $request->input('u_eql_edt');
         $effective_date = Carbon::createFromFormat('l d F Y - h:i A', $effective_date)->timestamp;
@@ -1666,11 +1683,6 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee Qualification Level. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'name' => $EmployeeQualification->getOriginal('name'),
-            'status' => $EmployeeQualification->getOriginal('status'),
-            'effective_timestamp' => $EmployeeQualification->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'name' => $EmployeeQualification->name,
             'status' => $EmployeeQualification->status,
@@ -1884,7 +1896,7 @@ class HRController extends Controller
             ->editColumn('status', function ($EmployeeCadre) {
                 $rights = $this->rights;
                 $updateStatus = explode(',', $rights->cadre_setup)[3];
-                return $updateStatus == 1 ? ($EmployeeCadre->status ? '<span class="label label-success cadre_setup cursor-pointer" data-id="'.$EmployeeCadre->id.'" data-status="'.$EmployeeCadre->status.'">Active</span>' : '<span class="label label-danger cadre_setup cursor-pointer" data-id="'.$EmployeeCadre->id.'" data-status="'.$EmployeeCadre->status.'">Inactive</span>') : ($EmployeeCadre->status ? '<span class="label label-success">Active</span>' : '<span class="label label-danger">Inactive</span>');
+                return $updateStatus == 1 ? ($EmployeeCadre->status ? '<span class="label label-success empCadre_status cursor-pointer" data-id="'.$EmployeeCadre->id.'" data-status="'.$EmployeeCadre->status.'">Active</span>' : '<span class="label label-danger empCadre_status cursor-pointer" data-id="'.$EmployeeCadre->id.'" data-status="'.$EmployeeCadre->status.'">Inactive</span>') : ($EmployeeCadre->status ? '<span class="label label-success">Active</span>' : '<span class="label label-danger">Inactive</span>');
 
             })
             ->rawColumns(['action', 'status',
@@ -1989,6 +2001,14 @@ class HRController extends Controller
             abort(403, 'Forbidden');
         }
         $EmployeeCadre = EmployeeCadre::findOrFail($id);
+
+        // Capture old values before applying updates
+        $oldData = [
+            'name' => $EmployeeCadre->name,
+            'org_id' => $EmployeeCadre->org_id,
+            'status' => $EmployeeCadre->status,
+            'effective_timestamp' => $EmployeeCadre->effective_timestamp,
+        ];
         $orgID = $request->input('u_cadreOrg');
         if (isset($orgID)) {
             $EmployeeCadre->org_id = $orgID;
@@ -2019,12 +2039,6 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee Cadre. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'name' => $EmployeeCadre->getOriginal('name'),
-            'org_id' => $EmployeeCadre->getOriginal('org_id'),
-            'status' => $EmployeeCadre->getOriginal('status'),
-            'effective_timestamp' => $EmployeeCadre->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'name' => $EmployeeCadre->name,
             'org_id' => $EmployeeCadre->org_id,
@@ -2374,6 +2388,15 @@ class HRController extends Controller
             abort(403, 'Forbidden');
         }
         $EmployeePosition = EmployeePosition::findOrFail($id);
+
+        // Capture old values before applying updates
+        $oldData = [
+            'name' => $EmployeePosition->name,
+            'org_id' => $EmployeePosition->org_id,
+            'cadre_id' => $EmployeePosition->cadre_id,
+            'status' => $EmployeePosition->status,
+            'effective_timestamp' => $EmployeePosition->effective_timestamp,
+        ];
         $orgID = $request->input('u_positionOrg');
         if (isset($orgID)) {
             $EmployeePosition->org_id = $orgID;
@@ -2405,13 +2428,6 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee Position. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'name' => $EmployeePosition->getOriginal('name'),
-            'org_id' => $EmployeePosition->getOriginal('org_id'),
-            'cadre_id' => $EmployeePosition->getOriginal('cadre_id'),
-            'status' => $EmployeePosition->getOriginal('status'),
-            'effective_timestamp' => $EmployeePosition->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'name' => $EmployeePosition->name,
             'org_id' => $EmployeePosition->org_id,
@@ -2821,7 +2837,7 @@ class HRController extends Controller
             }
         }
 
-        $Employees = $Employees;
+        $Employees = $Employees->orderBy('employee.id', 'desc');
         // ->get()
         // return DataTables::of($Employees)
         return DataTables::eloquent($Employees)
@@ -2983,7 +2999,6 @@ class HRController extends Controller
             ->make(true);
     }
 
-
     public function EmployeeProfileCompletion($employeeId)
     {
         $tables = [
@@ -3005,7 +3020,6 @@ class HRController extends Controller
 
         return ($count / count($tables)) * 100; // Calculate percentage
     }
-
 
     public function UpdateEmployeeDetailStatus(Request $request)
     {
@@ -3400,7 +3414,19 @@ class HRController extends Controller
         $Employee = Employee::findOrFail($id);
         $oldEmail = $Employee->email;
 
-
+        // Capture old values before applying updates
+        $oldData = [
+            'name' => $Employee->name,
+            'email' => $Employee->email,
+            'mobile_no' => $Employee->mobile_no,
+            'org_id' => $Employee->org_id,
+            'site_id' => $Employee->site_id,
+            'cc_id' => $Employee->cc_id,
+            'cadre_id' => $Employee->cadre_id,
+            'position_id' => $Employee->position_id,
+            'status' => $Employee->status,
+            'effective_timestamp' => $Employee->effective_timestamp,
+        ];
         $EmployeeName = trim($request->input('u_emp_name'));
         $Employee->name = $EmployeeName;
         $Employee->guardian_name = trim($request->input('u_guardian_name'));
@@ -3563,18 +3589,6 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'name' => $Employee->getOriginal('name'),
-            'email' => $Employee->getOriginal('email'),
-            'mobile_no' => $Employee->getOriginal('mobile_no'),
-            'org_id' => $Employee->getOriginal('org_id'),
-            'site_id' => $Employee->getOriginal('site_id'),
-            'cc_id' => $Employee->getOriginal('cc_id'),
-            'cadre_id' => $Employee->getOriginal('cadre_id'),
-            'position_id' => $Employee->getOriginal('position_id'),
-            'status' => $Employee->getOriginal('status'),
-            'effective_timestamp' => $Employee->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'name' => $Employee->name,
             'email' => $Employee->email,
@@ -3781,7 +3795,6 @@ class HRController extends Controller
                 $EmployeeSalaries->whereIn('employee.site_id', $sessionSiteIds);
             }
         }
-        $EmployeeSalaries = $EmployeeSalaries->orderBy('employee.id', 'desc');
 
         $session = auth()->user();
         $sessionOrg = $session->org_id;
@@ -3789,6 +3802,8 @@ class HRController extends Controller
         {
             $EmployeeSalaries->where('employee.org_id', '=', $sessionOrg);
         }
+        $EmployeeSalaries = $EmployeeSalaries->orderBy('emp_salary.id', 'desc');
+
         $EmployeeSalaries = $EmployeeSalaries;
         // ->get()
         // return DataTables::of($EmployeeSalaries)
@@ -4381,6 +4396,13 @@ class HRController extends Controller
         $empId = $request->input('empId');
         $EmpQualificationSetup = EmployeeQualification::where('emp_id', $empId)->firstOrFail();
 
+        // Capture old values before applying updates
+        $oldData = [
+            'levelid' => $EmpQualificationSetup->levelid,
+            'qualification_date' => $EmpQualificationSetup->qualification_date,
+            'name' => $EmpQualificationSetup->name,
+        ];
+
         // Get all the data
         $QualificationLevel = $request->input('u_ql');
         $QualificationDate = $request->input('u_qd');
@@ -4418,11 +4440,6 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee Qualification. Please try again']);
         }
 
-        $oldData = [
-            'levelid' => $EmpQualificationSetup->getOriginal('levelid'),
-            'qualification_date' => $EmpQualificationSetup->getOriginal('qualification_date'),
-            'name' => $EmpQualificationSetup->getOriginal('name'),
-        ];
         $newData = [
             'levelid' => $EmpQualificationSetup->levelid,
             'qualification_date' => $EmpQualificationSetup->qualification_date,
@@ -4760,6 +4777,18 @@ class HRController extends Controller
         $id = $request->input('ued-id');
         $employeeDocument = EmployeeDocuments::findOrFail($id);
 
+        // Capture old values before applying updates
+        $oldData = [
+            'document_desc' => $employeeDocument->document_desc,
+            'documents' => $employeeDocument->documents,
+            'effective_timestamp' => $employeeDocument->effective_timestamp,
+            'status' => $employeeDocument->status,
+        ];
+
+        $session = auth()->user();
+        $sessionName = $session->name;
+        $sessionId = $session->id;
+
         // Remove selected documents
         if ($request->has('removed_documents')) {
             $removedDocs = explode(',', $request->input('removed_documents'));
@@ -4812,9 +4841,33 @@ class HRController extends Controller
 
         $employeeDocument->save();
 
+        // Log update
+        $newData = [
+            'document_desc' => $employeeDocument->document_desc,
+            'documents' => $employeeDocument->documents,
+            'effective_timestamp' => $employeeDocument->effective_timestamp,
+            'status' => $employeeDocument->status,
+        ];
+        $logId = createLog(
+            'employee_documents',
+            'update',
+            [
+                'message' => 'Employee Documents have been updated',
+                'updated_by' => $sessionName
+            ],
+            $employeeDocument->id,
+            $oldData,
+            $newData,
+            $sessionId
+        );
+        $docLog = EmployeeDocuments::where('id', $employeeDocument->id)->first();
+        $logIds = $docLog->logid ? explode(',', $docLog->logid) : [];
+        $logIds[] = $logId;
+        $docLog->logid = implode(',', $logIds);
+        $docLog->save();
+
         return response()->json(['success' => true]);
     }
-
 
 
     public function GetMedicalLicenseEmployee(Request $request)
@@ -5024,6 +5077,14 @@ class HRController extends Controller
         $empId = $request->input('empId');
         $EmpMedicalLicense = EmployeeMedicalLicense::where('emp_id', $empId)->firstOrFail();
 
+        // Capture old values before applying updates
+        $oldData = [
+            'name' => $EmpMedicalLicense->name,
+            'ref_no' => $EmpMedicalLicense->ref_no,
+            'expire_date' => $EmpMedicalLicense->expire_date,
+            'status' => $EmpMedicalLicense->status,
+        ];
+
         $MedicalLicense = $request->input('u_medicalLicense');
         $RefNo = $request->input('u_refNo');
         $ExpireDate = $request->input('u_ed');
@@ -5069,12 +5130,6 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee Medical License. Please try again']);
         }
 
-        $oldData = [
-            'name' => $EmpMedicalLicense->getOriginal('name'),
-            'ref_no' => $EmpMedicalLicense->getOriginal('ref_no'),
-            'expire_date' => $EmpMedicalLicense->getOriginal('expire_date'),
-            'status' => $EmpMedicalLicense->getOriginal('status'),
-        ];
         $newData = [
             'name' => $EmpMedicalLicense->name,
             'ref_no' => $EmpMedicalLicense->ref_no,
@@ -5409,6 +5464,15 @@ class HRController extends Controller
         $empId = $request->input('empId');
 
         $EmpCostCenter = EmployeeCC::where('emp_id', $empId)->firstOrFail();
+
+        // Capture old values before applying updates
+        $oldData = [
+            'site_id' => $EmpCostCenter->site_id,
+            'cc_id' => $EmpCostCenter->cc_id,
+            'percentage' => $EmpCostCenter->percentage,
+            'effective_timestamp' => $EmpCostCenter->effective_timestamp,
+            'status' => $EmpCostCenter->status,
+        ];
         $CostCenter = $request->input('u_empcc');
         $HeadCountSite = $request->input('u_empcc_site');
         $Percent = $request->input('u_ecc_percent');
@@ -5469,6 +5533,7 @@ class HRController extends Controller
 
         $session = auth()->user();
         $sessionName = $session->name;
+        $sessionId = $session->id;
 
         $EmpCostCenter->save();
 
@@ -5476,13 +5541,6 @@ class HRController extends Controller
             return response()->json(['error' => 'Failed to update Employee Cost Center. Please try again']);
         }
 
-        $oldData = [
-            'site_id' => $EmpCostCenter->getOriginal('site_id'),
-            'cc_id' => $EmpCostCenter->getOriginal('cc_id'),
-            'percentage' => $EmpCostCenter->getOriginal('percentage'),
-            'effective_timestamp' => $EmpCostCenter->getOriginal('effective_timestamp'),
-            'status' => $EmpCostCenter->getOriginal('status'),
-        ];
         $newData = [
             'site_id' => $EmpCostCenter->site_id,
             'cc_id' => $EmpCostCenter->cc_id,
@@ -5868,6 +5926,13 @@ class HRController extends Controller
         }
         $EmployeeServiceAllocation = EmployeeServiceAllocation::findOrFail($id);
 
+        // Capture old values before applying updates
+        $oldData = [
+            'service_id' => $EmployeeServiceAllocation->service_id,
+            'status' => $EmployeeServiceAllocation->status,
+            'effective_timestamp' => $EmployeeServiceAllocation->effective_timestamp,
+        ];
+
         $ServiceIDs = $request->input('u_saservice');
         $ServiceIds = is_array($ServiceIDs) ? implode(',', $ServiceIDs) : '';
         $EmployeeServiceAllocation->service_id = $ServiceIds;
@@ -5897,11 +5962,6 @@ class HRController extends Controller
             return response()->json(['error' => 'Employee Service Allocation Failed. Please try again']);
         }
         // New logging (update)
-        $oldData = [
-            'service_id' => $EmployeeServiceAllocation->getOriginal('service_id'),
-            'status' => $EmployeeServiceAllocation->getOriginal('status'),
-            'effective_timestamp' => $EmployeeServiceAllocation->getOriginal('effective_timestamp'),
-        ];
         $newData = [
             'service_id' => $EmployeeServiceAllocation->service_id,
             'status' => $EmployeeServiceAllocation->status,
@@ -6149,6 +6209,14 @@ class HRController extends Controller
 
         $EmpLocationAllocation = EmployeeLocationAllocation::where('emp_id', $empId)->firstOrFail();
 
+        // Capture old values before applying updates
+        $oldData = [
+            'location_site' => $EmpLocationAllocation->location_site,
+            'service_location_id' => $EmpLocationAllocation->service_location_id,
+            'effective_timestamp' => $EmpLocationAllocation->effective_timestamp,
+            'status' => $EmpLocationAllocation->status,
+        ];
+
         $InventorySites = $request->input('uinvSite');
         $LocationArray = $request->input('ulocation_ela');
 
@@ -6199,6 +6267,7 @@ class HRController extends Controller
 
         $session = auth()->user();
         $sessionName = $session->name;
+        $sessionId = $session->id;
 
         $EmpLocationAllocation->save();
 
@@ -6206,12 +6275,6 @@ class HRController extends Controller
             return response()->json(['error' => '"Failed to update Inventory Location Allocation. Please try again."']);
         }
 
-        $oldData = [
-            'location_site' => $EmpLocationAllocation->getOriginal('location_site'),
-            'service_location_id' => $EmpLocationAllocation->getOriginal('service_location_id'),
-            'effective_timestamp' => $EmpLocationAllocation->getOriginal('effective_timestamp'),
-            'status' => $EmpLocationAllocation->getOriginal('status'),
-        ];
         $newData = [
             'location_site' => $EmpLocationAllocation->location_site,
             'service_location_id' => $EmpLocationAllocation->service_location_id,

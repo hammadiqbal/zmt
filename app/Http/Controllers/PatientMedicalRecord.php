@@ -220,7 +220,7 @@ class PatientMedicalRecord extends Controller
             $newData = [
                 'description' => $Desc,
                 'code' => $Code,
-                'type' => $CodeType,
+                'icd_type' => $CodeType,
                 'status' => $status,
                 'effective_timestamp' => $Edt,
             ];
@@ -455,7 +455,7 @@ class PatientMedicalRecord extends Controller
         $oldData = [
             'description' => $ICDCodes->description,
             'code' => $ICDCodes->code,
-            'type' => $ICDCodes->type,
+            'icd_type' => $ICDCodes->type,
             'status' => $ICDCodes->status,
             'effective_timestamp' => $ICDCodes->effective_timestamp,
         ];
@@ -493,7 +493,7 @@ class PatientMedicalRecord extends Controller
         $newData = [
             'description' => $ICDCodes->description,
             'code' => $ICDCodes->code,
-            'type' => $ICDCodes->type,
+            'icd_type' => $ICDCodes->type,
             'status' => $ICDCodes->status,
             'effective_timestamp' => $ICDCodes->effective_timestamp,
         ];
@@ -526,16 +526,16 @@ class PatientMedicalRecord extends Controller
         $user = auth()->user();
         $UserorgId = $user->org_id;
         $orgCode = Organization::where('id', $UserorgId)->value('code');
-        $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc');
-        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
-            $sessionSiteIds = $this->assignedSites;
-            if(!empty($sessionSiteIds)) {
-                $Patients->whereIn('site_id', $sessionSiteIds);
-            }
-        }
-        $Patients = $Patients->get();
+        // $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc');
+        // if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+        //     $sessionSiteIds = $this->assignedSites;
+        //     if(!empty($sessionSiteIds)) {
+        //         $Patients->whereIn('site_id', $sessionSiteIds);
+        //     }
+        // }
+        // $Patients = $Patients->get();
 
-        return view('dashboard.vital_sign', compact('user','orgCode','Patients'));
+        return view('dashboard.vital_sign', compact('user','orgCode'));
     }
 
     public function PatientRecords($mr, Request $request)
@@ -873,7 +873,7 @@ class PatientMedicalRecord extends Controller
             'effective_timestamp' => $Edt,
         ];
         $logId = createLog(
-            'patient_medical_record',
+            'vital_sign',
             'insert',
             [
                 'message' => 'Vital sign recorded',
@@ -1069,7 +1069,7 @@ class PatientMedicalRecord extends Controller
         $oldData = ['status' => (int)$Status];
         $newData = ['status' => $UpdateStatus];
         $logId = createLog(
-            'patient_medical_record',
+            'vital_sign',
             'status_change',
             [
                 'message' => "Status updated to '{$statusLog}'",
@@ -1247,7 +1247,7 @@ class PatientMedicalRecord extends Controller
             'effective_timestamp' => $VitalSigns->effective_timestamp,
         ];
         $logId = createLog(
-            'patient_medical_record',
+            'vital_sign',
             'update',
             [
                 'message' => 'Vital sign updated',
@@ -1276,18 +1276,18 @@ class PatientMedicalRecord extends Controller
         $UserorgId = $user->org_id;
         // $orgCode = Organization::where('id', $UserorgId)->value('code');
         // $icdCodes = ICDCoding::where('status', 1)->get();
-        $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc');
-        if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
-            $sessionSiteIds = $this->assignedSites;
-            if(!empty($sessionSiteIds)) {
-                $Patients->whereIn('site_id', $sessionSiteIds);
-            }
-        }
-        $Patients = $Patients->get();
+        // $Patients = PatientRegistration::select('mr_code','name','cell_no')->where('status', 1)->orderBy('id', 'desc');
+        // if($this->sessionUser->is_employee == 1 && $this->sessionUser->site_enabled == 0) {
+        //     $sessionSiteIds = $this->assignedSites;
+        //     if(!empty($sessionSiteIds)) {
+        //         $Patients->whereIn('site_id', $sessionSiteIds);
+        //     }
+        // }
+        // $Patients = $Patients->get();
 
         $Organizations = Organization::select('id', 'organization')->where('status', 1)->get();
 
-        return view('dashboard.encounters_and_procedures', compact('user','Organizations','Patients'));
+        return view('dashboard.encounters_and_procedures', compact('user','Organizations'));
     }
 
     public function GetLatestVitalSignData($mr)
@@ -3063,7 +3063,7 @@ class PatientMedicalRecord extends Controller
                         'status' => $status,
                     ];
                     $logId = createLog(
-                        'patient_medical_record',
+                        'req_epi',
                         'insert',
                         [
                             'message' => "Requisition for $act added",
@@ -3222,7 +3222,7 @@ class PatientMedicalRecord extends Controller
         $oldData = ['status' => (int)$Status];
         $newData = ['status' => $UpdateStatus];
         $logId = createLog(
-            'patient_medical_record',
+            'req_epi',
             'status_change',
             [
                 'message' => "Status updated to '{$statusLog}'",
@@ -3313,7 +3313,7 @@ class PatientMedicalRecord extends Controller
         // New logging (update)
         $newData = [ 'remarks' => $RequisitionForEPI->remarks ];
         $logId = createLog(
-            'patient_medical_record',
+            'req_epi',
             'update',
             [
                 'message' => 'Requisition for EPI updated',
@@ -4126,7 +4126,7 @@ class PatientMedicalRecord extends Controller
             if ($matchingReqs->isNotEmpty()) {
                 foreach ($matchingReqs as $req) {
                     $logId = createLog(
-                        'patient_medical_record',
+                        'investigation_tracking',
                         'status_change',
                         [
                             'message' => 'Status set to Inactive',
@@ -4165,12 +4165,11 @@ class PatientMedicalRecord extends Controller
 
         // New logging (insert)
         $newData = [
-            'investigation_id' => $investigationId,
             'investigation_confirmation_datetime' => $confirmDateTime,
             'confirmation_remarks' => $Remarks,
         ];
         $logId = createLog(
-            'patient_medical_record',
+            'investigation_tracking',
             'insert',
             [
                 'message' => 'Investigation confirmed',
@@ -4227,7 +4226,7 @@ class PatientMedicalRecord extends Controller
 
         // Create a log entry (insert)
         $logId = createLog(
-            'patient_medical_record',
+            'investigation_tracking',
             'insert',
             [
                 'message' => 'Report added',

@@ -95,10 +95,10 @@
                                                                 <div class="form-group has-custom m-b-5">
                                                                     <h6 class="box-title font-weight-bold">MR #</h6>
                                                                     <select class="form-control selecter p-0" name="pio_mr" id="enterMR" style="color:#222d32">
-                                                                        <option selected disabled >Select MR #</option>
+                                                                        {{-- <option selected disabled >Select MR #</option>
                                                                         @foreach ($Patients as $Patient)
                                                                             <option value="{{ $Patient['mr_code'] }}"> {{ $Patient['mr_code'] }} - {{ ucwords($Patient['name']) }} @if (!empty($Patient['cell_no'])) - {{ $Patient['cell_no'] }} @endif</option>
-                                                                        @endforeach
+                                                                        @endforeach --}}
                                                                     </select>
                                                                     {{-- <input type="text" placeholder="Patient MR #" class="form-control input-sm" name="pio_mr" id="enterMR"> --}}
                                                                 </div>

@@ -203,7 +203,27 @@ $(document).ready(function() {
             else if (label === 'Division Id') {
                 label = 'Division';
             }
-            
+            else if (label === 'Cat Id') {
+                label = 'Item Category';
+            }
+            else if (label === 'Sub Catid') {
+                label = 'Item Sub Category';
+            }
+            else if (label === 'Generic Id') {
+                label = 'Item Generic';
+            }
+            else if (label === 'Brand Id') {
+                label = 'Item Brand';
+            }else if (label === 'Prefix Id') {   
+                label = 'Prefix';
+            }else if (label === 'Thirdpartycategory') {  
+                label = 'Category';
+            }else if (label === 'Thirdparty Type') {        
+                label = 'Type';
+            }else if (label === 'Vendor Id') {
+                label = 'Vendor';
+            }
+        
             row.append($('<th style="width:40%">').text(label));
             row.append($('<td>').text(data[key] === null || data[key] === '' ? '-' : data[key]));
             tbody.append(row);

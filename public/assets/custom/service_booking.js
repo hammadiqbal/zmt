@@ -10,20 +10,8 @@ $(document).ready(function() {
             });
         });  
 
-        fetchOrgPatient(filterOrgId, '#fb_mrno', function(data) {
-            $('#fb_mrno').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', false);
-            // $.each(data, function(key, value) {
-            //     $('#fb_mrno').append('<option value="' + value.mr_code + '">' + value.mr_code + ' - ' + value.name + ' - ' + value.cell_no + '</option>');
-            // });
-            $.each(data, function(key, value) {
-                $('#fb_mrno').append(
-                    '<option value="' + value.mr_code + '">' +
-                        value.mr_code + ' - ' + value.name +
-                        (value.cell_no ? ' - ' + value.cell_no : '') +
-                    '</option>'
-                );
-            });
-        });
+        // Initialize MR search with AJAX and infinite scrolling
+        initializeMRSearch('#fb_mrno', filterOrgId);
         
     }
     else{
@@ -31,7 +19,15 @@ $(document).ready(function() {
         OrgChangeSites('#fb_org', '#fb_site', null);
         
         $('#fb_mrno').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', true);
-        OrgChangeMRCode('#fb_org', '#fb_mrno', null);
+        // Set up change handler for organization to initialize MR search
+        $('#fb_org').on('change', function() {
+            var orgId = $(this).val();
+            if (orgId) {
+                initializeMRSearch('#fb_mrno', orgId);
+            } else {
+                $('#fb_mrno').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', true);
+            }
+        });
     }
     // Service booking
 
@@ -72,17 +68,8 @@ $(document).ready(function() {
                     });
                 });
 
-                fetchOrgPatient(orgId, '#sb_mr', function(data) {
-                    $('#sb_mr').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', false);
-                    $.each(data, function(key, value) {
-                        $('#sb_mr').append(
-                            '<option value="' + value.mr_code + '">' +
-                                value.mr_code + ' - ' + value.name +
-                                (value.cell_no ? ' - ' + value.cell_no : '') +
-                            '</option>'
-                        );
-                    });
-                });
+                // Initialize MR search with AJAX and infinite scrolling
+                initializeMRSearch('#sb_mr', orgId);
                             
                 $('#sb_emp').html("<option selected disabled value=''>Select Physician</option>").prop('disabled', true);
                 SiteChangeEmployees('#sb_site', '#sb_emp', '#add_servicebooking');
@@ -137,7 +124,15 @@ $(document).ready(function() {
             } 
             else {
                 $('#sb_mr').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', true);
-                OrgChangeMRCode('#sb_org', '#sb_mr', '#add_servicebooking');
+                // Set up change handler for organization to initialize MR search
+                $('#sb_org').on('change', function() {
+                    var orgId = $(this).val();
+                    if (orgId) {
+                        initializeMRSearch('#sb_mr', orgId);
+                    } else {
+                        $('#sb_mr').html("<option selected disabled value=''>Select MR #</option>").prop('disabled', true);
+                    }
+                });
 
                 $('#sb_emp').html("<option selected disabled value=''>Select Physician</option>").prop('disabled', true);
                 SiteChangeEmployees('#sb_site', '#sb_emp', '#add_servicebooking');
@@ -356,7 +351,17 @@ $(document).ready(function() {
     // Call on page load
     updateDateFilterState();
 
-    $('#fb_site, #fb_mrno').on('change', function () {
+    // Handle change events for site and MR number (using event delegation for Select2)
+    $('#fb_site').on('change', function () {
+        handleFilterChange();
+    });
+
+    // Handle Select2 change event for MR number
+    $(document).on('change', '#fb_mrno', function () {
+        handleFilterChange();
+    });
+
+    function handleFilterChange() {
         // Check if site or MR number is selected
         var siteSelected = $('#fb_site').val() && $('#fb_site').val() !== '' && $('#fb_site').val() !== 'Select Site';
         var mrSelected = $('#fb_mrno').val() && $('#fb_mrno').val() !== '' && $('#fb_mrno').val() !== 'Select MR #';
@@ -370,7 +375,7 @@ $(document).ready(function() {
         }
         
         ServiceBooking.ajax.reload();  
-    });
+    }
 
     // Handle date filter selection
     $('#fb_date_filter').on('change', function() {
@@ -379,7 +384,12 @@ $(document).ready(function() {
 
     $('.clearFilter').on('click', function () {
         $('#fb_site').val($('#fb_site option:first').val()).change();
-        $('#fb_mrno').val($('#fb_mrno option:first').val()).change();
+        // Clear Select2 dropdown
+        if ($('#fb_mrno').hasClass('select2-hidden-accessible')) {
+            $('#fb_mrno').val(null).trigger('change');
+        } else {
+            $('#fb_mrno').val($('#fb_mrno option:first').val()).change();
+        }
         $('#fb_date_filter').val('today').prop('disabled', false).change();
         ServiceBooking.ajax.reload();   
     });
@@ -588,7 +598,7 @@ $(document).ready(function() {
                     const $serviceLocation = $('#u_sb_location');
                     if (data && data.length > 0) {
                         $.each(data, function(key, value) {
-                            if(locationId != value.id)
+                            if(locationId != value.location_id)
                             {
                                 $('#u_sb_location').append('<option value="' + value.location_id + '">' + value.name + '</option>');
                             }

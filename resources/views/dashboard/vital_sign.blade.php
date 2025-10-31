@@ -79,10 +79,10 @@
                                             <span class="main_label">{{ $orgCode }} - </span>
                                             @endif -->
                                             <select class="form-control selecter p-0" name="vs_mr" id="vs_mr" style="color:#222d32">
-                                                <option selected disabled >Select MR #</option>
-                                                @foreach ($Patients as $Patient)
+                                                {{-- <option selected disabled >Select MR #</option> --}}
+                                                {{-- @foreach ($Patients as $Patient)
                                                     <option value="{{ $Patient['mr_code'] }}"> {{ $Patient['mr_code'] }} - {{ ucwords($Patient['name']) }}</option>
-                                                @endforeach
+                                                @endforeach --}}
                                             </select>
                                             <!-- <input type="text" class="form-control input-sm" id="vs_mr" style="width: 60%;" placeholder="MR #" name="vs_mr"> -->
                                         </div>

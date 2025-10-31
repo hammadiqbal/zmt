@@ -273,6 +273,8 @@ $(document).ready(function() {
                 fetchInventoryCategory(response.orgId,'#u_it_catid', function(data) {
                     $('#u_it_catid').find('option:contains("Loading...")').remove();
                     $.each(data, function(key, value) {
+                        console.log(value.id);
+                        console.log(response.catId);
                         if(response.catId != value.id)
                         {
                             $('#u_it_catid').append('<option value="' + value.id + '">' + value.name + '</option>');
@@ -285,9 +287,6 @@ $(document).ready(function() {
                 fetchSelectedInventorySubCategory(response.catId,'#u_it_subcat', function(data) {
                     $('#u_it_subcat').find('option:contains("Loading...")').remove();
                     $.each(data, function(key, value) {
-                        console.log(value.id);
-                        console.log(response.subcatId);
-
                         if(response.subcatId != value.id)
                         {
                             $('#u_it_subcat').append('<option value="' + value.id + '">' + value.name + '</option>');
